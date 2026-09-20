@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Page, Card, Button, Badge, ListenButton, StatCard } from "@/components/tati";
+import { Page, Card, Button, Badge, Logo, ListenButton, StatCard } from "@/components/tati";
 import heroImage from "@/assets/tati-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -27,13 +27,16 @@ function Landing() {
   return (
     <Page>
       <header className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-lg font-extrabold text-primary">
-            TATI <span className="text-success">ChildSave</span>
-          </p>
-          <p className="text-[11px] font-extrabold uppercase tracking-widest text-muted-foreground">
-            Financial capability for kids
-          </p>
+        <div className="flex items-center gap-3">
+          <Logo />
+          <div>
+            <p className="text-lg font-extrabold text-primary">
+              TATI <span className="text-success">ChildSave</span>
+            </p>
+            <p className="text-[11px] font-extrabold uppercase tracking-widest text-muted-foreground">
+              Financial capability for kids
+            </p>
+          </div>
         </div>
         <ListenButton />
       </header>

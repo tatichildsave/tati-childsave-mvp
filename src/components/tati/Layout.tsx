@@ -2,6 +2,15 @@ import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { tatiTheme } from "@/lib/theme";
+import logo from "@/assets/tati-logo.svg";
+
+export function Logo({ className }: { className?: string }) {
+  return (
+    <Link to="/" aria-label="TATI ChildSave home" className={cn("inline-flex shrink-0", className)}>
+      <img src={logo} alt="TATI" width={44} height={44} className="h-11 w-11" />
+    </Link>
+  );
+}
 
 export function Page({
   children,
@@ -66,6 +75,7 @@ export function PageHeader({
           ) : null}
           <h1 className="break-words text-xl font-extrabold leading-tight">{title}</h1>
         </div>
+        <Logo />
         {listenable ? <ListenButton /> : null}
         {right}
       </div>

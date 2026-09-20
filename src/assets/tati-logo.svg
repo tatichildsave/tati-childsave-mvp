@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 432" role="img" aria-labelledby="title desc">
+  <title id="title">Tati logo</title>
+  <desc id="desc">White Tati wordmark inside a blue circle</desc>
+  <circle cx="216" cy="216" r="194" fill="#1647B5"/>
+  <text x="216" y="266" text-anchor="middle" fill="#fff" font-family="cursive" font-size="146" font-style="italic" font-weight="700">Tati</text>
+</svg>
