@@ -14,6 +14,7 @@ import {
   Avatar,
   StatCard,
   LoadingState,
+  AuthLoadingShell,
 } from "@/components/tati";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/onboarding")({
     if (error || !data.user) throw redirect({ to: "/login" });
     return {};
   },
+  pendingComponent: AuthLoadingShell,
   head: () => ({
     meta: [
       { title: "Start the TATI adventure — TATI ChildSave" },

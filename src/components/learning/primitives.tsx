@@ -48,7 +48,7 @@ export function ProgressBar({ value, max, label }: { value: number; max: number;
         aria-valuemax={100}
         aria-label={label ?? "Progress"}
       >
-        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
       </div>
       {label ? <p className="mt-2 text-sm text-muted-foreground">{label}</p> : null}
     </div>
@@ -72,7 +72,7 @@ export function ChoiceButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "min-h-[48px] w-full rounded-2xl border-2 px-4 py-3 text-left text-base font-medium transition-colors",
+        "min-h-[48px] w-full rounded-2xl border-2 px-4 py-3 text-left text-base font-medium transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
         state === "selected"
           ? "border-primary bg-primary/10 text-foreground"
           : state === "muted"
@@ -105,7 +105,7 @@ export function PrimaryButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50",
+        "inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-primary px-6 text-base font-semibold text-primary-foreground transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.98] disabled:opacity-50",
         className,
       )}
     >

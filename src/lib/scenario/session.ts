@@ -82,17 +82,20 @@ export async function recordDecision(
 ): Promise<void> {
   const last = state.decisions[state.decisions.length - 1];
   if (!last) return;
-  await supabase.from("scenario_decisions").insert({
-    session_id: sessionId,
-    child_profile_id: childId,
-    node_id: last.nodeId,
-    choice_id: last.choiceId,
-    day_number: last.day,
-    details: {
-      nodeTitle: last.nodeTitle,
-      choiceLabel: last.choiceLabel,
-      availableAfter: last.availableAfter,
-      savedAfter: last.savedAfter,
-    } as never,
-  });
+  await supabase.from("scenario_decisions").upsert(
+    {
+      session_id: sessionId,
+      child_profile_id: childId,
+      node_id: last.nodeId,
+      choice_id: last.choiceId,
+      day_number: last.day,
+      details: {
+        nodeTitle: last.nodeTitle,
+        choiceLabel: last.choiceLabel,
+        availableAfter: last.availableAfter,
+        savedAfter: last.savedAfter,
+      } as never,
+    },
+    { onConflict: "session_id,node_id,day_number", ignoreDuplicates: true },
+  );
 }

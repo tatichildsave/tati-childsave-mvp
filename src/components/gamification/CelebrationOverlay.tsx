@@ -28,7 +28,7 @@ export function CelebrationOverlay({
       aria-label={title}
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 px-4 backdrop-blur-sm"
     >
-      <div className="w-full max-w-md rounded-3xl bg-card p-6 text-center shadow-lg animate-in fade-in zoom-in-95 duration-300 motion-reduce:animate-none">
+      <div className="tati-milestone-in w-full max-w-md rounded-3xl bg-card p-6 text-center shadow-lg">
         <span aria-hidden="true" className="text-5xl">
           🎉
         </span>
@@ -38,7 +38,7 @@ export function CelebrationOverlay({
         {badgeIcons.length > 0 ? (
           <div className="mt-4 flex justify-center gap-2 text-3xl" aria-hidden="true">
             {badgeIcons.map((icon, i) => (
-              <span key={`${icon}-${i}`}>{icon}</span>
+              <span key={`${icon}-${i}`} className="inline-block tati-badge-unlock" style={{ animationDelay: `${i * 70}ms` }}>{icon}</span>
             ))}
           </div>
         ) : null}

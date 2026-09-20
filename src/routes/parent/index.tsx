@@ -126,7 +126,13 @@ function ParentHome() {
       </div>
 
       {children && children.length > 0 ? (
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
+          <Button to="/parent/feedback" variant="secondary">
+            Share parent feedback
+          </Button>
+          <Button to="/parent/metrics" variant="ghost">
+            View MVP metrics
+          </Button>
           <Button to="/onboarding" variant="outline">
             + Add another child
           </Button>

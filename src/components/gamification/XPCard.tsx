@@ -1,4 +1,5 @@
 import type { GamificationState } from "@/lib/gamification/types";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 /** Quiet progress panel: XP, level, journey progress and a streak-ready day count. */
 export function XPCard({ state }: { state: GamificationState }) {
@@ -12,7 +13,7 @@ export function XPCard({ state }: { state: GamificationState }) {
           </p>
         </div>
         <span className="rounded-full bg-accent-soft px-3 py-1 text-sm font-bold text-accent-foreground tabular-nums">
-          {state.xp} XP
+          <AnimatedNumber value={state.xp} suffix=" XP" className="tati-value-pop inline-block" />
         </span>
       </div>
 
@@ -24,10 +25,10 @@ export function XPCard({ state }: { state: GamificationState }) {
         aria-valuemax={100}
         aria-label="Progress to the next level"
       >
-        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${state.levelPct}%` }} />
+        <div className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${state.levelPct}%` }} />
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        {state.xpIntoLevel}/{state.xpForLevel} XP towards Level {state.level + 1}
+            <AnimatedNumber value={state.xpIntoLevel} />/{state.xpForLevel} XP towards Level {state.level + 1}
       </p>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">

@@ -5,7 +5,6 @@ import { lovable } from "@/integrations/lovable/index";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
 export const Route = createFileRoute("/login")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Sign in — TATI ChildSave" },
@@ -31,21 +30,17 @@ function LoginPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate({ to: "/parent", replace: true });
-    });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/parent", replace: true });
       else setChecking(false);
     });
-    return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -53,8 +48,10 @@ function LoginPage() {
       setError(
         signInError.message.toLowerCase().includes("invalid")
           ? "That email and password don't match. Please try again."
-          : signInError.message,
+          : "We couldn't sign you in right now. Please try again.",
       );
+    } else if (data.session) {
+      navigate({ to: "/parent", replace: true });
     }
     setBusy(false);
   }
@@ -83,6 +80,9 @@ function LoginPage() {
             <input
               id="email"
               type="email"
+              required
+              aria-required="true"
+              maxLength={254}
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -97,6 +97,8 @@ function LoginPage() {
             <input
               id="password"
               type="password"
+              required
+              aria-required="true"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

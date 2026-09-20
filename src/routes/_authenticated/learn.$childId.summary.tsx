@@ -107,6 +107,16 @@ function SummaryPage() {
         </p>
       </Card>
 
+      {post ? (
+        <Link
+          to="/learn/$childId/feedback"
+          params={{ childId }}
+          className="mt-5 flex min-h-[48px] items-center justify-center rounded-2xl border-2 border-primary bg-primary-soft text-base font-semibold text-primary"
+        >
+          Tell us how it felt
+        </Link>
+      ) : null}
+
       <Link
         to="/dashboard"
         className="mt-6 flex min-h-[48px] items-center justify-center rounded-2xl bg-primary text-base font-semibold text-primary-foreground"

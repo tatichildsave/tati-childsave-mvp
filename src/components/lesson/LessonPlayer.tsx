@@ -40,6 +40,7 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
 
 export function LessonPlayer({
   lesson,
+  childId,
   backTo,
   stepLabel,
   saving,
@@ -47,25 +48,30 @@ export function LessonPlayer({
   onComplete,
 }: {
   lesson: Lesson;
+  childId: string;
   backTo: string;
   stepLabel?: string | undefined;
   saving?: boolean | undefined;
   onComplete: (draft: LessonDraft) => void;
 }) {
-  const storageKey = `tati.lesson.${lesson.id}`;
+  const storageKey = `tati.lesson.${childId}.${lesson.id}`;
   const [draft, setDraft] = useState<LessonDraft>(() => emptyDraft(lesson.activity));
+  const [resumed, setResumed] = useState(false);
 
   // Resume where the learner left off.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
-      if (raw) setDraft({ ...emptyDraft(lesson.activity), ...(JSON.parse(raw) as Partial<LessonDraft>) });
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<LessonDraft>;
+        setDraft({ ...emptyDraft(lesson.activity), ...saved });
+        setResumed(Boolean(saved.taps?.length || saved.quickCheck || saved.activityChoice || saved.sorted?.length || Object.values(saved.allocation ?? {}).some(Boolean) || saved.reflection));
+      }
       else setDraft(emptyDraft(lesson.activity));
     } catch {
       setDraft(emptyDraft(lesson.activity));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson.id]);
+  }, [childId, lesson.id]);
 
   useEffect(() => {
     try {
@@ -97,6 +103,11 @@ export function LessonPlayer({
       </header>
 
       <main className={cn(tatiTheme.container, "space-y-4 pb-28 pt-4")}>
+        {resumed ? (
+          <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
+            Welcome back! Ready to continue?
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
           {stepLabel ? (
             <span className="rounded-full bg-secondary px-3 py-1.5 text-sm font-extrabold text-secondary-foreground">
@@ -119,7 +130,7 @@ export function LessonPlayer({
 
         {lesson.illustration ? (
           <figure className="relative overflow-hidden rounded-3xl shadow-card">
-            <img src={lesson.illustration} alt="" className="h-48 w-full object-cover" />
+            <img src={lesson.illustration} alt="" loading="eager" decoding="async" className="h-48 w-full object-cover" />
             {lesson.illustrationBadge ? (
               <figcaption className="absolute bottom-0 left-0 right-0 bg-foreground/60 px-4 py-2 text-sm font-extrabold text-background">
                 {lesson.illustrationBadge}
@@ -159,7 +170,7 @@ export function LessonPlayer({
             type="button"
             onClick={() => onComplete(draft)}
             disabled={saving}
-            className="inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground disabled:opacity-50"
+            className="inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-50"
           >
             {saving ? "Saving…" : (lesson.ctaLabel ?? "Continue")} <span aria-hidden="true">→</span>
           </button>
@@ -193,7 +204,7 @@ function Block({
   if (block.type === "scene") {
     return (
       <figure className="relative overflow-hidden rounded-3xl shadow-card">
-        <img src={block.imageUrl} alt="" className="h-48 w-full object-cover" />
+        <img src={block.imageUrl} alt="" loading="lazy" decoding="async" className="h-48 w-full object-cover" />
         {block.caption ? (
           <figcaption className="absolute bottom-0 left-0 right-0 bg-foreground/60 px-4 py-2 text-sm font-extrabold text-background">
             {block.caption}

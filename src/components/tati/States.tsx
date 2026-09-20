@@ -5,8 +5,19 @@ export function LoadingState({ label = "Getting things ready…" }: { label?: st
   return (
     <div role="status" aria-live="polite" className="space-y-3 py-6">
       <p className="text-center text-base font-bold text-muted-foreground">{label}</p>
-      <div className="h-24 animate-pulse rounded-3xl bg-muted" />
-      <div className="h-24 animate-pulse rounded-3xl bg-muted" />
+      <div className="h-24 animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" />
+      <div className="h-24 animate-pulse rounded-3xl bg-muted motion-reduce:animate-none" />
+    </div>
+  );
+}
+
+export function AuthLoadingShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <div role="status" aria-live="polite" className="w-full max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
+        <p className="text-base font-extrabold text-primary">Checking your TATI session…</p>
+        <p className="mt-2 text-base text-muted-foreground">Your family space will open in a moment.</p>
+      </div>
     </div>
   );
 }

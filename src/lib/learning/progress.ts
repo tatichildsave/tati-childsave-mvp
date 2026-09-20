@@ -30,7 +30,7 @@ export function progressQuery(childId: string) {
     queryKey: ["progress", childId],
     queryFn: async (): Promise<ProgressEvent[]> => {
       const { data, error } = await supabase
-        .from("learning_progress")
+        .from("journey_progress")
         .select("*")
         .eq("child_profile_id", childId);
       if (error) throw error;

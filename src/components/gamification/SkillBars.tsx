@@ -35,7 +35,7 @@ export function SkillBars({ skills, tone = "strength" }: { skills: SkillGrowth[]
             aria-label={`${s.label}: ${tone === "growing" ? "still growing" : WORDS[s.strength].toLowerCase()}`}
           >
             <div
-              className={cn("h-full rounded-full transition-all", tone === "growing" ? "bg-accent" : "bg-success")}
+              className={cn("h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none", tone === "growing" ? "bg-accent" : "bg-success")}
               style={{ width: `${Math.max(8, Math.round(s.after * 100))}%` }}
             />
           </div>

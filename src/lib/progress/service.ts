@@ -1,7 +1,7 @@
 // The TATI Progress Service.
 // Every dashboard, journey map and summary reads progress through this module,
 // so there is exactly one source of truth. Progress is persisted to the backend
-// (learning_progress) and cached by React Query, so a browser refresh re-reads
+// (journey_progress) and cached by React Query, so a browser refresh re-reads
 // the saved rows instead of resetting anything.
 
 import { useMemo } from "react";
@@ -15,19 +15,79 @@ import { computeProgressSnapshot, type ProgressSnapshot } from "./snapshot";
 export type { ProgressSnapshot, ItemProgress } from "./snapshot";
 
 export const progressKey = (childId: string) => ["progress", childId] as const;
+const pendingKey = (childId: string) => `tati.pending-progress.${childId}`;
+const syncingChildren = new Set<string>();
+
+function readPending(childId: string): ProgressEvent[] {
+  try {
+    const raw = localStorage.getItem(pendingKey(childId));
+    return raw ? (JSON.parse(raw) as ProgressEvent[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePending(childId: string, events: ProgressEvent[]) {
+  try {
+    localStorage.setItem(pendingKey(childId), JSON.stringify(events));
+  } catch {
+    /* storage unavailable; the current optimistic state still remains visible */
+  }
+}
+
+async function syncPending(childId: string, events: ProgressEvent[]) {
+  if (syncingChildren.has(childId)) return;
+  syncingChildren.add(childId);
+  const remaining: ProgressEvent[] = [];
+  try {
+    for (const event of events) {
+      const { error } = await supabase.from("journey_progress").upsert(
+        {
+          child_profile_id: event.child_profile_id,
+          track_id: event.track_id,
+          item_type: event.item_type,
+          item_id: event.item_id,
+          status: event.status,
+          score: event.score,
+          max_score: event.max_score,
+          details: event.details as never,
+          updated_at: event.updated_at,
+        },
+        { onConflict: "child_profile_id,item_type,item_id" },
+      );
+      if (error) remaining.push(event);
+    }
+    if (remaining.length === 0) {
+      try {
+        localStorage.removeItem(pendingKey(childId));
+      } catch {
+        /* ignore storage cleanup failures */
+      }
+    } else {
+      writePending(childId, remaining);
+    }
+  } finally {
+    syncingChildren.delete(childId);
+  }
+}
 
 export function progressQuery(childId: string) {
   return {
     queryKey: progressKey(childId),
     queryFn: async (): Promise<ProgressEvent[]> => {
+      const pending = readPending(childId);
       const { data, error } = await supabase
-        .from("learning_progress")
+        .from("journey_progress")
         .select("*")
         .eq("child_profile_id", childId);
-      if (error) throw error;
-      return (data ?? []) as unknown as ProgressEvent[];
+      if (error) return pending;
+      if (pending.length > 0) void syncPending(childId, pending);
+      const serverEvents = (data ?? []) as unknown as ProgressEvent[];
+      const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
+      return [...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)), ...pending];
     },
     staleTime: 30_000,
+    refetchOnWindowFocus: false,
   };
 }
 
@@ -70,7 +130,8 @@ export function useRecordProgress() {
 
   return useMutation({
     mutationFn: async (input: RecordProgressInput) => {
-      const { error } = await supabase.from("learning_progress").upsert(
+      const event = optimisticEvent(input);
+      const { error } = await supabase.from("journey_progress").upsert(
         {
           child_profile_id: input.childId,
           track_id: "save",
@@ -80,11 +141,16 @@ export function useRecordProgress() {
           score: input.score ?? null,
           max_score: input.maxScore ?? null,
           details: (input.details ?? {}) as never,
-          updated_at: new Date().toISOString(),
+          updated_at: event.updated_at,
         },
         { onConflict: "child_profile_id,item_type,item_id" },
       );
-      if (error) throw error;
+      if (error) {
+        const pending = readPending(input.childId).filter(
+          (item) => !(item.item_type === event.item_type && item.item_id === event.item_id),
+        );
+        writePending(input.childId, [...pending, event]);
+      }
     },
     onMutate: async (input) => {
       const key = progressKey(input.childId);

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Screen, Card, TopBar, PrimaryButton, ChoiceButton } from "@/components/learning/primitives";
 import { useRecordProgress } from "@/lib/progress/service";
 import { getReflection, getTrack } from "@/lib/learning/track";
@@ -28,6 +28,29 @@ function ReflectionPage() {
   const navigate = useNavigate();
   const record = useRecordProgress();
   const [choiceId, setChoiceId] = useState<string | null>(null);
+  const [resumed, setResumed] = useState(false);
+  const storageKey = `tati.reflection.${childId}.${reflectionId}`;
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setChoiceId(JSON.parse(saved) as string);
+        setResumed(true);
+      }
+    } catch {
+      localStorage.removeItem(storageKey);
+    }
+  }, [storageKey]);
+
+  function choose(choice: string) {
+    setChoiceId(choice);
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(choice));
+    } catch {
+      /* storage unavailable; the reflection remains usable */
+    }
+  }
 
   if (!reflection) {
     return (
@@ -54,6 +77,7 @@ function ReflectionPage() {
       itemId: reflection!.id,
       details: { choiceId },
     });
+    localStorage.removeItem(storageKey);
     celebrateStep("reflection");
     navigate({ to: "/learn/$childId", params: { childId } });
   }
@@ -61,6 +85,12 @@ function ReflectionPage() {
   return (
     <Screen>
       <TopBar title={reflection.title} backTo={`/learn/${childId}`} />
+
+      {resumed ? (
+        <p className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
+          Welcome back! Ready to continue?
+        </p>
+      ) : null}
 
       <Card>
         <p className="text-sm font-bold uppercase tracking-wide text-primary">
@@ -70,8 +100,8 @@ function ReflectionPage() {
         <h2 className="mt-4 text-xl font-bold">{reflection.question}</h2>
         <p className="mt-1 text-sm text-muted-foreground">No scores here — just your own thinking.</p>
         <div className="mt-4 space-y-2">
-          {reflection.options.map((option) => (
-            <ChoiceButton key={option.id} onClick={() => setChoiceId(option.id)}>
+            {reflection.options.map((option) => (
+            <ChoiceButton key={option.id} onClick={() => choose(option.id)}>
               {option.label}
             </ChoiceButton>
           ))}

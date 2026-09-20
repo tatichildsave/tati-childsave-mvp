@@ -85,11 +85,11 @@
   --secondary: oklch(0.93 0.017 82);
   --secondary-foreground: oklch(0.3 0.03 264);
   --muted: oklch(0.945 0.014 86);
-  --muted-foreground: oklch(0.52 0.02 264);
+  --muted-foreground: oklch(0.45 0.02 264);
   --accent: oklch(0.76 0.14 70);
   --accent-foreground: oklch(0.25 0.04 60);
   --accent-soft: oklch(0.93 0.05 78);
-  --success: oklch(0.62 0.15 152);
+  --success: oklch(0.54 0.15 152);
   --success-foreground: oklch(0.99 0.005 95);
   --success-soft: oklch(0.92 0.06 152);
   --warning: oklch(0.78 0.15 68);
@@ -175,6 +175,11 @@
     line-height: 1.5;
   }
 
+  :where(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
   h1,
   h2,
   h3,
@@ -182,5 +187,50 @@
     font-family: var(--font-display);
     font-weight: 800;
     letter-spacing: -0.01em;
+  }
+}
+
+@keyframes tati-value-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tati-badge-unlock {
+  0% { opacity: 0.55; transform: translateY(5px) scale(0.96); }
+  65% { transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes tati-consequence-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tati-milestone-in {
+  0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tati-value-pop { animation: tati-value-pop 360ms ease-out; }
+.tati-badge-unlock { animation: tati-badge-unlock 520ms ease-out both; }
+.tati-consequence-in { animation: tati-consequence-in 240ms ease-out both; }
+.tati-milestone-in { animation: tati-milestone-in 280ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tati-value-pop,
+  .tati-badge-unlock,
+  .tati-consequence-in,
+  .tati-milestone-in {
+    animation: none;
   }
 }

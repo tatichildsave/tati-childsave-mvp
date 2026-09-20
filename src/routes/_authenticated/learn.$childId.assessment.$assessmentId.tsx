@@ -7,6 +7,8 @@ import type { AssessmentResult } from "@/lib/assessment/types";
 import { useChild } from "@/lib/learning/progress";
 import { useRecordProgress } from "@/lib/progress/service";
 import { celebrateStep } from "@/components/gamification/celebrate";
+import { trackEvent } from "@/lib/analytics";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/assessment/$assessmentId")({
   head: () => ({
@@ -31,6 +33,12 @@ function AssessmentPage() {
   const record = useRecordProgress();
   const child = useChild(childId);
 
+  useEffect(() => {
+    if (assessmentId === "save-pre") {
+      void trackEvent("pre_assessment_started", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+    }
+  }, [assessmentId, childId]);
+
   if (!definition) {
     return (
       <Screen>
@@ -41,6 +49,12 @@ function AssessmentPage() {
 
   async function finish(result: AssessmentResult) {
     if (definition) await saveAssessmentAttempt(childId, definition, result);
+    if (result.assessmentType === "pre") {
+      void trackEvent("pre_assessment_completed", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+    }
+    if (result.assessmentType === "post") {
+      void trackEvent("post_assessment_completed", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+    }
     await record.mutateAsync({
       childId,
       itemType: "assessment",
@@ -64,6 +78,7 @@ function AssessmentPage() {
   return (
     <AssessmentRunner
       definition={definition}
+      storageKey={`tati.assessment.${childId}.${assessmentId}`}
       backTo={`/learn/${childId}`}
       saving={record.isPending}
       onComplete={finish}

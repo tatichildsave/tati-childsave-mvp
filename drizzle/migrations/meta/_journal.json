@@ -22,6 +22,41 @@
       "when": 1789799505582,
       "tag": "0002_tati_progress_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789800000000,
+      "tag": "0003_tati_security_and_journey",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789800100000,
+      "tag": "0004_tati_feedback_mvp",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789800200000,
+      "tag": "0005_tati_product_analytics",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789800300000,
+      "tag": "0006_tati_security_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789800400000,
+      "tag": "0007_tati_privacy_integrity",
+      "breakpoints": true
     }
   ]
 }

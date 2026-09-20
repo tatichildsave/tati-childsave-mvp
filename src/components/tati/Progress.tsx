@@ -34,7 +34,7 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            "h-full rounded-full transition-all",
+            "h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none",
             tone === "primary" && "bg-primary",
             tone === "success" && "bg-success",
             tone === "accent" && "bg-accent",
@@ -89,7 +89,7 @@ export function ProgressRing({
             strokeLinecap="round"
             strokeDasharray={c}
             strokeDashoffset={c - (c * pct) / 100}
-            className="transition-all"
+            className="transition-[stroke-dashoffset] duration-500 ease-out motion-reduce:transition-none"
           />
         </svg>
         <span className="absolute inset-0 flex items-center justify-center text-lg font-extrabold">

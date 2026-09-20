@@ -4,6 +4,8 @@ import { LessonPlayer, type LessonDraft } from "@/components/lesson/LessonPlayer
 import { useRecordProgress } from "@/lib/progress/service";
 import { getLessonById, lessonsForTrack } from "@/lib/lessons/registry";
 import { celebrateStep } from "@/components/gamification/celebrate";
+import { useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/lesson/$lessonId")({
   head: () => ({
@@ -24,6 +26,10 @@ function LessonPage() {
   const lesson = getLessonById(lessonId);
   const navigate = useNavigate();
   const record = useRecordProgress();
+
+  useEffect(() => {
+    if (lesson) void trackEvent("lesson_started", { childProfileId: childId, entityId: lesson.id, eventKey: lesson.id });
+  }, [childId, lesson]);
 
   if (!lesson) {
     return (
@@ -54,8 +60,9 @@ function LessonPage() {
         reflection: draft.reflection,
       },
     });
+    void trackEvent("lesson_completed", { childProfileId: childId, entityId: lesson.id, eventKey: lesson.id });
     try {
-      localStorage.removeItem(`tati.lesson.${lesson.id}`);
+      localStorage.removeItem(`tati.lesson.${childId}.${lesson.id}`);
     } catch {
       /* ignore */
     }
@@ -70,6 +77,7 @@ function LessonPage() {
   return (
     <LessonPlayer
       lesson={lesson}
+      childId={childId}
       backTo={`/learn/${childId}`}
       stepLabel={index >= 0 ? `Lesson ${index + 1} of ${all.length}` : undefined}
       saving={record.isPending}

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          actor_id: string
+          child_profile_id: string | null
+          created_at: string
+          entity_id: string | null
+          event_key: string | null
+          event_name: string
+          id: string
+          occurred_at: string
+        }
+        Insert: {
+          actor_id?: string
+          child_profile_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          event_key?: string | null
+          event_name: string
+          id?: string
+          occurred_at?: string
+        }
+        Update: {
+          actor_id?: string
+          child_profile_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          event_key?: string | null
+          event_name?: string
+          id?: string
+          occurred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_attempts: {
         Row: {
           assessment_id: string
@@ -267,27 +315,36 @@ export type Database = {
       }
       feedback: {
         Row: {
+          answers: Json
+          audience: string
           child_profile_id: string | null
           context: string
           created_at: string
+          experience_key: string
           id: string
           message: string | null
           rating: number | null
           user_id: string
         }
         Insert: {
+          answers?: Json
+          audience?: string
           child_profile_id?: string | null
           context?: string
           created_at?: string
+          experience_key?: string
           id?: string
           message?: string | null
           rating?: number | null
           user_id?: string
         }
         Update: {
+          answers?: Json
+          audience?: string
           child_profile_id?: string | null
           context?: string
           created_at?: string
+          experience_key?: string
           id?: string
           message?: string | null
           rating?: number | null
@@ -299,6 +356,20 @@ export type Database = {
             columns: ["child_profile_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_reviewers: {
+        Row: { created_at: string; user_id: string }
+        Insert: { created_at?: string; user_id: string }
+        Update: { created_at?: string; user_id?: string }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_reviewers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -335,7 +406,7 @@ export type Database = {
           },
         ]
       }
-      learning_progress: {
+      journey_progress: {
         Row: {
           child_profile_id: string
           created_at: string
@@ -381,6 +452,89 @@ export type Database = {
             columns: ["child_profile_id"]
             isOneToOne: false
             referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_competencies: {
+        Row: {
+          child_profile_id: string
+          competency_id: string
+          evidence: Json
+          id: string
+          level: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          child_profile_id: string
+          competency_id: string
+          evidence?: Json
+          id?: string
+          level?: string
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          child_profile_id?: string
+          competency_id?: string
+          evidence?: Json
+          id?: string
+          level?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_competencies_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_insights: {
+        Row: {
+          child_profile_id: string
+          content: Json
+          created_at: string
+          created_by: string
+          id: string
+          insight_type: string
+          read_at: string | null
+        }
+        Insert: {
+          child_profile_id: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          insight_type: string
+          read_at?: string | null
+        }
+        Update: {
+          child_profile_id?: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          insight_type?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_insights_child_profile_id_fkey"
+            columns: ["child_profile_id"]
+            isOneToOne: false
+            referencedRelation: "child_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_insights_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -563,6 +717,7 @@ export type Database = {
         Returns: boolean
       }
       owns_family: { Args: { _family_id: string }; Returns: boolean }
+      is_feedback_reviewer: { Args: Record<string, never>; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

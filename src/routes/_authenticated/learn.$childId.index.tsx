@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { XPCard } from "@/components/gamification/XPCard";
 import { BadgeGrid } from "@/components/gamification/BadgeGrid";
@@ -11,6 +11,7 @@ import { getTrack, itemPath, itemSubtitle, itemTitle } from "@/lib/learning/trac
 import type { TrackItem } from "@/lib/learning/types";
 import { cn } from "@/lib/utils";
 import journeyHero from "@/assets/journey-hero.png.asset.json";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/")({
   head: () => ({
@@ -62,6 +63,12 @@ function Journey() {
 
   const currentStep = allDone ? undefined : steps[currentIndex];
 
+  useEffect(() => {
+    if (game.journeyComplete) {
+      void trackEvent("journey_completed", { childProfileId: childId, eventKey: childId });
+    }
+  }, [childId, game.journeyComplete]);
+
   return (
     <Screen>
       <header className="mb-4 flex items-center justify-between gap-3">
@@ -85,6 +92,9 @@ function Journey() {
         <img
           src={journeyHero.url}
           alt="Kojo and a friend reading at their school in Accra"
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
           className="h-44 w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/25 to-transparent" />
@@ -127,7 +137,7 @@ function Journey() {
             aria-valuemax={100}
             aria-label="School bag goal progress"
           >
-            <div className="h-full rounded-full bg-success transition-all" style={{ width: `${savedPct}%` }} />
+            <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${savedPct}%` }} />
           </div>
           <div className="mt-2 flex justify-between text-sm">
             <span className="font-semibold text-success">{savedPct}% Complete</span>
@@ -162,7 +172,7 @@ function Journey() {
           <span aria-hidden="true" className="absolute bottom-6 left-[18px] top-4 w-1 rounded-full bg-muted" />
           <span
             aria-hidden="true"
-            className="absolute left-[18px] top-4 w-1 rounded-full bg-success transition-all"
+            className="absolute left-[18px] top-4 w-1 rounded-full bg-success transition-[height] duration-500 ease-out motion-reduce:transition-none"
             style={{ height: `${Math.max(0, (doneCount / steps.length) * 100)}%` }}
           />
           {steps.map(({ item, index, done }) => {

@@ -45,6 +45,9 @@ function Landing() {
             alt="Two Ghanaian school children dropping cedi coins into a savings jar"
             width={1024}
             height={640}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className="h-52 w-full object-cover"
           />
           <span className="absolute right-4 top-4">

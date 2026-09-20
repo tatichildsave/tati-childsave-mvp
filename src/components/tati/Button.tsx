@@ -47,7 +47,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 rounded-2xl font-extrabold transition-opacity disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-2xl font-extrabold transition-[transform,opacity,background-color,border-color] duration-150 active:scale-[0.98] disabled:opacity-50",
     variants[variant],
     sizes[size],
     full && "w-full",

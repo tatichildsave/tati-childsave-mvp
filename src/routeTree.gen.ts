@@ -23,10 +23,14 @@ import { Route as ChildLearnRouteImport } from './routes/child/learn'
 import { Route as ChildProgressRouteImport } from './routes/child/progress'
 import { Route as ChildResultsRouteImport } from './routes/child/results'
 import { Route as ParentIndexRouteImport } from './routes/parent/index'
+import { Route as ParentFeedbackRouteImport } from './routes/parent/feedback'
+import { Route as ParentFeedbackReviewRouteImport } from './routes/parent/feedback-review'
+import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
 import { Route as ChildLessonLessonIdRouteImport } from './routes/child/lesson.$lessonId'
 import { Route as ChildScenarioScenarioIdRouteImport } from './routes/child/scenario.$scenarioId'
 import { Route as ParentChildChildIdRouteImport } from './routes/parent/child.$childId'
 import { Route as AuthenticatedLearnChildIdIndexRouteImport } from './routes/_authenticated/learn.$childId.index'
+import { Route as AuthenticatedLearnChildIdFeedbackRouteImport } from './routes/_authenticated/learn.$childId.feedback'
 import { Route as AuthenticatedLearnChildIdSummaryRouteImport } from './routes/_authenticated/learn.$childId.summary'
 import { Route as AuthenticatedLearnChildIdAssessmentAssessmentIdRouteImport } from './routes/_authenticated/learn.$childId.assessment.$assessmentId'
 import { Route as AuthenticatedLearnChildIdLessonLessonIdRouteImport } from './routes/_authenticated/learn.$childId.lesson.$lessonId'
@@ -102,6 +106,21 @@ const ParentIndexRoute = ParentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ParentRouteRoute,
 } as any)
+const ParentFeedbackRoute = ParentFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
+const ParentFeedbackReviewRoute = ParentFeedbackReviewRouteImport.update({
+  id: '/feedback-review',
+  path: '/feedback-review',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
+const ParentMetricsRoute = ParentMetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
 const ChildLessonLessonIdRoute = ChildLessonLessonIdRouteImport.update({
   id: '/lesson/$lessonId',
   path: '/lesson/$lessonId',
@@ -121,6 +140,12 @@ const AuthenticatedLearnChildIdIndexRoute =
   AuthenticatedLearnChildIdIndexRouteImport.update({
     id: '/learn/$childId/',
     path: '/learn/$childId/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLearnChildIdFeedbackRoute =
+  AuthenticatedLearnChildIdFeedbackRouteImport.update({
+    id: '/learn/$childId/feedback',
+    path: '/learn/$childId/feedback',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedLearnChildIdSummaryRoute =
@@ -167,10 +192,14 @@ export interface FileRoutesByFullPath {
   '/child/learn': typeof ChildLearnRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/parent/feedback': typeof ParentFeedbackRoute
+  '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/metrics': typeof ParentMetricsRoute
   '/parent/': typeof ParentIndexRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/learn/$childId/': typeof AuthenticatedLearnChildIdIndexRoute
   '/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
@@ -190,10 +219,14 @@ export interface FileRoutesByTo {
   '/child/learn': typeof ChildLearnRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/parent/feedback': typeof ParentFeedbackRoute
+  '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/metrics': typeof ParentMetricsRoute
   '/parent': typeof ParentIndexRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/learn/$childId': typeof AuthenticatedLearnChildIdIndexRoute
   '/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
@@ -216,10 +249,14 @@ export interface FileRoutesById {
   '/child/learn': typeof ChildLearnRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/parent/feedback': typeof ParentFeedbackRoute
+  '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/metrics': typeof ParentMetricsRoute
   '/parent/': typeof ParentIndexRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/_authenticated/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/_authenticated/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/_authenticated/learn/$childId/': typeof AuthenticatedLearnChildIdIndexRoute
   '/_authenticated/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
@@ -242,10 +279,14 @@ export interface FileRouteTypes {
     | '/child/learn'
     | '/child/progress'
     | '/child/results'
+    | '/parent/feedback'
+    | '/parent/feedback-review'
+    | '/parent/metrics'
     | '/parent/'
     | '/child/lesson/$lessonId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
     | '/learn/$childId/'
     | '/learn/$childId/assessment/$assessmentId'
@@ -265,10 +306,14 @@ export interface FileRouteTypes {
     | '/child/learn'
     | '/child/progress'
     | '/child/results'
+    | '/parent/feedback'
+    | '/parent/feedback-review'
+    | '/parent/metrics'
     | '/parent'
     | '/child/lesson/$lessonId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
     | '/learn/$childId'
     | '/learn/$childId/assessment/$assessmentId'
@@ -290,10 +335,14 @@ export interface FileRouteTypes {
     | '/child/learn'
     | '/child/progress'
     | '/child/results'
+    | '/parent/feedback'
+    | '/parent/feedback-review'
+    | '/parent/metrics'
     | '/parent/'
     | '/child/lesson/$lessonId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/_authenticated/learn/$childId/feedback'
     | '/_authenticated/learn/$childId/summary'
     | '/_authenticated/learn/$childId/'
     | '/_authenticated/learn/$childId/assessment/$assessmentId'
@@ -413,6 +462,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentIndexRouteImport
       parentRoute: typeof ParentRouteRoute
     }
+    '/parent/feedback': {
+      id: '/parent/feedback'
+      path: '/feedback'
+      fullPath: '/parent/feedback'
+      preLoaderRoute: typeof ParentFeedbackRouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
+    '/parent/feedback-review': {
+      id: '/parent/feedback-review'
+      path: '/feedback-review'
+      fullPath: '/parent/feedback-review'
+      preLoaderRoute: typeof ParentFeedbackReviewRouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
+    '/parent/metrics': {
+      id: '/parent/metrics'
+      path: '/metrics'
+      fullPath: '/parent/metrics'
+      preLoaderRoute: typeof ParentMetricsRouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
     '/child/lesson/$lessonId': {
       id: '/child/lesson/$lessonId'
       path: '/lesson/$lessonId'
@@ -439,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/learn/$childId'
       fullPath: '/learn/$childId/'
       preLoaderRoute: typeof AuthenticatedLearnChildIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learn/$childId/feedback': {
+      id: '/_authenticated/learn/$childId/feedback'
+      path: '/learn/$childId/feedback'
+      fullPath: '/learn/$childId/feedback'
+      preLoaderRoute: typeof AuthenticatedLearnChildIdFeedbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/learn/$childId/summary': {
@@ -481,6 +558,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLearnChildIdFeedbackRoute: typeof AuthenticatedLearnChildIdFeedbackRoute
   AuthenticatedLearnChildIdSummaryRoute: typeof AuthenticatedLearnChildIdSummaryRoute
   AuthenticatedLearnChildIdIndexRoute: typeof AuthenticatedLearnChildIdIndexRoute
   AuthenticatedLearnChildIdAssessmentAssessmentIdRoute: typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
@@ -491,6 +569,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLearnChildIdFeedbackRoute:
+    AuthenticatedLearnChildIdFeedbackRoute,
   AuthenticatedLearnChildIdSummaryRoute: AuthenticatedLearnChildIdSummaryRoute,
   AuthenticatedLearnChildIdIndexRoute: AuthenticatedLearnChildIdIndexRoute,
   AuthenticatedLearnChildIdAssessmentAssessmentIdRoute:
@@ -529,11 +609,17 @@ const ChildRouteRouteWithChildren = ChildRouteRoute._addFileChildren(
 )
 
 interface ParentRouteRouteChildren {
+  ParentFeedbackRoute: typeof ParentFeedbackRoute
+  ParentFeedbackReviewRoute: typeof ParentFeedbackReviewRoute
+  ParentMetricsRoute: typeof ParentMetricsRoute
   ParentIndexRoute: typeof ParentIndexRoute
   ParentChildChildIdRoute: typeof ParentChildChildIdRoute
 }
 
 const ParentRouteRouteChildren: ParentRouteRouteChildren = {
+  ParentFeedbackRoute: ParentFeedbackRoute,
+  ParentFeedbackReviewRoute: ParentFeedbackReviewRoute,
+  ParentMetricsRoute: ParentMetricsRoute,
   ParentIndexRoute: ParentIndexRoute,
   ParentChildChildIdRoute: ParentChildChildIdRoute,
 }

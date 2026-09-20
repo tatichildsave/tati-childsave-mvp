@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Screen, Card, PrimaryButton, ProgressBar } from "@/components/learning/primitives";
@@ -7,6 +7,7 @@ import { useAddChild, useChildren } from "@/lib/learning/progress";
 import { itemTitle } from "@/lib/learning/track";
 import { skillSentence } from "@/lib/learning/parent-insights";
 import { useChildProgress } from "@/lib/progress/service";
+import { trackEvent } from "@/lib/analytics";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -30,6 +31,10 @@ function Dashboard() {
   const [name, setName] = useState("");
   const [age, setAge] = useState(10);
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    void trackEvent("parent_dashboard_viewed", { eventKey: "parent-dashboard" });
+  }, []);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -86,6 +91,7 @@ function Dashboard() {
                 <input
                   id="childName"
                   required
+                  maxLength={120}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Kwabena"
@@ -127,6 +133,12 @@ function ChildCard({ childId, name, age }: { childId: string; name: string; age:
   const growing = competency.stillDeveloping.slice(0, 2);
   const starters = progress.conversationStarters;
   const hasPost = progress.assessments.postDone;
+
+  useEffect(() => {
+    if (!isLoading && starters.length > 0) {
+      void trackEvent("parent_conversation_prompt_viewed", { childProfileId: childId, eventKey: childId });
+    }
+  }, [childId, isLoading, starters.length]);
 
   return (
     <Card>

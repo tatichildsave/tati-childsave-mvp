@@ -5,6 +5,7 @@ import { useScenarioRunner } from "@/lib/scenario/useScenarioRunner";
 import type { ScenarioDefinition } from "@/lib/scenario/types";
 import { Screen, PrimaryButton } from "@/components/learning/primitives";
 import { cn } from "@/lib/utils";
+import { AnimatedNumber } from "@/components/gamification/AnimatedNumber";
 
 interface Props {
   scenario: ScenarioDefinition;
@@ -77,7 +78,7 @@ export function ScenarioPlayer({
       ) : null}
       {status === "resumed" && state.phase !== "complete" ? (
         <p className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
-          Welcome back! We kept your story exactly where you left it.
+          Welcome back! Ready to continue? We kept your story exactly where you left it.
         </p>
       ) : null}
 
@@ -99,7 +100,7 @@ export function ScenarioPlayer({
           aria-valuemax={100}
           aria-label="Story progress"
         >
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${dayPct}%` }} />
+          <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${dayPct}%` }} />
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Stat label="Pocket" value={`GH₵${state.available}`} note="Available" />
@@ -120,6 +121,8 @@ export function ScenarioPlayer({
             <img
               src={scenario.intro.image}
               alt=""
+              loading="eager"
+              decoding="async"
               className="mb-4 h-44 w-full rounded-2xl object-cover"
             />
           ) : null}
@@ -165,7 +168,7 @@ export function ScenarioPlayer({
         <section className="mt-4">
           {node.image ? (
             <figure className="relative mb-4 overflow-hidden rounded-3xl border border-border">
-              <img src={node.image} alt={node.imageCaption ?? node.title} className="h-48 w-full object-cover" />
+              <img src={node.image} alt={node.imageCaption ?? node.title} loading="lazy" decoding="async" className="h-48 w-full object-cover" />
               {node.imageBadge ? (
                 <figcaption className="absolute right-3 top-3 rounded-full bg-card/90 px-3 py-1 text-xs font-bold">
                   {node.imageBadge}
@@ -200,7 +203,7 @@ export function ScenarioPlayer({
                 key={choice.id}
                 type="button"
                 onClick={() => runner.choose(choice.id)}
-                className="flex min-h-[64px] w-full items-center gap-3 rounded-3xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary"
+                className="flex min-h-[64px] w-full items-center gap-3 rounded-3xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-[transform,border-color] duration-150 hover:border-primary active:scale-[0.98]"
               >
                 <span
                   aria-hidden="true"
@@ -211,7 +214,7 @@ export function ScenarioPlayer({
                 <span className="min-w-0 flex-1">
                   <span className="block font-bold">{choice.label}</span>
                   {choice.description ? (
-                    <span className="block text-sm text-muted-foreground">{choice.description}</span>
+                    <span className="block text-base text-muted-foreground">{choice.description}</span>
                   ) : null}
                 </span>
                 <span aria-hidden="true" className="text-muted-foreground">
@@ -222,7 +225,7 @@ export function ScenarioPlayer({
           </div>
 
           {node.tip ? (
-            <p className="mt-4 rounded-2xl bg-accent-soft px-4 py-3 text-sm text-accent-foreground">
+            <p className="mt-4 rounded-2xl bg-accent-soft px-4 py-3 text-base text-accent-foreground">
               💡 <span className="font-bold">TATI Tip:</span> {node.tip}
             </p>
           ) : null}
@@ -240,7 +243,7 @@ export function ScenarioPlayer({
 
           {state.consequence.image ? (
             <figure className="relative mt-3 overflow-hidden rounded-3xl border border-border">
-              <img src={state.consequence.image} alt="" className="h-48 w-full object-cover" />
+              <img src={state.consequence.image} alt="" loading="lazy" decoding="async" className="h-48 w-full object-cover" />
               {state.consequence.imageCaption ? (
                 <figcaption className="absolute bottom-3 right-3 rounded-full bg-foreground/80 px-3 py-1 text-xs font-semibold text-background">
                   {state.consequence.imageCaption}
@@ -259,7 +262,7 @@ export function ScenarioPlayer({
               ) : null}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-muted p-4">
+              <div className="tati-consequence-in rounded-2xl bg-muted p-4">
                 <p className="text-sm font-semibold">In pocket</p>
                 <p className="text-xl font-bold">
                   {state.previousAvailable !== undefined && state.previousAvailable !== state.available ? (
@@ -267,11 +270,11 @@ export function ScenarioPlayer({
                       GH₵{state.previousAvailable}
                     </span>
                   ) : null}
-                  GH₵{state.available}
+                  <AnimatedNumber value={state.available} prefix="GH₵" className="tati-value-pop inline-block" />
                 </p>
                 <p className="text-sm text-muted-foreground">Available to spend</p>
               </div>
-              <div className="rounded-2xl bg-success-soft p-4">
+              <div className="tati-consequence-in rounded-2xl bg-success-soft p-4 [animation-delay:70ms]">
                 <p className="text-sm font-semibold text-success">Saved box</p>
                 <p className="text-xl font-bold text-success">
                   {state.previousSaved !== undefined && state.previousSaved !== state.saved ? (
@@ -279,13 +282,13 @@ export function ScenarioPlayer({
                       GH₵{state.previousSaved}
                     </span>
                   ) : null}
-                  GH₵{state.saved}
+                  <AnimatedNumber value={state.saved} prefix="GH₵" className="tati-value-pop inline-block" />
                 </p>
                 <p className="text-sm text-muted-foreground">Untouched &amp; protected</p>
               </div>
             </div>
             {state.consequence.debtNote ? (
-              <p className="mt-3 rounded-2xl bg-warning-soft px-4 py-2 text-sm font-semibold text-warning-foreground">
+              <p className="mt-3 rounded-2xl bg-warning-soft px-4 py-2 text-base font-semibold text-warning-foreground">
                 ⏳ {state.consequence.debtNote}
               </p>
             ) : null}
@@ -460,7 +463,7 @@ function GoalCard({ label, saved, target }: { label: string; saved: number; targ
         aria-valuemax={100}
         aria-label={label}
       >
-        <div className="h-full rounded-full bg-success transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-2 flex justify-between text-sm">
         <span className="text-muted-foreground">{pct}% reached</span>

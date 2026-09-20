@@ -26,6 +26,8 @@ const csrfMiddleware = createCsrfMiddleware({
 });
 
 export const startInstance = createStart(() => ({
+  // Protected content depends on the browser-restored Supabase session.
+  defaultSsr: false,
   functionMiddleware: [attachSupabaseAuth],
   requestMiddleware: [errorMiddleware, csrfMiddleware],
 }));

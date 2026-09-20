@@ -1,4 +1,4 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { tatiTheme } from "@/lib/theme";
@@ -64,7 +64,7 @@ export function PageHeader({
               {eyebrow}
             </p>
           ) : null}
-          <h1 className="truncate text-xl font-extrabold">{title}</h1>
+          <h1 className="break-words text-xl font-extrabold leading-tight">{title}</h1>
         </div>
         {listenable ? <ListenButton /> : null}
         {right}
@@ -79,9 +79,10 @@ export function ListenButton({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      aria-label="Listen to this page (coming soon)"
+      aria-label="Listen to this page (coming soon, unavailable)"
+      disabled
       className={cn(
-        "flex min-h-[48px] items-center gap-2 rounded-2xl bg-card px-4 text-base font-extrabold text-primary shadow-card",
+        "flex min-h-[48px] items-center gap-2 rounded-2xl bg-card px-4 text-base font-extrabold text-primary shadow-card disabled:cursor-not-allowed disabled:opacity-70",
         className,
       )}
     >
@@ -98,6 +99,11 @@ const navItems = [
 ] as const;
 
 export function BottomNavigation() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const focusedActivity = pathname.startsWith("/child/lesson/") || pathname.startsWith("/child/scenario/");
+
+  if (focusedActivity) return null;
+
   return (
     <nav
       aria-label="Main"

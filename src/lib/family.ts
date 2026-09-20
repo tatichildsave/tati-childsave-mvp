@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 
 export interface ChildProfile {
   id: string;
@@ -61,6 +62,8 @@ export function useSession() {
 export function childProfilesQuery() {
   return {
     queryKey: ["child-profiles"],
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
     queryFn: async (): Promise<ChildProfile[]> => {
       const { data, error } = await supabase
         .from("child_profiles")
@@ -109,6 +112,7 @@ export function useCreateChildProfile() {
         .select("*")
         .single();
       if (error) throw error;
+      void trackEvent("child_profile_created", { childProfileId: data.id, eventKey: data.id });
       return data as ChildProfile;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["child-profiles"] }),

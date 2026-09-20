@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { trackEvent } from "@/lib/analytics";
 import { Page, PageHeader, Card, CardTitle, CardNote, Button, Badge } from "@/components/tati";
 
 export const Route = createFileRoute("/signup")({
@@ -37,13 +38,9 @@ function SignupPage() {
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate({ to: "/parent", replace: true });
-    });
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/parent", replace: true });
     });
-    return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
   const longEnough = password.length >= 8;
@@ -63,11 +60,14 @@ function SignupPage() {
         options: { emailRedirectTo: window.location.origin, data: { full_name: fullName.trim() } },
       });
       if (signUpError) throw signUpError;
-      if (!data.session) {
+      if (data.session) {
+        void trackEvent("signup_completed", { eventKey: data.user?.id });
+        navigate({ to: "/parent", replace: true });
+      } else {
         setNote("Almost there — check your email and tap the link to confirm your account.");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "We couldn't create that account. Please try again.");
+    } catch {
+      setError("We couldn't create that account right now. Please check your details and try again.");
     } finally {
       setBusy(false);
     }
@@ -107,6 +107,9 @@ function SignupPage() {
             </label>
             <input
               id="name"
+              required
+              aria-required="true"
+              maxLength={120}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Ms. Mensah"
@@ -120,6 +123,9 @@ function SignupPage() {
             <input
               id="email"
               type="email"
+              required
+              aria-required="true"
+              maxLength={254}
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -137,6 +143,8 @@ function SignupPage() {
             <input
               id="password"
               type="password"
+              required
+              aria-required="true"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -158,6 +166,9 @@ function SignupPage() {
             <input
               id="confirm"
               type="password"
+              required
+              aria-required="true"
+              aria-invalid={confirm.length > 0 && !matches}
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -173,6 +184,8 @@ function SignupPage() {
           <label className="flex min-h-[48px] items-start gap-3 rounded-2xl bg-muted p-4 text-base">
             <input
               type="checkbox"
+              required
+              aria-required="true"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-1 h-5 w-5"

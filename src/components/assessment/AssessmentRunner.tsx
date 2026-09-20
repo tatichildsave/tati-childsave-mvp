@@ -37,17 +37,24 @@ function Header({ title, backTo }: { title: string; backTo: string }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-xs font-extrabold text-muted-foreground">TATI Junior</p>
-        <h1 className="truncate text-lg font-extrabold leading-tight">{title}</h1>
+        <h1 className="break-words text-lg font-extrabold leading-tight">{title}</h1>
       </div>
       <ListenButton />
     </header>
   );
 }
 
-function Scene({ url, badge, alt }: { url: string; badge?: string; alt: string }) {
+function Scene({ url, badge, alt, loading = "lazy" }: { url: string; badge?: string; alt: string; loading?: "eager" | "lazy" }) {
   return (
     <div className="relative overflow-hidden rounded-3xl shadow-card">
-      <img src={url} alt={alt} className="h-auto w-full object-cover" />
+      <img
+        src={url}
+        alt={alt}
+        loading={loading}
+        decoding="async"
+        fetchPriority={loading === "eager" ? "high" : "auto"}
+        className="h-auto w-full object-cover"
+      />
       {badge ? (
         <span className="absolute bottom-3 right-3 rounded-full bg-foreground/80 px-4 py-2 text-sm font-extrabold text-background">
           {badge}
@@ -71,7 +78,7 @@ function CtaButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground shadow-card transition-transform hover:opacity-95 active:scale-[0.99] disabled:opacity-50 motion-reduce:transition-none"
+      className="inline-flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground shadow-card transition-[transform,opacity] duration-150 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 motion-reduce:transition-none"
     >
       {children}
     </button>
@@ -80,6 +87,7 @@ function CtaButton({
 
 export function AssessmentRunner({
   definition,
+  storageKey,
   backTo,
   saving = false,
   onComplete,
@@ -87,13 +95,14 @@ export function AssessmentRunner({
   childName,
 }: {
   definition: AssessmentDefinition;
+  storageKey?: string;
   backTo: string;
   saving?: boolean;
   onComplete: (result: AssessmentResult) => void;
   completeLabel?: string;
   childName?: string;
 }) {
-  const runner = useAssessmentRunner(definition);
+  const runner = useAssessmentRunner(definition, storageKey);
   const headerTitle = definition.shortTitle ?? definition.title;
 
   if (runner.stage === "intro") {
@@ -115,6 +124,7 @@ export function AssessmentRunner({
         {definition.introImageUrl ? (
           <Scene
             url={definition.introImageUrl}
+            loading="eager"
             {...(definition.introImageBadge ? { badge: definition.introImageBadge } : {})}
             alt="A boy sitting at a table outside his school"
           />
@@ -198,6 +208,12 @@ export function AssessmentRunner({
       <Shell>
         <Header title={headerTitle} backTo={backTo} />
 
+        {runner.resumed ? (
+          <p className="mb-3 rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
+            Welcome back! Ready to continue?
+          </p>
+        ) : null}
+
         <div className="flex justify-center">
           <span className="rounded-full bg-card px-5 py-3 text-base font-extrabold shadow-card">
             🎉 Check-In Complete! • All Set
@@ -260,6 +276,12 @@ export function AssessmentRunner({
     <Shell>
       <Header title={headerTitle} backTo={backTo} />
 
+      {runner.resumed ? (
+        <p className="mb-3 rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
+          Welcome back! Ready to continue?
+        </p>
+      ) : null}
+
       <div className="mb-3 flex items-center gap-3">
         <span className="rounded-full bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground">
           ✨ Question {runner.index + 1} of {runner.total} • {question.topic ?? COMPETENCY_LABELS[question.competency]}
@@ -274,7 +296,7 @@ export function AssessmentRunner({
         aria-valuemax={100}
         aria-label={`Question ${runner.index + 1} of ${runner.total}`}
       >
-        <div className="h-full rounded-full bg-success transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
       </div>
 
       <div
@@ -318,7 +340,7 @@ export function AssessmentRunner({
                 onClick={() => runner.select(opt.id)}
                 aria-pressed={selected}
                 className={cn(
-                  "flex w-full items-start gap-3 rounded-3xl p-4 text-left shadow-card transition-colors",
+                  "flex w-full items-start gap-3 rounded-3xl p-4 text-left shadow-card transition-[transform,background-color] duration-150 active:scale-[0.98]",
                   selected ? "bg-primary/10 ring-2 ring-primary" : "bg-card hover:bg-secondary/60",
                 )}
               >
