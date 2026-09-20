@@ -6,7 +6,7 @@ export type FeedbackAudience = "child" | "parent";
 export type FeedbackSubmission = {
   audience: FeedbackAudience;
   experienceKey: string;
-  childProfileId?: string;
+  childProfileId?: string | null;
   context: string;
   answers: Record<string, string | number | boolean | null>;
   message?: string;
@@ -42,8 +42,8 @@ export async function submitFeedback(input: FeedbackSubmission) {
   }).select("id").maybeSingle();
   if (error) throw error;
   void trackEvent(input.audience === "child" ? "child_feedback_submitted" : "parent_feedback_submitted", {
-    childProfileId: input.childProfileId,
-    eventKey: data?.id,
+    childProfileId: input.childProfileId ?? null,
+    eventKey: data?.id ?? null,
   });
 }
 

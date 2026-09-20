@@ -34,7 +34,7 @@ function ParentFeedback() {
       await submitFeedback({
         audience: "parent",
         experienceKey: "parent-journey-review",
-        childProfileId: childProfileId || undefined,
+        childProfileId: childProfileId || null,
         context: "parent_post_journey",
         answers: { ...answers, confused, improve },
         message: [confused && `Confused: ${confused}`, improve && `Improve: ${improve}`].filter(Boolean).join("\n"),

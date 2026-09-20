@@ -33,14 +33,14 @@ export type AnalyticsEvent = {
 
 export async function trackEvent(
   eventName: AnalyticsEventName,
-  input: { childProfileId?: string; entityId?: string; eventKey?: string } = {},
+  input: { childProfileId?: string | null; entityId?: string | null; eventKey?: string | null } = {},
 ): Promise<string | undefined> {
   try {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return undefined;
 
-    const safeEntityId = input.entityId?.slice(0, 128);
-    const safeEventKey = input.eventKey?.slice(0, 128);
+    const safeEntityId = input.entityId?.slice(0, 128) ?? null;
+    const safeEventKey = input.eventKey?.slice(0, 128) ?? null;
 
     const { data, error } = await supabase
       .from("analytics_events")
@@ -48,8 +48,8 @@ export async function trackEvent(
         event_name: eventName,
         actor_id: userData.user.id,
         child_profile_id: input.childProfileId ?? null,
-        entity_id: safeEntityId ?? null,
-        event_key: safeEventKey ?? null,
+        entity_id: safeEntityId,
+        event_key: safeEventKey,
       })
       .select("id")
       .maybeSingle();

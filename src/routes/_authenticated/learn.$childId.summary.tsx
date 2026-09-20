@@ -1,10 +1,18 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useParams } from "@tanstack/react-router";
 import { Screen, Card, TopBar } from "@/components/learning/primitives";
 import { SkillBars } from "@/components/gamification/SkillBars";
 import { BadgeGrid } from "@/components/gamification/BadgeGrid";
 import { useChildProgress } from "@/lib/progress/service";
+import { assertChildInCurrentFamily } from "@/lib/family";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/summary")({
+  beforeLoad: async ({ params }) => {
+    try {
+      await assertChildInCurrentFamily(params.childId);
+    } catch {
+      throw redirect({ to: "/parent" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "How my money skills grew — TATI ChildSave" },

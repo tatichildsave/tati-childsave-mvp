@@ -61,7 +61,9 @@ function SignupPage() {
       });
       if (signUpError) throw signUpError;
       if (data.session) {
-        void trackEvent("signup_completed", { eventKey: data.user?.id });
+        if (data.user?.id) {
+          void trackEvent("signup_completed", { eventKey: data.user.id });
+        }
         navigate({ to: "/parent", replace: true });
       } else {
         setNote("Almost there — check your email and tap the link to confirm your account.");

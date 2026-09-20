@@ -1,11 +1,19 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Screen, Card, TopBar, PrimaryButton, ChoiceButton } from "@/components/learning/primitives";
 import { useRecordProgress } from "@/lib/progress/service";
 import { getReflection, getTrack } from "@/lib/learning/track";
 import { celebrateStep } from "@/components/gamification/celebrate";
+import { assertChildInCurrentFamily } from "@/lib/family";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/reflection/$reflectionId")({
+  beforeLoad: async ({ params }) => {
+    try {
+      await assertChildInCurrentFamily(params.childId);
+    } catch {
+      throw redirect({ to: "/parent" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Pause and think — TATI ChildSave" },

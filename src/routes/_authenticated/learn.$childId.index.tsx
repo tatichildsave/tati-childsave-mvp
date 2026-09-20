@@ -1,5 +1,5 @@
 import { Fragment, useEffect } from "react";
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { XPCard } from "@/components/gamification/XPCard";
 import { BadgeGrid } from "@/components/gamification/BadgeGrid";
 import { CelebrationOverlay } from "@/components/gamification/CelebrationOverlay";
@@ -12,8 +12,16 @@ import type { TrackItem } from "@/lib/learning/types";
 import { cn } from "@/lib/utils";
 import journeyHero from "@/assets/journey-hero.png.asset.json";
 import { trackEvent } from "@/lib/analytics";
+import { assertChildInCurrentFamily } from "@/lib/family";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/")({
+  beforeLoad: async ({ params }) => {
+    try {
+      await assertChildInCurrentFamily(params.childId);
+    } catch {
+      throw redirect({ to: "/parent" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "My Journey — TATI ChildSave" },

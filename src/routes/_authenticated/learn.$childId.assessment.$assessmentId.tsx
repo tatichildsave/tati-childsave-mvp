@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { Screen, TopBar } from "@/components/learning/primitives";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
@@ -9,8 +9,16 @@ import { useRecordProgress } from "@/lib/progress/service";
 import { celebrateStep } from "@/components/gamification/celebrate";
 import { trackEvent } from "@/lib/analytics";
 import { useEffect } from "react";
+import { assertChildInCurrentFamily } from "@/lib/family";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/assessment/$assessmentId")({
+  beforeLoad: async ({ params }) => {
+    try {
+      await assertChildInCurrentFamily(params.childId);
+    } catch {
+      throw redirect({ to: "/parent" });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Check-in — TATI ChildSave" },

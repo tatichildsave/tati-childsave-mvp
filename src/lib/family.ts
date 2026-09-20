@@ -51,6 +51,19 @@ export async function ensureFamily(): Promise<string> {
   return family.id;
 }
 
+export async function assertChildInCurrentFamily(childId: string): Promise<void> {
+  const familyId = await ensureFamily();
+  const { data, error } = await supabase
+    .from("child_profiles")
+    .select("id")
+    .eq("id", childId)
+    .eq("family_id", familyId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) throw new Error("That learner is not part of your family.");
+}
+
 export function useSession() {
   return useQuery({
     queryKey: ["session"],
@@ -65,9 +78,11 @@ export function childProfilesQuery() {
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<ChildProfile[]> => {
+      const familyId = await ensureFamily();
       const { data, error } = await supabase
         .from("child_profiles")
         .select("*")
+        .eq("family_id", familyId)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ChildProfile[];
@@ -97,15 +112,29 @@ export function useCreateChildProfile() {
     mutationFn: async (input: CreateChildInput): Promise<ChildProfile> => {
       const userId = await getCurrentUserId();
       const familyId = await ensureFamily();
+      const safeName = input.name.trim();
+      const age = Number(input.age);
+
+      if (!safeName) throw new Error("Please enter your child's name.");
+      if (safeName.length < 2 || safeName.length > 30) {
+        throw new Error("Your child's name should be between 2 and 30 characters.");
+      }
+      if (!/^[\p{L}\p{M}][\p{L}\p{M}'\-. ]*$/u.test(safeName)) {
+        throw new Error("Use letters, spaces, apostrophes, hyphens, or periods only.");
+      }
+      if (!Number.isInteger(age) || age < 8 || age > 12) {
+        throw new Error("Child age must be between 8 and 12 years old.");
+      }
+
       const { data, error } = await supabase
         .from("child_profiles")
         .insert({
           family_id: familyId,
           created_by: userId,
-          name: input.name.trim(),
-          age: input.age,
+          name: safeName,
+          age,
           avatar: input.avatar,
-          curriculum_level: `Primary ${Math.max(1, input.age - 5)}`,
+          curriculum_level: `Primary ${Math.max(1, age - 5)}`,
           onboarding_step: 0,
           onboarding_completed: input.onboardingCompleted ?? true,
         })

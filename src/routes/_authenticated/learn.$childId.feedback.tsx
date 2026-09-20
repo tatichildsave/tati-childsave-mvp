@@ -19,9 +19,9 @@ const continueOptions = ["Yes!", "Maybe", "Not yet"] as const;
 function ChildFeedback() {
   const { childId } = useParams({ from: "/_authenticated/learn/$childId/feedback" });
   const navigate = useNavigate();
-  const [fun, setFun] = useState<string>();
-  const [confusing, setConfusing] = useState<string>();
-  const [continueUsing, setContinueUsing] = useState<string>();
+  const [fun, setFun] = useState("");
+  const [confusing, setConfusing] = useState("");
+  const [continueUsing, setContinueUsing] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
   const [saving, setSaving] = useState(false);
