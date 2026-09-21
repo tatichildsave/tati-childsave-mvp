@@ -12,6 +12,7 @@ import {
   Badge,
   ProgressBar,
   Avatar,
+  AVATAR_KEYS,
   StatCard,
   LoadingState,
   AuthLoadingShell,
@@ -43,15 +44,6 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 const ages = [8, 9, 10, 11, 12];
-const characters = [
-  { key: "kojo", name: "Kojo" },
-  { key: "ama", name: "Ama" },
-  { key: "kwame", name: "Kwame" },
-  { key: "abena", name: "Akua" },
-  { key: "kofi", name: "Kofi" },
-  { key: "esi", name: "Esi" },
-] as const;
-
 const STEPS = ["welcome", "name", "age", "avatar", "meet", "journey", "start"] as const;
 const DRAFT_KEY = "tati.onboarding.draft";
 
@@ -278,19 +270,19 @@ function Onboarding() {
               </div>
             </Card>
             <div className="grid grid-cols-3 gap-3">
-              {characters.map((c) => (
+              {AVATAR_KEYS.map((avatar, index) => (
                 <button
-                  key={c.key}
+                  key={avatar}
                   type="button"
-                  onClick={() => set({ avatar: c.key })}
-                  aria-pressed={draft.avatar === c.key}
+                  onClick={() => set({ avatar })}
+                  aria-label={`Avatar ${index + 1}`}
+                  aria-pressed={draft.avatar === avatar}
                   className={cn(
                     "flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-2xl bg-card p-3 shadow-card transition-transform active:scale-95",
-                    draft.avatar === c.key && "ring-2 ring-primary",
+                    draft.avatar === avatar && "ring-2 ring-primary",
                   )}
                 >
-                  <Avatar avatar={c.key} size="md" />
-                  <span className="text-base font-extrabold">{c.name}</span>
+                  <Avatar avatar={avatar} size="md" />
                 </button>
               ))}
             </div>
