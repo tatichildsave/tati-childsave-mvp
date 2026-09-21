@@ -46,7 +46,8 @@ function SignupPage() {
   const longEnough = password.length >= 8;
   const hasNumberOrSymbol = /[\d\W]/.test(password);
   const matches = confirm.length > 0 && confirm === password;
-  const canSubmit = fullName.trim() && email.trim() && longEnough && matches && agreed && !busy;
+  const canSubmit =
+    fullName.trim() && email.trim() && longEnough && hasNumberOrSymbol && matches && agreed && !busy;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,8 +69,15 @@ function SignupPage() {
       } else {
         setNote("Almost there — check your email and tap the link to confirm your account.");
       }
-    } catch {
-      setError("We couldn't create that account right now. Please check your details and try again.");
+    } catch (signupError) {
+      const message = signupError instanceof Error ? signupError.message.toLowerCase() : "";
+      setError(
+        message.includes("already registered") || message.includes("already exists")
+          ? "An account with this email already exists. Try signing in instead."
+          : message.includes("password")
+            ? "Choose a password with at least 8 characters, including a number or symbol."
+            : "We couldn't create that account right now. Please check your details and try again.",
+      );
     } finally {
       setBusy(false);
     }
