@@ -21,12 +21,22 @@ import { trackEvent } from "@/lib/analytics";
 
 export type RunnerStatus = "loading" | "ready" | "resumed" | "interrupted";
 
+export interface ScenarioPersistence {
+  loadSession: (childId: string, scenarioId: string) => Promise<ScenarioState | undefined>;
+  saveSession: (childId: string, state: ScenarioState) => Promise<string | undefined>;
+  recordDecision: (childId: string, sessionId: string, state: ScenarioState) => Promise<void>;
+}
+
 /**
  * Drives one scenario: state, persistence after every decision and resume.
  * All money/branching logic stays in engine.ts; storage lives in session.ts,
  * which saves to the backend (with a local cache for instant resume).
  */
-export function useScenarioRunner(scenario: ScenarioDefinition, childId: string) {
+export function useScenarioRunner(
+  scenario: ScenarioDefinition,
+  childId: string,
+  persistence: ScenarioPersistence = { loadSession, saveSession, recordDecision },
+) {
   const key = scenarioCacheKey(childId, scenario.id);
   const [status, setStatus] = useState<RunnerStatus>("loading");
   const [state, setState] = useState<ScenarioState>(() => createInitialState(scenario));
@@ -51,7 +61,7 @@ export function useScenarioRunner(scenario: ScenarioDefinition, childId: string)
       setStatus(cached!.phase === "intro" ? "ready" : "resumed");
     }
 
-    void loadSession(childId, scenario.id).then((remote) => {
+    void persistence.loadSession(childId, scenario.id).then((remote) => {
       if (cancelled) return;
       if (usable(remote)) {
         const local = usable(cached) ? cached! : undefined;
@@ -67,23 +77,24 @@ export function useScenarioRunner(scenario: ScenarioDefinition, childId: string)
     return () => {
       cancelled = true;
     };
-  }, [key, childId, scenario, usable]);
+  }, [key, childId, persistence, scenario, usable]);
 
   const persist = useCallback(
     (next: ScenarioState, isDecision = false) => {
       setState(next);
       writeCachedState(key, next);
-      void saveSession(childId, next).then((id) => {
+      void persistence.saveSession(childId, next).then((id) => {
         if (id) {
           sessionId.current = id;
           setStatus("ready");
         } else {
           setStatus("interrupted");
         }
-        if (isDecision && sessionId.current) void recordDecision(childId, sessionId.current, next);
+        if (isDecision && sessionId.current)
+          void persistence.recordDecision(childId, sessionId.current, next);
       });
     },
-    [key, childId],
+    [key, childId, persistence],
   );
 
   const start = useCallback(() => persist(beginScenario(state)), [persist, state]);
@@ -94,7 +105,10 @@ export function useScenarioRunner(scenario: ScenarioDefinition, childId: string)
     },
     [childId, persist, scenario, state],
   );
-  const continueOn = useCallback(() => persist(advance(scenario, state)), [persist, scenario, state]);
+  const continueOn = useCallback(
+    () => persist(advance(scenario, state)),
+    [persist, scenario, state],
+  );
   const restart = useCallback(() => persist(createInitialState(scenario)), [persist, scenario]);
   const clearSaved = useCallback(() => clearCachedState(key), [key]);
 
@@ -103,16 +117,28 @@ export function useScenarioRunner(scenario: ScenarioDefinition, childId: string)
 
   useEffect(() => {
     if (status === "ready" && state.phase === "intro") {
-      void trackEvent("scenario_started", { childProfileId: childId, entityId: scenario.id, eventKey: scenario.id });
+      void trackEvent("scenario_started", {
+        childProfileId: childId,
+        entityId: scenario.id,
+        eventKey: scenario.id,
+      });
     }
     if (status === "resumed") {
-      void trackEvent("scenario_resumed", { childProfileId: childId, entityId: scenario.id, eventKey: scenario.id });
+      void trackEvent("scenario_resumed", {
+        childProfileId: childId,
+        entityId: scenario.id,
+        eventKey: scenario.id,
+      });
     }
   }, [childId, scenario.id, state.phase, status]);
 
   useEffect(() => {
     if (state.phase === "complete") {
-      void trackEvent("scenario_completed", { childProfileId: childId, entityId: scenario.id, eventKey: scenario.id });
+      void trackEvent("scenario_completed", {
+        childProfileId: childId,
+        entityId: scenario.id,
+        eventKey: scenario.id,
+      });
     }
   }, [childId, scenario.id, state.phase]);
 

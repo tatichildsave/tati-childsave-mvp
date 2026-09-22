@@ -1,7 +1,7 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useChildProfiles } from "@/lib/family";
+import { createFileRoute } from "@tanstack/react-router";
 import { Page, PageHeader, Card, LessonCard, ScenarioCard, ProgressBar } from "@/components/tati";
-import { mockLessons, mockScenarios, mockChildren } from "@/content/mock";
+import { getTrack, itemTitle, itemSubtitle } from "@/lib/learning/track";
+import { useChildLearning } from "@/lib/auth/use-child-learning";
 
 export const Route = createFileRoute("/child/learn")({
   head: () => ({
@@ -9,10 +9,14 @@ export const Route = createFileRoute("/child/learn")({
       { title: "My learning journey — TATI ChildSave" },
       {
         name: "description",
-        content: "Mini-lessons and decision stories on the SAVE track, unlocked one step at a time.",
+        content:
+          "Mini-lessons and decision stories on the SAVE track, unlocked one step at a time.",
       },
       { property: "og:title", content: "My learning journey — TATI ChildSave" },
-      { property: "og:description", content: "Lessons and decision stories for learners aged 8–12." },
+      {
+        property: "og:description",
+        content: "Lessons and decision stories for learners aged 8–12.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -21,11 +25,10 @@ export const Route = createFileRoute("/child/learn")({
 });
 
 function ChildLearn() {
-  const child = mockChildren[0]!;
-  const { data: profiles, isLoading } = useChildProfiles();
-  const realChild = profiles?.[0];
+  const { snapshot, isLoading, isError } = useChildLearning();
+  const track = getTrack("save");
 
-  if (isLoading) {
+  if (isLoading || !snapshot) {
     return (
       <Page withBottomNav>
         <p className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
@@ -35,10 +38,25 @@ function ChildLearn() {
     );
   }
 
-  // A real learner profile goes to the live adventure trail.
-  if (realChild) {
-    return <Navigate to="/learn/$childId" params={{ childId: realChild.id }} replace />;
+  if (isError) {
+    return (
+      <Page withBottomNav>
+        <PageHeader backTo="/child/home" title="My learning journey" />
+        <p className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
+          We could not load your journey. Please try again.
+        </p>
+      </Page>
+    );
   }
+
+  const lessonSteps = snapshot.steps.filter(({ item }) => item.kind === "lesson");
+  const scenarioSteps = snapshot.steps.filter(({ item }) => item.kind === "scenario");
+  const childPath = (kind: string, id: string) => {
+    if (kind === "lesson") return `/child/lesson/${id}`;
+    if (kind === "scenario") return `/child/scenario/${id}`;
+    if (kind === "assessment") return `/child/assessment/${id}`;
+    return `/child/reflection/${id}`;
+  };
 
   return (
     <Page withBottomNav>
@@ -52,9 +70,9 @@ function ChildLearn() {
 
       <Card>
         <ProgressBar
-          value={child.lessonsDone}
-          max={mockLessons.length}
-          label={`${child.lessonsDone} of ${mockLessons.length} lessons finished`}
+          value={snapshot.journey.doneItems.length}
+          max={snapshot.track.sequence.length}
+          label={`${snapshot.journey.doneItems.length} of ${snapshot.track.sequence.length} journey stops finished`}
           showPercent
           tone="success"
         />
@@ -62,33 +80,27 @@ function ChildLearn() {
 
       <h2 className="mb-3 mt-6 text-lg font-extrabold">Mini-lessons</h2>
       <Card className="space-y-3">
-        {mockLessons.map((lesson, i) => (
+        {lessonSteps.map(({ item, index, done, locked }) => (
           <LessonCard
-            key={lesson.id}
-            index={i + 1}
-            title={lesson.title}
-            subtitle={lesson.subtitle}
-            minutes={lesson.minutes}
-            status={lesson.status}
-            to="/child/lesson/$lessonId"
-            params={{ lessonId: lesson.id }}
+            key={item.id}
+            index={index + 1}
+            title={itemTitle(track, item)}
+            subtitle={itemSubtitle(track, item)}
+            status={done ? "done" : locked ? "locked" : "ready"}
+            to={childPath(item.kind, item.id)}
           />
         ))}
       </Card>
 
       <h2 className="mb-3 mt-6 text-lg font-extrabold">Decision stories</h2>
       <div className="space-y-4">
-        {mockScenarios.map((s) => (
+        {scenarioSteps.map(({ item, done, locked }) => (
           <ScenarioCard
-            key={s.id}
-            title={s.title}
-            description={s.description}
-            pocket={s.pocket}
-            target={s.target}
-            days={s.days}
-            status={s.status}
-            to="/child/scenario/$scenarioId"
-            params={{ scenarioId: s.id }}
+            key={item.id}
+            title={itemTitle(track, item)}
+            description={item.blurb ?? "Make a money choice, see what happens, and keep learning."}
+            status={done ? "done" : locked ? "locked" : "ready"}
+            to={childPath(item.kind, item.id)}
           />
         ))}
       </div>

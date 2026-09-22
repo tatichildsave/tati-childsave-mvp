@@ -20,13 +20,16 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as ChildHomeRouteImport } from './routes/child/home'
 import { Route as ChildLearnRouteImport } from './routes/child/learn'
+import { Route as ChildLoginRouteImport } from './routes/child/login'
 import { Route as ChildProgressRouteImport } from './routes/child/progress'
 import { Route as ChildResultsRouteImport } from './routes/child/results'
 import { Route as ParentIndexRouteImport } from './routes/parent/index'
 import { Route as ParentFeedbackRouteImport } from './routes/parent/feedback'
 import { Route as ParentFeedbackReviewRouteImport } from './routes/parent/feedback-review'
 import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
+import { Route as ChildAssessmentAssessmentIdRouteImport } from './routes/child/assessment.$assessmentId'
 import { Route as ChildLessonLessonIdRouteImport } from './routes/child/lesson.$lessonId'
+import { Route as ChildReflectionReflectionIdRouteImport } from './routes/child/reflection.$reflectionId'
 import { Route as ChildScenarioScenarioIdRouteImport } from './routes/child/scenario.$scenarioId'
 import { Route as ParentChildChildIdRouteImport } from './routes/parent/child.$childId'
 import { Route as AuthenticatedLearnChildIdIndexRouteImport } from './routes/_authenticated/learn.$childId.index'
@@ -91,6 +94,11 @@ const ChildLearnRoute = ChildLearnRouteImport.update({
   path: '/learn',
   getParentRoute: () => ChildRouteRoute,
 } as any)
+const ChildLoginRoute = ChildLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => ChildRouteRoute,
+} as any)
 const ChildProgressRoute = ChildProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
@@ -121,11 +129,23 @@ const ParentMetricsRoute = ParentMetricsRouteImport.update({
   path: '/metrics',
   getParentRoute: () => ParentRouteRoute,
 } as any)
+const ChildAssessmentAssessmentIdRoute =
+  ChildAssessmentAssessmentIdRouteImport.update({
+    id: '/assessment/$assessmentId',
+    path: '/assessment/$assessmentId',
+    getParentRoute: () => ChildRouteRoute,
+  } as any)
 const ChildLessonLessonIdRoute = ChildLessonLessonIdRouteImport.update({
   id: '/lesson/$lessonId',
   path: '/lesson/$lessonId',
   getParentRoute: () => ChildRouteRoute,
 } as any)
+const ChildReflectionReflectionIdRoute =
+  ChildReflectionReflectionIdRouteImport.update({
+    id: '/reflection/$reflectionId',
+    path: '/reflection/$reflectionId',
+    getParentRoute: () => ChildRouteRoute,
+  } as any)
 const ChildScenarioScenarioIdRoute = ChildScenarioScenarioIdRouteImport.update({
   id: '/scenario/$scenarioId',
   path: '/scenario/$scenarioId',
@@ -190,13 +210,16 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
+  '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
   '/parent/': typeof ParentIndexRoute
+  '/child/assessment/$assessmentId': typeof ChildAssessmentAssessmentIdRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
+  '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
@@ -217,13 +240,16 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
+  '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
   '/parent': typeof ParentIndexRoute
+  '/child/assessment/$assessmentId': typeof ChildAssessmentAssessmentIdRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
+  '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
@@ -247,13 +273,16 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
+  '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
   '/parent/': typeof ParentIndexRoute
+  '/child/assessment/$assessmentId': typeof ChildAssessmentAssessmentIdRoute
   '/child/lesson/$lessonId': typeof ChildLessonLessonIdRoute
+  '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/_authenticated/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
@@ -277,13 +306,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/child/home'
     | '/child/learn'
+    | '/child/login'
     | '/child/progress'
     | '/child/results'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
     | '/parent/'
+    | '/child/assessment/$assessmentId'
     | '/child/lesson/$lessonId'
+    | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
     | '/learn/$childId/feedback'
@@ -304,13 +336,16 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/child/home'
     | '/child/learn'
+    | '/child/login'
     | '/child/progress'
     | '/child/results'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
     | '/parent'
+    | '/child/assessment/$assessmentId'
     | '/child/lesson/$lessonId'
+    | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
     | '/learn/$childId/feedback'
@@ -333,13 +368,16 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/child/home'
     | '/child/learn'
+    | '/child/login'
     | '/child/progress'
     | '/child/results'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
     | '/parent/'
+    | '/child/assessment/$assessmentId'
     | '/child/lesson/$lessonId'
+    | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
     | '/_authenticated/learn/$childId/feedback'
@@ -441,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChildLearnRouteImport
       parentRoute: typeof ChildRouteRoute
     }
+    '/child/login': {
+      id: '/child/login'
+      path: '/login'
+      fullPath: '/child/login'
+      preLoaderRoute: typeof ChildLoginRouteImport
+      parentRoute: typeof ChildRouteRoute
+    }
     '/child/progress': {
       id: '/child/progress'
       path: '/progress'
@@ -483,11 +528,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentMetricsRouteImport
       parentRoute: typeof ParentRouteRoute
     }
+    '/child/assessment/$assessmentId': {
+      id: '/child/assessment/$assessmentId'
+      path: '/assessment/$assessmentId'
+      fullPath: '/child/assessment/$assessmentId'
+      preLoaderRoute: typeof ChildAssessmentAssessmentIdRouteImport
+      parentRoute: typeof ChildRouteRoute
+    }
     '/child/lesson/$lessonId': {
       id: '/child/lesson/$lessonId'
       path: '/lesson/$lessonId'
       fullPath: '/child/lesson/$lessonId'
       preLoaderRoute: typeof ChildLessonLessonIdRouteImport
+      parentRoute: typeof ChildRouteRoute
+    }
+    '/child/reflection/$reflectionId': {
+      id: '/child/reflection/$reflectionId'
+      path: '/reflection/$reflectionId'
+      fullPath: '/child/reflection/$reflectionId'
+      preLoaderRoute: typeof ChildReflectionReflectionIdRouteImport
       parentRoute: typeof ChildRouteRoute
     }
     '/child/scenario/$scenarioId': {
@@ -589,18 +648,24 @@ const AuthenticatedRouteRouteWithChildren =
 interface ChildRouteRouteChildren {
   ChildHomeRoute: typeof ChildHomeRoute
   ChildLearnRoute: typeof ChildLearnRoute
+  ChildLoginRoute: typeof ChildLoginRoute
   ChildProgressRoute: typeof ChildProgressRoute
   ChildResultsRoute: typeof ChildResultsRoute
+  ChildAssessmentAssessmentIdRoute: typeof ChildAssessmentAssessmentIdRoute
   ChildLessonLessonIdRoute: typeof ChildLessonLessonIdRoute
+  ChildReflectionReflectionIdRoute: typeof ChildReflectionReflectionIdRoute
   ChildScenarioScenarioIdRoute: typeof ChildScenarioScenarioIdRoute
 }
 
 const ChildRouteRouteChildren: ChildRouteRouteChildren = {
   ChildHomeRoute: ChildHomeRoute,
   ChildLearnRoute: ChildLearnRoute,
+  ChildLoginRoute: ChildLoginRoute,
   ChildProgressRoute: ChildProgressRoute,
   ChildResultsRoute: ChildResultsRoute,
+  ChildAssessmentAssessmentIdRoute: ChildAssessmentAssessmentIdRoute,
   ChildLessonLessonIdRoute: ChildLessonLessonIdRoute,
+  ChildReflectionReflectionIdRoute: ChildReflectionReflectionIdRoute,
   ChildScenarioScenarioIdRoute: ChildScenarioScenarioIdRoute,
 }
 

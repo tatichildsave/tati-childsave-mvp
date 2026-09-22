@@ -175,6 +175,7 @@ export type Database = {
           name: string
           onboarding_completed: boolean
           onboarding_step: number
+          tati_id: string
           tier: string
           updated_at: string
         }
@@ -189,6 +190,7 @@ export type Database = {
           name: string
           onboarding_completed?: boolean
           onboarding_step?: number
+          tati_id?: string
           tier?: string
           updated_at?: string
         }
@@ -203,6 +205,7 @@ export type Database = {
           name?: string
           onboarding_completed?: boolean
           onboarding_step?: number
+          tati_id?: string
           tier?: string
           updated_at?: string
         }

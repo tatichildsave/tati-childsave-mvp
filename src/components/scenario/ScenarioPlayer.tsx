@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { COMPETENCY_LABELS } from "@/lib/assessment/types";
 import { dayProgressPercent } from "@/lib/scenario/engine";
-import { useScenarioRunner } from "@/lib/scenario/useScenarioRunner";
+import { useScenarioRunner, type ScenarioPersistence } from "@/lib/scenario/useScenarioRunner";
 import type { ScenarioDefinition } from "@/lib/scenario/types";
 import { Screen, PrimaryButton } from "@/components/learning/primitives";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface Props {
   /** What the learner does next after this chapter (e.g. a lesson title). */
   nextUpLabel?: string | undefined;
   onChapterPause?: (payload: { available: number; saved: number; decisions: unknown[] }) => void;
+  persistence?: ScenarioPersistence;
 }
 
 /** Renders any scenario from the engine. Holds no story logic of its own. */
@@ -31,8 +32,9 @@ export function ScenarioPlayer({
   chapterTitle,
   nextUpLabel,
   onChapterPause,
+  persistence,
 }: Props) {
-  const runner = useScenarioRunner(scenario, childId);
+  const runner = useScenarioRunner(scenario, childId, persistence);
   const { state, node, summary, status } = runner;
   const dayPct = dayProgressPercent(scenario, state);
   const atChapterEnd =
@@ -100,20 +102,24 @@ export function ScenarioPlayer({
           aria-valuemax={100}
           aria-label="Story progress"
         >
-          <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${dayPct}%` }} />
+          <div
+            className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none"
+            style={{ width: `${dayPct}%` }}
+          />
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2">
           <Stat label="Pocket" value={`GH₵${state.available}`} note="Available" />
           <Stat label="Saved" value={`GH₵${state.saved}`} note="In box" tone="success" />
-          <Stat label="Target" value={`GH₵${state.goalTarget}`} note={scenario.goalLabel} tone="accent" />
+          <Stat
+            label="Target"
+            value={`GH₵${state.goalTarget}`}
+            note={scenario.goalLabel}
+            tone="accent"
+          />
         </div>
       </section>
 
-      <GoalCard
-        label={scenario.goalLabel}
-        saved={state.saved}
-        target={state.goalTarget}
-      />
+      <GoalCard label={scenario.goalLabel} saved={state.saved} target={state.goalTarget} />
 
       {state.phase === "intro" ? (
         <section className="mt-4 rounded-3xl border border-border bg-card p-5 shadow-sm">
@@ -137,11 +143,13 @@ export function ScenarioPlayer({
       {atChapterEnd ? (
         <section className="mt-4 space-y-3">
           <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Chapter complete</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-primary">
+              Chapter complete
+            </p>
             <h2 className="mt-1 text-xl font-bold">{chapterTitle ?? "Your story pauses here"}</h2>
             <p className="mt-2 text-muted-foreground">
-              Day {state.day} of {scenario.totalDays}. Your story is saved exactly here — the next part of the
-              adventure is waiting on your journey map.
+              Day {state.day} of {scenario.totalDays}. Your story is saved exactly here — the next
+              part of the adventure is waiting on your journey map.
             </p>
             {nextUpLabel ? (
               <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
@@ -168,7 +176,13 @@ export function ScenarioPlayer({
         <section className="mt-4">
           {node.image ? (
             <figure className="relative mb-4 overflow-hidden rounded-3xl border border-border">
-              <img src={node.image} alt={node.imageCaption ?? node.title} loading="lazy" decoding="async" className="h-48 w-full object-cover" />
+              <img
+                src={node.image}
+                alt={node.imageCaption ?? node.title}
+                loading="lazy"
+                decoding="async"
+                className="h-48 w-full object-cover"
+              />
               {node.imageBadge ? (
                 <figcaption className="absolute right-3 top-3 rounded-full bg-card/90 px-3 py-1 text-xs font-bold">
                   {node.imageBadge}
@@ -184,7 +198,9 @@ export function ScenarioPlayer({
                   {node.topic}
                 </span>
               ) : null}
-              {node.place ? <span className="text-sm text-muted-foreground">📍 {node.place}</span> : null}
+              {node.place ? (
+                <span className="text-sm text-muted-foreground">📍 {node.place}</span>
+              ) : null}
             </div>
             <h2 className="text-xl font-bold">{node.title}</h2>
             <p className="mt-2 text-muted-foreground">{node.situation}</p>
@@ -194,7 +210,9 @@ export function ScenarioPlayer({
                 <p className="mt-1 italic">“{node.quote.text}”</p>
               </blockquote>
             ) : null}
-            {node.question ? <p className="mt-3 font-semibold text-primary">❓ {node.question}</p> : null}
+            {node.question ? (
+              <p className="mt-3 font-semibold text-primary">❓ {node.question}</p>
+            ) : null}
           </div>
 
           <div className="mt-3 space-y-3">
@@ -214,7 +232,9 @@ export function ScenarioPlayer({
                 <span className="min-w-0 flex-1">
                   <span className="block font-bold">{choice.label}</span>
                   {choice.description ? (
-                    <span className="block text-base text-muted-foreground">{choice.description}</span>
+                    <span className="block text-base text-muted-foreground">
+                      {choice.description}
+                    </span>
                   ) : null}
                 </span>
                 <span aria-hidden="true" className="text-muted-foreground">
@@ -243,7 +263,13 @@ export function ScenarioPlayer({
 
           {state.consequence.image ? (
             <figure className="relative mt-3 overflow-hidden rounded-3xl border border-border">
-              <img src={state.consequence.image} alt="" loading="lazy" decoding="async" className="h-48 w-full object-cover" />
+              <img
+                src={state.consequence.image}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="h-48 w-full object-cover"
+              />
               {state.consequence.imageCaption ? (
                 <figcaption className="absolute bottom-3 right-3 rounded-full bg-foreground/80 px-3 py-1 text-xs font-semibold text-background">
                   {state.consequence.imageCaption}
@@ -265,12 +291,17 @@ export function ScenarioPlayer({
               <div className="tati-consequence-in rounded-2xl bg-muted p-4">
                 <p className="text-sm font-semibold">In pocket</p>
                 <p className="text-xl font-bold">
-                  {state.previousAvailable !== undefined && state.previousAvailable !== state.available ? (
+                  {state.previousAvailable !== undefined &&
+                  state.previousAvailable !== state.available ? (
                     <span className="mr-2 text-base font-semibold text-muted-foreground line-through">
                       GH₵{state.previousAvailable}
                     </span>
                   ) : null}
-                  <AnimatedNumber value={state.available} prefix="GH₵" className="tati-value-pop inline-block" />
+                  <AnimatedNumber
+                    value={state.available}
+                    prefix="GH₵"
+                    className="tati-value-pop inline-block"
+                  />
                 </p>
                 <p className="text-sm text-muted-foreground">Available to spend</p>
               </div>
@@ -282,7 +313,11 @@ export function ScenarioPlayer({
                       GH₵{state.previousSaved}
                     </span>
                   ) : null}
-                  <AnimatedNumber value={state.saved} prefix="GH₵" className="tati-value-pop inline-block" />
+                  <AnimatedNumber
+                    value={state.saved}
+                    prefix="GH₵"
+                    className="tati-value-pop inline-block"
+                  />
                 </p>
                 <p className="text-sm text-muted-foreground">Untouched &amp; protected</p>
               </div>
@@ -346,7 +381,10 @@ export function ScenarioPlayer({
               <h3 className="font-bold">🌟 Your superpowers in this story</h3>
               <ul className="mt-2 flex flex-wrap gap-2">
                 {summary.strengths.map((c) => (
-                  <li key={c} className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-foreground">
+                  <li
+                    key={c}
+                    className="rounded-full bg-accent-soft px-3 py-1 text-sm font-semibold text-accent-foreground"
+                  >
                     {COMPETENCY_LABELS[c]}
                   </li>
                 ))}
@@ -358,19 +396,21 @@ export function ScenarioPlayer({
             <h3 className="font-bold">🪞 Looking back at your 14 days</h3>
             <ul className="mt-2 space-y-2 text-sm">
               <li>
-                💪 You earned <span className="font-bold">GH₵{summary.totals.earned}</span> through work and money
-                that came back to you.
+                💪 You earned <span className="font-bold">GH₵{summary.totals.earned}</span> through
+                work and money that came back to you.
               </li>
               <li>
-                🐖 You moved <span className="font-bold">GH₵{summary.totals.movedToSavings}</span> into your savings
-                box.
+                🐖 You moved <span className="font-bold">GH₵{summary.totals.movedToSavings}</span>{" "}
+                into your savings box.
               </li>
               <li>
-                🛒 You spent or shared <span className="font-bold">GH₵{summary.totals.spent}</span> along the way.
+                🛒 You spent or shared <span className="font-bold">GH₵{summary.totals.spent}</span>{" "}
+                along the way.
               </li>
               <li>
                 🔁 When plans changed, you made{" "}
-                <span className="font-bold">{summary.decisions.length}</span> decisions and kept going.
+                <span className="font-bold">{summary.decisions.length}</span> decisions and kept
+                going.
               </li>
             </ul>
             <p className="mt-3 rounded-2xl bg-primary-soft px-4 py-3 text-sm text-primary">
@@ -384,21 +424,32 @@ export function ScenarioPlayer({
             <h3 className="font-bold">📖 The choices you made</h3>
             <ul className="mt-2 space-y-2">
               {summary.decisions.map((d, i) => (
-                <li key={i} className="rounded-2xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
-                  <span className="font-semibold">Day {d.day} · {d.choiceLabel}</span>
+                <li
+                  key={i}
+                  className="rounded-2xl bg-secondary px-4 py-3 text-sm text-secondary-foreground"
+                >
+                  <span className="font-semibold">
+                    Day {d.day} · {d.choiceLabel}
+                  </span>
                   <span className="block text-muted-foreground">
                     Pocket GH₵{d.availableAfter} · Saved GH₵{d.savedAfter}
                   </span>
                 </li>
               ))}
             </ul>
-            <p className="mt-3 text-sm">{summary.ending?.reflection ?? scenario.closingReflection}</p>
+            <p className="mt-3 text-sm">
+              {summary.ending?.reflection ?? scenario.closingReflection}
+            </p>
           </div>
 
           <PrimaryButton
             onClick={() => {
               runner.clearSaved();
-              onComplete({ available: state.available, saved: state.saved, decisions: state.decisions });
+              onComplete({
+                available: state.available,
+                saved: state.saved,
+                decisions: state.decisions,
+              });
             }}
             disabled={!!saving}
           >
@@ -463,7 +514,10 @@ function GoalCard({ label, saved, target }: { label: string; saved: number; targ
         aria-valuemax={100}
         aria-label={label}
       >
-        <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="mt-2 flex justify-between text-sm">
         <span className="text-muted-foreground">{pct}% reached</span>

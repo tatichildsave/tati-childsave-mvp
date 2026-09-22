@@ -4,6 +4,7 @@ import { trackEvent } from "@/lib/analytics";
 
 export interface ChildProfile {
   id: string;
+  tati_id: string;
   family_id: string;
   created_by: string;
   name: string;
