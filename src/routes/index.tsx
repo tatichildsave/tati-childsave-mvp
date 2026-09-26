@@ -89,6 +89,9 @@ function Landing() {
         <Button to="/login" variant="outline" size="lg">
           I already have an account
         </Button>
+        <Button to="/academy/login" variant="outline" size="lg">
+          Facilitator Sign In
+        </Button>
         <Button to="/parent" variant="ghost">
           Continue My Journey
         </Button>

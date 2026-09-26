@@ -157,5 +157,24 @@ service cloud.firestore {
     match /childAuthIdentities/{childProfileId} {
       allow read, write: if false;
     }
+
+    // ============================================================================
+    // ACADEMY COLLECTIONS (H3.2.2 — FACILITATOR DASHBOARD & COHORT WORKFLOW)
+    // ============================================================================
+    // These collections support the Academy facilitator operating environment.
+    // Facilitators access ONLY their assigned learners, with read-only access to
+    // learning progress. Facilitators cannot modify child learning records.
+    // All parent-private data (parentInsights) remains inaccessible.
+    // ============================================================================
+
+    match /facilitatorAssignments/{assignmentId} {
+      // Assignment documents enable efficient lookup of assigned children
+      // Schema: { facilitatorUid, familyId, childId, createdAt, assignedBy }
+      // Authorization: Facilitator can read only their own assignments
+      allow read: if signedIn() && hasRole('facilitator') && resource.data.facilitatorUid == request.auth.uid;
+      allow read: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
   }
 }
