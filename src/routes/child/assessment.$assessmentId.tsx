@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Page } from "@/components/tati";
+import { Screen } from "@/components/learning/primitives";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
-import { Screen, TopBar } from "@/components/learning/primitives";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
 import { assertChildActivity, saveChildAssessment } from "@/lib/auth/child-learning.functions";
 import { useChildLearning, useRecordChildProgress } from "@/lib/auth/use-child-learning";
@@ -11,6 +12,19 @@ export const Route = createFileRoute("/child/assessment/$assessmentId")({
   beforeLoad: async ({ params }) => {
     await assertChildActivity({ data: { itemType: "assessment", itemId: params.assessmentId } });
   },
+  head: () => ({
+    meta: [
+      { title: "Check-in — TATI ChildSave" },
+      {
+        name: "description",
+        content: "A quick check-in on what you've learned so far.",
+      },
+      { property: "og:title", content: "Check-in — TATI ChildSave" },
+      { property: "og:description", content: "See how your money skills are growing." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: AssessmentPage,
 });
 
@@ -25,9 +39,11 @@ function AssessmentPage() {
 
   if (!definition || !data)
     return (
-      <Screen>
-        <TopBar title="Check-in not found" backTo="/child/learn" />
-      </Screen>
+      <Page role="junior">
+        <Screen>
+          <p className="text-lg">Check-in not found</p>
+        </Screen>
+      </Page>
     );
 
   async function finish(result: AssessmentResult) {

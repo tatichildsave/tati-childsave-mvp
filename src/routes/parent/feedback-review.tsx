@@ -9,7 +9,7 @@ function FeedbackReview() {
   const feedback = useQuery({ queryKey: ["feedback-review"], queryFn: getFeedbackForReview });
 
   return (
-    <Page>
+    <Page role="parent">
       <PageHeader
         backTo="/parent"
         eyebrow="Internal testing view"
@@ -33,37 +33,43 @@ function FeedbackReview() {
       ) : null}
       <div className="space-y-4">
         {feedback.data?.map((item) => (
-          <Card key={item.id}>
-            <div className="flex items-start justify-between gap-3">
+          <Card key={item.id} tone="surface">
+            <div className="flex items-start justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs font-extrabold uppercase tracking-widest text-muted-foreground">
                   {item.audience} · {item.experience_key}
                 </p>
-                <h2 className="mt-1 text-lg font-extrabold">{item.context}</h2>
+                <h2 className="mt-2 text-lg font-extrabold">{item.context}</h2>
               </div>
-              <time className="text-xs text-muted-foreground" dateTime={item.created_at}>
+              <time
+                className="text-xs text-muted-foreground whitespace-nowrap"
+                dateTime={item.created_at}
+              >
                 {new Date(item.created_at).toLocaleDateString()}
               </time>
             </div>
-            <dl className="mt-4 space-y-2">
+            <dl className="space-y-2">
               {Object.entries(item.answers).map(([key, value]) => (
-                <div key={key} className="rounded-2xl bg-secondary px-3 py-2">
+                <div key={key} className="rounded-2xl bg-background px-3 py-2">
                   <dt className="text-xs font-bold uppercase text-muted-foreground">{key}</dt>
-                  <dd>{String(value)}</dd>
+                  <dd className="text-base font-bold">{String(value)}</dd>
                 </div>
               ))}
             </dl>
             {item.message ? (
-              <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-accent-soft p-3">
+              <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-accent-soft p-3 text-base">
                 {item.message}
               </p>
             ) : null}
           </Card>
         ))}
       </div>
-      <Link to="/parent" className="mt-6 block text-center font-extrabold text-primary">
+      <button
+        onClick={() => window.history.back()}
+        className="mt-6 block text-center w-full font-extrabold text-primary hover:underline"
+      >
         Back to parent portal
-      </Link>
+      </button>
     </Page>
   );
 }

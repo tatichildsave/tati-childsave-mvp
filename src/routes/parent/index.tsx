@@ -51,16 +51,17 @@ function ParentHome() {
     (session?.user_metadata?.["full_name"] as string | undefined) ?? session?.email ?? "there";
 
   return (
-    <Page>
+    <Page role="parent">
       <PageHeader
-        eyebrow="Parent portal"
+        eyebrow="Parent Portal"
         title="Your family"
-        subtitle={`Welcome back, ${parentName}.`}
+        subtitle={`Welcome back, ${parentName}. Let's see how your child is learning.`}
         right={
           <button
             type="button"
             onClick={signOut}
-            className="min-h-[48px] px-2 text-sm font-extrabold text-muted-foreground"
+            className="min-h-[48px] px-3 text-sm font-extrabold text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Sign out"
           >
             Sign out
           </button>
@@ -81,7 +82,7 @@ function ParentHome() {
         <EmptyState
           icon="🌱"
           title="No learner yet"
-          description="Add your child and their TATI adventure begins right away."
+          description="Add your child and their TATI money learning adventure begins right away."
           action={
             <Button to="/onboarding" size="lg">
               Add my child →
@@ -92,34 +93,33 @@ function ParentHome() {
 
       <div className="space-y-4">
         {children?.map((child) => (
-          <Card key={child.id}>
-            <div className="flex items-center gap-3">
-              <Avatar avatar={child.avatar} name={child.name} size="md" />
+          <Card key={child.id} interactive tone="surface">
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar avatar={child.avatar} name={child.name} size="lg" />
               <div className="min-w-0 flex-1">
-                <CardTitle>
+                <h2 className="text-xl font-extrabold">
                   {child.name}, {child.age}
-                </CardTitle>
-                <CardNote className="truncate">
-                  {child.curriculum_level ?? `Primary ${Math.max(1, child.age - 5)}`} · TATI Junior
-                </CardNote>
+                </h2>
+                <p className="text-sm font-bold text-muted-foreground">
+                  {child.curriculum_level ?? `Primary ${Math.max(1, child.age - 5)}`} learner
+                </p>
               </div>
-              <Badge tone="primary">Junior</Badge>
             </div>
 
-            <div className="mt-4 space-y-3">
-              <Link
-                to="/learn/$childId"
-                params={{ childId: child.id }}
-                className="flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-primary text-lg font-extrabold text-primary-foreground"
-              >
-                Continue {child.name}'s journey →
-              </Link>
+            <div className="mb-4 space-y-2">
               <Link
                 to="/parent/child/$childId"
                 params={{ childId: child.id }}
-                className="flex min-h-[48px] w-full items-center justify-center rounded-2xl border-2 border-border bg-card text-base font-extrabold"
+                className="flex min-h-[48px] w-full items-center justify-center rounded-2xl bg-success text-base font-extrabold text-success-foreground hover:opacity-90 transition-opacity active:scale-95"
               >
-                See progress and insights
+                See {child.name}'s progress →
+              </Link>
+              <Link
+                to="/learn/$childId"
+                params={{ childId: child.id }}
+                className="flex min-h-[48px] w-full items-center justify-center rounded-2xl border-2 border-primary bg-primary-soft text-base font-extrabold text-primary hover:border-primary/80 transition-colors active:scale-95"
+              >
+                Continue learning journey
               </Link>
             </div>
           </Card>
@@ -128,14 +128,14 @@ function ParentHome() {
 
       {children && children.length > 0 ? (
         <div className="mt-6 space-y-3">
-          <Button to="/parent/feedback" variant="secondary">
-            Share parent feedback
+          <Button to="/parent/feedback" variant="secondary" size="md">
+            Share observations
           </Button>
-          <Button to="/parent/metrics" variant="ghost">
-            View MVP metrics
-          </Button>
-          <Button to="/onboarding" variant="outline">
+          <Button to="/onboarding" variant="outline" size="md">
             + Add another child
+          </Button>
+          <Button to="/parent/metrics" variant="ghost" size="md">
+            View learning metrics
           </Button>
         </div>
       ) : null}

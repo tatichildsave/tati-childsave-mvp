@@ -5,6 +5,8 @@
  * holds the shared *shape* of the design language — spacing rhythm, radii,
  * typography scale and the semantic tone names used by components — so every
  * screen stays consistent.
+ *
+ * H2.0 Phase 1: Enhanced with motion tokens, focus styles, and role-specific layouts.
  */
 
 export const tatiTheme = {
@@ -26,6 +28,28 @@ export const tatiTheme = {
     muted: "text-base text-muted-foreground",
     caption: "text-sm text-muted-foreground",
   },
+  /** Motion tokens for consistent animations */
+  motion: {
+    fast: "duration-150",
+    medium: "duration-300",
+    slow: "duration-500",
+    easing: "ease-out",
+  },
+  /** Focus indicator: high-contrast ring for keyboard navigation */
+  focusRing:
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  /** Button active state: subtle scale-down for tactile feedback */
+  buttonActive: "active:scale-[0.98] transition-transform duration-150",
+  /** Card hover state: subtle lift animation */
+  cardHover: "hover:shadow-lg transition-shadow duration-150 motion-reduce:hover:shadow-card",
+} as const;
+
+/** Container sizes for different experiences */
+export const containers = {
+  junior: "mx-auto w-full max-w-md px-4 sm:max-w-xl lg:max-w-3xl",
+  parent: "mx-auto w-full max-w-md px-4 sm:max-w-xl lg:max-w-2xl",
+  academy: "mx-auto w-full px-4 sm:px-6 lg:px-8",
+  admin: "mx-auto w-full px-4 sm:px-6 lg:px-8",
 } as const;
 
 /** Semantic tones shared by Badge, StatCard, Avatar rings and pills. */

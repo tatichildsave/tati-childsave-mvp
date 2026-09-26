@@ -1,7 +1,7 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { tatiTheme } from "@/lib/theme";
+import { tatiTheme, containers } from "@/lib/theme";
 import logo from "@/assets/tati-logo.svg";
 
 export function Logo({ className }: { className?: string }) {
@@ -16,18 +16,19 @@ export function Page({
   children,
   withBottomNav = false,
   className,
+  role = "junior",
 }: {
   children: ReactNode;
   withBottomNav?: boolean;
   className?: string;
+  role?: "junior" | "parent" | "academy" | "admin";
 }) {
+  const containerClass = containers[role];
+  const bottomPadding = withBottomNav ? "pb-28" : "pb-12";
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div
-        className={cn(tatiTheme.container, "pt-4", withBottomNav ? "pb-28" : "pb-12", className)}
-      >
-        {children}
-      </div>
+      <div className={cn(containerClass, "pt-4", bottomPadding, className)}>{children}</div>
     </div>
   );
 }
@@ -55,7 +56,11 @@ export function PageHeader({
           <Link
             to={backTo}
             aria-label="Go back"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-card text-xl shadow-card"
+            className={cn(
+              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-card text-xl shadow-card",
+              tatiTheme.focusRing,
+              tatiTheme.buttonActive,
+            )}
           >
             <span aria-hidden="true">←</span>
           </Link>
@@ -64,7 +69,11 @@ export function PageHeader({
             type="button"
             onClick={() => router.history.back()}
             aria-label="Go back"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-card text-xl shadow-card"
+            className={cn(
+              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-card text-xl shadow-card",
+              tatiTheme.focusRing,
+              tatiTheme.buttonActive,
+            )}
           >
             <span aria-hidden="true">←</span>
           </button>
@@ -95,6 +104,7 @@ export function ListenButton({ className }: { className?: string }) {
       disabled
       className={cn(
         "flex min-h-[48px] items-center gap-2 rounded-2xl bg-card px-4 text-base font-extrabold text-primary shadow-card disabled:cursor-not-allowed disabled:opacity-70",
+        tatiTheme.focusRing,
         className,
       )}
     >
@@ -119,15 +129,18 @@ export function BottomNavigation() {
 
   return (
     <nav
-      aria-label="Main"
+      aria-label="Main navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur"
     >
-      <ul className={cn(tatiTheme.container, "flex items-stretch justify-around py-1")}>
+      <ul className={cn(containers.junior, "flex items-stretch justify-around py-1")}>
         {navItems.map((item) => (
           <li key={item.to} className="flex-1">
             <Link
               to={item.to}
-              className="flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-2xl text-xs font-extrabold text-muted-foreground"
+              className={cn(
+                "flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-2xl text-xs font-extrabold text-muted-foreground",
+                tatiTheme.focusRing,
+              )}
               activeProps={{ className: "text-primary" }}
             >
               <span aria-hidden="true" className="text-xl">
@@ -170,7 +183,11 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-lg"
+            className={cn(
+              "flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-lg",
+              tatiTheme.focusRing,
+              tatiTheme.buttonActive,
+            )}
           >
             <span aria-hidden="true">✕</span>
           </button>

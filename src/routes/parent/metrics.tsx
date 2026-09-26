@@ -61,7 +61,7 @@ function MetricsPage() {
   }, [query.data]);
 
   return (
-    <Page>
+    <Page role="parent">
       <PageHeader
         backTo="/parent"
         eyebrow="Internal MVP metrics"
@@ -85,44 +85,47 @@ function MetricsPage() {
       ) : null}
       {!query.isLoading && !query.isError ? (
         <>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 mb-6">
             {metrics.funnel.map(([label, count]) => (
-              <Card key={label}>
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="mt-1 text-3xl font-extrabold text-primary">{count}</p>
+              <Card key={label} tone="surface">
+                <p className="text-xs text-muted-foreground font-bold uppercase">{label}</p>
+                <p className="mt-2 text-3xl font-extrabold text-primary">{count}</p>
               </Card>
             ))}
           </div>
-          <Card className="mt-5">
-            <h2 className="text-lg font-extrabold">Largest drop-offs</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Directional funnel comparison; stages use distinct internal identifiers.
-            </p>
-            <ol className="mt-4 space-y-2">
+
+          <div>
+            <h2 className="text-lg font-extrabold mb-2">Largest drop-offs</h2>
+            <Card tone="muted" className="mb-3">
+              <p className="text-sm text-muted-foreground">
+                Directional funnel comparison; stages use distinct internal identifiers.
+              </p>
+            </Card>
+            <ol className="space-y-2">
               {metrics.dropoffs.slice(0, 5).map((dropoff) => (
-                <li
-                  key={dropoff.label}
-                  className="flex items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3"
-                >
-                  <span>{dropoff.label}</span>
-                  <span className="text-right font-bold text-destructive">
-                    {dropoff.rate}%{" "}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      ({dropoff.previous} → {dropoff.count})
+                <Card key={dropoff.label} tone="surface">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-bold">{dropoff.label}</span>
+                    <span className="text-right">
+                      <span className="font-extrabold text-destructive">{dropoff.rate}%</span>
+                      <span className="text-xs font-normal text-muted-foreground ml-2">
+                        ({dropoff.previous} → {dropoff.count})
+                      </span>
                     </span>
-                  </span>
-                </li>
+                  </div>
+                </Card>
               ))}
             </ol>
-          </Card>
+          </div>
         </>
       ) : null}
-      <Link
-        to="/parent/feedback-review"
-        className="mt-6 block text-center font-extrabold text-primary"
+
+      <button
+        onClick={() => window.history.back()}
+        className="mt-6 block text-center w-full font-extrabold text-primary hover:underline"
       >
-        Review submitted feedback
-      </Link>
+        Back to parent portal
+      </button>
     </Page>
   );
 }

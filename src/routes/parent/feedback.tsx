@@ -73,15 +73,15 @@ function ParentFeedback() {
 
   if (sent) {
     return (
-      <Page>
-        <PageHeader backTo="/parent" title="Feedback sent" />
-        <Card className="text-center">
-          <p className="text-4xl">🌟</p>
-          <h2 className="mt-2 text-2xl font-extrabold">Thank you</h2>
-          <p className="mt-2 text-muted-foreground">
+      <Page role="parent">
+        <PageHeader title="Feedback sent" />
+        <Card tone="primary" className="py-8 text-center text-white">
+          <p className="text-4xl mb-2">🌟</p>
+          <h2 className="text-2xl font-extrabold mb-3">Thank you!</h2>
+          <p className="text-base text-white/80">
             Your feedback helps us improve TATI for families.
           </p>
-          <Button className="mt-5" onClick={() => navigate({ to: "/parent" })}>
+          <Button className="mt-6" onClick={() => navigate({ to: "/parent" })} full size="lg">
             Back to parent portal
           </Button>
         </Card>
@@ -90,23 +90,24 @@ function ParentFeedback() {
   }
 
   return (
-    <Page>
+    <Page role="parent">
       <PageHeader
         backTo="/parent"
         eyebrow="Help us improve"
         title="Parent feedback"
         subtitle="A few quick questions about your child's experience."
       />
+
       {children && children.length > 1 ? (
-        <Card>
-          <label className="font-extrabold" htmlFor="feedback-child">
+        <Card tone="surface" className="mb-4">
+          <label className="font-extrabold text-base" htmlFor="feedback-child">
             Which learner?
           </label>
           <select
             id="feedback-child"
             value={childProfileId}
             onChange={(event) => setChildProfileId(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-input bg-card p-3"
+            className="mt-3 w-full rounded-2xl border-2 border-border bg-card p-3 font-bold"
           >
             <option value="">The whole family</option>
             {children.map((child) => (
@@ -117,17 +118,22 @@ function ParentFeedback() {
           </select>
         </Card>
       ) : null}
+
       {questions.map((question) => (
-        <Card key={question.key} className="mt-4">
-          <h2 className="font-extrabold">{question.label}</h2>
-          <div className="mt-3 grid gap-2">
+        <Card key={question.key} tone="surface" className="mb-4">
+          <h2 className="font-extrabold text-base mb-3">{question.label}</h2>
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
             {question.options.map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => setAnswers((current) => ({ ...current, [question.key]: option }))}
                 aria-pressed={answers[question.key] === option}
-                className={`min-h-12 rounded-2xl border-2 px-4 py-3 text-left font-bold ${answers[question.key] === option ? "border-primary bg-primary text-primary-foreground" : "border-border bg-secondary"}`}
+                className={`min-h-12 rounded-2xl border-2 px-4 py-3 text-left font-bold transition-all ${
+                  answers[question.key] === option
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-surface hover:border-primary/50"
+                }`}
               >
                 {option}
               </button>
@@ -135,6 +141,7 @@ function ParentFeedback() {
           </div>
         </Card>
       ))}
+
       <TextQuestion
         id="parent-confused"
         label="What confused your child?"
@@ -147,12 +154,22 @@ function ParentFeedback() {
         value={improve}
         onChange={setImprove}
       />
-      <Button className="mt-5" size="lg" disabled={!complete || saving} onClick={() => void send()}>
-        {saving ? "Sending..." : "Send parent feedback"}
+
+      <Button
+        className="mt-6"
+        size="lg"
+        disabled={!complete || saving}
+        onClick={() => void send()}
+        full
+      >
+        {saving ? "Sending..." : "Send parent feedback →"}
       </Button>
-      <Link to="/parent" className="mt-4 block text-center font-extrabold text-primary">
+      <button
+        onClick={() => navigate({ to: "/parent" })}
+        className="mt-3 block w-full text-center font-extrabold text-primary hover:underline"
+      >
         Maybe later
-      </Link>
+      </button>
     </Page>
   );
 }
@@ -169,16 +186,16 @@ function TextQuestion({
   onChange: (value: string) => void;
 }) {
   return (
-    <Card className="mt-4">
-      <label htmlFor={id} className="font-extrabold">
-        {label} <span className="font-normal text-muted-foreground">Optional</span>
+    <Card tone="surface" className="mb-4">
+      <label htmlFor={id} className="font-extrabold text-base block mb-2">
+        {label} <span className="font-normal text-muted-foreground">(Optional)</span>
       </label>
       <textarea
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         maxLength={1000}
-        className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-input bg-secondary p-4"
+        className="w-full min-h-24 resize-y rounded-2xl border-2 border-border bg-background p-4 font-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         placeholder="Share a little detail..."
       />
     </Card>

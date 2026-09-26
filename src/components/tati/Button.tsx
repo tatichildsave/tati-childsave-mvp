@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { tatiTheme } from "@/lib/theme";
 
 type Variant = "primary" | "success" | "secondary" | "ghost" | "outline";
 type Size = "md" | "lg";
@@ -47,7 +48,11 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 rounded-2xl font-extrabold transition-[transform,opacity,background-color,border-color] duration-150 active:scale-[0.98] disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-2xl font-extrabold",
+    "transition-[transform,opacity,background-color,border-color,box-shadow] duration-150",
+    "active:scale-[0.98] disabled:opacity-50",
+    "hover:shadow-lg motion-reduce:hover:shadow-none",
+    tatiTheme.focusRing,
     variants[variant],
     sizes[size],
     full && "w-full",

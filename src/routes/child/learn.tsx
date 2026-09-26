@@ -30,21 +30,21 @@ function ChildLearn() {
 
   if (isLoading || !snapshot) {
     return (
-      <Page withBottomNav>
-        <p className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          Opening your journey…
-        </p>
+      <Page withBottomNav role="junior">
+        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
+          <p className="font-bold">Opening your journey…</p>
+        </div>
       </Page>
     );
   }
 
   if (isError) {
     return (
-      <Page withBottomNav>
+      <Page withBottomNav role="junior">
         <PageHeader backTo="/child/home" title="My learning journey" />
-        <p className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          We could not load your journey. Please try again.
-        </p>
+        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
+          <p>We could not load your journey. Please try again.</p>
+        </div>
       </Page>
     );
   }
@@ -59,7 +59,7 @@ function ChildLearn() {
   };
 
   return (
-    <Page withBottomNav>
+    <Page withBottomNav role="junior">
       <PageHeader
         backTo="/child/home"
         eyebrow="Track: SAVE"
@@ -68,7 +68,8 @@ function ChildLearn() {
         listenable
       />
 
-      <Card>
+      {/* Progress Section */}
+      <Card tone="surface" className="mb-6">
         <ProgressBar
           value={snapshot.journey.doneItems.length}
           max={snapshot.track.sequence.length}
@@ -78,31 +79,39 @@ function ChildLearn() {
         />
       </Card>
 
-      <h2 className="mb-3 mt-6 text-lg font-extrabold">Mini-lessons</h2>
-      <Card className="space-y-3">
-        {lessonSteps.map(({ item, index, done, locked }) => (
-          <LessonCard
-            key={item.id}
-            index={index + 1}
-            title={itemTitle(track, item)}
-            subtitle={itemSubtitle(track, item)}
-            status={done ? "done" : locked ? "locked" : "ready"}
-            to={childPath(item.kind, item.id)}
-          />
-        ))}
-      </Card>
+      {/* Mini-lessons Section */}
+      <div className="mb-6">
+        <h2 className="mb-3 text-lg font-extrabold">📚 Mini-lessons</h2>
+        <div className="space-y-2">
+          {lessonSteps.map(({ item, index, done, locked }) => (
+            <LessonCard
+              key={item.id}
+              index={index + 1}
+              title={itemTitle(track, item)}
+              subtitle={itemSubtitle(track, item)}
+              status={done ? "done" : locked ? "locked" : "ready"}
+              to={childPath(item.kind, item.id)}
+            />
+          ))}
+        </div>
+      </div>
 
-      <h2 className="mb-3 mt-6 text-lg font-extrabold">Decision stories</h2>
-      <div className="space-y-4">
-        {scenarioSteps.map(({ item, done, locked }) => (
-          <ScenarioCard
-            key={item.id}
-            title={itemTitle(track, item)}
-            description={item.blurb ?? "Make a money choice, see what happens, and keep learning."}
-            status={done ? "done" : locked ? "locked" : "ready"}
-            to={childPath(item.kind, item.id)}
-          />
-        ))}
+      {/* Decision Stories Section */}
+      <div className="mb-6">
+        <h2 className="mb-3 text-lg font-extrabold">💭 Decision stories</h2>
+        <div className="space-y-3">
+          {scenarioSteps.map(({ item, done, locked }) => (
+            <ScenarioCard
+              key={item.id}
+              title={itemTitle(track, item)}
+              description={
+                item.blurb ?? "Make a money choice, see what happens, and keep learning."
+              }
+              status={done ? "done" : locked ? "locked" : "ready"}
+              to={childPath(item.kind, item.id)}
+            />
+          ))}
+        </div>
       </div>
     </Page>
   );

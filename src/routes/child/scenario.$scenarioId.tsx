@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Page } from "@/components/tati";
 import { ScenarioPlayer } from "@/components/scenario/ScenarioPlayer";
 import { getScenarioDefinition } from "@/lib/scenario/registry";
 import { getTrack, itemTitle } from "@/lib/learning/track";
@@ -9,7 +10,7 @@ import {
   saveChildScenario,
 } from "@/lib/auth/child-learning.functions";
 import type { ScenarioState } from "@/lib/scenario/types";
-import { Screen, TopBar, Card, PrimaryButton } from "@/components/learning/primitives";
+import { Screen, Card, PrimaryButton } from "@/components/learning/primitives";
 
 export const Route = createFileRoute("/child/scenario/$scenarioId")({
   beforeLoad: async ({ params }) => {
@@ -60,27 +61,27 @@ function ScenarioPage() {
 
   if (isLoading || !data) {
     return (
-      <Screen>
-        <p className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          Opening your story…
-        </p>
-      </Screen>
+      <Page role="junior">
+        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
+          <p className="font-bold">Opening your story…</p>
+        </div>
+      </Page>
     );
   }
 
   if (!scenario || !item) {
     return (
-      <Screen>
-        <TopBar title="Story not found" backTo="/child/learn" />
-        <Card>
-          <p className="text-lg">This story is not available in your journey.</p>
-          <div className="mt-4">
+      <Page role="junior">
+        <Screen>
+          <Card>
+            <p className="text-lg font-bold mb-4">Story not found</p>
+            <p className="text-base mb-4">This story is not available in your journey.</p>
             <PrimaryButton onClick={() => navigate({ to: "/child/learn" })}>
               Back to my journey
             </PrimaryButton>
-          </div>
-        </Card>
-      </Screen>
+          </Card>
+        </Screen>
+      </Page>
     );
   }
 

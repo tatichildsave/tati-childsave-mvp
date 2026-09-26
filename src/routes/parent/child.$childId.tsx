@@ -46,7 +46,7 @@ function ParentChild() {
 
   if (isLoading) {
     return (
-      <Page>
+      <Page role="parent">
         <PageHeader backTo="/parent" title="Child journey" />
         <LoadingState label="Loading this learner…" />
       </Page>
@@ -55,7 +55,7 @@ function ParentChild() {
 
   if (isError) {
     return (
-      <Page>
+      <Page role="parent">
         <PageHeader backTo="/parent" title="Child journey" />
         <ErrorState onRetry={() => void refetch()} />
       </Page>
@@ -64,7 +64,7 @@ function ParentChild() {
 
   if (!child) {
     return (
-      <Page>
+      <Page role="parent">
         <PageHeader backTo="/parent" title="Child journey" />
         <EmptyState
           title="We couldn't find that learner"
@@ -79,59 +79,79 @@ function ParentChild() {
   const insights = progress.insights;
 
   return (
-    <Page>
+    <Page role="parent">
       <PageHeader backTo="/parent" eyebrow="Parent portal" title={`${child.name}'s journey`} />
 
-      <Card className="flex items-center gap-4">
-        <Avatar avatar={child.avatar} name={child.name} size="lg" ring="primary" />
+      {/* Child Profile Card */}
+      <Card tone="surface" className="mb-6 flex items-center gap-4">
+        <Avatar avatar={child.avatar} name={child.name} size="lg" />
         <div>
-          <CardTitle>
+          <h1 className="text-2xl font-extrabold">
             {child.name}, {child.age}
-          </CardTitle>
-          <p className="text-base text-muted-foreground">
-            {child.curriculum_level ?? `Primary ${Math.max(1, child.age - 5)}`} · TATI Junior
+          </h1>
+          <p className="text-sm font-bold text-muted-foreground">
+            {child.curriculum_level ?? `Primary ${Math.max(1, child.age - 5)}`} learner
           </p>
         </div>
       </Card>
 
-      <div className="mt-4 flex justify-center">
-        <ProgressRing
-          value={done}
-          max={track.sequence.length}
-          caption="Journey steps done"
-          tone="success"
-          size={120}
-        />
-      </div>
-
-      <h2 className="mb-3 mt-6 text-lg font-extrabold">What we're noticing</h2>
-      <Card className="space-y-2">
-        {insights.map((insight, i) => (
-          <p key={i} className="text-base">
-            • {insight}
-          </p>
-        ))}
-      </Card>
-
-      <h2 className="mb-3 mt-6 text-lg font-extrabold">Lessons</h2>
-      <Card className="space-y-3">
-        {track.lessons.map((lesson, i) => (
-          <LessonCard
-            key={lesson.id}
-            index={i + 1}
-            title={lesson.title}
-            subtitle={`Lesson · ${lesson.minutes ?? 5} min`}
-            minutes={lesson.minutes ?? 5}
-            status={doneLesson(lesson.id) ? "done" : "ready"}
+      {/* Progress Ring */}
+      <Card tone="primary" className="mb-6 flex justify-center py-8">
+        <div className="text-center">
+          <ProgressRing
+            value={done}
+            max={track.sequence.length}
+            caption="Learning steps completed"
+            tone="success"
+            size={120}
           />
-        ))}
+        </div>
       </Card>
 
-      <div className="mt-6 space-y-3">
-        <Button to="/parent" variant="secondary">
-          Back to all children
-        </Button>
+      {/* Insights Section */}
+      <div className="mb-6">
+        <h2 className="mb-3 text-lg font-extrabold">💡 What we're noticing</h2>
+        {insights.length > 0 ? (
+          <Card tone="muted" className="space-y-3">
+            {insights.map((insight, i) => (
+              <div key={i} className="flex gap-3">
+                <span className="text-primary" aria-hidden="true">
+                  ✓
+                </span>
+                <p className="text-base text-muted-foreground">{insight}</p>
+              </div>
+            ))}
+          </Card>
+        ) : (
+          <Card tone="muted">
+            <p className="text-center text-sm text-muted-foreground">
+              Insights will appear as {child.name} progresses through lessons.
+            </p>
+          </Card>
+        )}
       </div>
+
+      {/* Lessons Section */}
+      <div className="mb-6">
+        <h2 className="mb-3 text-lg font-extrabold">📖 Lessons</h2>
+        <div className="space-y-2">
+          {track.lessons.map((lesson, i) => (
+            <LessonCard
+              key={lesson.id}
+              index={i + 1}
+              title={lesson.title}
+              subtitle={`Lesson · ${lesson.minutes ?? 5} min`}
+              minutes={lesson.minutes ?? 5}
+              status={doneLesson(lesson.id) ? "done" : "ready"}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Action Button */}
+      <Button to="/parent" variant="secondary" size="md" full>
+        Back to all children
+      </Button>
     </Page>
   );
 }

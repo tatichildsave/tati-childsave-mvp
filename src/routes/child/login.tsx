@@ -30,18 +30,19 @@ function ChildLogin() {
   }
 
   return (
-    <Page>
+    <Page role="junior">
       <PageHeader
         backTo="/"
-        eyebrow="TATI learner space"
+        eyebrow="🎮 TATI Learner Space"
         title="Welcome back"
-        subtitle="Enter your TATI ID and PIN to continue your journey."
+        subtitle="Enter your TATI ID and 4-digit PIN to continue learning."
       />
-      <Card>
+
+      <Card tone="surface" className="mb-6">
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="tati-id" className="mb-1 block text-base font-extrabold">
-              TATI ID
+            <label htmlFor="tati-id" className="mb-2 block text-base font-extrabold">
+              Your TATI ID
             </label>
             <input
               id="tati-id"
@@ -51,12 +52,14 @@ function ChildLogin() {
               value={tatiId}
               onChange={(event) => setTatiId(event.target.value.toUpperCase())}
               placeholder="TATI-XXXXXXXX"
-              className="min-h-[56px] w-full rounded-2xl border border-border bg-background px-4 text-base font-bold"
+              className="min-h-[56px] w-full rounded-2xl border-2 border-border bg-background px-4 text-base font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-describedby={error ? "login-error" : undefined}
             />
           </div>
+
           <div>
-            <label htmlFor="child-pin" className="mb-1 block text-base font-extrabold">
-              PIN
+            <label htmlFor="child-pin" className="mb-2 block text-base font-extrabold">
+              Your 4-digit PIN
             </label>
             <input
               id="child-pin"
@@ -64,28 +67,35 @@ function ChildLogin() {
               inputMode="numeric"
               autoComplete="current-password"
               type="password"
-              maxLength={6}
+              maxLength={4}
               value={pin}
-              onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))}
-              className="min-h-[56px] w-full rounded-2xl border border-border bg-background px-4 text-base font-bold tracking-[0.3em]"
+              onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
+              className="min-h-[56px] w-full rounded-2xl border-2 border-border bg-background px-4 text-center text-2xl font-extrabold tracking-[0.5em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-describedby={error ? "login-error" : undefined}
             />
+            <p className="mt-2 text-xs text-muted-foreground">{pin.length} of 4 digits entered</p>
           </div>
+
           {error ? (
-            <p
+            <div
+              id="login-error"
               role="alert"
-              className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive"
+              className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-base font-bold text-destructive"
             >
-              {error}
-            </p>
+              <span aria-hidden="true">⚠️</span>
+              <span>{error}</span>
+            </div>
           ) : null}
-          <Button type="submit" size="lg" disabled={busy || !tatiId || !pin}>
-            {busy ? "Checking…" : "Start my journey →"}
+
+          <Button type="submit" size="lg" disabled={busy || !tatiId || pin.length !== 4} full>
+            {busy ? "✓ Checking…" : "Start my journey →"}
           </Button>
         </form>
       </Card>
-      <p className="mt-5 text-center text-sm text-muted-foreground">
-        Parent or guardian?{" "}
-        <Link to="/login" className="font-extrabold text-primary">
+
+      <p className="text-center text-sm text-muted-foreground">
+        👤 Parent or guardian?{" "}
+        <Link to="/login" className="font-extrabold text-primary hover:underline">
           Sign in here
         </Link>
       </p>

@@ -1,12 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  Card,
-  ChoiceButton,
-  PrimaryButton,
-  Screen,
-  TopBar,
-} from "@/components/learning/primitives";
+import { Page, Card, Button } from "@/components/tati";
+import { Card as PrimCard, ChoiceButton, PrimaryButton } from "@/components/learning/primitives";
 import { getReflection, getTrack } from "@/lib/learning/track";
 import { assertChildActivity } from "@/lib/auth/child-learning.functions";
 import { useRecordChildProgress } from "@/lib/auth/use-child-learning";
@@ -15,6 +10,19 @@ export const Route = createFileRoute("/child/reflection/$reflectionId")({
   beforeLoad: async ({ params }) => {
     await assertChildActivity({ data: { itemType: "reflection", itemId: params.reflectionId } });
   },
+  head: () => ({
+    meta: [
+      { title: "Pause and think — TATI ChildSave" },
+      {
+        name: "description",
+        content: "Take a moment to think about what you learned.",
+      },
+      { property: "og:title", content: "Pause and think — TATI ChildSave" },
+      { property: "og:description", content: "Reflect on your choices and learning." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ReflectionPage,
 });
 
@@ -28,10 +36,13 @@ function ReflectionPage() {
   const currentReflection = reflection;
   if (!currentReflection)
     return (
-      <Screen>
-        <TopBar title="Pause and think" backTo="/child/learn" />
-      </Screen>
+      <Page role="junior">
+        <Card>
+          <p className="text-lg">Reflection not found</p>
+        </Card>
+      </Page>
     );
+
   const reflectionToPlay = currentReflection;
   const picked = reflectionToPlay.options.find((option) => option.id === choiceId);
 
@@ -44,14 +55,15 @@ function ReflectionPage() {
   }
 
   return (
-    <Screen>
-      <TopBar title={reflectionToPlay.title} backTo="/child/learn" />
-      <Card>
+    <Page role="junior">
+      <PrimCard>
         <p className="text-sm font-bold uppercase tracking-wide text-primary">
           {reflectionToPlay.icon ?? "🪞"} Pause and think
         </p>
-        <p className="mt-2 text-lg leading-relaxed">{reflectionToPlay.intro}</p>
-        <h2 className="mt-4 text-xl font-bold">{reflectionToPlay.question}</h2>
+        <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+          {reflectionToPlay.intro}
+        </p>
+        <h2 className="mt-4 text-lg font-extrabold">{reflectionToPlay.question}</h2>
         <div className="mt-4 space-y-2">
           {reflectionToPlay.options.map((option) => (
             <ChoiceButton
@@ -63,20 +75,22 @@ function ReflectionPage() {
             </ChoiceButton>
           ))}
         </div>
-      </Card>
+      </PrimCard>
+
       {picked ? (
-        <Card className="mt-4">
-          <p className="text-lg leading-relaxed">{picked.response}</p>
-          <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
-            {reflection.closing}
-          </p>
+        <Card tone="surface" className="mt-4">
+          <p className="text-base leading-relaxed">{picked.response}</p>
+          <div className="mt-4 rounded-2xl bg-accent-soft p-4 text-base font-bold text-accent-foreground">
+            💭 {reflection.closing}
+          </div>
         </Card>
       ) : null}
+
       <div className="mt-6">
-        <PrimaryButton onClick={finish} disabled={!picked || record.isPending}>
+        <Button onClick={finish} disabled={!picked || record.isPending} full size="lg">
           {record.isPending ? "Saving…" : "Continue my journey →"}
-        </PrimaryButton>
+        </Button>
       </div>
-    </Screen>
+    </Page>
   );
 }

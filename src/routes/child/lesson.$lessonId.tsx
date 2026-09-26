@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Screen, TopBar } from "@/components/learning/primitives";
+import { Page } from "@/components/tati";
+import { Screen } from "@/components/learning/primitives";
 import { LessonPlayer, type LessonDraft } from "@/components/lesson/LessonPlayer";
 import { getLessonById, lessonsForTrack } from "@/lib/lessons/registry";
 import { assertChildActivity } from "@/lib/auth/child-learning.functions";
@@ -44,9 +45,11 @@ function LessonPage() {
   const playableLesson = lesson;
   if (!playableLesson || access.isError || !data) {
     return (
-      <Screen>
-        <TopBar title="Lesson not found" backTo="/child/learn" />
-      </Screen>
+      <Page role="junior">
+        <Screen>
+          <p className="text-lg">Lesson not found</p>
+        </Screen>
+      </Page>
     );
   }
   const lessonToPlay = playableLesson;
