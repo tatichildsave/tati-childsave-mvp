@@ -651,8 +651,7 @@ export const schoolReopeningScenario: ScenarioDefinition = {
       topic: "Promise kept",
       place: "Kwame's house",
       title: "Kwame brings the rest",
-      situation:
-        "Just as you agreed, Kwame arrives with the remaining GH₵5 in his hand.",
+      situation: "Just as you agreed, Kwame arrives with the remaining GH₵5 in his hand.",
       question: "Where does this money go?",
       image: repaymentScene.url,
       imageBadge: "Agreement honoured",
@@ -810,8 +809,7 @@ export const schoolReopeningScenario: ScenarioDefinition = {
       id: "went-for-it",
       title: "You went for your goal",
       body: "You kept your eyes on the school bag for fourteen days of earning, sharing and surprises.",
-      reflection:
-        "Which day changed your plan the most? What would you do again next term?",
+      reflection: "Which day changed your plan the most? What would you do again next term?",
     },
     {
       id: "adjusted",

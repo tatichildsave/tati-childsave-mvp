@@ -13,9 +13,15 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Parent dashboard — TATI ChildSave" },
-      { name: "description", content: "Follow your child's saving journey, progress and insights." },
+      {
+        name: "description",
+        content: "Follow your child's saving journey, progress and insights.",
+      },
       { property: "og:title", content: "Parent dashboard — TATI ChildSave" },
-      { property: "og:description", content: "Progress and insights from your child's SAVE track." },
+      {
+        property: "og:description",
+        content: "Progress and insights from your child's SAVE track.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -47,10 +53,15 @@ function Dashboard() {
     <Screen>
       <header className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary">Parent space</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Parent space
+          </p>
           <h1 className="text-3xl font-bold">Your children</h1>
         </div>
-        <button onClick={signOut} className="min-h-[48px] text-sm font-semibold text-muted-foreground">
+        <button
+          onClick={signOut}
+          className="min-h-[48px] text-sm font-semibold text-muted-foreground"
+        >
           Sign out
         </button>
       </header>
@@ -58,7 +69,9 @@ function Dashboard() {
       {isLoading ? <p className="text-muted-foreground">Loading…</p> : null}
 
       <div className="space-y-4">
-        {children?.map((child) => <ChildCard key={child.id} childId={child.id} name={child.name} age={child.age} />)}
+        {children?.map((child) => (
+          <ChildCard key={child.id} childId={child.id} name={child.name} age={child.age} />
+        ))}
       </div>
 
       {!isLoading && children?.length === 0 ? (
@@ -136,7 +149,10 @@ function ChildCard({ childId, name, age }: { childId: string; name: string; age:
 
   useEffect(() => {
     if (!isLoading && starters.length > 0) {
-      void trackEvent("parent_conversation_prompt_viewed", { childProfileId: childId, eventKey: childId });
+      void trackEvent("parent_conversation_prompt_viewed", {
+        childProfileId: childId,
+        eventKey: childId,
+      });
     }
   }, [childId, isLoading, starters.length]);
 
@@ -222,7 +238,10 @@ function ChildCard({ childId, name, age }: { childId: string; name: string; age:
           <>
             <ul className="mt-2 space-y-2">
               {strong.map((s) => (
-                <li key={s.competency} className="rounded-2xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+                <li
+                  key={s.competency}
+                  className="rounded-2xl bg-secondary px-4 py-3 text-sm text-secondary-foreground"
+                >
                   {skillSentence(name, s)}
                 </li>
               ))}
@@ -242,7 +261,9 @@ function ChildCard({ childId, name, age }: { childId: string; name: string; age:
       </div>
 
       <div className="mt-4 rounded-2xl border-2 border-dashed border-border p-4">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-primary">Talk about it at home</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wide text-primary">
+          Talk about it at home
+        </h3>
         <ul className="mt-2 space-y-2">
           {starters.map((s) => (
             <li key={s} className="text-sm">

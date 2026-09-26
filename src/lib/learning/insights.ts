@@ -18,8 +18,13 @@ export function buildInsights(track: Track, events: ProgressEvent[]): string[] {
   out.push(`${lessons} of ${track.lessons.length} lessons finished.`);
 
   if (scenarios.length > 0) {
-    const kept = scenarios.reduce((sum, s) => sum + Number((s.details as { finalSavings?: number }).finalSavings ?? 0), 0);
-    out.push(`Decision stories completed: ${scenarios.length}. Money kept across stories: GH₵${kept}.`);
+    const kept = scenarios.reduce(
+      (sum, s) => sum + Number((s.details as { finalSavings?: number }).finalSavings ?? 0),
+      0,
+    );
+    out.push(
+      `Decision stories completed: ${scenarios.length}. Money kept across stories: GH₵${kept}.`,
+    );
   }
 
   if (post && pre.score !== null && post.score !== null) {

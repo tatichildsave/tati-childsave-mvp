@@ -5,7 +5,11 @@ import type { AssessmentDefinition, ResponseMap } from "./types";
 export type RunnerStage = "intro" | "question" | "complete";
 
 /** Drives one-question-at-a-time navigation, selection state and completion. */
-export function useAssessmentRunner(definition: AssessmentDefinition, storageKey?: string, initial?: ResponseMap) {
+export function useAssessmentRunner(
+  definition: AssessmentDefinition,
+  storageKey?: string,
+  initial?: ResponseMap,
+) {
   const [stage, setStage] = useState<RunnerStage>("intro");
   const [index, setIndex] = useState(0);
   const [responses, setResponses] = useState<ResponseMap>(initial ?? {});
@@ -20,7 +24,11 @@ export function useAssessmentRunner(definition: AssessmentDefinition, storageKey
     try {
       const raw = localStorage.getItem(storageKey);
       if (!raw) return;
-      const saved = JSON.parse(raw) as { stage?: RunnerStage; index?: number; responses?: ResponseMap };
+      const saved = JSON.parse(raw) as {
+        stage?: RunnerStage;
+        index?: number;
+        responses?: ResponseMap;
+      };
       if ((saved.stage === "question" || saved.stage === "complete") && saved.responses) {
         setStage(saved.stage);
         setIndex(Math.max(0, Math.min(total - 1, saved.index ?? 0)));

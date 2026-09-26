@@ -41,7 +41,9 @@ export function AnimatedNumber({
 
   return (
     <span key={value} className={className} aria-live="polite">
-      {prefix}{displayValue}{suffix}
+      {prefix}
+      {displayValue}
+      {suffix}
     </span>
   );
 }

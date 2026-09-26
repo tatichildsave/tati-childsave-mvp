@@ -14,9 +14,15 @@ export function LoadingState({ label = "Getting things ready…" }: { label?: st
 export function AuthLoadingShell() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
-      <div role="status" aria-live="polite" className="w-full max-w-md rounded-3xl bg-card p-8 text-center shadow-card">
+      <div
+        role="status"
+        aria-live="polite"
+        className="w-full max-w-md rounded-3xl bg-card p-8 text-center shadow-card"
+      >
         <p className="text-base font-extrabold text-primary">Checking your TATI session…</p>
-        <p className="mt-2 text-base text-muted-foreground">Your family space will open in a moment.</p>
+        <p className="mt-2 text-base text-muted-foreground">
+          Your family space will open in a moment.
+        </p>
       </div>
     </div>
   );

@@ -56,7 +56,8 @@ export const saveTrack: Track = {
       stage: "Chapter 1 — The plan begins",
       label: "STORY · DAYS 1–2",
       chip: "Decision story",
-      blurb: "School reopens in 14 days. Decide how much to hide away, then take a job at the stall.",
+      blurb:
+        "School reopens in 14 days. Decide how much to hide away, then take a job at the stall.",
       icon: "🎒",
       pauseBefore: ["needs-vs-wants"],
       reward: 10,
@@ -203,7 +204,8 @@ export const saveTrack: Track = {
       stage: "Chapter 5 — The final stretch",
       label: "STORY · DAYS 11–14",
       chip: "Grand finale",
-      blurb: "One more chance to earn, a jersey calling your name, and reopening day at the market.",
+      blurb:
+        "One more chance to earn, a jersey calling your name, and reopening day at the market.",
       icon: "🏁",
       reward: 10,
     },
@@ -320,11 +322,13 @@ export const saveTrack: Track = {
             { id: "d", label: "Borrow the money from a friend" },
           ],
           bestOptionId: "b",
-          feedback: "A goal plus a plan makes big things possible. GH₵5 a week reaches GH₵60 in 12 weeks.",
+          feedback:
+            "A goal plus a plan makes big things possible. GH₵5 a week reaches GH₵60 in 12 weeks.",
         },
         {
           id: "p5",
-          prompt: "Kofi saved for two weeks then spent everything on sweets. What would you tell him?",
+          prompt:
+            "Kofi saved for two weeks then spent everything on sweets. What would you tell him?",
           options: [
             { id: "a", label: "He wasted it all" },
             { id: "b", label: "He can start again and keep part of his money next time" },
@@ -344,7 +348,8 @@ export const saveTrack: Track = {
       questions: [
         {
           id: "q1",
-          prompt: "You receive GH₵20 for helping at your uncle's shop. What is a strong first step?",
+          prompt:
+            "You receive GH₵20 for helping at your uncle's shop. What is a strong first step?",
           options: [
             { id: "a", label: "Decide how much to keep before you spend anything" },
             { id: "b", label: "Buy something quickly before you change your mind" },
@@ -352,7 +357,8 @@ export const saveTrack: Track = {
             { id: "d", label: "Split it with everyone" },
           ],
           bestOptionId: "a",
-          feedback: "Deciding first is what savers do. Spending is easier to control once the saving is set aside.",
+          feedback:
+            "Deciding first is what savers do. Spending is easier to control once the saving is set aside.",
         },
         {
           id: "q2",
@@ -376,7 +382,8 @@ export const saveTrack: Track = {
             { id: "d", label: "Nobody can ever take it" },
           ],
           bestOptionId: "b",
-          feedback: "Safe places protect money from being lost — that's the main job of a saving place.",
+          feedback:
+            "Safe places protect money from being lost — that's the main job of a saving place.",
         },
         {
           id: "q4",
@@ -544,7 +551,8 @@ export const saveTrack: Track = {
         },
         {
           id: "s2",
-          situation: "The waakye stall smells wonderful. A full plate costs GH₵12, a small one GH₵6.",
+          situation:
+            "The waakye stall smells wonderful. A full plate costs GH₵12, a small one GH₵6.",
           question: "What do you choose?",
           choices: [
             {
@@ -580,14 +588,16 @@ export const saveTrack: Track = {
               label: "Buy one to match my friend",
               savingsDelta: -5,
               outcome: "You have a wristband. Your football fund did not grow today.",
-              reflection: "Did the wristband matter more than the football? Only you can answer that.",
+              reflection:
+                "Did the wristband matter more than the football? Only you can answer that.",
             },
             {
               id: "b",
               label: "Skip it and keep the money",
               savingsDelta: 0,
               outcome: "You walk on. Whatever is left goes into your money box tonight.",
-              reflection: "You chose your bigger goal over a small buy. That is a real saving skill.",
+              reflection:
+                "You chose your bigger goal over a small buy. That is a real saving skill.",
             },
           ],
         },

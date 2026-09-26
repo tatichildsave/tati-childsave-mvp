@@ -66,7 +66,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --shadow-card: 0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
+  --shadow-card:
+    0 1px 2px color-mix(in oklab, var(--foreground) 6%, transparent),
     0 8px 24px -16px color-mix(in oklab, var(--foreground) 22%, transparent);
 }
 
@@ -191,31 +192,65 @@
 }
 
 @keyframes tati-value-pop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.06); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes tati-badge-unlock {
-  0% { opacity: 0.55; transform: translateY(5px) scale(0.96); }
-  65% { transform: translateY(-2px) scale(1.02); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% {
+    opacity: 0.55;
+    transform: translateY(5px) scale(0.96);
+  }
+  65% {
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes tati-consequence-in {
-  0% { opacity: 0; transform: translateY(8px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes tati-milestone-in {
-  0% { opacity: 0; transform: translateY(10px) scale(0.98); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.tati-value-pop { animation: tati-value-pop 360ms ease-out; }
-.tati-badge-unlock { animation: tati-badge-unlock 520ms ease-out both; }
-.tati-consequence-in { animation: tati-consequence-in 240ms ease-out both; }
-.tati-milestone-in { animation: tati-milestone-in 280ms ease-out both; }
+.tati-value-pop {
+  animation: tati-value-pop 360ms ease-out;
+}
+.tati-badge-unlock {
+  animation: tati-badge-unlock 520ms ease-out both;
+}
+.tati-consequence-in {
+  animation: tati-consequence-in 240ms ease-out both;
+}
+.tati-milestone-in {
+  animation: tati-milestone-in 280ms ease-out both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

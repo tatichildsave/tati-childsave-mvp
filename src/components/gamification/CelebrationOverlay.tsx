@@ -38,7 +38,13 @@ export function CelebrationOverlay({
         {badgeIcons.length > 0 ? (
           <div className="mt-4 flex justify-center gap-2 text-3xl" aria-hidden="true">
             {badgeIcons.map((icon, i) => (
-              <span key={`${icon}-${i}`} className="inline-block tati-badge-unlock" style={{ animationDelay: `${i * 70}ms` }}>{icon}</span>
+              <span
+                key={`${icon}-${i}`}
+                className="inline-block tati-badge-unlock"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                {icon}
+              </span>
             ))}
           </div>
         ) : null}

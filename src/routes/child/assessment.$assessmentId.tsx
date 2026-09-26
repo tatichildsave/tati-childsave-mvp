@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { Screen, TopBar } from "@/components/learning/primitives";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
@@ -19,6 +20,8 @@ function AssessmentPage() {
   const { data } = useChildLearning();
   const record = useRecordChildProgress();
   const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!definition || !data)
     return (
@@ -28,27 +31,38 @@ function AssessmentPage() {
     );
 
   async function finish(result: AssessmentResult) {
-    await saveChildAssessment({
-      data: {
-        assessmentId: result.assessmentId,
-        responses: result.responses,
-        points: result.points,
-        maxPoints: result.maxPoints,
-        competencyScores: Object.fromEntries(
-          result.competencies.map((item) => [item.competency, item]),
-        ),
-      },
-    });
-    await record.mutateAsync({
-      data: {
-        itemType: "assessment",
-        itemId: assessmentId,
-        score: result.points,
-        maxScore: result.maxPoints,
-        details: { assessmentType: result.assessmentType },
-      },
-    });
-    await navigate({ to: "/child/learn" });
+    try {
+      setSubmitError(null);
+      setIsSubmitting(true);
+
+      await saveChildAssessment({
+        data: {
+          assessmentId: result.assessmentId,
+          responses: result.responses,
+          points: result.points,
+          maxPoints: result.maxPoints,
+          competencyScores: Object.fromEntries(
+            result.competencies.map((item) => [item.competency, item]),
+          ),
+        },
+      });
+
+      await record.mutateAsync({
+        data: {
+          itemType: "assessment",
+          itemId: assessmentId,
+          score: result.points,
+          maxScore: result.maxPoints,
+          details: { assessmentType: result.assessmentType },
+        },
+      });
+
+      await navigate({ to: "/child/learn" });
+    } catch (error) {
+      console.error("Assessment submission error:", error);
+      setSubmitError("We couldn't save your answers. Your answers are still here. Try again.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -56,8 +70,9 @@ function AssessmentPage() {
       definition={definition}
       storageKey={`tati.assessment.child.${data.profile.id}.${assessmentId}`}
       backTo="/child/learn"
-      saving={record.isPending}
+      saving={record.isPending || isSubmitting}
       onComplete={finish}
+      submitError={submitError}
       {...(data.profile.name ? { childName: data.profile.name.split(" ")[0] } : {})}
     />
   );

@@ -22,7 +22,10 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/assessment/
   head: () => ({
     meta: [
       { title: "Check-in — TATI ChildSave" },
-      { name: "description", content: "A short, friendly check-in about money choices. No pass or fail." },
+      {
+        name: "description",
+        content: "A short, friendly check-in about money choices. No pass or fail.",
+      },
       { property: "og:title", content: "Check-in — TATI ChildSave" },
       { property: "og:description", content: "A short, friendly check-in about money choices." },
       { property: "og:type", content: "website" },
@@ -43,7 +46,11 @@ function AssessmentPage() {
 
   useEffect(() => {
     if (assessmentId === "save-pre") {
-      void trackEvent("pre_assessment_started", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+      void trackEvent("pre_assessment_started", {
+        childProfileId: childId,
+        entityId: assessmentId,
+        eventKey: assessmentId,
+      });
     }
   }, [assessmentId, childId]);
 
@@ -58,10 +65,18 @@ function AssessmentPage() {
   async function finish(result: AssessmentResult) {
     if (definition) await saveAssessmentAttempt(childId, definition, result);
     if (result.assessmentType === "pre") {
-      void trackEvent("pre_assessment_completed", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+      void trackEvent("pre_assessment_completed", {
+        childProfileId: childId,
+        entityId: assessmentId,
+        eventKey: assessmentId,
+      });
     }
     if (result.assessmentType === "post") {
-      void trackEvent("post_assessment_completed", { childProfileId: childId, entityId: assessmentId, eventKey: assessmentId });
+      void trackEvent("post_assessment_completed", {
+        childProfileId: childId,
+        entityId: assessmentId,
+        eventKey: assessmentId,
+      });
     }
     await record.mutateAsync({
       childId,

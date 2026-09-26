@@ -52,7 +52,10 @@ export async function loadSession(
 }
 
 /** Saves the story after every decision so a refresh never loses progress. */
-export async function saveSession(childId: string, state: ScenarioState): Promise<string | undefined> {
+export async function saveSession(
+  childId: string,
+  state: ScenarioState,
+): Promise<string | undefined> {
   const { data, error } = await supabase
     .from("scenario_sessions")
     .upsert(

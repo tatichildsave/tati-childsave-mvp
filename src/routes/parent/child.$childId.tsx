@@ -25,7 +25,10 @@ export const Route = createFileRoute("/parent/child/$childId")({
         content: "Progress, savings and plain-language insights for one child on the SAVE track.",
       },
       { property: "og:title", content: "Child journey — TATI ChildSave parent portal" },
-      { property: "og:description", content: "See what your child is ready to talk about at home." },
+      {
+        property: "og:description",
+        content: "See what your child is ready to talk about at home.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -38,7 +41,8 @@ function ParentChild() {
   const { child, isLoading, isError, refetch } = useChildProfile(childId);
   const progress = useChildProgress(childId);
   const { track } = progress;
-  const doneLesson = (id: string) => progress.steps.some((s) => s.done && s.item.kind === "lesson" && s.item.id === id);
+  const doneLesson = (id: string) =>
+    progress.steps.some((s) => s.done && s.item.kind === "lesson" && s.item.id === id);
 
   if (isLoading) {
     return (

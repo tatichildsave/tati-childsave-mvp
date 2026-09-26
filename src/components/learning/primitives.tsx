@@ -10,7 +10,15 @@ export function Screen({ children }: { children: ReactNode }) {
   );
 }
 
-export function TopBar({ title, backTo, right }: { title: string; backTo?: string; right?: ReactNode }) {
+export function TopBar({
+  title,
+  backTo,
+  right,
+}: {
+  title: string;
+  backTo?: string;
+  right?: ReactNode;
+}) {
   return (
     <header className="mb-5 flex items-center gap-3">
       {backTo ? (
@@ -30,7 +38,12 @@ export function TopBar({ title, backTo, right }: { title: string; backTo?: strin
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm", className)}>
+    <div
+      className={cn(
+        "rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -48,7 +61,10 @@ export function ProgressBar({ value, max, label }: { value: number; max: number;
         aria-valuemax={100}
         aria-label={label ?? "Progress"}
       >
-        <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       {label ? <p className="mt-2 text-sm text-muted-foreground">{label}</p> : null}
     </div>

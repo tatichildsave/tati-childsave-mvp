@@ -59,7 +59,12 @@ export const savePreAssessment: AssessmentDefinition = {
           description: "Put every cedi away for a special goal.",
           icon: "🎯",
         },
-        { id: "d", label: "Give it to a friend to hold", description: "Ask someone else to keep it safe.", icon: "🤝" },
+        {
+          id: "d",
+          label: "Give it to a friend to hold",
+          description: "Ask someone else to keep it safe.",
+          icon: "🤝",
+        },
       ],
       idealOptionId: "b",
       feedback:
@@ -109,14 +114,16 @@ export const savePreAssessment: AssessmentDefinition = {
         { id: "d", label: "Borrow the money from a friend" },
       ],
       idealOptionId: "b",
-      feedback: "A goal plus a plan makes big things possible. GH₵5 a week reaches GH₵60 in 12 weeks.",
+      feedback:
+        "A goal plus a plan makes big things possible. GH₵5 a week reaches GH₵60 in 12 weeks.",
     },
     {
       id: "p5",
       assessmentType: "pre",
       competency: "financial-resilience",
       illustration: "🌱",
-      question: "Kofi saved for two weeks then spent everything on sweets. What would you tell him?",
+      question:
+        "Kofi saved for two weeks then spent everything on sweets. What would you tell him?",
       options: [
         { id: "a", label: "He wasted it all" },
         { id: "b", label: "He can start again and keep part of his money next time" },
@@ -139,7 +146,8 @@ export const savePreAssessment: AssessmentDefinition = {
         { id: "c", label: "Neither, keep the money in your bag" },
       ],
       idealOptionId: "a",
-      feedback: "Things we need usually come before things we want. Wants can still have their turn later.",
+      feedback:
+        "Things we need usually come before things we want. Wants can still have their turn later.",
     },
     {
       id: "p7",
@@ -153,7 +161,8 @@ export const savePreAssessment: AssessmentDefinition = {
         { id: "c", label: "Waiting until someone gives you some" },
       ],
       idealOptionId: "a",
-      feedback: "Earning means giving something useful — your help, your time, your skill — and getting money back.",
+      feedback:
+        "Earning means giving something useful — your help, your time, your skill — and getting money back.",
     },
     {
       id: "p8",
@@ -222,7 +231,8 @@ export const savePostAssessment: AssessmentDefinition = {
         { id: "d", label: "Split it with everyone" },
       ],
       idealOptionId: "a",
-      feedback: "Deciding first is what savers do. Spending is easier to control once the saving is set aside.",
+      feedback:
+        "Deciding first is what savers do. Spending is easier to control once the saving is set aside.",
     },
     {
       id: "q2",
@@ -300,7 +310,8 @@ export const savePostAssessment: AssessmentDefinition = {
       assessmentType: "post",
       competency: "financial-resilience",
       illustration: "🌦️",
-      question: "You had to use your savings for something unexpected. How do you feel about your goal?",
+      question:
+        "You had to use your savings for something unexpected. How do you feel about your goal?",
       options: [
         { id: "a", label: "The goal is still there — I start adding again" },
         { id: "b", label: "The goal is finished" },
@@ -335,7 +346,8 @@ export const savePostAssessment: AssessmentDefinition = {
         { id: "c", label: "Say yes and never mention it again" },
       ],
       idealOptionId: "a",
-      feedback: "Clear agreements and a grown-up's help keep both your money and your friendship safe.",
+      feedback:
+        "Clear agreements and a grown-up's help keep both your money and your friendship safe.",
     },
     {
       id: "q10",

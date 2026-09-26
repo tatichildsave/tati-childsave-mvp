@@ -13,12 +13,14 @@ export const saveReflections: ReflectionPrompt[] = [
       {
         id: "goal",
         label: "My school bag goal",
-        response: "Holding your goal in mind helps, even when it means saying 'not today' to something nice.",
+        response:
+          "Holding your goal in mind helps, even when it means saying 'not today' to something nice.",
       },
       {
         id: "now",
         label: "What I wanted right then",
-        response: "Wanting something now is normal. Noticing that feeling is the first step to steering it.",
+        response:
+          "Wanting something now is normal. Noticing that feeling is the first step to steering it.",
       },
       {
         id: "both",
@@ -38,17 +40,20 @@ export const saveReflections: ReflectionPrompt[] = [
       {
         id: "good",
         label: "Good — I helped a friend",
-        response: "Helping is a real value. Agreeing on when money comes back keeps the friendship easy.",
+        response:
+          "Helping is a real value. Agreeing on when money comes back keeps the friendship easy.",
       },
       {
         id: "worried",
         label: "A little worried about my goal",
-        response: "That worry is useful information. It tells you how much this goal matters to you.",
+        response:
+          "That worry is useful information. It tells you how much this goal matters to you.",
       },
       {
         id: "unsure",
         label: "I am still not sure",
-        response: "Unsure is an honest answer. Some money choices only make sense after you see what follows.",
+        response:
+          "Unsure is an honest answer. Some money choices only make sense after you see what follows.",
       },
     ],
     closing: "Lending is a choice, not a rule. What matters is deciding with your eyes open.",
@@ -63,7 +68,8 @@ export const saveReflections: ReflectionPrompt[] = [
       {
         id: "earn",
         label: "Look for more ways to earn",
-        response: "Earning gave you choices nobody else controlled. That is a strong habit to grow.",
+        response:
+          "Earning gave you choices nobody else controlled. That is a strong habit to grow.",
       },
       {
         id: "save-first",
@@ -73,7 +79,8 @@ export const saveReflections: ReflectionPrompt[] = [
       {
         id: "plan",
         label: "Plan for the surprise days",
-        response: "Surprises always come. A small emergency stash keeps a plan standing when they do.",
+        response:
+          "Surprises always come. A small emergency stash keeps a plan standing when they do.",
       },
       {
         id: "same",
@@ -81,6 +88,7 @@ export const saveReflections: ReflectionPrompt[] = [
         response: "Then your plan suited you. Keep it and stretch the goal a little next time.",
       },
     ],
-    closing: "Reaching GH₵80 was never the whole point. Finishing the journey and learning from it is progress.",
+    closing:
+      "Reaching GH₵80 was never the whole point. Finishing the journey and learning from it is progress.",
   },
 ];

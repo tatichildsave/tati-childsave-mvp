@@ -1,0 +1,9 @@
+﻿npm notice run npx
+npm notice run tsc --noEmit
+src/lib/auth/child-learning.functions.ts(273,15): error TS2352: Conversion of type 'ScenarioDecisionLog' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'ScenarioDecisionLog'.
+src/lib/auth/child-learning.functions.ts(561,27): error TS4111: Property 'nodeId' comes from an index signature, so it must be accessed with ['nodeId'].
+src/lib/auth/child-learning.functions.ts(562,26): error TS4111: Property 'choiceId' comes from an index signature, so it must be accessed with ['choiceId'].
+src/lib/auth/child-learning.functions.ts(573,14): error TS4111: Property 'endingId' comes from an index signature, so it must be accessed with ['endingId'].
+src/lib/auth/child-learning.functions.ts(573,50): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/lib/auth/child-learning.functions.ts(573,55): error TS4111: Property 'endingId' comes from an index signature, so it must be accessed with ['endingId'].

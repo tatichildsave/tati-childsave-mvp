@@ -11,7 +11,13 @@ const WORDS: Record<SkillGrowth["strength"], string> = {
  * Visual skill picture for a child. Shows how full each skill bar is and whether it
  * grew — never a school-style percentage.
  */
-export function SkillBars({ skills, tone = "strength" }: { skills: SkillGrowth[]; tone?: "strength" | "growing" }) {
+export function SkillBars({
+  skills,
+  tone = "strength",
+}: {
+  skills: SkillGrowth[];
+  tone?: "strength" | "growing";
+}) {
   if (skills.length === 0) return null;
   return (
     <ul className="space-y-3">
@@ -22,7 +28,9 @@ export function SkillBars({ skills, tone = "strength" }: { skills: SkillGrowth[]
             <span
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-extrabold",
-                tone === "growing" ? "bg-accent-soft text-accent-foreground" : "bg-success-soft text-success",
+                tone === "growing"
+                  ? "bg-accent-soft text-accent-foreground"
+                  : "bg-success-soft text-success",
               )}
             >
               {tone === "growing" ? "Still growing" : WORDS[s.strength]}
@@ -35,7 +43,10 @@ export function SkillBars({ skills, tone = "strength" }: { skills: SkillGrowth[]
             aria-label={`${s.label}: ${tone === "growing" ? "still growing" : WORDS[s.strength].toLowerCase()}`}
           >
             <div
-              className={cn("h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none", tone === "growing" ? "bg-accent" : "bg-success")}
+              className={cn(
+                "h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none",
+                tone === "growing" ? "bg-accent" : "bg-success",
+              )}
               style={{ width: `${Math.max(8, Math.round(s.after * 100))}%` }}
             />
           </div>

@@ -32,7 +32,13 @@ export type LessonBlock =
   | { type: "text"; body: string }
   | { type: "highlight"; body: string }
   | { type: "example"; title: string; body: string }
-  | { type: "checkpoint"; prompt: string; options: AssessmentOption[]; bestOptionId: string; feedback: string };
+  | {
+      type: "checkpoint";
+      prompt: string;
+      options: AssessmentOption[];
+      bestOptionId: string;
+      feedback: string;
+    };
 
 export interface Lesson {
   id: string;

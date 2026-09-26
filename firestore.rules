@@ -1,0 +1,161 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return signedIn()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data
+        : {};
+    }
+
+    function hasRole(role) {
+      return signedIn() && role in userDoc().roles;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function memberPath(familyId) {
+      return /databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid);
+    }
+
+    function isActiveFamilyMember(familyId) {
+      return signedIn() && exists(memberPath(familyId))
+        && get(memberPath(familyId)).data.status == 'active';
+    }
+
+    function isFamilyAdult(familyId) {
+      return isActiveFamilyMember(familyId)
+        && get(memberPath(familyId)).data.role in ['parent', 'guardian'];
+    }
+
+    function isAssignedFacilitator(familyId, childId) {
+      return signedIn() && hasRole('facilitator')
+        && 'facilitatorUids' in get(/databases/$(database)/documents/families/$(familyId)/children/$(childId)).data
+        && get(/databases/$(database)/documents/families/$(familyId)/children/$(childId)).data.facilitatorUids.hasAny([request.auth.uid]);
+    }
+
+    function canAccessChild(familyId, childId) {
+      return isFamilyAdult(familyId) || isAssignedFacilitator(familyId, childId) || isAdmin();
+    }
+
+    function immutableOwnership(existing, proposed) {
+      return proposed.familyId == existing.familyId
+        && proposed.id == existing.id
+        && proposed.createdBy == existing.createdBy;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.roles is list
+        && request.resource.data.status == 'pending';
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.roles == resource.data.roles
+        && request.resource.data.status == resource.data.status;
+      allow delete: if isAdmin();
+    }
+
+    match /families/{familyId} {
+      allow read: if isActiveFamilyMember(familyId) || isAdmin();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if (isActiveFamilyMember(familyId) || isAdmin())
+        && request.resource.data.familyId == resource.data.familyId
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isAdmin();
+
+      match /members/{uid} {
+        allow read: if isActiveFamilyMember(familyId) || isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
+
+      match /children/{childId} {
+        allow read: if canAccessChild(familyId, childId);
+        allow create: if isFamilyAdult(familyId)
+          && request.resource.data.familyId == familyId
+          && request.resource.data.id == childId
+          && request.resource.data.createdBy == request.auth.uid;
+        allow update: if canAccessChild(familyId, childId)
+          && immutableOwnership(resource.data, request.resource.data);
+        allow delete: if isAdmin() || isFamilyAdult(familyId);
+
+        match /journeyProgress/{itemKey} {
+          allow read: if canAccessChild(familyId, childId);
+          allow create, update: if (isFamilyAdult(familyId) || isAssignedFacilitator(familyId, childId) || isAdmin())
+            && request.resource.data.familyId == familyId
+            && request.resource.data.childId == childId
+            && request.resource.data.score == null
+            && request.resource.data.maxScore == null;
+          allow delete: if isAdmin();
+        }
+
+        match /assessmentAttempts/{attemptId} {
+          allow read: if canAccessChild(familyId, childId);
+          allow write: if false;
+        }
+
+        match /scenarioSessions/{scenarioKey} {
+          allow read: if canAccessChild(familyId, childId);
+          allow write: if false;
+
+          match /decisions/{decisionId} {
+            allow read: if canAccessChild(familyId, childId);
+            allow write: if false;
+          }
+        }
+
+        match /competencies/{competencyId} {
+          allow read: if canAccessChild(familyId, childId);
+          allow write: if false;
+        }
+
+        match /achievements/{achievementId} {
+          allow read: if canAccessChild(familyId, childId);
+          allow write: if false;
+        }
+
+        match /parentInsights/{insightId} {
+          allow read: if isFamilyAdult(familyId) || isAdmin();
+          allow write: if false;
+        }
+      }
+    }
+
+    match /childCredentials/{tatiId} {
+      allow read, write: if false;
+    }
+
+    match /childSessions/{sessionId} {
+      allow read, write: if false;
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if signedIn() && (resource.data.submittedByUid == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && request.resource.data.submittedByUid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /analyticsEvents/{eventId} {
+      allow read: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'eventName', 'actorUid', 'childId', 'familyId', 'entityId', 'eventKey', 'occurredAt'
+        ]);
+      allow update, delete: if false;
+    }
+
+    match /childAuthIdentities/{childProfileId} {
+      allow read, write: if false;
+    }
+  }
+}

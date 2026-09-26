@@ -121,7 +121,8 @@ export const mockScenarios: MockScenario[] = [
   {
     id: "market-day",
     title: "Market Day with GH₵20",
-    description: "A Saturday at Makola market, a waakye stall and a football fund. What will you keep?",
+    description:
+      "A Saturday at Makola market, a waakye stall and a football fund. What will you keep?",
     pocket: 20,
     target: 60,
     days: 1,
@@ -130,9 +131,27 @@ export const mockScenarios: MockScenario[] = [
 ];
 
 export const mockAchievements = [
-  { id: "first-goal", icon: "🎯", title: "First Goal Set", note: "Commit to your first savings target", unlocked: false },
-  { id: "piggy-saver", icon: "💰", title: "Piggy Saver", note: "Keep money in savings for 3 straight choices", unlocked: false },
-  { id: "resilient", icon: "🌟", title: "Resilient Spender", note: "Choose a need over a tempting want", unlocked: false },
+  {
+    id: "first-goal",
+    icon: "🎯",
+    title: "First Goal Set",
+    note: "Commit to your first savings target",
+    unlocked: false,
+  },
+  {
+    id: "piggy-saver",
+    icon: "💰",
+    title: "Piggy Saver",
+    note: "Keep money in savings for 3 straight choices",
+    unlocked: false,
+  },
+  {
+    id: "resilient",
+    icon: "🌟",
+    title: "Resilient Spender",
+    note: "Choose a need over a tempting want",
+    unlocked: false,
+  },
 ];
 
 export const mockInsights = [

@@ -7,9 +7,20 @@
 import { computeGamification } from "@/lib/gamification/engine";
 import type { GamificationState } from "@/lib/gamification/types";
 import type { ProgressEvent } from "@/lib/learning/progress";
-import { buildSkillGrowth, growthHeadline, stillDeveloping, strengths, type SkillGrowth } from "@/lib/learning/growth";
+import {
+  buildSkillGrowth,
+  growthHeadline,
+  stillDeveloping,
+  strengths,
+  type SkillGrowth,
+} from "@/lib/learning/growth";
 import { buildInsights } from "@/lib/learning/insights";
-import { conversationStarters, journeySnapshot, skillSentence, type JourneySnapshot } from "@/lib/learning/parent-insights";
+import {
+  conversationStarters,
+  journeySnapshot,
+  skillSentence,
+  type JourneySnapshot,
+} from "@/lib/learning/parent-insights";
 import { itemPath, itemTitle } from "@/lib/learning/track";
 import type { Track, TrackItem, TrackItemKind } from "@/lib/learning/types";
 
@@ -47,7 +58,13 @@ export interface ProgressSnapshot {
   events: ProgressEvent[];
   /** Every stop with its done / current / locked state. */
   steps: ItemProgress[];
-  journey: JourneySnapshot & { complete: boolean; savedCedis: number; savedPct: number; daysToGo: number; dayNumber: number };
+  journey: JourneySnapshot & {
+    complete: boolean;
+    savedCedis: number;
+    savedPct: number;
+    daysToGo: number;
+    dayNumber: number;
+  };
   currentItem?: TrackItem;
   continuePath: string;
   countsByKind: Record<TrackItemKind, { done: number; total: number }>;

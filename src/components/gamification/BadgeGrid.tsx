@@ -3,12 +3,20 @@ import type { BadgeState } from "@/lib/gamification/types";
 import { cn } from "@/lib/utils";
 
 /** Badge shelf. Locked badges stay visible with a friendly "how to earn" hint. */
-export function BadgeGrid({ badges, title = "My badges" }: { badges: BadgeState[]; title?: string }) {
+export function BadgeGrid({
+  badges,
+  title = "My badges",
+}: {
+  badges: BadgeState[];
+  title?: string;
+}) {
   const previousEarned = useRef<Set<string>>(new Set());
   const [newlyEarned, setNewlyEarned] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const earned = new Set(badges.filter((badge) => badge.earned).map((badge) => badge.definition.id));
+    const earned = new Set(
+      badges.filter((badge) => badge.earned).map((badge) => badge.definition.id),
+    );
     setNewlyEarned(new Set([...earned].filter((id) => !previousEarned.current.has(id))));
     previousEarned.current = earned;
   }, [badges]);

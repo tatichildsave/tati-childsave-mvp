@@ -22,7 +22,8 @@ export const Route = createFileRoute("/parent/")({
       { title: "Parent portal — TATI ChildSave" },
       {
         name: "description",
-        content: "Follow each child's money journey: progress, choices made and what to talk about at home.",
+        content:
+          "Follow each child's money journey: progress, choices made and what to talk about at home.",
       },
       { property: "og:title", content: "Parent portal — TATI ChildSave" },
       { property: "og:description", content: "Plain-language insights for parents and guardians." },

@@ -16,7 +16,11 @@ const JOURNEY_ACHIEVEMENT = "journey-complete";
  * one big journey celebration is still owed. Earned badges are saved in the
  * backend, so a refresh or another device never re-announces them.
  */
-export function useBadgeCelebrations(childId: string, badges: BadgeState[], journeyComplete: boolean) {
+export function useBadgeCelebrations(
+  childId: string,
+  badges: BadgeState[],
+  journeyComplete: boolean,
+) {
   const qc = useQueryClient();
   const { data: awarded } = useQuery(achievementsQuery(childId));
   const [showJourneyCelebration, setShowJourneyCelebration] = useState(false);
@@ -39,7 +43,8 @@ export function useBadgeCelebrations(childId: string, badges: BadgeState[], jour
       if (!firstSync) {
         for (const id of fresh) {
           const badge = badges.find((b) => b.definition.id === id);
-          if (badge) celebrateBadge(badge.definition.icon, badge.definition.name, badge.definition.blurb);
+          if (badge)
+            celebrateBadge(badge.definition.icon, badge.definition.name, badge.definition.blurb);
         }
       }
       void markCelebrated(childId, fresh);

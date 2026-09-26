@@ -19,7 +19,10 @@ export function achievementsQuery(childId: string) {
         .select("achievement_id, celebrated")
         .eq("child_profile_id", childId);
       if (error) throw error;
-      return (data ?? []).map((r) => ({ achievementId: r.achievement_id, celebrated: r.celebrated }));
+      return (data ?? []).map((r) => ({
+        achievementId: r.achievement_id,
+        celebrated: r.celebrated,
+      }));
     },
     staleTime: 30_000,
     enabled: Boolean(childId),

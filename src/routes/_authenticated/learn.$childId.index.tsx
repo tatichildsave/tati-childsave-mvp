@@ -27,12 +27,14 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/")({
       { title: "My Journey — TATI ChildSave" },
       {
         name: "description",
-        content: "Follow the SAVE adventure trail: lessons, choices and your school bag savings goal.",
+        content:
+          "Follow the SAVE adventure trail: lessons, choices and your school bag savings goal.",
       },
       { property: "og:title", content: "My Journey — TATI ChildSave" },
       {
         property: "og:description",
-        content: "Follow the SAVE adventure trail: lessons, choices and your school bag savings goal.",
+        content:
+          "Follow the SAVE adventure trail: lessons, choices and your school bag savings goal.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -114,7 +116,9 @@ function Journey() {
           ) : null}
         </div>
         <div className="absolute bottom-4 left-4 right-4 text-background">
-          <p className="text-xs font-semibold uppercase tracking-widest opacity-90">TATI Junior · {track.name}</p>
+          <p className="text-xs font-semibold uppercase tracking-widest opacity-90">
+            TATI Junior · {track.name}
+          </p>
           <h2 className="text-xl font-bold">Your {track.name} Journey 🎒</h2>
           <p className="text-sm opacity-90">
             {track.storyline} · {daysToGo} Days to Go!
@@ -145,11 +149,16 @@ function Journey() {
             aria-valuemax={100}
             aria-label="School bag goal progress"
           >
-            <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${savedPct}%` }} />
+            <div
+              className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none"
+              style={{ width: `${savedPct}%` }}
+            />
           </div>
           <div className="mt-2 flex justify-between text-sm">
             <span className="font-semibold text-success">{savedPct}% Complete</span>
-            <span className="text-muted-foreground">Only GH₵{Math.max(0, target - saved)} to go! 🎉</span>
+            <span className="text-muted-foreground">
+              Only GH₵{Math.max(0, target - saved)} to go! 🎉
+            </span>
           </div>
         </section>
       ) : null}
@@ -177,7 +186,10 @@ function Journey() {
         </p>
       ) : (
         <ol className="relative space-y-3 pl-11">
-          <span aria-hidden="true" className="absolute bottom-6 left-[18px] top-4 w-1 rounded-full bg-muted" />
+          <span
+            aria-hidden="true"
+            className="absolute bottom-6 left-[18px] top-4 w-1 rounded-full bg-muted"
+          />
           <span
             aria-hidden="true"
             className="absolute left-[18px] top-4 w-1 rounded-full bg-success transition-[height] duration-500 ease-out motion-reduce:transition-none"
@@ -190,7 +202,9 @@ function Journey() {
               <Fragment key={`${item.kind}-${item.id}`}>
                 {newStage ? (
                   <li className="relative pt-3">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{stage}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      {stage}
+                    </p>
                   </li>
                 ) : null}
                 <TrailStep
@@ -203,7 +217,6 @@ function Journey() {
               </Fragment>
             );
           })}
-
         </ol>
       )}
 
@@ -215,8 +228,12 @@ function Journey() {
       {goal ? (
         <section className="mt-4 ml-11 rounded-3xl border-2 border-accent bg-accent-soft p-5">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide text-accent-foreground">Grand Finale</span>
-            <span className="rounded-full bg-card px-3 py-1 text-xs font-bold">GH₵{target} Total</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-accent-foreground">
+              Grand Finale
+            </span>
+            <span className="rounded-full bg-card px-3 py-1 text-xs font-bold">
+              GH₵{target} Total
+            </span>
           </div>
           <h4 className="text-base font-bold">🎒 {goal.finaleTitle}</h4>
           <p className="mt-1 text-sm text-muted-foreground">{goal.finaleBody}</p>
@@ -237,7 +254,9 @@ function Journey() {
         <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Next action</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Next action
+              </p>
               <p className="truncate font-semibold">{itemTitle(track, currentStep.item)}</p>
             </div>
             <Link
@@ -340,7 +359,9 @@ function TrailStep({
             {state === "current" ? "You are here · " : ""}Step {stepNumber} · {label}
           </p>
           {item.chip ? (
-            <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">{item.chip}</span>
+            <span className="rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">
+              {item.chip}
+            </span>
           ) : null}
         </div>
         <p className="mt-0.5 font-bold">{title}</p>

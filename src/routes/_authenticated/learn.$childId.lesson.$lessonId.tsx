@@ -30,13 +30,20 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/lesson/$les
 });
 
 function LessonPage() {
-  const { childId, lessonId } = useParams({ from: "/_authenticated/learn/$childId/lesson/$lessonId" });
+  const { childId, lessonId } = useParams({
+    from: "/_authenticated/learn/$childId/lesson/$lessonId",
+  });
   const lesson = getLessonById(lessonId);
   const navigate = useNavigate();
   const record = useRecordProgress();
 
   useEffect(() => {
-    if (lesson) void trackEvent("lesson_started", { childProfileId: childId, entityId: lesson.id, eventKey: lesson.id });
+    if (lesson)
+      void trackEvent("lesson_started", {
+        childProfileId: childId,
+        entityId: lesson.id,
+        eventKey: lesson.id,
+      });
   }, [childId, lesson]);
 
   if (!lesson) {
@@ -68,7 +75,11 @@ function LessonPage() {
         reflection: draft.reflection,
       },
     });
-    void trackEvent("lesson_completed", { childProfileId: childId, entityId: lesson.id, eventKey: lesson.id });
+    void trackEvent("lesson_completed", {
+      childProfileId: childId,
+      entityId: lesson.id,
+      eventKey: lesson.id,
+    });
     try {
       localStorage.removeItem(`tati.lesson.${childId}.${lesson.id}`);
     } catch {
@@ -76,7 +87,10 @@ function LessonPage() {
     }
     celebrateStep("lesson", lesson.title);
     if (lesson.nextLesson) {
-      navigate({ to: "/learn/$childId/lesson/$lessonId", params: { childId, lessonId: lesson.nextLesson } });
+      navigate({
+        to: "/learn/$childId/lesson/$lessonId",
+        params: { childId, lessonId: lesson.nextLesson },
+      });
     } else {
       navigate({ to: "/learn/$childId", params: { childId } });
     }

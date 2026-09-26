@@ -3,7 +3,13 @@
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { Track, TrackItemKind } from "@/lib/learning/types";
 import { BADGES, XP_PER_LEVEL, XP_RULES, levelLabel } from "./rules";
-import type { BadgeContext, BadgeState, GamificationState, RewardTrigger, StreakState } from "./types";
+import type {
+  BadgeContext,
+  BadgeState,
+  GamificationState,
+  RewardTrigger,
+  StreakState,
+} from "./types";
 
 const KINDS: TrackItemKind[] = ["assessment", "lesson", "scenario", "reflection"];
 
@@ -58,7 +64,9 @@ export function computeGamification(
 
   const counts = KINDS.reduce(
     (acc, kind) => {
-      acc[kind] = track.sequence.filter((i) => i.kind === kind && done.has(`${i.kind}:${i.id}`)).length;
+      acc[kind] = track.sequence.filter(
+        (i) => i.kind === kind && done.has(`${i.kind}:${i.id}`),
+      ).length;
       return acc;
     },
     {} as Record<TrackItemKind, number>,

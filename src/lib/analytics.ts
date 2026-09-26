@@ -33,7 +33,11 @@ export type AnalyticsEvent = {
 
 export async function trackEvent(
   eventName: AnalyticsEventName,
-  input: { childProfileId?: string | null; entityId?: string | null; eventKey?: string | null } = {},
+  input: {
+    childProfileId?: string | null;
+    entityId?: string | null;
+    eventKey?: string | null;
+  } = {},
 ): Promise<string | undefined> {
   try {
     const { data: userData } = await supabase.auth.getUser();

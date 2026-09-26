@@ -1,6 +1,13 @@
 import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { Screen, Card, TopBar, PrimaryButton, ChoiceButton, GhanaCedi } from "@/components/learning/primitives";
+import {
+  Screen,
+  Card,
+  TopBar,
+  PrimaryButton,
+  ChoiceButton,
+  GhanaCedi,
+} from "@/components/learning/primitives";
 import { ScenarioPlayer } from "@/components/scenario/ScenarioPlayer";
 import { useRecordProgress } from "@/lib/progress/service";
 import { getScenarioDefinition } from "@/lib/scenario/registry";
@@ -20,7 +27,10 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/scenario/$s
   head: () => ({
     meta: [
       { title: "Decision story — TATI ChildSave" },
-      { name: "description", content: "Make money choices and see what happens next in a Ghanaian story." },
+      {
+        name: "description",
+        content: "Make money choices and see what happens next in a Ghanaian story.",
+      },
       { property: "og:title", content: "Decision story — TATI ChildSave" },
       { property: "og:description", content: "Make money choices and see what happens next." },
       { property: "og:type", content: "website" },
@@ -39,12 +49,16 @@ interface HistoryEntry {
 }
 
 function ScenarioPage() {
-  const { childId, scenarioId } = useParams({ from: "/_authenticated/learn/$childId/scenario/$scenarioId" });
+  const { childId, scenarioId } = useParams({
+    from: "/_authenticated/learn/$childId/scenario/$scenarioId",
+  });
   const track = getTrack("save");
   const chapterItem = track.sequence.find((i) => i.kind === "scenario" && i.id === scenarioId);
   const baseScenarioId = chapterItem?.scenarioId ?? scenarioId.split("--")[0]!;
   const branching = getScenarioDefinition(baseScenarioId);
-  const chapterIndex = track.sequence.findIndex((i) => i.kind === "scenario" && i.id === scenarioId);
+  const chapterIndex = track.sequence.findIndex(
+    (i) => i.kind === "scenario" && i.id === scenarioId,
+  );
   const nextUp = chapterIndex >= 0 ? track.sequence[chapterIndex + 1] : undefined;
   const scenario = getScenario(track, baseScenarioId);
   const navigate = useNavigate();
@@ -111,7 +125,16 @@ function ScenarioPage() {
   function choose(choice: ScenarioChoice) {
     const after = savings + choice.savingsDelta;
     setSavings(after);
-    setHistory([...history, { stepId, choiceId: choice.id, label: choice.label, outcome: choice.outcome, savingsAfter: after }]);
+    setHistory([
+      ...history,
+      {
+        stepId,
+        choiceId: choice.id,
+        label: choice.label,
+        outcome: choice.outcome,
+        savingsAfter: after,
+      },
+    ]);
     setPending(choice);
   }
 
@@ -150,7 +173,10 @@ function ScenarioPage() {
         title={scenario.title}
         backTo={`/learn/${childId}`}
         right={
-          <span className="rounded-full bg-secondary px-4 py-2 text-sm text-secondary-foreground" aria-label="Money you have">
+          <span
+            className="rounded-full bg-secondary px-4 py-2 text-sm text-secondary-foreground"
+            aria-label="Money you have"
+          >
             <GhanaCedi amount={savings} />
           </span>
         }
@@ -165,7 +191,10 @@ function ScenarioPage() {
             </p>
             <ul className="mt-4 space-y-2">
               {history.map((h, i) => (
-                <li key={i} className="rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
+                <li
+                  key={i}
+                  className="rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground"
+                >
                   <span className="font-semibold">{h.label}</span> — {h.outcome}
                 </li>
               ))}
@@ -189,13 +218,17 @@ function ScenarioPage() {
         <Card>
           <p className="text-lg leading-relaxed">{pending.outcome}</p>
           {pending.reflection ? (
-            <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">{pending.reflection}</p>
+            <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
+              {pending.reflection}
+            </p>
           ) : null}
           <p className="mt-3 text-lg">
             You now have <GhanaCedi amount={savings} />.
           </p>
           <div className="mt-5">
-            <PrimaryButton onClick={continueOn}>{pending.next ? "What happens next?" : "Look back at my story"}</PrimaryButton>
+            <PrimaryButton onClick={continueOn}>
+              {pending.next ? "What happens next?" : "Look back at my story"}
+            </PrimaryButton>
           </div>
         </Card>
       ) : step ? (

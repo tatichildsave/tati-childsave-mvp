@@ -35,7 +35,10 @@ export const Route = createFileRoute("/onboarding")({
         content: "Meet TATI, pick a name, an age and a character, and begin the money adventure.",
       },
       { property: "og:title", content: "Start the TATI adventure — TATI ChildSave" },
-      { property: "og:description", content: "A short, friendly start to your child's money journey." },
+      {
+        property: "og:description",
+        content: "A short, friendly start to your child's money journey.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -188,7 +191,9 @@ function Onboarding() {
         {step === 1 ? (
           <div className="space-y-5">
             <h2 className="text-3xl font-extrabold leading-tight">What should TATI call you?</h2>
-            <p className="text-lg text-muted-foreground">Your first name or a nickname is perfect.</p>
+            <p className="text-lg text-muted-foreground">
+              Your first name or a nickname is perfect.
+            </p>
             <Card>
               <label htmlFor="childName" className="mb-1 block text-base font-bold">
                 Name or nickname
@@ -203,7 +208,8 @@ function Onboarding() {
                 className="min-h-[56px] w-full rounded-2xl border border-border bg-background px-4 text-lg font-bold"
               />
               <CardNote className="mt-2">
-                🔒 No email, phone number or password — you learn safely under your parent's account.
+                🔒 No email, phone number or password — you learn safely under your parent's
+                account.
               </CardNote>
             </Card>
             <Button size="lg" onClick={() => go(2)} disabled={!nameOk}>
@@ -301,10 +307,12 @@ function Onboarding() {
               <span aria-hidden="true" className="text-5xl">
                 👋
               </span>
-              <h2 className="mt-3 text-3xl font-extrabold leading-tight">Hi {draft.name.trim() || "friend"}, I'm TATI!</h2>
+              <h2 className="mt-3 text-3xl font-extrabold leading-tight">
+                Hi {draft.name.trim() || "friend"}, I'm TATI!
+              </h2>
               <p className="mt-3 text-lg text-muted-foreground">
-                I'll walk with you while you learn how money works — in cedis, at home, at school and
-                at the market.
+                I'll walk with you while you learn how money works — in cedis, at home, at school
+                and at the market.
               </p>
             </Card>
             <Card tone="muted">
@@ -327,7 +335,11 @@ function Onboarding() {
               {[
                 { icon: "💬", title: "A quick chat", note: "A few easy questions to start." },
                 { icon: "📚", title: "Short lessons", note: "Small ideas about saving money." },
-                { icon: "🎯", title: "Money stories", note: "You make the choices and see what happens." },
+                {
+                  icon: "🎯",
+                  title: "Money stories",
+                  note: "You make the choices and see what happens.",
+                },
                 { icon: "🏅", title: "Your summary", note: "See how much you grew." },
               ].map((s) => (
                 <Card key={s.title} className="flex items-start gap-3">
@@ -353,7 +365,13 @@ function Onboarding() {
         {step === 6 ? (
           <div className="space-y-5">
             <Card className="text-center">
-              <Avatar avatar={draft.avatar} size="xl" ring="accent" name={draft.name} className="mx-auto" />
+              <Avatar
+                avatar={draft.avatar}
+                size="xl"
+                ring="accent"
+                name={draft.name}
+                className="mx-auto"
+              />
               <div className="mt-3 flex justify-center">
                 <Badge tone="warning" icon="🎓">
                   Primary {Math.max(1, draft.age - 5)} · Age {draft.age}
@@ -377,7 +395,10 @@ function Onboarding() {
             </Card>
 
             {error ? (
-              <p role="alert" className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive">
+              <p
+                role="alert"
+                className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive"
+              >
                 {error}
               </p>
             ) : null}

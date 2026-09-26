@@ -31,7 +31,14 @@ export interface LessonDraft {
 function emptyDraft(activity?: Activity): LessonDraft {
   const allocation: Record<string, number> = {};
   if (activity?.kind === "allocate") for (const jar of activity.jars) allocation[jar.id] = 0;
-  return { taps: [], quickCheck: null, activityChoice: null, sorted: [], allocation, reflection: "" };
+  return {
+    taps: [],
+    quickCheck: null,
+    activityChoice: null,
+    sorted: [],
+    allocation,
+    reflection: "",
+  };
 }
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -65,9 +72,17 @@ export function LessonPlayer({
       if (raw) {
         const saved = JSON.parse(raw) as Partial<LessonDraft>;
         setDraft({ ...emptyDraft(lesson.activity), ...saved });
-        setResumed(Boolean(saved.taps?.length || saved.quickCheck || saved.activityChoice || saved.sorted?.length || Object.values(saved.allocation ?? {}).some(Boolean) || saved.reflection));
-      }
-      else setDraft(emptyDraft(lesson.activity));
+        setResumed(
+          Boolean(
+            saved.taps?.length ||
+            saved.quickCheck ||
+            saved.activityChoice ||
+            saved.sorted?.length ||
+            Object.values(saved.allocation ?? {}).some(Boolean) ||
+            saved.reflection,
+          ),
+        );
+      } else setDraft(emptyDraft(lesson.activity));
     } catch {
       setDraft(emptyDraft(lesson.activity));
     }
@@ -96,7 +111,9 @@ export function LessonPlayer({
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-base font-extrabold text-primary">TATI ChildSave</p>
-            <p className="truncate text-sm text-muted-foreground">{lesson.subtitle ?? "Interactive lesson"}</p>
+            <p className="truncate text-sm text-muted-foreground">
+              {lesson.subtitle ?? "Interactive lesson"}
+            </p>
           </div>
           <ListenButton />
         </div>
@@ -130,7 +147,13 @@ export function LessonPlayer({
 
         {lesson.illustration ? (
           <figure className="relative overflow-hidden rounded-3xl shadow-card">
-            <img src={lesson.illustration} alt="" loading="eager" decoding="async" className="h-48 w-full object-cover" />
+            <img
+              src={lesson.illustration}
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="h-48 w-full object-cover"
+            />
             {lesson.illustrationBadge ? (
               <figcaption className="absolute bottom-0 left-0 right-0 bg-foreground/60 px-4 py-2 text-sm font-extrabold text-background">
                 {lesson.illustrationBadge}
@@ -143,10 +166,16 @@ export function LessonPlayer({
           <Block key={i} block={block} draft={draft} patch={patch} />
         ))}
 
-        {lesson.activity ? <ActivityBlock activity={lesson.activity} draft={draft} patch={patch} /> : null}
+        {lesson.activity ? (
+          <ActivityBlock activity={lesson.activity} draft={draft} patch={patch} />
+        ) : null}
 
         {lesson.knowledgeCheck ? (
-          <QuickCheckBlock check={lesson.knowledgeCheck} selected={draft.quickCheck} onSelect={(id) => patch({ quickCheck: id })} />
+          <QuickCheckBlock
+            check={lesson.knowledgeCheck}
+            selected={draft.quickCheck}
+            onSelect={(id) => patch({ quickCheck: id })}
+          />
         ) : null}
 
         {lesson.reflection ? (
@@ -193,7 +222,11 @@ function Block({
 
   if (block.type === "highlight") {
     const tone =
-      block.tone === "warn" ? "bg-destructive/10" : block.tone === "good" ? "bg-success-soft" : "bg-primary-soft";
+      block.tone === "warn"
+        ? "bg-destructive/10"
+        : block.tone === "good"
+          ? "bg-success-soft"
+          : "bg-primary-soft";
     return (
       <div className={cn("rounded-3xl p-5", tone)}>
         <p className="text-base font-bold leading-relaxed">{block.body}</p>
@@ -204,7 +237,13 @@ function Block({
   if (block.type === "scene") {
     return (
       <figure className="relative overflow-hidden rounded-3xl shadow-card">
-        <img src={block.imageUrl} alt="" loading="lazy" decoding="async" className="h-48 w-full object-cover" />
+        <img
+          src={block.imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-48 w-full object-cover"
+        />
         {block.caption ? (
           <figcaption className="absolute bottom-0 left-0 right-0 bg-foreground/60 px-4 py-2 text-sm font-extrabold text-background">
             {block.caption}
@@ -228,15 +267,26 @@ function Block({
                 type="button"
                 disabled={!interactive}
                 onClick={() =>
-                  patch({ taps: open ? draft.taps.filter((t) => t !== c.id) : [...draft.taps, c.id] })
+                  patch({
+                    taps: open ? draft.taps.filter((t) => t !== c.id) : [...draft.taps, c.id],
+                  })
                 }
                 className={cn(
                   "min-h-[48px] rounded-3xl bg-card p-5 text-left shadow-card",
                   c.tone ? toneRing[c.tone] : "",
                 )}
               >
-                {c.icon ? <span aria-hidden="true" className="text-2xl">{c.icon}</span> : null}
-                <p className={cn("text-sm font-extrabold uppercase tracking-widest", c.tone ? toneText[c.tone] : "")}>
+                {c.icon ? (
+                  <span aria-hidden="true" className="text-2xl">
+                    {c.icon}
+                  </span>
+                ) : null}
+                <p
+                  className={cn(
+                    "text-sm font-extrabold uppercase tracking-widest",
+                    c.tone ? toneText[c.tone] : "",
+                  )}
+                >
                   {c.label}
                 </p>
                 <p className="mt-1 text-lg font-extrabold">{c.title}</p>
@@ -247,7 +297,9 @@ function Block({
                   </span>
                 ) : null}
                 {interactive ? (
-                  <p className="mt-2 text-sm font-bold text-primary">{open ? c.reveal : "Tap to explore"}</p>
+                  <p className="mt-2 text-sm font-bold text-primary">
+                    {open ? c.reveal : "Tap to explore"}
+                  </p>
                 ) : null}
               </button>
             );
@@ -261,17 +313,27 @@ function Block({
     return (
       <Card>
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className={cn("text-lg font-extrabold", block.tone === "warn" ? "text-destructive" : "text-success")}>
+          <h2
+            className={cn(
+              "text-lg font-extrabold",
+              block.tone === "warn" ? "text-destructive" : "text-success",
+            )}
+          >
             {block.title}
           </h2>
           {block.chip ? (
-            <span className="rounded-full bg-secondary px-3 py-1 text-sm font-extrabold">{block.chip}</span>
+            <span className="rounded-full bg-secondary px-3 py-1 text-sm font-extrabold">
+              {block.chip}
+            </span>
           ) : null}
         </div>
         {block.body ? <p className="mt-2 text-base text-muted-foreground">{block.body}</p> : null}
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {block.items.map((it) => (
-            <li key={it.id} className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-base">
+            <li
+              key={it.id}
+              className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-base"
+            >
               <span aria-hidden="true">{it.icon ?? "•"}</span>
               <span>{it.label}</span>
             </li>
@@ -287,7 +349,9 @@ function Block({
         <h2 className="text-lg font-extrabold">💡 {block.title}</h2>
         <p className="mt-1 whitespace-pre-line text-base leading-relaxed">{block.body}</p>
         {block.example ? (
-          <p className="mt-3 whitespace-pre-line rounded-2xl bg-secondary p-4 text-base">{block.example}</p>
+          <p className="mt-3 whitespace-pre-line rounded-2xl bg-secondary p-4 text-base">
+            {block.example}
+          </p>
         ) : null}
       </Card>
     );
@@ -298,11 +362,15 @@ function Block({
       <div className="space-y-3">
         {block.steps.map((s) => (
           <Card key={s.id}>
-            <p className="text-sm font-extrabold uppercase tracking-widest text-primary">{s.label}</p>
+            <p className="text-sm font-extrabold uppercase tracking-widest text-primary">
+              {s.label}
+            </p>
             <p className="mt-1 text-lg font-extrabold">{s.title}</p>
             <p className="mt-1 text-base text-muted-foreground">{s.body}</p>
             {s.note ? (
-              <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-base font-bold">{s.note}</p>
+              <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-base font-bold">
+                {s.note}
+              </p>
             ) : null}
           </Card>
         ))}
@@ -337,7 +405,9 @@ function QuickCheckBlock({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold">💡 Quick check!</h2>
         {check.chip ? (
-          <span className="rounded-full bg-secondary px-3 py-1 text-sm font-extrabold">{check.chip}</span>
+          <span className="rounded-full bg-secondary px-3 py-1 text-sm font-extrabold">
+            {check.chip}
+          </span>
         ) : null}
       </div>
       <p className="mt-2 text-base leading-relaxed">{check.prompt}</p>
@@ -369,7 +439,9 @@ function QuickCheckBlock({
       {selected ? (
         <div className="mt-3 rounded-2xl bg-secondary p-4">
           <p className="text-base font-extrabold">
-            {selected === check.correctOptionId ? (check.feedbackTitle ?? "Well reasoned!") : "Interesting choice."}
+            {selected === check.correctOptionId
+              ? (check.feedbackTitle ?? "Well reasoned!")
+              : "Interesting choice."}
           </p>
           <p className="mt-1 text-base text-muted-foreground">{check.feedback}</p>
         </div>
@@ -394,7 +466,9 @@ function ActivityBlock({
       <Card>
         <h2 className="text-lg font-extrabold">👆 {activity.title}</h2>
         <p className="mt-1 text-base">{activity.instruction}</p>
-        {activity.helper ? <p className="mt-1 text-base text-muted-foreground">{activity.helper}</p> : null}
+        {activity.helper ? (
+          <p className="mt-1 text-base text-muted-foreground">{activity.helper}</p>
+        ) : null}
         <p className="mt-2 text-base font-extrabold text-success">{foundNeeds} needs found</p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {activity.items.map((it) => {
@@ -404,7 +478,9 @@ function ActivityBlock({
                 key={it.id}
                 type="button"
                 aria-pressed={on}
-                onClick={() => patch({ sorted: on ? picked.filter((p) => p !== it.id) : [...picked, it.id] })}
+                onClick={() =>
+                  patch({ sorted: on ? picked.filter((p) => p !== it.id) : [...picked, it.id] })
+                }
                 className={cn(
                   "min-h-[48px] rounded-2xl border-2 bg-card p-4 text-left",
                   on ? "border-success" : "border-border",
@@ -421,7 +497,9 @@ function ActivityBlock({
                     {on ? "✓" : "+"}
                   </span>
                   {it.price !== undefined ? (
-                    <span className="rounded-xl bg-secondary px-3 py-1 text-base font-extrabold">GH₵{it.price}</span>
+                    <span className="rounded-xl bg-secondary px-3 py-1 text-base font-extrabold">
+                      GH₵{it.price}
+                    </span>
                   ) : null}
                 </div>
                 <p className="mt-2 text-base font-extrabold">{it.label}</p>
@@ -440,7 +518,8 @@ function ActivityBlock({
     );
   }
 
-  if (activity.kind === "allocate") return <Allocator activity={activity} draft={draft} patch={patch} />;
+  if (activity.kind === "allocate")
+    return <Allocator activity={activity} draft={draft} patch={patch} />;
 
   return (
     <Card>
@@ -543,7 +622,9 @@ function Allocator({
       </div>
       {left === 0 ? (
         <div className="mt-3 rounded-2xl bg-success-soft p-4">
-          <p className="text-base font-extrabold text-success">{activity.feedbackTitle ?? "All allocated! ✨"}</p>
+          <p className="text-base font-extrabold text-success">
+            {activity.feedbackTitle ?? "All allocated! ✨"}
+          </p>
           <p className="mt-1 text-base">{activity.feedback}</p>
         </div>
       ) : null}

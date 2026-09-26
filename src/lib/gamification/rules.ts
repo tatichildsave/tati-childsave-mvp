@@ -66,7 +66,8 @@ export const BADGES: BadgeDefinition[] = [
     icon: "🤔",
     blurb: "You pause before you spend.",
     hint: "Finish the needs vs wants and Stop-Think-Choose lessons.",
-    earnedBy: (c) => has("lesson:needs-vs-wants")(c.done) && has("lesson:stop-think-choose")(c.done),
+    earnedBy: (c) =>
+      has("lesson:needs-vs-wants")(c.done) && has("lesson:stop-think-choose")(c.done),
   },
   {
     id: "comeback-kid",

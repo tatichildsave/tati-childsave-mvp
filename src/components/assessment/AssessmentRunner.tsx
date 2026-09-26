@@ -44,7 +44,17 @@ function Header({ title, backTo }: { title: string; backTo: string }) {
   );
 }
 
-function Scene({ url, badge, alt, loading = "lazy" }: { url: string; badge?: string; alt: string; loading?: "eager" | "lazy" }) {
+function Scene({
+  url,
+  badge,
+  alt,
+  loading = "lazy",
+}: {
+  url: string;
+  badge?: string;
+  alt: string;
+  loading?: "eager" | "lazy";
+}) {
   return (
     <div className="relative overflow-hidden rounded-3xl shadow-card">
       <img
@@ -93,6 +103,7 @@ export function AssessmentRunner({
   onComplete,
   completeLabel = "Start My Journey 🚀",
   childName,
+  submitError,
 }: {
   definition: AssessmentDefinition;
   storageKey?: string;
@@ -101,6 +112,7 @@ export function AssessmentRunner({
   onComplete: (result: AssessmentResult) => void;
   completeLabel?: string;
   childName?: string;
+  submitError?: string | null;
 }) {
   const runner = useAssessmentRunner(definition, storageKey);
   const headerTitle = definition.shortTitle ?? definition.title;
@@ -109,6 +121,12 @@ export function AssessmentRunner({
     return (
       <Shell>
         <Header title={headerTitle} backTo={backTo} />
+
+        {submitError ? (
+          <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
+            <p className="text-sm text-warning-foreground">{submitError}</p>
+          </div>
+        ) : null}
 
         <div className="mb-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground">
@@ -200,13 +218,17 @@ export function AssessmentRunner({
 
   if (runner.stage === "complete") {
     const { result } = runner;
-    const superpowers = [...result.competencies]
-      .sort((a, b) => b.ratio - a.ratio)
-      .slice(0, 3);
+    const superpowers = [...result.competencies].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
 
     return (
       <Shell>
         <Header title={headerTitle} backTo={backTo} />
+
+        {submitError ? (
+          <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
+            <p className="text-sm text-warning-foreground">{submitError}</p>
+          </div>
+        ) : null}
 
         {runner.resumed ? (
           <p className="mb-3 rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
@@ -276,6 +298,12 @@ export function AssessmentRunner({
     <Shell>
       <Header title={headerTitle} backTo={backTo} />
 
+      {submitError ? (
+        <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
+          <p className="text-sm text-warning-foreground">{submitError}</p>
+        </div>
+      ) : null}
+
       {runner.resumed ? (
         <p className="mb-3 rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
           Welcome back! Ready to continue?
@@ -284,7 +312,8 @@ export function AssessmentRunner({
 
       <div className="mb-3 flex items-center gap-3">
         <span className="rounded-full bg-secondary px-4 py-2 text-sm font-bold text-secondary-foreground">
-          ✨ Question {runner.index + 1} of {runner.total} • {question.topic ?? COMPETENCY_LABELS[question.competency]}
+          ✨ Question {runner.index + 1} of {runner.total} •{" "}
+          {question.topic ?? COMPETENCY_LABELS[question.competency]}
         </span>
         <span className="ml-auto text-base font-extrabold text-success tabular-nums">{pct}%</span>
       </div>
@@ -296,7 +325,10 @@ export function AssessmentRunner({
         aria-valuemax={100}
         aria-label={`Question ${runner.index + 1} of ${runner.total}`}
       >
-        <div className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-success transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${pct}%` }}
+        />
       </div>
 
       <div
@@ -367,7 +399,9 @@ export function AssessmentRunner({
                     selected ? "bg-primary" : "bg-muted",
                   )}
                 >
-                  {selected ? <span className="h-2 w-2 rounded-full bg-primary-foreground" /> : null}
+                  {selected ? (
+                    <span className="h-2 w-2 rounded-full bg-primary-foreground" />
+                  ) : null}
                 </span>
               </button>
             );

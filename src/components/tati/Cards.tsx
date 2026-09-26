@@ -48,7 +48,9 @@ export function LessonCard({
       <span
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base font-extrabold",
-          status === "locked" ? "bg-card text-muted-foreground" : "bg-primary text-primary-foreground",
+          status === "locked"
+            ? "bg-card text-muted-foreground"
+            : "bg-primary text-primary-foreground",
         )}
         aria-hidden="true"
       >

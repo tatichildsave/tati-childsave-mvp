@@ -1,0 +1,600 @@
+npm notice run test
+npm notice run vitest run --run tests/firebase/firestore.rules.test.ts
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+
+ RUN  v5.0.1 C:/Users/Y O G A/tati-childsave-mvp
+
+ ÔØ» tests/firebase/firestore.rules.test.ts (45 tests | 40 failed) 748ms
+   ÔØ» Firestore security rules (45)
+     ÔØ» Authenticated adult access (10) (10)
+       +ù parent reads own family 42ms
+       +ù parent reads own child 10ms
+       +ù parent reads own child progress 6ms
+       +ù parent reads own family members 12ms
+       +ù parent can read user profile 15ms
+       +ù parent cannot modify role 18ms
+       +ù parent cannot change status 12ms
+       +ù parent cannot self-promote to admin 5ms
+       +ù authenticat adult can read journey content 15ms
+       +ù admin can read any child 4ms
+     ÔØ» Family isolation (6) (6)
+       +ù parent A cannot read family B 11ms
+       +ù parent A cannot read family B child 3ms
+       +ù parent B cannot read family A 13ms
+       +ù parent B cannot read family A child 17ms
+       +ù parent A cannot update family B 18ms
+       +ù parent B cannot create in family A 10ms
+     ÔØ» Child data protection (4) (4)
+       +ù cannot overwrite child identity 3ms
+       +ù cannot write authoritative score 4ms
+       +ù cannot write competency level 16ms
+       +ù cannot award an achievement 3ms
+     ÔØ» Server-only collections (10) (10)
+       +ù rejects client write to assessmentAttempts/attempt-server 13ms
+       +ù rejects client write to competencies/competency-server 17ms
+       +ù rejects client write to achievements/achievement-server 16ms
+       +ù rejects client write to scenarioSessions/session-server 18ms
+       +ù rejects client write to scenarioSessions/session-server/decisions/decision-server 9ms
+       +ù rejects client write to riskScores/score-server 7ms
+       +ù rejects client write to recommendations/recommendation-server 5ms
+       +ù rejects client write to auditLog/event-server 11ms
+       +ù rejects client write to analytics/event-server 15ms
+       +ù rejects client write to serverResults/result-server 15ms
+     ÔØ» Legitimate client writes (1) (1)
+       +ù allows a parent to create journey progress 4ms
+     ÔØ» Role escalation prevention (6) (6)
+       +ù cannot change family role 15ms
+       +ù cannot add itself as admin 17ms
+       +ù cannot change family owner 18ms
+       +ù cannot change child family 10ms
+       +ù cannot grant facilitator access 6ms
+       +ù cannot forge an auth role field 16ms
+     ÔØ» Admin capabilities (3) (3)
+       +ù admin can read any family 8ms
+       +ù admin can read protected child data 17ms
+       +ù admin can read users 3ms
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 40 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent reads own family
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:90:7
+     88|   describe("Authenticated adult access (10)", () => {
+     89|     it("parent reads own family", async () => {
+     90|       await login(USERS.parentA);
+       |       ^
+     91|       expectAllowed(await tryRead(db, familyA));
+     92|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent reads own child
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:94:7
+     92|     });
+     93|     it("parent reads own child", async () => {
+     94|       await login(USERS.parentA);
+       |       ^
+     95|       expectAllowed(await tryRead(db, childA));
+     96|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent reads own child progress
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:98:7
+     96|     });
+     97|     it("parent reads own child progress", async () => {
+     98|       await login(USERS.parentA);
+       |       ^
+     99|       expectAllowed(await tryRead(db, journeyProgressA));
+    100|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent reads own family members
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:102:7
+    100|     });
+    101|     it("parent reads own family members", async () => {
+    102|       await login(USERS.parentA);
+       |       ^
+    103|       expectAllowed(await tryRead(db, `${familyA}/members/parent-a`));
+    104|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent can read user profile
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:106:7
+    104|     });
+    105|     it("parent can read user profile", async () => {
+    106|       await login(USERS.parentA);
+       |       ^
+    107|       expectAllowed(await tryRead(db, "users/parent-a"));
+    108|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent cannot modify role
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:110:7
+    108|     });
+    109|     it("parent cannot modify role", async () => {
+    110|       await login(USERS.parentA);
+       |       ^
+    111|       expectDenied(await tryUpdate(db, "users/parent-a", { roles: ["adÔÇª
+    112|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent cannot change status
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:114:7
+    112|     });
+    113|     it("parent cannot change status", async () => {
+    114|       await login(USERS.parentA);
+       |       ^
+    115|       expectDenied(await tryUpdate(db, "users/parent-a", { status: "suÔÇª
+    116|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > parent cannot self-promote to admin
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:118:7
+    116|     });
+    117|     it("parent cannot self-promote to admin", async () => {
+    118|       await login(USERS.parentA);
+       |       ^
+    119|       expectDenied(await tryUpdate(db, "users/parent-a", { roles: ["adÔÇª
+    120|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > authenticat adult can read journey content
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:122:7
+    120|     });
+    121|     it("authenticat adult can read journey content", async () => {
+    122|       await login(USERS.parentA);
+       |       ^
+    123|       expectAllowed(await tryRead(db, journeyProgressA));
+    124|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[9/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Authenticated adult access (10) > admin can read any child
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:126:7
+    124|     });
+    125|     it("admin can read any child", async () => {
+    126|       await login(USERS.admin);
+       |       ^
+    127|       expectAllowed(await tryRead(db, childB));
+    128|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[10/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent A cannot read family B
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:133:7
+    131|   describe("Family isolation (6)", () => {
+    132|     it("parent A cannot read family B", async () => {
+    133|       await login(USERS.parentA);
+       |       ^
+    134|       expectDenied(await tryRead(db, familyB));
+    135|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[11/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent A cannot read family B child
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:137:7
+    135|     });
+    136|     it("parent A cannot read family B child", async () => {
+    137|       await login(USERS.parentA);
+       |       ^
+    138|       expectDenied(await tryRead(db, childB));
+    139|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[12/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent B cannot read family A
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:141:7
+    139|     });
+    140|     it("parent B cannot read family A", async () => {
+    141|       await login(USERS.parentB);
+       |       ^
+    142|       expectDenied(await tryRead(db, familyA));
+    143|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[13/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent B cannot read family A child
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:145:7
+    143|     });
+    144|     it("parent B cannot read family A child", async () => {
+    145|       await login(USERS.parentB);
+       |       ^
+    146|       expectDenied(await tryRead(db, childA));
+    147|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[14/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent A cannot update family B
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:149:7
+    147|     });
+    148|     it("parent A cannot update family B", async () => {
+    149|       await login(USERS.parentA);
+       |       ^
+    150|       expectDenied(await tryUpdate(db, familyB, { name: "stolen" }));
+    151|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[15/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Family isolation (6) > parent B cannot create in family A
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:153:7
+    151|     });
+    152|     it("parent B cannot create in family A", async () => {
+    153|       await login(USERS.parentB);
+       |       ^
+    154|       expectDenied(await tryWrite(db, `${familyA}/children/forged`, { ÔÇª
+    155|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[16/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Child data protection (4) > cannot overwrite child identity
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:160:7
+    158|   describe("Child data protection (4)", () => {
+    159|     it("cannot overwrite child identity", async () => {
+    160|       await login(USERS.parentA);
+       |       ^
+    161|       expectDenied(
+    162|         await tryWrite(
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[17/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Child data protection (4) > cannot write authoritative score
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:171:7
+    169|     });
+    170|     it("cannot write authoritative score", async () => {
+    171|       await login(USERS.parentA);
+       |       ^
+    172|       expectDenied(
+    173|         await tryWrite(db, `${childA}/assessmentAttempts/fake`, { scorÔÇª
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[18/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Child data protection (4) > cannot write competency level
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:177:7
+    175|     });
+    176|     it("cannot write competency level", async () => {
+    177|       await login(USERS.parentA);
+       |       ^
+    178|       expectDenied(await tryWrite(db, `${childA}/competencies/fake`, {ÔÇª
+    179|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[19/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Child data protection (4) > cannot award an achievement
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:181:7
+    179|     });
+    180|     it("cannot award an achievement", async () => {
+    181|       await login(USERS.parentA);
+       |       ^
+    182|       expectDenied(await tryWrite(db, `${childA}/achievements/fake`, {ÔÇª
+    183|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[20/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to assessmentAttempts/attempt-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to competencies/competency-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to achievements/achievement-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to scenarioSessions/session-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to scenarioSessions/session-server/decisions/decision-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to riskScores/score-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to recommendations/recommendation-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to auditLog/event-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to analytics/event-server
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Server-only collections (10) > rejects client write to serverResults/result-server
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:200:7
+    198|     ] as const;
+    199|     it.each(cases)("rejects client write to %s", async (suffix, data) ÔÇª
+    200|       await login(USERS.parentA);
+       |       ^
+    201|       expectDenied(await tryWrite(db, `${childA}/${suffix}`, data));
+    202|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[21/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Legitimate client writes (1) > allows a parent to create journey progress
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:207:7
+    205|   describe("Legitimate client writes (1)", () => {
+    206|     it("allows a parent to create journey progress", async () => {
+    207|       await login(USERS.parentA);
+       |       ^
+    208|       expectAllowed(
+    209|         await tryWrite(db, `${childA}/journeyProgress/test-write`, {
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[22/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot change family role
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:221:7
+    219|   describe("Role escalation prevention (6)", () => {
+    220|     it("cannot change family role", async () => {
+    221|       await login(USERS.parentA);
+       |       ^
+    222|       expectDenied(await tryUpdate(db, `${familyA}/members/parent-a`, ÔÇª
+    223|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[23/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot add itself as admin
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:225:7
+    223|     });
+    224|     it("cannot add itself as admin", async () => {
+    225|       await login(USERS.parentA);
+       |       ^
+    226|       expectDenied(
+    227|         await tryWrite(db, `${familyA}/members/attacker`, { role: "admÔÇª
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[24/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot change family owner
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:231:7
+    229|     });
+    230|     it("cannot change family owner", async () => {
+    231|       await login(USERS.parentA);
+       |       ^
+    232|       expectDenied(await tryUpdate(db, familyA, { familyId: "family-b"ÔÇª
+    233|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[25/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot change child family
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:235:7
+    233|     });
+    234|     it("cannot change child family", async () => {
+    235|       await login(USERS.parentA);
+       |       ^
+    236|       expectDenied(
+    237|         await tryUpdate(db, childA, {
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[26/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot grant facilitator access
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:245:7
+    243|     });
+    244|     it("cannot grant facilitator access", async () => {
+    245|       await login(USERS.parentA);
+       |       ^
+    246|       expectDenied(await tryWrite(db, `${familyA}/members/facilitator-ÔÇª
+    247|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[27/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Role escalation prevention (6) > cannot forge an auth role field
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:249:7
+    247|     });
+    248|     it("cannot forge an auth role field", async () => {
+    249|       await login(USERS.parentA);
+       |       ^
+    250|       expectDenied(await tryUpdate(db, `${familyA}/members/parent-a`, ÔÇª
+    251|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[28/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Admin capabilities (3) > admin can read any family
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:274:7
+    272|   describe("Admin capabilities (3)", () => {
+    273|     it("admin can read any family", async () => {
+    274|       await login(USERS.admin);
+       |       ^
+    275|       expectAllowed(await tryRead(db, familyA));
+    276|       expectAllowed(await tryRead(db, familyB));
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[29/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Admin capabilities (3) > admin can read protected child data
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:279:7
+    277|     });
+    278|     it("admin can read protected child data", async () => {
+    279|       await login(USERS.admin);
+       |       ^
+    280|       expectAllowed(await tryRead(db, assessmentAttemptA));
+    281|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[30/40]ÔÄ»
+System.Management.Automation.RemoteException
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > Admin capabilities (3) > admin can read users
+FirebaseError: Firebase: Error (auth/user-not-found).
+ ÔØ» createErrorInternal ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:499:41
+ ÔØ» _fail ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:474:11
+ ÔØ» _performFetchWithErrorHandling ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:961:17
+ ÔØ» _performSignInRequest ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:976:28
+ ÔØ» _signInWithCredential ../../Y%20O%20G%20A/tati-childsave-mvp/node_modules/@firebase/auth/dist/node-esm/totp-BU9AvxK8.js:5764:22
+ ÔØ» tests/firebase/firestore.rules.test.ts:283:7
+    281|     });
+    282|     it("admin can read users", async () => {
+    283|       await login(USERS.admin);
+       |       ^
+    284|       expectAllowed(await tryRead(db, "users/parent-a"));
+    285|     });
+System.Management.Automation.RemoteException
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[31/40]ÔÄ»
+System.Management.Automation.RemoteException
+
+ Test Files  1 failed (1)
+      Tests  40 failed | 5 passed (45)
+   Start at  23:58:40
+   Duration  1.40s (tests 65%, import 26%, transform 8%, worker 1%)
+

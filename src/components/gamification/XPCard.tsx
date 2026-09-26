@@ -7,7 +7,9 @@ export function XPCard({ state }: { state: GamificationState }) {
     <section className="mb-5 rounded-3xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Your progress</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            Your progress
+          </p>
           <p className="text-lg font-bold">
             <span aria-hidden="true">⭐</span> Level {state.level} · {state.levelLabel}
           </p>
@@ -25,10 +27,14 @@ export function XPCard({ state }: { state: GamificationState }) {
         aria-valuemax={100}
         aria-label="Progress to the next level"
       >
-        <div className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${state.levelPct}%` }} />
+        <div
+          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out motion-reduce:transition-none"
+          style={{ width: `${state.levelPct}%` }}
+        />
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-            <AnimatedNumber value={state.xpIntoLevel} />/{state.xpForLevel} XP towards Level {state.level + 1}
+        <AnimatedNumber value={state.xpIntoLevel} />/{state.xpForLevel} XP towards Level{" "}
+        {state.level + 1}
       </p>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">

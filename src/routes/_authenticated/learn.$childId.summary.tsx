@@ -21,7 +21,10 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/summary")({
         content: "A warm look at the money skills your child grew on the SAVE journey.",
       },
       { property: "og:title", content: "How my money skills grew — TATI ChildSave" },
-      { property: "og:description", content: "A warm look at the money skills grown on the SAVE journey." },
+      {
+        property: "og:description",
+        content: "A warm look at the money skills grown on the SAVE journey.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -43,8 +46,8 @@ function SummaryPage() {
       <Card className="bg-accent text-accent-foreground">
         <h2 className="text-2xl font-bold">{competency.headline}</h2>
         <p className="mt-1">
-          You finished {game.journey.done} of {game.journey.total} stops, earned {game.xp} XP and collected{" "}
-          {game.earnedBadges.length} badge{game.earnedBadges.length === 1 ? "" : "s"}.
+          You finished {game.journey.done} of {game.journey.total} stops, earned {game.xp} XP and
+          collected {game.earnedBadges.length} badge{game.earnedBadges.length === 1 ? "" : "s"}.
         </p>
       </Card>
 
@@ -57,7 +60,9 @@ function SummaryPage() {
       {strong.length > 0 ? (
         <Card className="mt-5">
           <h3 className="text-lg font-bold">Your superpowers 💪</h3>
-          <p className="mt-1 text-sm text-muted-foreground">These are the skills you showed most often.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            These are the skills you showed most often.
+          </p>
           <div className="mt-4">
             <SkillBars skills={strong} />
           </div>
@@ -110,8 +115,8 @@ function SummaryPage() {
       <Card className="mt-5">
         <h3 className="text-lg font-bold">Ready for next time</h3>
         <p className="mt-2 text-lg">
-          Choose one real goal together this week — an amount and a date — and decide where the money
-          will sleep: a money box, a Mobile Money wallet, or a children's bank account.
+          Choose one real goal together this week — an amount and a date — and decide where the
+          money will sleep: a money box, a Mobile Money wallet, or a children's bank account.
         </p>
       </Card>
 

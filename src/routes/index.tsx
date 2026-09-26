@@ -14,7 +14,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "TATI ChildSave — money skills for Ghanaian children" },
       {
         property: "og:description",
-        content: "Learn money skills. Make your own choices. Built for learners aged 8–12 in Ghana.",
+        content:
+          "Learn money skills. Make your own choices. Built for learners aged 8–12 in Ghana.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -22,13 +22,48 @@ export const saveLessons: Lesson[] = [
       {
         type: "cards",
         cards: [
-          { id: "save", label: "SAVE", title: "Keep for later", body: "Keep for future needs and big dreams.", chip: "🐷 Piggy Bank", tone: "save", reveal: "Kwabena keeps GH₵2 from his pocket money every school day." },
-          { id: "spend", label: "SPEND", title: "Use today", body: "Buy what you need or want today.", chip: "🧺 Daily Needs", tone: "spend", reveal: "Ama buys her exercise book before the new term starts." },
-          { id: "share", label: "SHARE", title: "Give a little", body: "Help friends, family or your community.", chip: "🤎 Caring Heart", tone: "share", reveal: "Esi buys water for a classmate who forgot her bottle." },
-          { id: "plan", label: "PLAN", title: "Decide first", body: "Decide how to balance your money.", chip: "🎯 Smart Goals", tone: "plan", reveal: "Yaw writes his plan before he opens his money box." },
+          {
+            id: "save",
+            label: "SAVE",
+            title: "Keep for later",
+            body: "Keep for future needs and big dreams.",
+            chip: "🐷 Piggy Bank",
+            tone: "save",
+            reveal: "Kwabena keeps GH₵2 from his pocket money every school day.",
+          },
+          {
+            id: "spend",
+            label: "SPEND",
+            title: "Use today",
+            body: "Buy what you need or want today.",
+            chip: "🧺 Daily Needs",
+            tone: "spend",
+            reveal: "Ama buys her exercise book before the new term starts.",
+          },
+          {
+            id: "share",
+            label: "SHARE",
+            title: "Give a little",
+            body: "Help friends, family or your community.",
+            chip: "🤎 Caring Heart",
+            tone: "share",
+            reveal: "Esi buys water for a classmate who forgot her bottle.",
+          },
+          {
+            id: "plan",
+            label: "PLAN",
+            title: "Decide first",
+            body: "Decide how to balance your money.",
+            chip: "🎯 Smart Goals",
+            tone: "plan",
+            reveal: "Yaw writes his plan before he opens his money box.",
+          },
         ],
       },
-      { type: "text", body: "People earn money by working: selling at a stall, teaching, driving a trotro, fixing phones, or helping at home for pocket money." },
+      {
+        type: "text",
+        body: "People earn money by working: selling at a stall, teaching, driving a trotro, fixing phones, or helping at home for pocket money.",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -43,7 +78,10 @@ export const saveLessons: Lesson[] = [
       feedbackTitle: "Well reasoned!",
       feedback: "When you spend GH₵6, you have GH₵14 left for other goals.",
     },
-    reflection: { prompt: "Which superpower do you use most right now?", placeholder: "I usually…" },
+    reflection: {
+      prompt: "Which superpower do you use most right now?",
+      placeholder: "I usually…",
+    },
     xpReward: 20,
     competencies: ["earning", "saving"],
     nextLesson: "needs-vs-wants",
@@ -54,7 +92,8 @@ export const saveLessons: Lesson[] = [
     track: "save",
     title: "Need or Want: What's the Difference?",
     subtitle: "Spot what you truly need for school and health",
-    learningObjective: "Tell the difference between a need and a want, and know it can change with the situation.",
+    learningObjective:
+      "Tell the difference between a need and a want, and know it can change with the situation.",
     estimatedMinutes: 5,
     illustration: stallScene.url,
     illustrationBadge: "Every coin tells a story",
@@ -90,7 +129,8 @@ export const saveLessons: Lesson[] = [
         type: "tip",
         title: "TATI Wisdom",
         body: "Something can be a NEED in one situation and a WANT in another!",
-        example: "A warm lunch is a need when you are hungry at school, but three extra packets of sweet biscuits is a want.",
+        example:
+          "A warm lunch is a need when you are hungry at school, but three extra packets of sweet biscuits is a want.",
       },
     ],
     activity: {
@@ -103,15 +143,23 @@ export const saveLessons: Lesson[] = [
         { id: "water", label: "Chilled water", note: "Health need", price: 2, isNeed: true },
         { id: "coins", label: "Game coins", note: "Optional want", price: 5 },
         { id: "lolly", label: "Sweet ice lolly", note: "Treat / want", price: 3 },
-        { id: "sandals", label: "School sandals", note: "Health & school", price: 15, isNeed: true },
+        {
+          id: "sandals",
+          label: "School sandals",
+          note: "Health & school",
+          price: 15,
+          isNeed: true,
+        },
         { id: "shades", label: "Gold sunglasses", note: "Fun want", price: 12 },
       ],
       feedbackTitle: "Great eye!",
-      feedback: "Books, drinking water and safe sandals help you learn and stay healthy each day. Toys and sweets are fun, but can wait for special treat times.",
+      feedback:
+        "Books, drinking water and safe sandals help you learn and stay healthy each day. Toys and sweets are fun, but can wait for special treat times.",
     },
     knowledgeCheck: {
       id: "kc",
-      prompt: "Is a box of mathematical drawing instruments a Need or a Want for your geometry exam?",
+      prompt:
+        "Is a box of mathematical drawing instruments a Need or a Want for your geometry exam?",
       chip: "Tap your answer",
       options: [
         { id: "need", label: "It's a Need" },
@@ -137,13 +185,32 @@ export const saveLessons: Lesson[] = [
     illustrationBadge: "TATI Goal Master Blueprint",
     topic: "Goal Setting",
     contentBlocks: [
-      { type: "text", body: "Every successful saver in Accra knows: a goal isn't just a wish — it's an adventure with three simple steps!" },
+      {
+        type: "text",
+        body: "Every successful saver in Accra knows: a goal isn't just a wish — it's an adventure with three simple steps!",
+      },
       {
         type: "steps",
         steps: [
-          { id: "what", label: "PILLAR 1", title: "WHAT am I saving for?", body: "\"A sturdy, colourful school bag for Primary 5.\"" },
-          { id: "how", label: "PILLAR 2", title: "HOW MUCH do I need?", body: "GH₵80 in total.", note: "I have GH₵50, so I need GH₵30 more." },
-          { id: "when", label: "PILLAR 3", title: "WHEN do I need it?", body: "In 14 days, before school reopening day!" },
+          {
+            id: "what",
+            label: "PILLAR 1",
+            title: "WHAT am I saving for?",
+            body: '"A sturdy, colourful school bag for Primary 5."',
+          },
+          {
+            id: "how",
+            label: "PILLAR 2",
+            title: "HOW MUCH do I need?",
+            body: "GH₵80 in total.",
+            note: "I have GH₵50, so I need GH₵30 more.",
+          },
+          {
+            id: "when",
+            label: "PILLAR 3",
+            title: "WHEN do I need it?",
+            body: "In 14 days, before school reopening day!",
+          },
         ],
       },
       {
@@ -154,7 +221,11 @@ export const saveLessons: Lesson[] = [
           { label: "Days left", value: "14" },
         ],
       },
-      { type: "highlight", body: "Breaking big goals into daily steps makes them easy to reach. GH₵30 in 14 days is about GH₵2.20 a day.", tone: "good" },
+      {
+        type: "highlight",
+        body: "Breaking big goals into daily steps makes them easy to reach. GH₵30 in 14 days is about GH₵2.20 a day.",
+        tone: "good",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -168,7 +239,10 @@ export const saveLessons: Lesson[] = [
       feedbackTitle: "Exactly!",
       feedback: "A goal names the thing, the amount and the day.",
     },
-    reflection: { prompt: "What is your own goal, and by when?", placeholder: "I am saving GH₵… for… by…" },
+    reflection: {
+      prompt: "What is your own goal, and by when?",
+      placeholder: "I am saving GH₵… for… by…",
+    },
     xpReward: 25,
     competencies: ["goal-setting", "saving"],
     nextLesson: "money-plan",
@@ -186,25 +260,73 @@ export const saveLessons: Lesson[] = [
       {
         type: "cards",
         cards: [
-          { id: "save", label: "SAVE", title: "Save for big goals", body: "Protected for the future, like your GH₵80 school bag.", chip: "Safe in the digital piggy bank", tone: "save" },
-          { id: "spend", label: "SPEND", title: "Spend on everyday needs", body: "For items you need today or small agreed wants.", chip: "Pocket money in hand", tone: "spend" },
-          { id: "share", label: "SHARE", title: "Share with community", body: "Helping family, classmates or giving to good causes.", chip: "Generosity & friends", tone: "share" },
+          {
+            id: "save",
+            label: "SAVE",
+            title: "Save for big goals",
+            body: "Protected for the future, like your GH₵80 school bag.",
+            chip: "Safe in the digital piggy bank",
+            tone: "save",
+          },
+          {
+            id: "spend",
+            label: "SPEND",
+            title: "Spend on everyday needs",
+            body: "For items you need today or small agreed wants.",
+            chip: "Pocket money in hand",
+            tone: "spend",
+          },
+          {
+            id: "share",
+            label: "SHARE",
+            title: "Share with community",
+            body: "Helping family, classmates or giving to good causes.",
+            chip: "Generosity & friends",
+            tone: "share",
+          },
         ],
       },
-      { type: "highlight", body: "Remember! There is no single magic formula. Good money managers divide their money based on their current goals and needs.", tone: "info" },
+      {
+        type: "highlight",
+        body: "Remember! There is no single magic formula. Good money managers divide their money based on their current goals and needs.",
+        tone: "info",
+      },
     ],
     activity: {
       kind: "allocate",
       title: "Allocate your GH₵20 allowance",
-      instruction: "Share your GH₵20 into the three jars however you think is best for your school goals.",
+      instruction:
+        "Share your GH₵20 into the three jars however you think is best for your school goals.",
       total: 20,
       jars: [
-        { id: "save", label: "SAVE jar", chip: "Priority", note: "Targeting school bag", icon: "🐷", tone: "save" },
-        { id: "spend", label: "SPEND jar", chip: "Daily needs", note: "Snacks & school pencil", icon: "🛍️", tone: "spend" },
-        { id: "share", label: "SHARE jar", chip: "Giving back", note: "Help a friend", icon: "❤️", tone: "share" },
+        {
+          id: "save",
+          label: "SAVE jar",
+          chip: "Priority",
+          note: "Targeting school bag",
+          icon: "🐷",
+          tone: "save",
+        },
+        {
+          id: "spend",
+          label: "SPEND jar",
+          chip: "Daily needs",
+          note: "Snacks & school pencil",
+          icon: "🛍️",
+          tone: "spend",
+        },
+        {
+          id: "share",
+          label: "SHARE jar",
+          chip: "Giving back",
+          note: "Help a friend",
+          icon: "❤️",
+          tone: "share",
+        },
       ],
       feedbackTitle: "Thoughtful balance!",
-      feedback: "Putting more toward your school bag speeds up your goal, while keeping a little for daily needs and sharing shows wise discernment.",
+      feedback:
+        "Putting more toward your school bag speeds up your goal, while keeping a little for daily needs and sharing shows wise discernment.",
     },
     xpReward: 25,
     competencies: ["budgeting", "saving"],
@@ -220,7 +342,10 @@ export const saveLessons: Lesson[] = [
     estimatedMinutes: 4,
     topic: "Tracking Money",
     contentBlocks: [
-      { type: "text", body: "Abena receives GH₵20 after helping her aunt at her food stall. By Friday she cannot remember where GH₵7 went. A tracker solves that." },
+      {
+        type: "text",
+        body: "Abena receives GH₵20 after helping her aunt at her food stall. By Friday she cannot remember where GH₵7 went. A tracker solves that.",
+      },
       {
         type: "stat",
         items: [
@@ -229,7 +354,12 @@ export const saveLessons: Lesson[] = [
           { label: "Left", value: "GH₵13" },
         ],
       },
-      { type: "tip", title: "Three-line tracker", body: "Date · What happened · Amount in or out. That's all you need in an exercise book.", example: "Mon · helped at stall · +GH₵20\nTue · meat pie · −GH₵3" },
+      {
+        type: "tip",
+        title: "Three-line tracker",
+        body: "Date · What happened · Amount in or out. That's all you need in an exercise book.",
+        example: "Mon · helped at stall · +GH₵20\nTue · meat pie · −GH₵3",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -258,9 +388,30 @@ export const saveLessons: Lesson[] = [
       {
         type: "cards",
         cards: [
-          { id: "home", label: "AT HOME", title: "Money box", body: "Easy to reach — and easy to spend. Keep it with a trusted adult.", tone: "spend", reveal: "Good for small amounts you are saving for a few weeks." },
-          { id: "momo", label: "MOBILE MONEY", title: "Mobile wallet", body: "A parent's wallet can hold your savings safely on the phone.", tone: "plan", reveal: "Keep the PIN secret. Only your parent should approve a withdrawal." },
-          { id: "bank", label: "BANK", title: "Savings account", body: "Very safe, harder to touch, and it can grow a little over time.", tone: "save", reveal: "Many Ghanaian banks have junior accounts opened by a parent." },
+          {
+            id: "home",
+            label: "AT HOME",
+            title: "Money box",
+            body: "Easy to reach — and easy to spend. Keep it with a trusted adult.",
+            tone: "spend",
+            reveal: "Good for small amounts you are saving for a few weeks.",
+          },
+          {
+            id: "momo",
+            label: "MOBILE MONEY",
+            title: "Mobile wallet",
+            body: "A parent's wallet can hold your savings safely on the phone.",
+            tone: "plan",
+            reveal: "Keep the PIN secret. Only your parent should approve a withdrawal.",
+          },
+          {
+            id: "bank",
+            label: "BANK",
+            title: "Savings account",
+            body: "Very safe, harder to touch, and it can grow a little over time.",
+            tone: "save",
+            reveal: "Many Ghanaian banks have junior accounts opened by a parent.",
+          },
         ],
       },
     ],
@@ -288,20 +439,43 @@ export const saveLessons: Lesson[] = [
     estimatedMinutes: 4,
     topic: "Money Safety",
     contentBlocks: [
-      { type: "text", body: "Mobile Money keeps cedis on a phone number instead of in your pocket. An agent gives cash in (deposit) or cash out (withdraw)." },
+      {
+        type: "text",
+        body: "Mobile Money keeps cedis on a phone number instead of in your pocket. An agent gives cash in (deposit) or cash out (withdraw).",
+      },
       {
         type: "steps",
         steps: [
-          { id: "1", label: "STEP 1", title: "Cash in", body: "Your parent gives money to the agent and it appears on the wallet." },
-          { id: "2", label: "STEP 2", title: "Keep", body: "The savings stay on the phone until you need them." },
-          { id: "3", label: "STEP 3", title: "Cash out", body: "Your parent withdraws when it is time to buy your goal item." },
+          {
+            id: "1",
+            label: "STEP 1",
+            title: "Cash in",
+            body: "Your parent gives money to the agent and it appears on the wallet.",
+          },
+          {
+            id: "2",
+            label: "STEP 2",
+            title: "Keep",
+            body: "The savings stay on the phone until you need them.",
+          },
+          {
+            id: "3",
+            label: "STEP 3",
+            title: "Cash out",
+            body: "Your parent withdraws when it is time to buy your goal item.",
+          },
         ],
       },
-      { type: "highlight", body: "Never share a PIN — not with a friend, not with a caller who says they work for the network.", tone: "warn" },
+      {
+        type: "highlight",
+        body: "Never share a PIN — not with a friend, not with a caller who says they work for the network.",
+        tone: "warn",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
-      prompt: "A stranger calls and says he sent money by mistake and needs your PIN. What do you do?",
+      prompt:
+        "A stranger calls and says he sent money by mistake and needs your PIN. What do you do?",
       options: [
         { id: "a", label: "Give the PIN quickly" },
         { id: "b", label: "Tell a parent and share nothing" },
@@ -324,9 +498,20 @@ export const saveLessons: Lesson[] = [
     estimatedMinutes: 4,
     topic: "Saving",
     contentBlocks: [
-      { type: "text", body: "A bank keeps your money safe and writes down every cedi. A parent opens a junior savings account with your name on it." },
-      { type: "tip", title: "Interest", body: "Banks sometimes add a small extra amount for leaving your money with them. Your GH₵100 can quietly become a little more." },
-      { type: "highlight", body: "A passbook or SMS shows your balance, so nobody has to guess.", tone: "info" },
+      {
+        type: "text",
+        body: "A bank keeps your money safe and writes down every cedi. A parent opens a junior savings account with your name on it.",
+      },
+      {
+        type: "tip",
+        title: "Interest",
+        body: "Banks sometimes add a small extra amount for leaving your money with them. Your GH₵100 can quietly become a little more.",
+      },
+      {
+        type: "highlight",
+        body: "A passbook or SMS shows your balance, so nobody has to guess.",
+        tone: "info",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -363,7 +548,11 @@ export const saveLessons: Lesson[] = [
           { label: "8 weeks", value: "GH₵80" },
         ],
       },
-      { type: "highlight", body: "Saving the same small amount often beats waiting for one big gift.", tone: "good" },
+      {
+        type: "highlight",
+        body: "Saving the same small amount often beats waiting for one big gift.",
+        tone: "good",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -391,7 +580,10 @@ export const saveLessons: Lesson[] = [
     illustrationBadge: "44% OFF",
     topic: "Smart Spending",
     contentBlocks: [
-      { type: "text", body: "At Kwesi's sports stall, an Accra Stars jersey is 44% off: GH₵45 down to GH₵25. Is that automatically a smart buy for you right now?" },
+      {
+        type: "text",
+        body: "At Kwesi's sports stall, an Accra Stars jersey is 44% off: GH₵45 down to GH₵25. Is that automatically a smart buy for you right now?",
+      },
       {
         type: "stat",
         items: [
@@ -403,20 +595,50 @@ export const saveLessons: Lesson[] = [
       {
         type: "cards",
         cards: [
-          { id: "win", label: "REAL WIN", title: "When is it a real win?", body: "It saves money ONLY IF you already needed and planned for it.", tone: "save" },
-          { id: "trap", label: "TRAP", title: "When is it a trap?", body: "If it takes away money you promised for your school bag, it is still a distraction.", tone: "spend" },
+          {
+            id: "win",
+            label: "REAL WIN",
+            title: "When is it a real win?",
+            body: "It saves money ONLY IF you already needed and planned for it.",
+            tone: "save",
+          },
+          {
+            id: "trap",
+            label: "TRAP",
+            title: "When is it a trap?",
+            body: "If it takes away money you promised for your school bag, it is still a distraction.",
+            tone: "spend",
+          },
         ],
       },
-      { type: "highlight", body: "TATI core takeaway: smart shoppers look at their total goals, not just the discount tag.", tone: "info" },
+      {
+        type: "highlight",
+        body: "TATI core takeaway: smart shoppers look at their total goals, not just the discount tag.",
+        tone: "info",
+      },
     ],
     activity: {
       kind: "choice",
       title: "Your call",
       instruction: "The jersey is GH₵25 today. What do you do?",
       options: [
-        { id: "buy", label: "Buy it now", response: "You enjoy the jersey today, and the school bag moves 10 days further away. Every decision teaches us something." },
-        { id: "wait", label: "Keep saving for the bag", response: "Your goal stays on track and you can look again after reopening day." },
-        { id: "part", label: "Ask a parent first", response: "Talking it through is a strong habit — grown-ups can help you compare the goal and the offer." },
+        {
+          id: "buy",
+          label: "Buy it now",
+          response:
+            "You enjoy the jersey today, and the school bag moves 10 days further away. Every decision teaches us something.",
+        },
+        {
+          id: "wait",
+          label: "Keep saving for the bag",
+          response: "Your goal stays on track and you can look again after reopening day.",
+        },
+        {
+          id: "part",
+          label: "Ask a parent first",
+          response:
+            "Talking it through is a strong habit — grown-ups can help you compare the goal and the offer.",
+        },
       ],
     },
     xpReward: 25,
@@ -436,13 +658,39 @@ export const saveLessons: Lesson[] = [
       {
         type: "steps",
         steps: [
-          { id: "stop", label: "STEP 1 · STOP", title: "Do I NEED or really WANT this?", body: "Take a breath. Is it an essential, or a sparkling temptation you'll forget tomorrow?", note: "Wait 10 seconds before handing over your coins." },
-          { id: "think", label: "STEP 2 · THINK", title: "Can I truly afford it right now?", body: "Look only at your loose pocket cash. Never touch coins already locked in your savings.", note: "GH₵45 pocket cash vs GH₵72.50 protected." },
-          { id: "choose", label: "STEP 3 · CHOOSE", title: "What happens to my goal if I buy it?", body: "Will spending delay your GH₵80 school bag before term starts?", note: "Only GH₵7.50 left to hit your goal!" },
+          {
+            id: "stop",
+            label: "STEP 1 · STOP",
+            title: "Do I NEED or really WANT this?",
+            body: "Take a breath. Is it an essential, or a sparkling temptation you'll forget tomorrow?",
+            note: "Wait 10 seconds before handing over your coins.",
+          },
+          {
+            id: "think",
+            label: "STEP 2 · THINK",
+            title: "Can I truly afford it right now?",
+            body: "Look only at your loose pocket cash. Never touch coins already locked in your savings.",
+            note: "GH₵45 pocket cash vs GH₵72.50 protected.",
+          },
+          {
+            id: "choose",
+            label: "STEP 3 · CHOOSE",
+            title: "What happens to my goal if I buy it?",
+            body: "Will spending delay your GH₵80 school bag before term starts?",
+            note: "Only GH₵7.50 left to hit your goal!",
+          },
         ],
       },
-      { type: "tip", title: "Coach Kwame's rule", body: "\"Smart savers aren't the ones who never spend; they're the ones who check twice!\"" },
-      { type: "highlight", body: "\"Deciding not to spend today is choosing your bigger dream tomorrow.\"", tone: "good" },
+      {
+        type: "tip",
+        title: "Coach Kwame's rule",
+        body: "\"Smart savers aren't the ones who never spend; they're the ones who check twice!\"",
+      },
+      {
+        type: "highlight",
+        body: '"Deciding not to spend today is choosing your bigger dream tomorrow."',
+        tone: "good",
+      },
     ],
     xpReward: 20,
     competencies: ["spending-decisions", "financial-resilience"],
@@ -457,15 +705,34 @@ export const saveLessons: Lesson[] = [
     estimatedMinutes: 4,
     topic: "Borrowing & Lending",
     contentBlocks: [
-      { type: "text", body: "Yaw borrows GH₵5 from Ama for a snack and promises to pay on Friday. Borrowing is a promise, not a gift." },
+      {
+        type: "text",
+        body: "Yaw borrows GH₵5 from Ama for a snack and promises to pay on Friday. Borrowing is a promise, not a gift.",
+      },
       {
         type: "cards",
         cards: [
-          { id: "before", label: "BEFORE BORROWING", title: "Ask three things", body: "Do I need it? When exactly will I pay back? What if I cannot?", tone: "plan" },
-          { id: "lending", label: "BEFORE LENDING", title: "Lend only what you can spare", body: "Never lend money that belongs to your goal, and agree the payback day out loud.", tone: "share" },
+          {
+            id: "before",
+            label: "BEFORE BORROWING",
+            title: "Ask three things",
+            body: "Do I need it? When exactly will I pay back? What if I cannot?",
+            tone: "plan",
+          },
+          {
+            id: "lending",
+            label: "BEFORE LENDING",
+            title: "Lend only what you can spare",
+            body: "Never lend money that belongs to your goal, and agree the payback day out loud.",
+            tone: "share",
+          },
         ],
       },
-      { type: "highlight", body: "Keeping your promise builds trust — that is worth more than the GH₵5.", tone: "good" },
+      {
+        type: "highlight",
+        body: "Keeping your promise builds trust — that is worth more than the GH₵5.",
+        tone: "good",
+      },
     ],
     knowledgeCheck: {
       id: "kc",
@@ -492,7 +759,10 @@ export const saveLessons: Lesson[] = [
     estimatedMinutes: 4,
     topic: "Financial Resilience",
     contentBlocks: [
-      { type: "text", body: "Akosua saved GH₵60 for her bag. Then her sandals tore and she had to spend GH₵15. Her plan changed — and that is normal." },
+      {
+        type: "text",
+        body: "Akosua saved GH₵60 for her bag. Then her sandals tore and she had to spend GH₵15. Her plan changed — and that is normal.",
+      },
       {
         type: "stat",
         items: [
@@ -501,10 +771,21 @@ export const saveLessons: Lesson[] = [
           { label: "New total", value: "GH₵45" },
         ],
       },
-      { type: "tip", title: "Adjust, don't quit", body: "Add a little more each day, move the date, or choose a smaller first goal. You can adjust your plan." },
-      { type: "highlight", body: "A small emergency stash — even GH₵5 — softens surprises.", tone: "info" },
+      {
+        type: "tip",
+        title: "Adjust, don't quit",
+        body: "Add a little more each day, move the date, or choose a smaller first goal. You can adjust your plan.",
+      },
+      {
+        type: "highlight",
+        body: "A small emergency stash — even GH₵5 — softens surprises.",
+        tone: "info",
+      },
     ],
-    reflection: { prompt: "What would you change if a surprise cost came up this week?", placeholder: "I would…" },
+    reflection: {
+      prompt: "What would you change if a surprise cost came up this week?",
+      placeholder: "I would…",
+    },
     xpReward: 20,
     competencies: ["financial-resilience", "budgeting"],
     nextLesson: "money-safety",
@@ -531,7 +812,11 @@ export const saveLessons: Lesson[] = [
           { id: "ask", label: "Ask a parent before any big payment", icon: "🙋🏾" },
         ],
       },
-      { type: "highlight", body: "If an offer sounds too good to be true — double your cedis today! — it is a trick.", tone: "warn" },
+      {
+        type: "highlight",
+        body: "If an offer sounds too good to be true — double your cedis today! — it is a trick.",
+        tone: "warn",
+      },
     ],
     knowledgeCheck: {
       id: "kc",

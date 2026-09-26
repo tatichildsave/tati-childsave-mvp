@@ -84,7 +84,10 @@ export function progressQuery(childId: string) {
       if (pending.length > 0) void syncPending(childId, pending);
       const serverEvents = (data ?? []) as unknown as ProgressEvent[];
       const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
-      return [...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)), ...pending];
+      return [
+        ...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)),
+        ...pending,
+      ];
     },
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -159,9 +162,15 @@ export function useRecordProgress() {
       const next = optimisticEvent(input);
       qc.setQueryData<ProgressEvent[]>(key, (old) => {
         const list = old ?? [];
-        const existing = list.find((e) => e.item_type === next.item_type && e.item_id === next.item_id);
+        const existing = list.find(
+          (e) => e.item_type === next.item_type && e.item_id === next.item_id,
+        );
         if (!existing) return [...list, next];
-        return list.map((e) => (e === existing ? { ...existing, ...next, id: existing.id, created_at: existing.created_at } : e));
+        return list.map((e) =>
+          e === existing
+            ? { ...existing, ...next, id: existing.id, created_at: existing.created_at }
+            : e,
+        );
       });
       return { previous, key };
     },

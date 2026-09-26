@@ -31,9 +31,19 @@ export type ContentBlock =
   | { type: "highlight"; body: string; tone?: "info" | "warn" | "good" }
   | { type: "scene"; imageUrl: string; caption?: string; badge?: string }
   | { type: "cards"; intro?: string; cards: ConceptCard[] }
-  | { type: "list"; title: string; chip?: string; body?: string; items: LessonItem[]; tone?: "good" | "warn" }
+  | {
+      type: "list";
+      title: string;
+      chip?: string;
+      body?: string;
+      items: LessonItem[];
+      tone?: "good" | "warn";
+    }
   | { type: "tip"; title: string; body: string; example?: string }
-  | { type: "steps"; steps: { id: string; label: string; title: string; body: string; note?: string }[] }
+  | {
+      type: "steps";
+      steps: { id: string; label: string; title: string; body: string; note?: string }[];
+    }
   | { type: "stat"; items: { label: string; value: string; note?: string }[] };
 
 export interface QuickCheck {
@@ -61,7 +71,14 @@ export type Activity =
       title: string;
       instruction: string;
       total: number;
-      jars: { id: string; label: string; chip?: string; note?: string; icon?: string; tone: "save" | "spend" | "share" }[];
+      jars: {
+        id: string;
+        label: string;
+        chip?: string;
+        note?: string;
+        icon?: string;
+        tone: "save" | "spend" | "share";
+      }[];
       feedbackTitle?: string;
       feedback: string;
     }

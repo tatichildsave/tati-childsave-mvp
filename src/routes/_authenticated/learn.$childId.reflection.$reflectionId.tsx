@@ -1,6 +1,12 @@
 import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Screen, Card, TopBar, PrimaryButton, ChoiceButton } from "@/components/learning/primitives";
+import {
+  Screen,
+  Card,
+  TopBar,
+  PrimaryButton,
+  ChoiceButton,
+} from "@/components/learning/primitives";
 import { useRecordProgress } from "@/lib/progress/service";
 import { getReflection, getTrack } from "@/lib/learning/track";
 import { celebrateStep } from "@/components/gamification/celebrate";
@@ -17,7 +23,10 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/reflection/
   head: () => ({
     meta: [
       { title: "Pause and think — TATI ChildSave" },
-      { name: "description", content: "A short pause to think about the money choices you just made." },
+      {
+        name: "description",
+        content: "A short pause to think about the money choices you just made.",
+      },
       { property: "og:title", content: "Pause and think — TATI ChildSave" },
       { property: "og:description", content: "A short pause to think about your money choices." },
       { property: "og:type", content: "website" },
@@ -106,9 +115,11 @@ function ReflectionPage() {
         </p>
         <p className="mt-2 text-lg leading-relaxed">{reflection.intro}</p>
         <h2 className="mt-4 text-xl font-bold">{reflection.question}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">No scores here — just your own thinking.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No scores here — just your own thinking.
+        </p>
         <div className="mt-4 space-y-2">
-            {reflection.options.map((option) => (
+          {reflection.options.map((option) => (
             <ChoiceButton key={option.id} onClick={() => choose(option.id)}>
               {option.label}
             </ChoiceButton>
@@ -119,7 +130,9 @@ function ReflectionPage() {
       {picked ? (
         <Card className="mt-4">
           <p className="text-lg leading-relaxed">{picked.response}</p>
-          <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">{reflection.closing}</p>
+          <p className="mt-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
+            {reflection.closing}
+          </p>
         </Card>
       ) : null}
 

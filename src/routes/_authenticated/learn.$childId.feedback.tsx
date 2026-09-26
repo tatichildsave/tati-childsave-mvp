@@ -11,7 +11,7 @@ const funOptions = [
   ["😴", "Not really"],
   ["🙂", "A little"],
   ["😄", "Fun"],
-  ["🤩", "Loved it!"]
+  ["🤩", "Loved it!"],
 ] as const;
 const confusingOptions = ["No, I understood", "A little", "Yes, I needed help"] as const;
 const continueOptions = ["Yes!", "Maybe", "Not yet"] as const;
@@ -52,7 +52,10 @@ function ChildFeedback() {
           <div className="text-5xl">🌟</div>
           <h1 className="mt-3 text-2xl font-bold">Thanks for telling us!</h1>
           <p className="mt-2 text-muted-foreground">Your ideas help make TATI better.</p>
-          <PrimaryButton className="mt-6" onClick={() => navigate({ to: "/learn/$childId", params: { childId } })}>
+          <PrimaryButton
+            className="mt-6"
+            onClick={() => navigate({ to: "/learn/$childId", params: { childId } })}
+          >
             Back to my journey
           </PrimaryButton>
         </Card>
@@ -63,14 +66,33 @@ function ChildFeedback() {
   return (
     <Screen>
       <TopBar title="Quick check-in" backTo={`/learn/${childId}/summary`} />
-      <p className="mb-5 text-center text-lg text-muted-foreground">Three tiny questions. You can skip the note.</p>
+      <p className="mb-5 text-center text-lg text-muted-foreground">
+        Three tiny questions. You can skip the note.
+      </p>
 
-      <Question title="Was TATI fun?" options={funOptions.map(([icon, label]) => ({ value: label, label: `${icon} ${label}` }))} value={fun} onChange={setFun} />
-      <Question title="Was anything confusing?" options={confusingOptions.map((label) => ({ value: label, label }))} value={confusing} onChange={setConfusing} />
-      <Question title="Would you like another money challenge?" options={continueOptions.map((label) => ({ value: label, label }))} value={continueUsing} onChange={setContinueUsing} />
+      <Question
+        title="Was TATI fun?"
+        options={funOptions.map(([icon, label]) => ({ value: label, label: `${icon} ${label}` }))}
+        value={fun}
+        onChange={setFun}
+      />
+      <Question
+        title="Was anything confusing?"
+        options={confusingOptions.map((label) => ({ value: label, label }))}
+        value={confusing}
+        onChange={setConfusing}
+      />
+      <Question
+        title="Would you like another money challenge?"
+        options={continueOptions.map((label) => ({ value: label, label }))}
+        value={continueUsing}
+        onChange={setContinueUsing}
+      />
 
       <Card className="mt-4">
-        <label htmlFor="child-feedback-note" className="font-bold">Anything else? <span className="font-normal text-muted-foreground">Optional</span></label>
+        <label htmlFor="child-feedback-note" className="font-bold">
+          Anything else? <span className="font-normal text-muted-foreground">Optional</span>
+        </label>
         <textarea
           id="child-feedback-note"
           value={message}
@@ -84,7 +106,11 @@ function ChildFeedback() {
       <PrimaryButton className="mt-5" onClick={() => void send()} disabled={!canSend || saving}>
         {saving ? "Sending..." : "Send my answers"}
       </PrimaryButton>
-      <Link to="/learn/$childId" params={{ childId }} className="mt-4 block text-center font-semibold text-primary">
+      <Link
+        to="/learn/$childId"
+        params={{ childId }}
+        className="mt-4 block text-center font-semibold text-primary"
+      >
         Skip for now
       </Link>
     </Screen>

@@ -23,7 +23,9 @@ export function Page({
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className={cn(tatiTheme.container, "pt-4", withBottomNav ? "pb-28" : "pb-12", className)}>
+      <div
+        className={cn(tatiTheme.container, "pt-4", withBottomNav ? "pb-28" : "pb-12", className)}
+      >
         {children}
       </div>
     </div>
@@ -110,7 +112,8 @@ const navItems = [
 
 export function BottomNavigation() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const focusedActivity = pathname.startsWith("/child/lesson/") || pathname.startsWith("/child/scenario/");
+  const focusedActivity =
+    pathname.startsWith("/child/lesson/") || pathname.startsWith("/child/scenario/");
 
   if (focusedActivity) return null;
 

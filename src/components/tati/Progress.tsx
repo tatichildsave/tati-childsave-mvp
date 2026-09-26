@@ -78,7 +78,14 @@ export function ProgressRing({
           aria-label={`${caption ?? "Progress"}: ${pct}%`}
           className="-rotate-90"
         >
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth={stroke} />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth={stroke}
+          />
           <circle
             cx={size / 2}
             cy={size / 2}

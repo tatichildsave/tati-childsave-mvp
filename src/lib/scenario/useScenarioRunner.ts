@@ -40,6 +40,7 @@ export function useScenarioRunner(
   const key = scenarioCacheKey(childId, scenario.id);
   const [status, setStatus] = useState<RunnerStatus>("loading");
   const [state, setState] = useState<ScenarioState>(() => createInitialState(scenario));
+  const [saveError, setSaveError] = useState<string | null>(null);
   const loaded = useRef(false);
   const sessionId = useRef<string | undefined>(undefined);
 
@@ -83,19 +84,44 @@ export function useScenarioRunner(
     (next: ScenarioState, isDecision = false) => {
       setState(next);
       writeCachedState(key, next);
-      void persistence.saveSession(childId, next).then((id) => {
+      setSaveError(null);
+      void persistence
+        .saveSession(childId, next)
+        .catch((error) => {
+          setSaveError("We couldn't save your progress. Please try again.");
+          console.error("Scenario save error:", error);
+        })
+        .then((id) => {
+          if (id) {
+            sessionId.current = id;
+            setStatus("ready");
+            setSaveError(null);
+          } else if (!saveError) {
+            setStatus("interrupted");
+          }
+          if (isDecision && sessionId.current)
+            void persistence.recordDecision(childId, sessionId.current, next);
+        });
+    },
+    [key, childId, persistence, saveError],
+  );
+
+  const retryLastSave = useCallback(() => {
+    setSaveError(null);
+    void persistence
+      .saveSession(childId, state)
+      .catch((error) => {
+        setSaveError("We couldn't save your progress. Please try again.");
+        console.error("Scenario save retry error:", error);
+      })
+      .then((id) => {
         if (id) {
           sessionId.current = id;
           setStatus("ready");
-        } else {
-          setStatus("interrupted");
+          setSaveError(null);
         }
-        if (isDecision && sessionId.current)
-          void persistence.recordDecision(childId, sessionId.current, next);
       });
-    },
-    [key, childId, persistence],
-  );
+  }, [childId, persistence, state]);
 
   const start = useCallback(() => persist(beginScenario(state)), [persist, state]);
   const choose = useCallback(
@@ -142,5 +168,17 @@ export function useScenarioRunner(
     }
   }, [childId, scenario.id, state.phase]);
 
-  return { status, state, node, summary, start, choose, continueOn, restart, clearSaved };
+  return {
+    status,
+    state,
+    node,
+    summary,
+    start,
+    choose,
+    continueOn,
+    restart,
+    clearSaved,
+    saveError,
+    retryLastSave,
+  };
 }

@@ -47,5 +47,7 @@ export async function saveAssessmentAttempt(
       max_points: questionMaxPoints(q),
     }));
   if (rows.length === 0) return;
-  await supabase.from("assessment_responses").upsert(rows, { onConflict: "attempt_id,question_id" });
+  await supabase
+    .from("assessment_responses")
+    .upsert(rows, { onConflict: "attempt_id,question_id" });
 }

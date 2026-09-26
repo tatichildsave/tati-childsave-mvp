@@ -35,7 +35,7 @@ export function ScenarioPlayer({
   persistence,
 }: Props) {
   const runner = useScenarioRunner(scenario, childId, persistence);
-  const { state, node, summary, status } = runner;
+  const { state, node, summary, status, saveError, retryLastSave } = runner;
   const dayPct = dayProgressPercent(scenario, state);
   const atChapterEnd =
     !!pauseBefore?.length &&
@@ -82,6 +82,19 @@ export function ScenarioPlayer({
         <p className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           Welcome back! Ready to continue? We kept your story exactly where you left it.
         </p>
+      ) : null}
+      {saveError ? (
+        <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
+          <p className="text-sm text-warning-foreground">{saveError}</p>
+          <button
+            type="button"
+            onClick={retryLastSave}
+            disabled={!!saving}
+            className="mt-2 inline-flex items-center justify-center rounded-lg bg-warning px-3 py-1.5 text-sm font-semibold text-warning-foreground disabled:opacity-50"
+          >
+            Try again
+          </button>
+        </div>
       ) : null}
 
       {/* Day + money strip */}

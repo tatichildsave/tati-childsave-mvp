@@ -12,10 +12,14 @@ export const Route = createFileRoute("/signup")({
       { title: "Create your parent account — TATI ChildSave" },
       {
         name: "description",
-        content: "Create a TATI ChildSave parent account and set up a private learner profile for your child.",
+        content:
+          "Create a TATI ChildSave parent account and set up a private learner profile for your child.",
       },
       { property: "og:title", content: "Create your parent account — TATI ChildSave" },
-      { property: "og:description", content: "Set up a safe learner profile for your child in minutes." },
+      {
+        property: "og:description",
+        content: "Set up a safe learner profile for your child in minutes.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -47,7 +51,13 @@ function SignupPage() {
   const hasNumberOrSymbol = /[\d\W]/.test(password);
   const matches = confirm.length > 0 && confirm === password;
   const canSubmit =
-    fullName.trim() && email.trim() && longEnough && hasNumberOrSymbol && matches && agreed && !busy;
+    fullName.trim() &&
+    email.trim() &&
+    longEnough &&
+    hasNumberOrSymbol &&
+    matches &&
+    agreed &&
+    !busy;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -185,7 +195,9 @@ function SignupPage() {
               className={inputClass}
             />
             {confirm ? (
-              <p className={`mt-2 text-sm font-bold ${matches ? "text-success" : "text-muted-foreground"}`}>
+              <p
+                className={`mt-2 text-sm font-bold ${matches ? "text-success" : "text-muted-foreground"}`}
+              >
                 {matches ? "✓ Passwords match" : "Passwords don't match yet"}
               </p>
             ) : null}
@@ -209,12 +221,18 @@ function SignupPage() {
           </label>
 
           {error ? (
-            <p role="alert" className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive">
+            <p
+              role="alert"
+              className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive"
+            >
               {error}
             </p>
           ) : null}
           {note ? (
-            <p role="status" className="rounded-2xl bg-success-soft p-3 text-base font-bold text-success">
+            <p
+              role="status"
+              className="rounded-2xl bg-success-soft p-3 text-base font-bold text-success"
+            >
               {note}
             </p>
           ) : null}

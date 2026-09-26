@@ -8,7 +8,10 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — TATI ChildSave" },
-      { name: "description", content: "Parents sign in to continue their child's TATI money journey." },
+      {
+        name: "description",
+        content: "Parents sign in to continue their child's TATI money journey.",
+      },
       { property: "og:title", content: "Sign in — TATI ChildSave" },
       { property: "og:description", content: "Sign in to your TATI ChildSave parent account." },
       { property: "og:type", content: "website" },
@@ -66,7 +69,12 @@ function LoginPage() {
 
   return (
     <Page>
-      <PageHeader backTo="/" eyebrow="Parent portal" title="Welcome back" subtitle="Continue your child's TATI journey." />
+      <PageHeader
+        backTo="/"
+        eyebrow="Parent portal"
+        title="Welcome back"
+        subtitle="Continue your child's TATI journey."
+      />
 
       <Card>
         {checking ? (
@@ -107,7 +115,10 @@ function LoginPage() {
           </div>
 
           {error ? (
-            <p role="alert" className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive">
+            <p
+              role="alert"
+              className="rounded-2xl bg-warning-soft p-3 text-base font-bold text-destructive"
+            >
               {error}
             </p>
           ) : null}

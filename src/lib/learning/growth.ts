@@ -38,7 +38,8 @@ export function buildSkillGrowth(
   const source = post.length > 0 ? post : pre;
 
   return source.map((c) => {
-    const before = post.length > 0 ? pre.find((p) => p.competency === c.competency)?.ratio : undefined;
+    const before =
+      post.length > 0 ? pre.find((p) => p.competency === c.competency)?.ratio : undefined;
     const after = c.ratio;
     return {
       competency: c.competency,
