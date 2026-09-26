@@ -20,6 +20,17 @@ service cloud.firestore {
       return hasRole('admin');
     }
 
+    // ============================================================================
+    // H3.3 SCHOOL ADMINISTRATION FUNCTIONS
+    // ============================================================================
+    function isSchoolAdmin(schoolId) {
+      return signedIn() && exists(/databases/$(database)/documents/schools/$(schoolId)/admins/$(request.auth.uid));
+    }
+
+    function canAccessSchool(schoolId) {
+      return isAdmin() || isSchoolAdmin(schoolId);
+    }
+
     function memberPath(familyId) {
       return /databases/$(database)/documents/families/$(familyId)/members/$(request.auth.uid);
     }
@@ -175,6 +186,115 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // ============================================================================
+    // ACADEMY SESSIONS (H3.2.8 — FACILITATOR SESSION PERSISTENCE)
+    // ============================================================================
+    // Facilitator sessions record the operational context of facilitated activities.
+    // Sessions are owned by facilitators, immutable after creation.
+    // Sessions do NOT modify learner progress.
+    // ============================================================================
+
+    match /academySessions/{sessionId} {
+      // Create: Authenticated facilitator only
+      allow create: if signedIn() && hasRole('facilitator')
+        && request.resource.data.facilitatorUid == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.startedAt != null
+        && request.resource.data.endedAt == null;
+
+      // Read: Owner or admin only
+      allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
+
+      // Update: Owner only, with immutable ownership and identity fields
+      allow update: if request.auth.uid == resource.data.facilitatorUid
+        && request.resource.data.facilitatorUid == resource.data.facilitatorUid
+        && request.resource.data.activityId == resource.data.activityId
+        && request.resource.data.learnerIds == resource.data.learnerIds
+        && request.resource.data.startedAt == resource.data.startedAt
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      // Delete: Prevent deletion of historical session records
+      allow delete: if false;
+    }
+
+    // ============================================================================
+    // ACADEMY COHORTS (H3.2.9 — FACILITATOR COHORT MANAGEMENT)
+    // ============================================================================
+    // Facilitator cohorts are named groups of assigned learners.
+    // Cohorts are owned by facilitators and organized on top of facilitatorAssignments.
+    // Cohorts do NOT modify learner progress, assignments, or protected data.
+    // Ownership (facilitatorUid) is immutable after creation.
+    // ============================================================================
+
+    match /academyCohorts/{cohortId} {
+      // Create: Authenticated facilitators only
+      // Validates: cohort owner is self, valid name, active status
+      allow create: if signedIn() && hasRole('facilitator')
+        && request.resource.data.facilitatorUid == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.name != null
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100;
+
+      // Read: Owner or admin only
+      // Facilitators can only see their own cohorts
+      allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
+
+      // Update: Owner only, with immutability checks
+      // Prevents: ownership change, timestamp modification
+      // Allows: name, description, learnerIds, status changes
+      allow update: if request.auth.uid == resource.data.facilitatorUid
+        && request.resource.data.facilitatorUid == resource.data.facilitatorUid
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      // Delete: Prevent deletion (archive instead)
+      // Cohort history must be preserved
+      allow delete: if false;
+    }
+
+    // ============================================================================
+    // SCHOOLS (H3.3 — SCHOOL ADMINISTRATION)
+    // ============================================================================
+    // Schools are organizational entities that group facilitators and cohorts.
+    // School admins manage facilitators, cohorts, and learners within their school.
+    // School isolation is enforced via isSchoolAdmin() and canAccessSchool() functions.
+    // ============================================================================
+
+    match /schools/{schoolId} {
+      // Read: School admin or platform admin only
+      allow read: if canAccessSchool(schoolId);
+
+      // Create: Platform admin only
+      allow create: if isAdmin()
+        && request.resource.data.status == 'active'
+        && request.resource.data.name != null
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 200;
+
+      // Update: Platform admin only, prevent ownership/identity changes
+      allow update: if isAdmin()
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      // Delete: Prevent deletion (archive instead)
+      // School history must be preserved
+      allow delete: if false;
+
+      match /admins/{adminUid} {
+        // Read: School admin or platform admin only
+        allow read: if canAccessSchool(schoolId);
+
+        // Create: Platform admin only
+        allow create: if isAdmin();
+
+        // Update: Platform admin only
+        allow update: if isAdmin();
+
+        // Delete: Platform admin only
+        allow delete: if isAdmin();
+      }
     }
   }
 }

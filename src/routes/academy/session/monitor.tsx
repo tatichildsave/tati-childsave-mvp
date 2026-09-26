@@ -1,21 +1,39 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Avatar, Button, Card, EmptyState, LoadingState, Badge } from "@/components/tati";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AcademyShell } from "@/components/academy/AcademyShell";
 import { getFacilitatorSession } from "@/lib/auth/facilitator-auth.functions";
-import { useAcademyDashboard } from "@/lib/academy";
+import {
+  useAcademyDashboard,
+  useAcademySession,
+  useUpdateSessionAttendance,
+  useUpdateSessionNote,
+  useCompleteAcademySession,
+  computeSessionDuration,
+  computeAttendanceSummary,
+} from "@/lib/academy";
 import { getTrack, itemTitle, itemSubtitle } from "@/lib/learning/track";
 import { facilitatorGuides } from "@/lib/academy/facilitator-guide";
 import { getActivityStatus, summarizeActivityStatuses } from "@/lib/academy/activity-status";
-import { getChildJourneyProgress } from "@/lib/academy/data-access";
+import { getChildJourneyProgress, type FirestoreProgressEvent } from "@/lib/academy/data-access";
 
 interface MonitorSearchParams {
+  sessionId?: string | undefined;
   activityId?: string | undefined;
 }
 
 export const Route = createFileRoute("/academy/session/monitor")({
   validateSearch: (search: Record<string, unknown>): MonitorSearchParams => ({
+    sessionId: search["sessionId"] as string | undefined,
     activityId: search["activityId"] as string | undefined,
   }),
   head: () => ({
@@ -37,7 +55,17 @@ export const Route = createFileRoute("/academy/session/monitor")({
 function AcademySessionMonitor() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/academy/session/monitor" });
-  const activityId = search["activityId"];
+  const { sessionId, activityId } = search;
+
+  // Local state
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [noteMode, setNoteMode] = useState<"view" | "edit">("view");
+  const [savingNote, setSavingNote] = useState(false);
+  const [attendanceChanges, setAttendanceChanges] = useState<
+    Record<string, "present" | "absent" | "unknown">
+  >({});
 
   // Get facilitator session
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -46,7 +74,7 @@ function AcademySessionMonitor() {
     staleTime: 60_000,
   });
 
-  // Load cohort dashboard data
+  // Load academy dashboard
   const {
     data: dashboardData,
     isLoading: dashboardLoading,
@@ -55,11 +83,24 @@ function AcademySessionMonitor() {
     session ? { uid: session.uid, email: session.email, displayName: session.displayName } : null,
   );
 
-  // Load detailed journey progress for all learners
+  // Load persisted session (if sessionId provided)
+  const { data: persistedSession, isLoading: sessionDataLoading } = useAcademySession(
+    sessionId ?? null,
+    session?.uid ?? null,
+  );
+
+  // Determine active activity ID (from session or param)
+  const effectiveActivityId = sessionId ? persistedSession?.activityId : activityId;
+
+  // Load journey progress for all learners
   const { data: learnerJourneyData, isLoading: journeyLoading } = useQuery({
-    queryKey: ["academy-activity-monitoring", session?.uid, activityId],
+    queryKey: ["academy-activity-monitoring", session?.uid, effectiveActivityId],
     queryFn: async () => {
-      if (!dashboardData?.assignedChildren || !dashboardData.progressSummaries || !activityId) {
+      if (
+        !dashboardData?.assignedChildren ||
+        !dashboardData.progressSummaries ||
+        !effectiveActivityId
+      ) {
         return null;
       }
 
@@ -75,33 +116,35 @@ function AcademySessionMonitor() {
       }
       return journeyMap;
     },
-    enabled: !!dashboardData?.assignedChildren && !!activityId,
-    staleTime: 60_000,
+    enabled: !!dashboardData?.assignedChildren && !!effectiveActivityId,
+    staleTime: 30_000,
   });
 
-  // Compute activity statuses (must be outside conditional rendering)
-  const activityStatuses = useMemo(() => {
-    if (!learnerJourneyData || !dashboardData?.progressSummaries || !activityId) return [];
+  // Mutations
+  const updateAttendanceMutation = useUpdateSessionAttendance();
+  const updateNoteMutation = useUpdateSessionNote();
+  const completeSessionMutation = useCompleteAcademySession();
 
-    return dashboardData.progressSummaries.map((learner) => {
-      const journeyProgress = learnerJourneyData[learner.childId] || [];
-      return getActivityStatus(learner, activityId, journeyProgress);
-    });
-  }, [learnerJourneyData, dashboardData?.progressSummaries, activityId]);
-
-  const statusSummary = useMemo(
-    () => summarizeActivityStatuses(activityStatuses),
-    [activityStatuses],
-  );
-
-  // Redirect to login if not authenticated
+  // Redirect if not authenticated
   useEffect(() => {
     if (!sessionLoading && !session?.isFacilitator) {
       navigate({ to: "/academy/login", replace: true });
     }
   }, [sessionLoading, session?.isFacilitator, navigate]);
 
-  if (sessionLoading || dashboardLoading || journeyLoading) {
+  // Load initial note from session
+  useEffect(() => {
+    if (persistedSession?.facilitatorNote) {
+      setNoteText(persistedSession.facilitatorNote);
+    }
+    // Load initial attendance from session
+    if (persistedSession?.attendance) {
+      setAttendanceChanges(persistedSession.attendance);
+    }
+  }, [persistedSession]);
+
+  // Show loading states
+  if (sessionLoading || dashboardLoading || journeyLoading || sessionDataLoading) {
     return (
       <AcademyShell>
         <LoadingState label="Loading session monitoring…" />
@@ -113,18 +156,18 @@ function AcademySessionMonitor() {
     return null;
   }
 
-  // If no activity ID provided
-  if (!activityId) {
+  // Require either sessionId or activityId
+  if (!effectiveActivityId) {
     return (
       <AcademyShell>
         <EmptyState
           title="No activity selected"
-          description="Please select an activity to monitor learner progress."
+          description="Please select an activity to monitor."
           action={
             <div className="flex gap-2">
-              <Button to="/academy/session">View today's guide</Button>
+              <Button to="/academy/session">View guide</Button>
               <Button to="/academy/cohorts" variant="outline">
-                Back to cohorts
+                Cohorts
               </Button>
             </div>
           }
@@ -133,9 +176,99 @@ function AcademySessionMonitor() {
     );
   }
 
-  // Load track and find activity
+  // For persistent sessions, verify ownership
+  if (sessionId && persistedSession && persistedSession.facilitatorUid !== session.uid) {
+    return (
+      <AcademyShell>
+        <EmptyState
+          title="Session not available"
+          description="This session belongs to another facilitator."
+          action={<Button to="/academy/cohorts">Back to cohorts</Button>}
+        />
+      </AcademyShell>
+    );
+  }
+
+  // For completed sessions, show read-only summary
+  if (persistedSession && persistedSession.status === "completed") {
+    const duration = computeSessionDuration(persistedSession);
+    const attendance = computeAttendanceSummary(persistedSession);
+
+    return (
+      <AcademyShell>
+        <div className="space-y-6">
+          <div>
+            <button
+              onClick={() => navigate({ to: "/academy/cohorts" })}
+              className="mb-3 text-sm font-medium text-primary hover:underline"
+            >
+              ← Back to cohorts
+            </button>
+            <h1 className="text-3xl font-bold text-foreground">Session Completed</h1>
+            <p className="mt-1 text-base text-muted-foreground">
+              {persistedSession.activityTitle || effectiveActivityId}
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <p className="text-xs text-muted-foreground uppercase font-medium">Duration</p>
+              <p className="mt-2 text-2xl font-bold text-foreground">
+                {duration ? `${duration} min` : "—"}
+              </p>
+            </Card>
+
+            <Card>
+              <p className="text-xs text-muted-foreground uppercase font-medium">Attendance</p>
+              <p className="mt-2 text-base font-bold text-foreground">
+                {attendance.present} present, {attendance.absent} absent, {attendance.unknown}{" "}
+                unknown
+              </p>
+            </Card>
+          </div>
+
+          {persistedSession.facilitatorNote && (
+            <Card>
+              <p className="text-xs text-muted-foreground uppercase font-medium mb-2">
+                Facilitator Note
+              </p>
+              <p className="text-sm text-foreground">{persistedSession.facilitatorNote}</p>
+            </Card>
+          )}
+
+          <div className="flex gap-2">
+            <Button to="/academy/cohorts" variant="primary">
+              Back to Cohorts
+            </Button>
+            <Button to="/academy/dashboard" variant="outline">
+              Dashboard
+            </Button>
+          </div>
+        </div>
+      </AcademyShell>
+    );
+  }
+
+  // Compute activity statuses (must be outside conditional rendering)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const activityStatuses = useMemo(() => {
+    if (!learnerJourneyData || !dashboardData?.progressSummaries || !effectiveActivityId) return [];
+
+    return dashboardData.progressSummaries.map((learner) => {
+      const journeyProgress = learnerJourneyData[learner.childId] || [];
+      return getActivityStatus(learner, effectiveActivityId, journeyProgress);
+    });
+  }, [learnerJourneyData, dashboardData?.progressSummaries, effectiveActivityId]);
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const statusSummary = useMemo(
+    () => summarizeActivityStatuses(activityStatuses),
+    [activityStatuses],
+  );
+
+  // Load track and activity
   const track = getTrack("save");
-  const activity = track.sequence.find((item) => item.id === activityId);
+  const activity = track.sequence.find((item) => item.id === effectiveActivityId);
 
   if (!activity) {
     return (
@@ -149,14 +282,14 @@ function AcademySessionMonitor() {
     );
   }
 
-  // Get activity metadata
-  const guide = facilitatorGuides[activityId];
+  // Activity metadata
+  const guide = facilitatorGuides[effectiveActivityId];
   const activityTitle = itemTitle(track, activity);
   const activitySubtitle = itemSubtitle(track, activity);
-  const position = track.sequence.findIndex((item) => item.id === activityId) + 1;
+  const position = track.sequence.findIndex((item) => item.id === effectiveActivityId) + 1;
   const totalActivities = track.sequence.length;
 
-  // Get learners
+  // Get learners and compute activity statuses
   const learners = dashboardData?.progressSummaries || [];
 
   // Group learners by status
@@ -167,15 +300,57 @@ function AcademySessionMonitor() {
     (s) => s.status === "on-another-activity",
   );
 
-  // Determine support section
-  const learnersNeedingCheckIn = [
-    ...notStartedLearners.filter(
-      (s) =>
-        s.learner.supportSignal === "needs-support" || s.learner.supportSignal === "not-started",
-    ),
-  ];
+  // Handler functions
+  const handleAttendanceChange = (childId: string, status: "present" | "absent" | "unknown") => {
+    setAttendanceChanges((prev) => ({
+      ...prev,
+      [childId]: status,
+    }));
 
-  const hasNoActivity = statusSummary.total === 0;
+    if (sessionId && persistedSession) {
+      updateAttendanceMutation.mutate({
+        sessionId,
+        facilitatorUid: session.uid,
+        childId,
+        status,
+      });
+    }
+  };
+
+  const handleSaveNote = async () => {
+    if (!sessionId || !persistedSession) return;
+
+    setSavingNote(true);
+    try {
+      await updateNoteMutation.mutateAsync({
+        sessionId,
+        facilitatorUid: session.uid,
+        note: noteText,
+      });
+      setNoteMode("view");
+    } catch (error) {
+      console.error("Failed to save note:", error);
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    if (!sessionId || !persistedSession) return;
+
+    setIsEndingSession(true);
+    try {
+      await completeSessionMutation.mutateAsync({
+        sessionId,
+        facilitatorUid: session.uid,
+      });
+      setShowEndConfirm(false);
+      // Session completion will reload this component with completed status
+    } catch (error) {
+      console.error("Failed to end session:", error);
+      setIsEndingSession(false);
+    }
+  };
 
   return (
     <AcademyShell>
@@ -186,7 +361,7 @@ function AcademySessionMonitor() {
             <button
               onClick={() =>
                 navigate({
-                  to: `/academy/session?activityId=${activityId}`,
+                  to: `/academy/session?activityId=${effectiveActivityId}`,
                 })
               }
               className="mb-3 text-sm font-medium text-primary hover:underline"
@@ -200,6 +375,27 @@ function AcademySessionMonitor() {
             ↻ Refresh
           </Button>
         </div>
+
+        {/* Session Status (if persisted) */}
+        {persistedSession && (
+          <Card className="border-primary/30 bg-primary/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Session Status
+                </p>
+                <p className="mt-1 text-lg font-bold text-primary">
+                  {persistedSession.status === "active" ? "● Session Active" : "Session Completed"}
+                </p>
+              </div>
+              {persistedSession.status === "active" && (
+                <Button size="md" variant="outline" onClick={() => setShowEndConfirm(true)}>
+                  End Session
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
 
         {/* Activity Context */}
         <Card>
@@ -254,7 +450,7 @@ function AcademySessionMonitor() {
             </Card>
 
             <Card>
-              <p className="text-sm text-muted-foreground">Working On Other</p>
+              <p className="text-sm text-muted-foreground">Other Activity</p>
               <p className="mt-2 text-3xl font-bold text-muted-foreground">
                 {statusSummary.onAnotherActivity}
               </p>
@@ -262,195 +458,16 @@ function AcademySessionMonitor() {
           </div>
         </div>
 
-        {/* Learner Status Board */}
-        {!hasNoActivity ? (
-          <div className="space-y-6">
-            {/* In Progress */}
-            {inProgressLearners.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-foreground mb-2">Currently Working</h2>
-                <Card>
-                  <div className="space-y-2">
-                    {inProgressLearners.map((status) => (
-                      <div
-                        key={status.learner.childId}
-                        className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-3"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <Avatar
-                            avatar={status.learner.avatar}
-                            name={status.learner.childName}
-                            size="sm"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {status.learner.childName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {status.learner.journeyProgress.completed} of{" "}
-                              {status.learner.journeyProgress.total} activities
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          to={`/academy/cohorts/${status.learner.childId}`}
-                          variant="outline"
-                          size="md"
-                        >
-                          View detail
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* Completed */}
-            {completedLearners.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-foreground mb-2">Completed</h2>
-                <Card>
-                  <div className="space-y-2">
-                    {completedLearners.map((status) => (
-                      <div
-                        key={status.learner.childId}
-                        className="flex items-center justify-between rounded-lg bg-success/5 border border-success/20 p-3"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success">
-                            <span className="text-white text-sm">✓</span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {status.learner.childName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {status.learner.journeyProgress.completed} of{" "}
-                              {status.learner.journeyProgress.total} activities
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          to={`/academy/cohorts/${status.learner.childId}`}
-                          variant="outline"
-                          size="md"
-                        >
-                          View detail
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* Not Started */}
-            {notStartedLearners.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-foreground mb-2">Not Started Yet</h2>
-                <Card>
-                  <div className="space-y-2">
-                    {notStartedLearners.map((status) => (
-                      <div
-                        key={status.learner.childId}
-                        className="flex items-center justify-between rounded-lg bg-muted/30 p-3"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <Avatar
-                            avatar={status.learner.avatar}
-                            name={status.learner.childName}
-                            size="sm"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {status.learner.childName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {status.learner.journeyProgress.completed} of{" "}
-                              {status.learner.journeyProgress.total} activities
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          to={`/academy/cohorts/${status.learner.childId}`}
-                          variant="outline"
-                          size="md"
-                        >
-                          View detail
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-
-            {/* Working On Another Activity */}
-            {onAnotherActivityLearners.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-foreground mb-2">
-                  Working On Another Activity
-                </h2>
-                <Card>
-                  <div className="space-y-2">
-                    {onAnotherActivityLearners.map((status) => (
-                      <div
-                        key={status.learner.childId}
-                        className="flex items-center justify-between rounded-lg bg-muted/30 p-3"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <Avatar
-                            avatar={status.learner.avatar}
-                            name={status.learner.childName}
-                            size="sm"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {status.learner.childName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {status.statusReason || status.learner.currentActivityName}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          to={`/academy/cohorts/${status.learner.childId}`}
-                          variant="outline"
-                          size="md"
-                        >
-                          View detail
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </div>
-            )}
-          </div>
-        ) : (
-          <EmptyState
-            title="No learners assigned"
-            description="When learners are assigned to your cohorts, they'll appear here."
-          />
-        )}
-
-        {/* Support Section */}
-        {learnersNeedingCheckIn.length > 0 && (
+        {/* In Progress */}
+        {inProgressLearners.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-foreground mb-2">
-              Learners Who May Need a Check-In
-            </h2>
-            <Card tone="muted">
-              <p className="text-sm text-muted-foreground mb-4">
-                These learners may benefit from a quick check-in to offer support or answer
-                questions.
-              </p>
+            <h2 className="text-lg font-bold text-foreground mb-2">Currently Working</h2>
+            <Card>
               <div className="space-y-2">
-                {learnersNeedingCheckIn.map((status) => (
+                {inProgressLearners.map((status) => (
                   <div
                     key={status.learner.childId}
-                    className="flex items-center justify-between rounded-lg border border-warning/20 bg-warning/5 p-3"
+                    className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-3"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <Avatar
@@ -462,9 +479,39 @@ function AcademySessionMonitor() {
                         <p className="text-sm font-medium text-foreground">
                           {status.learner.childName}
                         </p>
-                        <p className="text-xs text-muted-foreground">{status.statusReason}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {status.learner.journeyProgress.completed} of{" "}
+                          {status.learner.journeyProgress.total} activities
+                        </p>
                       </div>
                     </div>
+
+                    {/* Attendance selector (session only) */}
+                    {sessionId && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "present")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "present"
+                              ? "bg-success text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "absent")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "absent"
+                              ? "bg-destructive text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    )}
+
                     <Button
                       to={`/academy/cohorts/${status.learner.childId}`}
                       variant="outline"
@@ -477,6 +524,242 @@ function AcademySessionMonitor() {
               </div>
             </Card>
           </div>
+        )}
+
+        {/* Completed */}
+        {completedLearners.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold text-foreground mb-2">Completed</h2>
+            <Card>
+              <div className="space-y-2">
+                {completedLearners.map((status) => (
+                  <div
+                    key={status.learner.childId}
+                    className="flex items-center justify-between rounded-lg bg-success/5 border border-success/20 p-3"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success">
+                        <span className="text-white text-sm">✓</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {status.learner.childName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {status.learner.journeyProgress.completed} of{" "}
+                          {status.learner.journeyProgress.total} activities
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Attendance selector (session only) */}
+                    {sessionId && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "present")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "present"
+                              ? "bg-success text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "absent")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "absent"
+                              ? "bg-destructive text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    )}
+
+                    <Button
+                      to={`/academy/cohorts/${status.learner.childId}`}
+                      variant="outline"
+                      size="md"
+                    >
+                      View detail
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Not Started */}
+        {notStartedLearners.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold text-foreground mb-2">Not Started Yet</h2>
+            <Card>
+              <div className="space-y-2">
+                {notStartedLearners.map((status) => (
+                  <div
+                    key={status.learner.childId}
+                    className="flex items-center justify-between rounded-lg bg-muted/30 p-3"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar
+                        avatar={status.learner.avatar}
+                        name={status.learner.childName}
+                        size="sm"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {status.learner.childName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {status.learner.journeyProgress.completed} of{" "}
+                          {status.learner.journeyProgress.total} activities
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Attendance selector (session only) */}
+                    {sessionId && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "present")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "present"
+                              ? "bg-success text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Present
+                        </button>
+                        <button
+                          onClick={() => handleAttendanceChange(status.learner.childId, "absent")}
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            attendanceChanges[status.learner.childId] === "absent"
+                              ? "bg-destructive text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          Absent
+                        </button>
+                      </div>
+                    )}
+
+                    <Button
+                      to={`/academy/cohorts/${status.learner.childId}`}
+                      variant="outline"
+                      size="md"
+                    >
+                      View detail
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* On Another Activity */}
+        {onAnotherActivityLearners.length > 0 && (
+          <div>
+            <h2 className="text-lg font-bold text-foreground mb-2">Working On Another Activity</h2>
+            <Card>
+              <div className="space-y-2">
+                {onAnotherActivityLearners.map((status) => (
+                  <div
+                    key={status.learner.childId}
+                    className="flex items-center justify-between rounded-lg bg-muted/30 p-3"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar
+                        avatar={status.learner.avatar}
+                        name={status.learner.childName}
+                        size="sm"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {status.learner.childName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {status.statusReason || status.learner.currentActivityName}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      to={`/academy/cohorts/${status.learner.childId}`}
+                      variant="outline"
+                      size="md"
+                    >
+                      View detail
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Facilitator Note (session only) */}
+        {sessionId && (
+          <Card>
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Session Observation
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Learning and facilitation notes only (max 1000 characters)
+                </p>
+              </div>
+              {noteMode === "view" && (
+                <Button size="md" variant="outline" onClick={() => setNoteMode("edit")}>
+                  Edit
+                </Button>
+              )}
+            </div>
+
+            {noteMode === "view" ? (
+              noteText ? (
+                <p className="text-sm text-foreground">{noteText}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No observation recorded yet.</p>
+              )
+            ) : (
+              <div className="space-y-2">
+                <textarea
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value.slice(0, 1000))}
+                  placeholder="What did you observe? What should you follow up on?"
+                  maxLength={1000}
+                  className="w-full min-h-24 p-3 rounded border border-border bg-background text-foreground text-sm font-sans"
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {noteText.length} / 1000 characters
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="md"
+                      variant="outline"
+                      onClick={() => {
+                        setNoteMode("view");
+                        if (persistedSession?.facilitatorNote) {
+                          setNoteText(persistedSession.facilitatorNote);
+                        }
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="md" onClick={handleSaveNote} disabled={savingNote}>
+                      {savingNote ? "Saving…" : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
         )}
 
         {/* Facilitation Reminder */}
@@ -495,7 +778,7 @@ function AcademySessionMonitor() {
               size="md"
               onClick={() =>
                 navigate({
-                  to: `/academy/session?activityId=${activityId}`,
+                  to: `/academy/session?activityId=${effectiveActivityId}`,
                 })
               }
             >
@@ -513,6 +796,25 @@ function AcademySessionMonitor() {
             </Button>
           </div>
         </div>
+
+        {/* End Session Confirmation Dialog */}
+        {showEndConfirm && persistedSession && (
+          <AlertDialog open={showEndConfirm} onOpenChange={setShowEndConfirm}>
+            <AlertDialogContent>
+              <AlertDialogTitle>End this session?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Your attendance and facilitator observation will be saved with this session.
+                Learners can still continue their learning.
+              </AlertDialogDescription>
+              <div className="flex gap-2 justify-end">
+                <AlertDialogCancel>Continue session</AlertDialogCancel>
+                <AlertDialogAction onClick={handleEndSession} disabled={isEndingSession}>
+                  {isEndingSession ? "Ending…" : "End session"}
+                </AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </AcademyShell>
   );

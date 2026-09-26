@@ -18,6 +18,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ParentRouteRouteImport } from './routes/parent/route'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AcademyAdminRouteImport } from './routes/academy/admin'
 import { Route as AcademyCohortsRouteImport } from './routes/academy/cohorts'
 import { Route as AcademyDashboardRouteImport } from './routes/academy/dashboard'
 import { Route as AcademyLoginRouteImport } from './routes/academy/login'
@@ -43,6 +44,9 @@ import { Route as ParentChildChildIdRouteImport } from './routes/parent/child.$c
 import { Route as AuthenticatedLearnChildIdIndexRouteImport } from './routes/_authenticated/learn.$childId.index'
 import { Route as AuthenticatedLearnChildIdFeedbackRouteImport } from './routes/_authenticated/learn.$childId.feedback'
 import { Route as AuthenticatedLearnChildIdSummaryRouteImport } from './routes/_authenticated/learn.$childId.summary'
+import { Route as AcademyAdminSchoolsIndexRouteImport } from './routes/academy/admin/schools/index'
+import { Route as AcademyAdminSchoolsSchoolIdRouteImport } from './routes/academy/admin/schools/$schoolId'
+import { Route as AcademyAdminSchoolsCreateRouteImport } from './routes/academy/admin/schools/create'
 import { Route as AuthenticatedLearnChildIdAssessmentAssessmentIdRouteImport } from './routes/_authenticated/learn.$childId.assessment.$assessmentId'
 import { Route as AuthenticatedLearnChildIdLessonLessonIdRouteImport } from './routes/_authenticated/learn.$childId.lesson.$lessonId'
 import { Route as AuthenticatedLearnChildIdReflectionReflectionIdRouteImport } from './routes/_authenticated/learn.$childId.reflection.$reflectionId'
@@ -91,6 +95,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AcademyAdminRoute = AcademyAdminRouteImport.update({
+  id: '/academy/admin',
+  path: '/academy/admin',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AcademyCohortsRoute = AcademyCohortsRouteImport.update({
   id: '/academy/cohorts',
@@ -222,6 +231,24 @@ const AuthenticatedLearnChildIdSummaryRoute =
     path: '/learn/$childId/summary',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AcademyAdminSchoolsIndexRoute =
+  AcademyAdminSchoolsIndexRouteImport.update({
+    id: '/schools/',
+    path: '/schools/',
+    getParentRoute: () => AcademyAdminRoute,
+  } as any)
+const AcademyAdminSchoolsSchoolIdRoute =
+  AcademyAdminSchoolsSchoolIdRouteImport.update({
+    id: '/schools/$schoolId',
+    path: '/schools/$schoolId',
+    getParentRoute: () => AcademyAdminRoute,
+  } as any)
+const AcademyAdminSchoolsCreateRoute =
+  AcademyAdminSchoolsCreateRouteImport.update({
+    id: '/schools/create',
+    path: '/schools/create',
+    getParentRoute: () => AcademyAdminRoute,
+  } as any)
 const AuthenticatedLearnChildIdAssessmentAssessmentIdRoute =
   AuthenticatedLearnChildIdAssessmentAssessmentIdRouteImport.update({
     id: '/learn/$childId/assessment/$assessmentId',
@@ -256,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
   '/academy/login': typeof AcademyLoginRoute
@@ -280,7 +308,10 @@ export interface FileRoutesByFullPath {
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
+  '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
+  '/academy/admin/schools/create': typeof AcademyAdminSchoolsCreateRoute
   '/learn/$childId/': typeof AuthenticatedLearnChildIdIndexRoute
+  '/academy/admin/schools/': typeof AcademyAdminSchoolsIndexRoute
   '/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
   '/learn/$childId/lesson/$lessonId': typeof AuthenticatedLearnChildIdLessonLessonIdRoute
   '/learn/$childId/reflection/$reflectionId': typeof AuthenticatedLearnChildIdReflectionReflectionIdRoute
@@ -294,6 +325,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
   '/academy/login': typeof AcademyLoginRoute
@@ -318,7 +350,10 @@ export interface FileRoutesByTo {
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
+  '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
+  '/academy/admin/schools/create': typeof AcademyAdminSchoolsCreateRoute
   '/learn/$childId': typeof AuthenticatedLearnChildIdIndexRoute
+  '/academy/admin/schools': typeof AcademyAdminSchoolsIndexRoute
   '/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
   '/learn/$childId/lesson/$lessonId': typeof AuthenticatedLearnChildIdLessonLessonIdRoute
   '/learn/$childId/reflection/$reflectionId': typeof AuthenticatedLearnChildIdReflectionReflectionIdRoute
@@ -335,6 +370,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
   '/academy/login': typeof AcademyLoginRoute
@@ -359,7 +395,10 @@ export interface FileRoutesById {
   '/parent/child/$childId': typeof ParentChildChildIdRoute
   '/_authenticated/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/_authenticated/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
+  '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
+  '/academy/admin/schools/create': typeof AcademyAdminSchoolsCreateRoute
   '/_authenticated/learn/$childId/': typeof AuthenticatedLearnChildIdIndexRoute
+  '/academy/admin/schools/': typeof AcademyAdminSchoolsIndexRoute
   '/_authenticated/learn/$childId/assessment/$assessmentId': typeof AuthenticatedLearnChildIdAssessmentAssessmentIdRoute
   '/_authenticated/learn/$childId/lesson/$lessonId': typeof AuthenticatedLearnChildIdLessonLessonIdRoute
   '/_authenticated/learn/$childId/reflection/$reflectionId': typeof AuthenticatedLearnChildIdReflectionReflectionIdRoute
@@ -376,6 +415,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signup'
     | '/dashboard'
+    | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
     | '/academy/login'
@@ -400,7 +440,10 @@ export interface FileRouteTypes {
     | '/parent/child/$childId'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
+    | '/academy/admin/schools/$schoolId'
+    | '/academy/admin/schools/create'
     | '/learn/$childId/'
+    | '/academy/admin/schools/'
     | '/learn/$childId/assessment/$assessmentId'
     | '/learn/$childId/lesson/$lessonId'
     | '/learn/$childId/reflection/$reflectionId'
@@ -414,6 +457,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signup'
     | '/dashboard'
+    | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
     | '/academy/login'
@@ -438,7 +482,10 @@ export interface FileRouteTypes {
     | '/parent/child/$childId'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
+    | '/academy/admin/schools/$schoolId'
+    | '/academy/admin/schools/create'
     | '/learn/$childId'
+    | '/academy/admin/schools'
     | '/learn/$childId/assessment/$assessmentId'
     | '/learn/$childId/lesson/$lessonId'
     | '/learn/$childId/reflection/$reflectionId'
@@ -454,6 +501,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/signup'
     | '/_authenticated/dashboard'
+    | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
     | '/academy/login'
@@ -478,7 +526,10 @@ export interface FileRouteTypes {
     | '/parent/child/$childId'
     | '/_authenticated/learn/$childId/feedback'
     | '/_authenticated/learn/$childId/summary'
+    | '/academy/admin/schools/$schoolId'
+    | '/academy/admin/schools/create'
     | '/_authenticated/learn/$childId/'
+    | '/academy/admin/schools/'
     | '/_authenticated/learn/$childId/assessment/$assessmentId'
     | '/_authenticated/learn/$childId/lesson/$lessonId'
     | '/_authenticated/learn/$childId/reflection/$reflectionId'
@@ -494,6 +545,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  AcademyAdminRoute: typeof AcademyAdminRouteWithChildren
   AcademyCohortsRoute: typeof AcademyCohortsRouteWithChildren
   AcademyDashboardRoute: typeof AcademyDashboardRoute
   AcademyLoginRoute: typeof AcademyLoginRoute
@@ -565,6 +617,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/academy/admin': {
+      id: '/academy/admin'
+      path: '/academy/admin'
+      fullPath: '/academy/admin'
+      preLoaderRoute: typeof AcademyAdminRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/academy/cohorts': {
       id: '/academy/cohorts'
@@ -741,6 +800,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnChildIdSummaryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/academy/admin/schools/': {
+      id: '/academy/admin/schools/'
+      path: '/schools'
+      fullPath: '/academy/admin/schools/'
+      preLoaderRoute: typeof AcademyAdminSchoolsIndexRouteImport
+      parentRoute: typeof AcademyAdminRoute
+    }
+    '/academy/admin/schools/$schoolId': {
+      id: '/academy/admin/schools/$schoolId'
+      path: '/schools/$schoolId'
+      fullPath: '/academy/admin/schools/$schoolId'
+      preLoaderRoute: typeof AcademyAdminSchoolsSchoolIdRouteImport
+      parentRoute: typeof AcademyAdminRoute
+    }
+    '/academy/admin/schools/create': {
+      id: '/academy/admin/schools/create'
+      path: '/schools/create'
+      fullPath: '/academy/admin/schools/create'
+      preLoaderRoute: typeof AcademyAdminSchoolsCreateRouteImport
+      parentRoute: typeof AcademyAdminRoute
+    }
     '/_authenticated/learn/$childId/assessment/$assessmentId': {
       id: '/_authenticated/learn/$childId/assessment/$assessmentId'
       path: '/learn/$childId/assessment/$assessmentId'
@@ -850,6 +930,22 @@ const ParentRouteRouteWithChildren = ParentRouteRoute._addFileChildren(
   ParentRouteRouteChildren,
 )
 
+interface AcademyAdminRouteChildren {
+  AcademyAdminSchoolsSchoolIdRoute: typeof AcademyAdminSchoolsSchoolIdRoute
+  AcademyAdminSchoolsCreateRoute: typeof AcademyAdminSchoolsCreateRoute
+  AcademyAdminSchoolsIndexRoute: typeof AcademyAdminSchoolsIndexRoute
+}
+
+const AcademyAdminRouteChildren: AcademyAdminRouteChildren = {
+  AcademyAdminSchoolsSchoolIdRoute: AcademyAdminSchoolsSchoolIdRoute,
+  AcademyAdminSchoolsCreateRoute: AcademyAdminSchoolsCreateRoute,
+  AcademyAdminSchoolsIndexRoute: AcademyAdminSchoolsIndexRoute,
+}
+
+const AcademyAdminRouteWithChildren = AcademyAdminRoute._addFileChildren(
+  AcademyAdminRouteChildren,
+)
+
 interface AcademyCohortsRouteChildren {
   AcademyCohortsChildIdRoute: typeof AcademyCohortsChildIdRoute
 }
@@ -885,6 +981,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  AcademyAdminRoute: AcademyAdminRouteWithChildren,
   AcademyCohortsRoute: AcademyCohortsRouteWithChildren,
   AcademyDashboardRoute: AcademyDashboardRoute,
   AcademyLoginRoute: AcademyLoginRoute,

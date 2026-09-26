@@ -11,6 +11,7 @@
 import { collection, getDocs, getDoc, query, doc, where, type Firestore } from "firebase/firestore";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import { getFirebaseFirestore } from "@/integrations/firebase/client";
+import type { AcademyCohort } from "./cohort-data";
 
 // Types for Academy data views
 
@@ -103,6 +104,9 @@ export interface LearnerDetailView {
   activityLog: ActivityLogEntry[];
   supportSignal: "on-track" | "not-started" | "needs-support";
 }
+
+// Re-export AcademyCohort from cohort-data
+export type { AcademyCohort };
 
 /**
  * INTERNAL: Get all children assigned to a facilitator via facilitatorAssignments index

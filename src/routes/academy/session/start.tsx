@@ -2,9 +2,22 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Avatar, Button, Card, EmptyState, LoadingState } from "@/components/tati";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AcademyShell } from "@/components/academy/AcademyShell";
 import { getFacilitatorSession } from "@/lib/auth/facilitator-auth.functions";
-import { useAcademyDashboard } from "@/lib/academy";
+import {
+  useAcademyDashboard,
+  useCreateAcademySession,
+  useActiveFacilitatorSession,
+  type CreateSessionInput,
+} from "@/lib/academy";
 import { getTrack, itemTitle, itemSubtitle } from "@/lib/learning/track";
 import { facilitatorGuides } from "@/lib/academy/facilitator-guide";
 
@@ -44,6 +57,9 @@ function AcademyActivityLaunch() {
     spaceReady: false,
   });
 
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+
   const { data: session, isLoading: sessionLoading } = useQuery({
     queryKey: ["facilitator-session"],
     queryFn: getFacilitatorSession,
@@ -55,12 +71,59 @@ function AcademyActivityLaunch() {
     session ? { uid: session.uid, email: session.email, displayName: session.displayName } : null,
   );
 
+  // Check for existing active session
+  const { data: existingSession } = useActiveFacilitatorSession(
+    session?.uid ?? null,
+    activityId ?? null,
+  );
+
+  // Session creation mutation
+  const createSessionMutation = useCreateAcademySession();
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!sessionLoading && !session?.isFacilitator) {
       navigate({ to: "/academy/login", replace: true });
     }
   }, [sessionLoading, session?.isFacilitator, navigate]);
+
+  const handleStartSession = async () => {
+    if (!session || !activityId || !dashboardData) return;
+
+    // If there's an existing active session, show resume dialog
+    if (existingSession && existingSession.status === "active") {
+      setShowResumeDialog(true);
+      return;
+    }
+
+    // Create new session
+    setIsCreatingSession(true);
+    try {
+      const track = getTrack("save");
+      const activity = track.sequence.find((item) => item.id === activityId);
+      if (!activity) throw new Error("Activity not found");
+
+      const sessionInput: CreateSessionInput = {
+        facilitatorUid: session.uid,
+        activityId,
+        activityKind: activity.kind as "lesson" | "scenario" | "assessment" | "reflection",
+        activityTitle: itemTitle(track, activity),
+        trackId: "save",
+        learnerIds: dashboardData.assignedChildren.map((child) => child.id),
+      };
+
+      const newSessionId = await createSessionMutation.mutateAsync(sessionInput);
+      navigate({ to: `/academy/session/monitor?sessionId=${newSessionId}` });
+    } catch (error) {
+      console.error("Failed to create session:", error);
+      setIsCreatingSession(false);
+    }
+  };
+
+  const handleResumeSession = () => {
+    if (!existingSession) return;
+    navigate({ to: `/academy/session/monitor?sessionId=${existingSession.id}` });
+  };
 
   if (sessionLoading || dashboardLoading) {
     return (
@@ -370,16 +433,30 @@ function AcademyActivityLaunch() {
             <Button
               size="lg"
               className="min-w-[200px]"
-              onClick={() =>
-                navigate({
-                  to: `/academy/session/monitor?activityId=${activityId}`,
-                })
-              }
+              onClick={handleStartSession}
+              disabled={isCreatingSession}
             >
-              Start Monitoring →
+              {isCreatingSession ? "Starting…" : "Start Session →"}
             </Button>
           </div>
         </div>
+
+        {/* Resume Active Session Dialog */}
+        {showResumeDialog && existingSession && (
+          <AlertDialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+            <AlertDialogContent>
+              <AlertDialogTitle>Session Already Active</AlertDialogTitle>
+              <AlertDialogDescription>
+                You already have an active session for this activity. Would you like to resume it or
+                start a new one?
+              </AlertDialogDescription>
+              <div className="flex gap-2 justify-end">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResumeSession}>Resume Session</AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </AcademyShell>
   );
