@@ -41,6 +41,7 @@ export interface AcademyCohort {
   description: string | null; // Optional description (mutable, max 500 chars)
   learnerIds: string[]; // Child IDs assigned to cohort (mutable, only authorized)
   status: AcademyCohortStatus; // "active" or "archived" (mutable)
+  schoolId?: string; // Optional school association (H3.3, mutable, backward compatible)
   createdAt: Timestamp; // Server timestamp (immutable)
   updatedAt: Timestamp; // Updated on mutations
 }
@@ -50,6 +51,7 @@ export interface CreateCohortInput {
   name: string; // Cohort name (required, non-empty, max 100 chars)
   description?: string | null; // Optional (max 500 chars)
   learnerIds?: string[]; // Initial learner IDs (optional, must be authorized)
+  schoolId?: string; // Optional school association (H3.3, backward compatible)
 }
 
 export interface UpdateCohortInput {
@@ -58,6 +60,7 @@ export interface UpdateCohortInput {
   name?: string; // Can change
   description?: string | null; // Can change
   learnerIds?: string[]; // Can change (if authorized)
+  schoolId?: string; // Can change (H3.3)
 }
 
 export interface ArchiveCohortInput {

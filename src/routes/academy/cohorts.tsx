@@ -460,7 +460,8 @@ function AcademyCohorts() {
                       onEdit={() => setModalMode("edit")}
                       onArchive={() => handleArchiveCohort(selectedCohort)}
                       onSelectLearner={(learner) => {
-                        navigate({ to: `/academy/cohorts/${learner.id}` });
+                        const learnerId = "id" in learner ? learner.id : learner.childId;
+                        navigate({ to: `/academy/cohorts/${learnerId}` });
                       }}
                     />
                   </div>

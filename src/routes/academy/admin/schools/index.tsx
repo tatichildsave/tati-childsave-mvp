@@ -55,7 +55,7 @@ function SchoolsIndex() {
           {schools.map((school) => (
             <Link
               key={school.id}
-              to={`/academy/admin/schools/${school.id}`}
+              to={`/academy/admin/schools/${school.id}` as any}
               className="block p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md hover:border-blue-300 transition-all"
             >
               <div className="flex items-start justify-between">

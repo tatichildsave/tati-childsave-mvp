@@ -5,8 +5,12 @@ import {
   type FirebaseApp,
   type FirebaseOptions,
 } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, type Auth, connectAuthEmulator } from "firebase/auth";
+import {
+  getFirestore,
+  type Firestore,
+  connectFirestoreEmulator,
+} from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const browserOnly = typeof window !== "undefined";
@@ -31,8 +35,52 @@ export function getFirebaseConfig(): FirebaseOptions {
   };
 }
 
+let firebaseAppInitialized = false;
+let firestoreInitialized = false;
+let authInitialized = false;
+
 export function getFirebaseApp(): FirebaseApp {
-  return getApps().length > 0 ? getApp() : initializeApp(getFirebaseConfig());
+  if (getApps().length > 0) {
+    return getApp();
+  }
+
+  const app = initializeApp(getFirebaseConfig());
+
+  // Connect to emulator if environment variables are set
+  // This allows local development without cloud Firebase
+  if (browserOnly && !firebaseAppInitialized) {
+    const firestoreEmulatorHost = import.meta.env["VITE_FIRESTORE_EMULATOR_HOST"];
+    const authEmulatorHost = import.meta.env["VITE_FIREBASE_AUTH_EMULATOR_HOST"];
+
+    if (firestoreEmulatorHost) {
+      try {
+        const [host, port] = firestoreEmulatorHost.split(":");
+        const fs = getFirestore(app);
+        connectFirestoreEmulator(fs, host, parseInt(port || "8080"));
+        firestoreInitialized = true;
+      } catch (error) {
+        // Emulator may already be connected, which is fine
+        console.debug("Firestore emulator connection info:", error);
+      }
+    }
+
+    if (authEmulatorHost) {
+      try {
+        const auth = getAuth(app);
+        connectAuthEmulator(auth, `http://${authEmulatorHost}`, {
+          disableWarnings: true,
+        });
+        authInitialized = true;
+      } catch (error) {
+        // Emulator may already be connected, which is fine
+        console.debug("Auth emulator connection info:", error);
+      }
+    }
+
+    firebaseAppInitialized = true;
+  }
+
+  return app;
 }
 
 export function getFirebaseAuth(): Auth | null {

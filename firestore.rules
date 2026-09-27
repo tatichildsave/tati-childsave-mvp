@@ -180,9 +180,10 @@ service cloud.firestore {
 
     match /facilitatorAssignments/{assignmentId} {
       // Assignment documents enable efficient lookup of assigned children
-      // Schema: { facilitatorUid, familyId, childId, createdAt, assignedBy }
-      // Authorization: Facilitator can read only their own assignments
+      // Schema: { facilitatorUid, familyId, childId, createdAt, assignedBy, schoolId? }
+      // Authorization: Facilitator can read own, school admin can read their school, admin can access all
       allow read: if signedIn() && hasRole('facilitator') && resource.data.facilitatorUid == request.auth.uid;
+      allow read: if resource.data.get('schoolId') != null && canAccessSchool(resource.data.schoolId);
       allow read: if isAdmin();
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
@@ -229,7 +230,7 @@ service cloud.firestore {
     // ============================================================================
 
     match /academyCohorts/{cohortId} {
-      // Create: Authenticated facilitators only
+      // Create: Authenticated facilitators only (with optional schoolId)
       // Validates: cohort owner is self, valid name, active status
       allow create: if signedIn() && hasRole('facilitator')
         && request.resource.data.facilitatorUid == request.auth.uid
@@ -238,13 +239,15 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 100;
 
-      // Read: Owner or admin only
+      // Read: Owner or admin or school admin (if schoolId matches)
       // Facilitators can only see their own cohorts
+      // School admins can see cohorts in their school
       allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
+      allow read: if resource.data.get('schoolId') != null && canAccessSchool(resource.data.schoolId);
 
       // Update: Owner only, with immutability checks
       // Prevents: ownership change, timestamp modification
-      // Allows: name, description, learnerIds, status changes
+      // Allows: name, description, learnerIds, status, schoolId changes
       allow update: if request.auth.uid == resource.data.facilitatorUid
         && request.resource.data.facilitatorUid == resource.data.facilitatorUid
         && request.resource.data.createdAt == resource.data.createdAt;

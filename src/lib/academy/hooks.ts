@@ -58,6 +58,14 @@ import {
   type AssignSchoolAdminInput,
   type RemoveSchoolAdminInput,
 } from "./school-data";
+import {
+  getFacilitatorsBySchool,
+  getCohortsBySchool,
+  getLearnersBySchool,
+  type SchoolFacilitatorSummary,
+  type SchoolCohortSummary,
+  type SchoolLearnerSummary,
+} from "./school-queries";
 
 /**
  * Hook: Fetch Academy dashboard data
@@ -571,5 +579,63 @@ export function useSchoolAdmins(schoolId: string | null) {
       return getSchoolAdmins(schoolId);
     },
     enabled: !!schoolId,
+  });
+}
+
+// ============================================================================
+// H3.3 PHASE B — SCHOOL-LEVEL DATA QUERIES
+// ============================================================================
+
+/**
+ * Hook: Fetch facilitators associated with a school
+ */
+export function useSchoolFacilitators(
+  schoolId: string | null,
+): UseQueryResult<SchoolFacilitatorSummary[]> {
+  return useQuery({
+    queryKey: ["school-facilitators", schoolId],
+    queryFn: () => {
+      if (!schoolId) throw new Error("School ID required");
+      return getFacilitatorsBySchool(schoolId);
+    },
+    enabled: !!schoolId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+}
+
+/**
+ * Hook: Fetch cohorts belonging to a school
+ */
+export function useSchoolCohorts(
+  schoolId: string | null,
+): UseQueryResult<SchoolCohortSummary[]> {
+  return useQuery({
+    queryKey: ["school-cohorts", schoolId],
+    queryFn: () => {
+      if (!schoolId) throw new Error("School ID required");
+      return getCohortsBySchool(schoolId);
+    },
+    enabled: !!schoolId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+}
+
+/**
+ * Hook: Fetch learners in a school (aggregated via cohorts)
+ */
+export function useSchoolLearners(
+  schoolId: string | null,
+): UseQueryResult<SchoolLearnerSummary[]> {
+  return useQuery({
+    queryKey: ["school-learners", schoolId],
+    queryFn: () => {
+      if (!schoolId) throw new Error("School ID required");
+      return getLearnersBySchool(schoolId);
+    },
+    enabled: !!schoolId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 }

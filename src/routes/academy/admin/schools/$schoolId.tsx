@@ -11,7 +11,13 @@
 
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { useSchool } from "@/lib/academy";
+import {
+  useSchool,
+  useSchoolAdmins,
+  useSchoolFacilitators,
+  useSchoolCohorts,
+  useSchoolLearners,
+} from "@/lib/academy";
 import type { School } from "@/lib/academy";
 
 export const Route = createFileRoute("/academy/admin/schools/$schoolId")({
@@ -157,56 +163,243 @@ function AdminsTab({
   schoolId: string;
   canManage: boolean;
 }) {
-  // TODO: Implement useSchoolAdmins hook
+  const { data: admins, isLoading } = useSchoolAdmins(schoolId);
+
+  if (isLoading) {
+    return <div className="text-gray-500">Loading admins...</div>;
+  }
+
   return (
-    <div>
-      <p className="text-gray-600">Manage school administrators</p>
-      {canManage && (
-        <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-          Add Admin
-        </button>
-      )}
-      <div className="mt-4">
-        <p className="text-sm text-gray-500">No admins found.</p>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          School Administrators
+        </h3>
+        {canManage && (
+          <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Add Administrator
+          </button>
+        )}
       </div>
+
+      {!admins || admins.length === 0 ? (
+        <p className="text-sm text-gray-500">No administrators found.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Role
+                </th>
+                {canManage && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    Action
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {admins.map((admin) => (
+                <tr key={admin.adminUid}>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                    {admin.adminUid}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    -
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {admin.role}
+                  </td>
+                  {canManage && (
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button className="text-red-600 hover:text-red-900 text-sm font-medium">
+                        Remove
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
 function FacilitatorsTab({ schoolId }: { schoolId: string }) {
-  // TODO: Implement getFacilitatorsBySchool
+  const { data: facilitators, isLoading } = useSchoolFacilitators(schoolId);
+
+  if (isLoading) {
+    return <div className="text-gray-500">Loading facilitators...</div>;
+  }
+
   return (
-    <div>
-      <p className="text-gray-600">
-        Facilitators assigned to this school (if school-scoped)
-      </p>
-      <div className="mt-4">
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900">Facilitators</h3>
+
+      {!facilitators || facilitators.length === 0 ? (
         <p className="text-sm text-gray-500">No facilitators found.</p>
-      </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {facilitators.map((facilitator) => (
+            <div
+              key={facilitator.uid}
+              className="bg-white border border-gray-200 rounded-lg p-4"
+            >
+              <div className="font-medium text-gray-900">
+                {facilitator.displayName || facilitator.uid}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {facilitator.email}
+              </div>
+              <div className="mt-3 space-y-1 text-sm">
+                <div>
+                  <span className="text-gray-600">Cohorts: </span>
+                  <span className="font-medium text-gray-900">
+                    {facilitator.cohortCount}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Learners: </span>
+                  <span className="font-medium text-gray-900">
+                    {facilitator.learnerCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function CohortsTab({ schoolId }: { schoolId: string }) {
-  // TODO: Implement getCohortsBySchool
+  const { data: cohorts, isLoading } = useSchoolCohorts(schoolId);
+
+  if (isLoading) {
+    return <div className="text-gray-500">Loading cohorts...</div>;
+  }
+
   return (
-    <div>
-      <p className="text-gray-600">Cohorts in this school</p>
-      <div className="mt-4">
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900">Cohorts</h3>
+
+      {!cohorts || cohorts.length === 0 ? (
         <p className="text-sm text-gray-500">No cohorts found.</p>
-      </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Cohort Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Facilitator
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Learners
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {cohorts.map((cohort) => (
+                <tr key={cohort.id}>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    {cohort.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {cohort.facilitatorName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {cohort.learnerCount}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        cohort.status === "active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {cohort.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
 function LearnersTab({ schoolId }: { schoolId: string }) {
-  // TODO: Implement getLearnersBySchool
+  const { data: learners, isLoading } = useSchoolLearners(schoolId);
+
+  if (isLoading) {
+    return <div className="text-gray-500">Loading learners...</div>;
+  }
+
   return (
-    <div>
-      <p className="text-gray-600">Learners in this school (aggregate view)</p>
-      <div className="mt-4">
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900">Learner Roster</h3>
+
+      {!learners || learners.length === 0 ? (
         <p className="text-sm text-gray-500">No learners found.</p>
-      </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Age
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Cohort
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                  Facilitator
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {learners.map((learner) => (
+                <tr key={learner.id}>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    {learner.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {learner.age}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {learner.cohortName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {learner.facilitatorName}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

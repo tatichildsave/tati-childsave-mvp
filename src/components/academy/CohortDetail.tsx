@@ -21,7 +21,11 @@ function getLearnerName(learner: AssignedChild | ChildProgressSummary): string {
 }
 
 function getLearnerId(learner: AssignedChild | ChildProgressSummary): string {
-  return "id" in learner ? learner.id : learner.childId;
+  // AssignedChild has 'id', ChildProgressSummary has 'childId'
+  if ("id" in learner && typeof learner.id === "string") {
+    return learner.id;
+  }
+  return learner.childId;
 }
 
 function getLearnerAge(learner: AssignedChild | ChildProgressSummary): number | undefined {
