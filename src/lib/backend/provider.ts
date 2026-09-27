@@ -13,9 +13,9 @@ export function registerBackendProvider(
   factories.set(name, factory);
 }
 
-/** Supabase remains the active provider until an explicit migration cutover. */
+/** Firebase Auth is now the active provider after consolidation from Supabase Auth. */
 export function getActiveBackendProviderName(): BackendProviderName {
-  return "supabase";
+  return "firebase";
 }
 
 export function getAvailableBackendProviders(): readonly BackendProviderName[] {

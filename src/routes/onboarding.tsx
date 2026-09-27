@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { useCreateChildProfile } from "@/lib/family";
 import {
   Page,
@@ -22,8 +23,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/onboarding")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
+    const auth = getFirebaseAuth();
+    const user = auth?.currentUser;
+    if (!user?.uid) throw redirect({ to: "/login" });
     return {};
   },
   pendingComponent: AuthLoadingShell,

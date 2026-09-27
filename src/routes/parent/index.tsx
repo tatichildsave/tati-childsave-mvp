@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "firebase/auth";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { useChildProfiles, useSession } from "@/lib/family";
 import {
   Page,
@@ -40,15 +41,17 @@ function ParentHome() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  async function signOut() {
+  async function handleSignOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    const auth = getFirebaseAuth();
+    if (auth) {
+      await signOut(auth);
+    }
     navigate({ to: "/login", replace: true });
   }
 
-  const parentName =
-    (session?.user_metadata?.["full_name"] as string | undefined) ?? session?.email ?? "there";
+  const parentName = session?.displayName ?? session?.email ?? "there";
 
   return (
     <Page role="parent">
@@ -59,7 +62,7 @@ function ParentHome() {
         right={
           <button
             type="button"
-            onClick={signOut}
+            onClick={handleSignOut}
             className="min-h-[48px] px-3 text-sm font-extrabold text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Sign out"
           >

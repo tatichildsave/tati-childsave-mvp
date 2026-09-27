@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
 import { Page, PageHeader, Card, CardTitle, CardNote, Button, Badge } from "@/components/tati";
 
@@ -42,9 +42,16 @@ function SignupPage() {
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/parent", replace: true });
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate({ to: "/parent", replace: true });
+      }
     });
+
+    return () => unsubscribe();
   }, [navigate]);
 
   const longEnough = password.length >= 8;
@@ -65,26 +72,27 @@ function SignupPage() {
     setError(null);
     setNote(null);
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { emailRedirectTo: window.location.origin, data: { full_name: fullName.trim() } },
-      });
-      if (signUpError) throw signUpError;
-      if (data.session) {
-        if (data.user?.id) {
-          void trackEvent("signup_completed", { eventKey: data.user.id });
-        }
-        navigate({ to: "/parent", replace: true });
-      } else {
-        setNote("Almost there — check your email and tap the link to confirm your account.");
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        setError("Authentication not available. Please reload the page.");
+        return;
       }
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      // Update user profile with display name
+      await updateProfile(userCredential.user, { displayName: fullName.trim() });
+      
+      // Track signup event
+      void trackEvent("signup_completed", { eventKey: userCredential.user.uid });
+      
+      navigate({ to: "/parent", replace: true });
     } catch (signupError) {
       const message = signupError instanceof Error ? signupError.message.toLowerCase() : "";
       setError(
-        message.includes("already registered") || message.includes("already exists")
+        message.includes("already-in-use") || message.includes("email-already-in-use")
           ? "An account with this email already exists. Try signing in instead."
-          : message.includes("password")
+          : message.includes("weak-password")
             ? "Choose a password with at least 8 characters, including a number or symbol."
             : "We couldn't create that account right now. Please check your details and try again.",
       );
@@ -95,10 +103,25 @@ function SignupPage() {
 
   async function handleGoogle() {
     setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) setError("Google sign-in didn't work. Please try again.");
+    try {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        setError("Authentication not available. Please reload the page.");
+        return;
+      }
+      
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      void trackEvent("signup_completed", { eventKey: result.user.uid });
+      navigate({ to: "/parent", replace: true });
+    } catch (googleError) {
+      const message = googleError instanceof Error ? googleError.message : "";
+      if (message.includes("popup-closed")) {
+        // User closed the popup, not an error
+        return;
+      }
+      setError("Google sign-in didn't work. Please try again.");
+    }
   }
 
   return (

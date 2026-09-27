@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import { getFirebaseFirestore, getFirebaseAuth } from "@/integrations/firebase/client";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirebaseAuth, getFirebaseFirestore } from "@/integrations/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 
 export interface FacilitatorSession {
@@ -37,17 +37,18 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
  */
 export async function getFacilitatorSession(): Promise<FacilitatorSession | null> {
   try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return null;
+    const auth = getFirebaseAuth();
+    const user = auth?.currentUser;
+    
+    if (!user) return null;
 
-    const isFacilitator = await checkFacilitatorStatus(data.user.id);
+    const isFacilitator = await checkFacilitatorStatus(user.uid);
     if (!isFacilitator) return null;
 
     return {
-      uid: data.user.id,
-      email: data.user.email ?? "",
-      displayName:
-        (data.user.user_metadata?.["full_name"] as string) ?? data.user.email ?? "Facilitator",
+      uid: user.uid,
+      email: user.email ?? "",
+      displayName: user.displayName ?? user.email ?? "Facilitator",
       isFacilitator: true,
     };
   } catch (error) {
@@ -64,26 +65,23 @@ export async function loginFacilitator(
   password: string,
 ): Promise<FacilitatorSession | null> {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    if (error || !data.session) return null;
+    const auth = getFirebaseAuth();
+    if (!auth) return null;
+    
+    const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
 
     // Verify facilitator role
-    const isFacilitator = await checkFacilitatorStatus(data.user.id);
+    const isFacilitator = await checkFacilitatorStatus(userCredential.user.uid);
     if (!isFacilitator) {
       // Sign them out immediately if they don't have facilitator role
-      await supabase.auth.signOut();
+      await signOut(auth);
       return null;
     }
 
     return {
-      uid: data.user.id,
-      email: data.user.email ?? "",
-      displayName:
-        (data.user.user_metadata?.["full_name"] as string) ?? data.user.email ?? "Facilitator",
+      uid: userCredential.user.uid,
+      email: userCredential.user.email ?? "",
+      displayName: userCredential.user.displayName ?? userCredential.user.email ?? "Facilitator",
       isFacilitator: true,
     };
   } catch (error) {
@@ -96,5 +94,8 @@ export async function loginFacilitator(
  * Logout current facilitator.
  */
 export async function logoutFacilitator(): Promise<void> {
-  await supabase.auth.signOut();
+  const auth = getFirebaseAuth();
+  if (auth) {
+    await signOut(auth);
+  }
 }

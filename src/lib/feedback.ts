@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
 
 export type FeedbackAudience = "child" | "parent";
@@ -27,13 +28,14 @@ export type FeedbackRow = {
 };
 
 export async function submitFeedback(input: FeedbackSubmission) {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) throw new Error("Please sign in before sending feedback.");
+  const auth = getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user?.uid) throw new Error("Please sign in before sending feedback.");
 
   const { data, error } = await supabase
     .from("feedback")
     .insert({
-      user_id: userData.user.id,
+      user_id: user.uid,
       audience: input.audience,
       experience_key: input.experienceKey,
       child_profile_id: input.childProfileId ?? null,

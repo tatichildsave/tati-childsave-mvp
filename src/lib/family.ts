@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
 
 export interface ChildProfile {
@@ -19,9 +20,10 @@ export interface ChildProfile {
 }
 
 export async function getCurrentUserId(): Promise<string> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw new Error("You need to be signed in.");
-  return data.user.id;
+  const auth = getFirebaseAuth();
+  const user = auth?.currentUser;
+  if (!user?.uid) throw new Error("You need to be signed in.");
+  return user.uid;
 }
 
 /** Returns the family id for the signed-in parent, creating it on first use. */
@@ -68,7 +70,10 @@ export async function assertChildInCurrentFamily(childId: string): Promise<void>
 export function useSession() {
   return useQuery({
     queryKey: ["session"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user,
+    queryFn: async () => {
+      const auth = getFirebaseAuth();
+      return auth?.currentUser ?? null;
+    },
     staleTime: 30_000,
   });
 }

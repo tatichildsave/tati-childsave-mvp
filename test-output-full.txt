@@ -1,0 +1,317 @@
+﻿node.exe : npm notice run test
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Users\Y O G A\AppData\Roamin ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm notice run test:String) [], R 
+   emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+npm notice run vitest run tests/firebase/firestore.rules.test.ts --run
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig 
+paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You 
+can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your 
+Vite config instead.[39m
+
+ RUN  v5.0.1 C:/Users/Y O G A/tati-childsave-mvp
+
+(node:51116) MetadataLookupWarning: received unexpected error = All promises 
+were rejected code = ETIMEDOUT, ENOTFOUND
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Legitimate client writes (1) > allows a parent to create journey progress
+[2026-09-27T23:36:57.314Z]  @firebase/firestore: Firestore (12.19.0): 
+GrpcConnection RPC 'Write' stream 0x37aa70e5 error. Code: 7 Message: 7 
+PERMISSION_DENIED: 
+evaluation error at L103:36 for 'create' @ L103, evaluation error at L103:36 
+for 'update' @ L103, Null value error. for 'create' @ L103
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] Clearing Firebase emulators...
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] Creating Firebase Auth user: parent-a@tati.test
+[TEST] Creating Firebase Auth user: parent-b@tati.test
+[TEST] Creating Firebase Auth user: facilitator-a@tati.test
+[TEST] Creating Firebase Auth user: admin@tati.test
+[TEST] Starting auth user creation...
+
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] ERROR creating user parent-b (parent-b@tati.test): Firebase: Error 
+(auth/email-already-in-use).
+
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] ERROR creating user facilitator-a (facilitator-a@tati.test): Firebase: 
+Error (auth/email-already-in-use).
+
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] ERROR creating user admin (admin@tati.test): Firebase: Error 
+(auth/email-already-in-use).
+
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] ERROR creating user parent-a (parent-a@tati.test): Firebase: Error 
+(auth/email-already-in-use).
+
+stderr | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] WARNING: No Firebase Auth UIDs were captured! Check if Auth emulator is 
+running.
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+[TEST] All auth users processed. UID map keys: [] UID map size: 0
+Creating users with UIDs: [ 'parent-a', 'parent-b', 'facilitator-a', 'admin' ]
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+Creating families
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+Creating members
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+Creating children
+
+stdout | tests/firebase/firestore.rules.test.ts > Firestore security rules
+Creating journey progress
+
+ ÔØ» tests/firebase/firestore.rules.test.ts (45 tests | 10 failed) 6883ms
+   ÔØ» Firestore security rules (45)
+     ÔØ» Authenticated adult access (10) (10)
+       ├ù parent reads own family 284ms
+       ├ù parent reads own child 62ms
+       ├ù parent reads own child progress 69ms
+       ├ù parent reads own family members 44ms
+       ├ù authenticat adult can read journey content 68ms
+       ├ù admin can read any child 49ms
+     ÔØ» Legitimate client writes (1) (1)
+       ├ù allows a parent to create journey progress 59ms
+     ÔØ» Admin capabilities (3) (3)
+       ├ù admin can read any family 51ms
+       ├ù admin can read protected child data 83ms
+       ├ù admin can read users 50ms
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 10 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > parent reads own family
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:162:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > parent reads own child
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:166:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > parent reads own child progress
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:170:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > parent reads own family members
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:175:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > authenticat adult can read journey content
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:196:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Authenticated adult access (10) > admin can read any child
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:200:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Legitimate client writes (1) > allows a parent to create journey progress
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:281:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Admin capabilities (3) > admin can read any family
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:348:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Admin capabilities (3) > admin can read protected child data
+AssertionError: expected false to be true // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 35 passed (45)
+   Start at  23:36:48
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:353:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[9/10]ÔÄ»
+
+ FAIL  tests/firebase/firestore.rules.test.ts > Firestore security rules > 
+Admin capabilities (3) > admin can read users
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ÔØ» expectAllowed tests/firebase/firestore.rules.test.ts:81:66
+     79|   expect(result.error).toBe("PERMISSION_DENIED");
+     80| };
+     81| const expectAllowed = (result: Result) => 
+expect(result.success).toBe(ÔÇª
+       |                                                                  ^
+     82|
+     83| describe("Firestore security rules", () => {
+ ÔØ» tests/firebase/firestore.rules.test.ts:357:7
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[10/10]ÔÄ»
+
+   Duration  10.28s (tests 71%, import 26%, transform 3%)
+

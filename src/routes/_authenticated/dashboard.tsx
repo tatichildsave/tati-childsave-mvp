@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "firebase/auth";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { Screen, Card, PrimaryButton, ProgressBar } from "@/components/learning/primitives";
 import { useAddChild, useChildren } from "@/lib/learning/progress";
 import { itemTitle } from "@/lib/learning/track";
@@ -42,10 +43,13 @@ function Dashboard() {
     void trackEvent("parent_dashboard_viewed", { eventKey: "parent-dashboard" });
   }, []);
 
-  async function signOut() {
+  async function handleSignOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    const auth = getFirebaseAuth();
+    if (auth) {
+      await signOut(auth);
+    }
     navigate({ to: "/login", replace: true });
   }
 
@@ -59,7 +63,7 @@ function Dashboard() {
           <h1 className="text-3xl font-bold">Your children</h1>
         </div>
         <button
-          onClick={signOut}
+          onClick={handleSignOut}
           className="min-h-[48px] text-sm font-semibold text-muted-foreground"
         >
           Sign out

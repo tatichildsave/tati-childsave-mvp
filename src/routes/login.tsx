@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
 export const Route = createFileRoute("/login")({
@@ -33,38 +33,71 @@ function LoginPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/parent", replace: true });
-      else setChecking(false);
+    const auth = getFirebaseAuth();
+    if (!auth) {
+      setChecking(false);
+      return;
+    }
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate({ to: "/parent", replace: true });
+      } else {
+        setChecking(false);
+      }
     });
+
+    return () => unsubscribe();
   }, [navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    if (signInError) {
+    
+    try {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        setError("Authentication not available. Please reload the page.");
+        setBusy(false);
+        return;
+      }
+      
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      if (userCredential.user) {
+        navigate({ to: "/parent", replace: true });
+      }
+    } catch (signInError) {
+      const message = signInError instanceof Error ? signInError.message.toLowerCase() : "";
       setError(
-        signInError.message.toLowerCase().includes("invalid")
+        message.includes("invalid") || message.includes("wrong-password") || message.includes("user-not-found")
           ? "That email and password don't match. Please try again."
           : "We couldn't sign you in right now. Please try again.",
       );
-    } else if (data.session) {
-      navigate({ to: "/parent", replace: true });
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   async function handleGoogle() {
     setError(null);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) setError("Google sign-in didn't work. Please try again.");
+    try {
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        setError("Authentication not available. Please reload the page.");
+        return;
+      }
+      
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      navigate({ to: "/parent", replace: true });
+    } catch (googleError) {
+      const message = googleError instanceof Error ? googleError.message : "";
+      if (message.includes("popup-closed")) {
+        // User closed the popup, not an error
+        return;
+      }
+      setError("Google sign-in didn't work. Please try again.");
+    }
   }
 
   return (

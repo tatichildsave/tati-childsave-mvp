@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 
 export const ANALYTICS_EVENTS = [
   "signup_completed",
@@ -40,8 +41,9 @@ export async function trackEvent(
   } = {},
 ): Promise<string | undefined> {
   try {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return undefined;
+    const auth = getFirebaseAuth();
+    const user = auth?.currentUser;
+    if (!user?.uid) return undefined;
 
     const safeEntityId = input.entityId?.slice(0, 128) ?? null;
     const safeEventKey = input.eventKey?.slice(0, 128) ?? null;
@@ -50,7 +52,7 @@ export async function trackEvent(
       .from("analytics_events")
       .insert({
         event_name: eventName,
-        actor_id: userData.user.id,
+        actor_id: user.uid,
         child_profile_id: input.childProfileId ?? null,
         entity_id: safeEntityId,
         event_key: safeEventKey,

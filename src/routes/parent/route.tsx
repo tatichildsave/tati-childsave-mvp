@@ -1,13 +1,14 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { AuthLoadingShell } from "@/components/tati";
 
 export const Route = createFileRoute("/parent")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
-    return { user: data.user };
+    const auth = getFirebaseAuth();
+    const user = auth?.currentUser;
+    if (!user?.uid) throw redirect({ to: "/login" });
+    return { user };
   },
   pendingComponent: AuthLoadingShell,
   component: () => <Outlet />,
