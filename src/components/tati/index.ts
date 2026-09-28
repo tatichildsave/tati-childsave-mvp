@@ -6,3 +6,7 @@ export { Avatar, AVATAR_KEYS, type AvatarKey } from "./Avatar";
 export { LessonCard, ScenarioCard, StatCard, type ItemStatus } from "./Cards";
 export { Page, PageHeader, Logo, ListenButton, BottomNavigation, Modal } from "./Layout";
 export { LoadingState, AuthLoadingShell, EmptyState, ErrorState } from "./States";
+export { ChapterBanner } from "./ChapterBanner";
+export { GoalWidget } from "./GoalWidget";
+export { NextStepCard } from "./NextStepCard";
+export { LearningObjectiveBadge } from "./LearningObjectiveBadge";

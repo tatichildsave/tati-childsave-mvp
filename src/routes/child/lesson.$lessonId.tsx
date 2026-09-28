@@ -34,7 +34,7 @@ export const Route = createFileRoute("/child/lesson/$lessonId")({
 function LessonPage() {
   const { lessonId } = Route.useParams();
   const lesson = getLessonById(lessonId);
-  const { data } = useChildLearning();
+  const { data, snapshot } = useChildLearning();
   const access = useQuery({
     queryKey: ["child-activity", "lesson", lessonId],
     queryFn: () => assertChildActivity({ data: { itemType: "lesson", itemId: lessonId } }),
@@ -43,7 +43,7 @@ function LessonPage() {
   const navigate = useNavigate();
 
   const playableLesson = lesson;
-  if (!playableLesson || access.isError || !data) {
+  if (!playableLesson || access.isError || !data || !snapshot) {
     return (
       <Page role="junior">
         <Screen>
@@ -56,6 +56,12 @@ function LessonPage() {
 
   const all = lessonsForTrack(lessonToPlay.track);
   const index = all.findIndex((item) => item.id === lessonToPlay.id);
+
+  // Get chapter/stage info from track
+  const track = getTrack("save");
+  const trackItem = track.sequence.find((item) => item.kind === "lesson" && item.id === lessonId);
+  const stage = trackItem?.stage ?? "";
+  
   async function finish(draft: LessonDraft) {
     await record.mutateAsync({
       data: {
@@ -75,6 +81,12 @@ function LessonPage() {
       backTo="/child/learn"
       stepLabel={index >= 0 ? `Lesson ${index + 1} of ${all.length}` : undefined}
       saving={record.isPending}
+      chapterStage={stage}
+      dayNumber={snapshot.journey.dayNumber}
+      daysTotal={track.goal.daysTotal}
+      currentSaved={snapshot.journey.savedCedis}
+      goalTarget={track.goal.target}
+      goalLabel={track.goal.title}
       onComplete={finish}
     />
   );

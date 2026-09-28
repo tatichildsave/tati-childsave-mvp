@@ -39,7 +39,7 @@ export const Route = createFileRoute("/child/scenario/$scenarioId")({
 function ScenarioPage() {
   const { scenarioId } = Route.useParams();
   const navigate = useNavigate();
-  const { data, isLoading } = useChildLearning();
+  const { data, isLoading, snapshot } = useChildLearning();
   const record = useRecordChildProgress();
   const track = getTrack("save");
   const item = track.sequence.find((entry) => entry.kind === "scenario" && entry.id === scenarioId);
@@ -59,7 +59,7 @@ function ScenarioPage() {
     recordDecision: async () => undefined,
   };
 
-  if (isLoading || !data) {
+  if (isLoading || !data || !snapshot) {
     return (
       <Page role="junior">
         <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
@@ -91,6 +91,12 @@ function ScenarioPage() {
       childId={childId}
       persistence={persistence}
       saving={record.isPending}
+      chapterStage={item?.stage}
+      dayNumber={snapshot.journey.dayNumber}
+      daysTotal={track.goal.daysTotal}
+      currentSaved={snapshot.journey.savedCedis}
+      goalTarget={track.goal.target}
+      goalLabel={track.goal.title}
       onComplete={async ({ saved, available, decisions }) => {
         await record.mutateAsync({
           data: {

@@ -4,6 +4,7 @@ import { dayProgressPercent } from "@/lib/scenario/engine";
 import { useScenarioRunner, type ScenarioPersistence } from "@/lib/scenario/useScenarioRunner";
 import type { ScenarioDefinition } from "@/lib/scenario/types";
 import { Screen, PrimaryButton } from "@/components/learning/primitives";
+import { ChapterBanner, GoalWidget } from "@/components/tati";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/gamification/AnimatedNumber";
 
@@ -20,6 +21,18 @@ interface Props {
   nextUpLabel?: string | undefined;
   onChapterPause?: (payload: { available: number; saved: number; decisions: unknown[] }) => void;
   persistence?: ScenarioPersistence;
+  /** Stage/chapter context (e.g., "Chapter 2 — Market Day") */
+  chapterStage?: string | undefined;
+  /** Current day number */
+  dayNumber?: number | undefined;
+  /** Total days in journey */
+  daysTotal?: number | undefined;
+  /** Current amount saved */
+  currentSaved?: number | undefined;
+  /** Target goal amount */
+  goalTarget?: number | undefined;
+  /** Goal label (e.g., "School Bag Goal") */
+  goalLabel?: string | undefined;
 }
 
 /** Renders any scenario from the engine. Holds no story logic of its own. */
@@ -33,6 +46,12 @@ export function ScenarioPlayer({
   nextUpLabel,
   onChapterPause,
   persistence,
+  chapterStage,
+  dayNumber,
+  daysTotal,
+  currentSaved,
+  goalTarget,
+  goalLabel,
 }: Props) {
   const runner = useScenarioRunner(scenario, childId, persistence);
   const { state, node, summary, status, saveError, retryLastSave } = runner;
@@ -72,6 +91,24 @@ export function ScenarioPlayer({
           🔊 Listen
         </span>
       </header>
+
+      {chapterStage && dayNumber !== undefined && daysTotal !== undefined ? (
+        <div className="mb-4">
+          <ChapterBanner stage={chapterStage} dayNumber={dayNumber} daysTotal={daysTotal} />
+        </div>
+      ) : null}
+
+      {goalLabel && goalTarget !== undefined && currentSaved !== undefined && dayNumber !== undefined && daysTotal !== undefined ? (
+        <div className="mb-4">
+          <GoalWidget
+            goalLabel={goalLabel}
+            targetAmount={goalTarget}
+            currentSaved={currentSaved}
+            daysTotal={daysTotal}
+            dayNumber={dayNumber}
+          />
+        </div>
+      ) : null}
 
       {status === "interrupted" ? (
         <p className="mb-4 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning-foreground">

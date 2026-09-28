@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { tatiTheme } from "@/lib/theme";
-import { ListenButton } from "@/components/tati";
+import { ListenButton, ChapterBanner, GoalWidget, LearningObjectiveBadge } from "@/components/tati";
 import type { Activity, ContentBlock, Lesson, QuickCheck } from "@/lib/lessons/types";
 
 const toneRing: Record<string, string> = {
@@ -51,7 +51,12 @@ export function LessonPlayer({
   backTo,
   stepLabel,
   saving,
-
+  chapterStage,
+  dayNumber,
+  daysTotal,
+  currentSaved,
+  goalTarget,
+  goalLabel,
   onComplete,
 }: {
   lesson: Lesson;
@@ -59,6 +64,12 @@ export function LessonPlayer({
   backTo: string;
   stepLabel?: string | undefined;
   saving?: boolean | undefined;
+  chapterStage?: string | undefined;
+  dayNumber?: number | undefined;
+  daysTotal?: number | undefined;
+  currentSaved?: number | undefined;
+  goalTarget?: number | undefined;
+  goalLabel?: string | undefined;
   onComplete: (draft: LessonDraft) => void;
 }) {
   const storageKey = `tati.lesson.${childId}.${lesson.id}`;
@@ -120,6 +131,20 @@ export function LessonPlayer({
       </header>
 
       <main className={cn(tatiTheme.container, "space-y-4 pb-28 pt-4")}>
+        {chapterStage && dayNumber !== undefined && daysTotal !== undefined ? (
+          <ChapterBanner stage={chapterStage} dayNumber={dayNumber} daysTotal={daysTotal} />
+        ) : null}
+
+        {goalLabel && goalTarget !== undefined && currentSaved !== undefined && dayNumber !== undefined && daysTotal !== undefined ? (
+          <GoalWidget
+            goalLabel={goalLabel}
+            targetAmount={goalTarget}
+            currentSaved={currentSaved}
+            daysTotal={daysTotal}
+            dayNumber={dayNumber}
+          />
+        ) : null}
+
         {resumed ? (
           <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
             Welcome back! Ready to continue?
@@ -142,8 +167,11 @@ export function LessonPlayer({
 
         <div>
           <h1 className="text-2xl font-extrabold leading-tight">{lesson.title}</h1>
-          <p className="mt-2 text-base text-muted-foreground">{lesson.learningObjective}</p>
         </div>
+
+        {lesson.learningObjective ? (
+          <LearningObjectiveBadge objective={lesson.learningObjective} />
+        ) : null}
 
         {lesson.illustration ? (
           <figure className="relative overflow-hidden rounded-3xl shadow-card">

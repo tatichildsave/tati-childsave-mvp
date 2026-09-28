@@ -9,6 +9,8 @@ import {
   ListenButton,
   XPIndicator,
   Button,
+  NextStepCard,
+  GoalWidget,
 } from "@/components/tati";
 import { childLogout, getChildSession } from "@/lib/auth/child-auth.functions";
 import { useChildLearning } from "@/lib/auth/use-child-learning";
@@ -95,6 +97,19 @@ function ChildHome() {
 
       {/* XP Progress */}
       <XPIndicator xp={snapshot.game.xp} level={snapshot.game.level} className="mb-6" />
+
+      {/* Goal Widget */}
+      <GoalWidget
+        goalLabel={track.goal.title}
+        targetAmount={track.goal.target}
+        currentSaved={snapshot.journey.savedCedis}
+        daysTotal={track.goal.daysTotal}
+        dayNumber={snapshot.journey.dayNumber}
+        className="mb-6"
+      />
+
+      {/* Next Step Card */}
+      <NextStepCard snapshot={snapshot} className="mb-6" />
 
       {/* Current Challenge Section */}
       <div className="mb-4">
