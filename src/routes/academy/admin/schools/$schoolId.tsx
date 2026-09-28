@@ -46,9 +46,7 @@ function SchoolDetail() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
         <h3 className="text-sm font-medium text-red-800">Error loading school</h3>
-        <p className="text-sm text-red-700 mt-1">
-          {error ? String(error) : "School not found"}
-        </p>
+        <p className="text-sm text-red-700 mt-1">{error ? String(error) : "School not found"}</p>
       </div>
     );
   }
@@ -76,35 +74,27 @@ function SchoolDetail() {
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="flex space-x-8">
-          {["overview", "admins", "facilitators", "cohorts", "learners"].map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as Tab)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            )
-          )}
+          {["overview", "admins", "facilitators", "cohorts", "learners"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab as Tab)}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </nav>
       </div>
 
       {/* Tab Content */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        {activeTab === "overview" && (
-          <OverviewTab school={school} canManage={true} />
-        )}
-        {activeTab === "admins" && (
-          <AdminsTab schoolId={schoolId} canManage={true} />
-        )}
-        {activeTab === "facilitators" && (
-          <FacilitatorsTab schoolId={schoolId} />
-        )}
+        {activeTab === "overview" && <OverviewTab school={school} canManage={true} />}
+        {activeTab === "admins" && <AdminsTab schoolId={schoolId} canManage={true} />}
+        {activeTab === "facilitators" && <FacilitatorsTab schoolId={schoolId} />}
         {activeTab === "cohorts" && <CohortsTab schoolId={schoolId} />}
         {activeTab === "learners" && <LearnersTab schoolId={schoolId} />}
       </div>
@@ -112,13 +102,7 @@ function SchoolDetail() {
   );
 }
 
-function OverviewTab({
-  school,
-  canManage,
-}: {
-  school: School;
-  canManage: boolean;
-}) {
+function OverviewTab({ school, canManage }: { school: School; canManage: boolean }) {
   return (
     <div className="space-y-4">
       <div>
@@ -131,15 +115,11 @@ function OverviewTab({
       </div>
       <div>
         <label className="text-sm font-medium text-gray-700">Created</label>
-        <p className="mt-1 text-lg text-gray-900">
-          {school.createdAt.toDate().toLocaleString()}
-        </p>
+        <p className="mt-1 text-lg text-gray-900">{school.createdAt.toDate().toLocaleString()}</p>
       </div>
       <div>
         <label className="text-sm font-medium text-gray-700">Last Updated</label>
-        <p className="mt-1 text-lg text-gray-900">
-          {school.updatedAt.toDate().toLocaleString()}
-        </p>
+        <p className="mt-1 text-lg text-gray-900">{school.updatedAt.toDate().toLocaleString()}</p>
       </div>
 
       {canManage && (
@@ -156,13 +136,7 @@ function OverviewTab({
   );
 }
 
-function AdminsTab({
-  schoolId,
-  canManage,
-}: {
-  schoolId: string;
-  canManage: boolean;
-}) {
+function AdminsTab({ schoolId, canManage }: { schoolId: string; canManage: boolean }) {
   const { data: admins, isLoading } = useSchoolAdmins(schoolId);
 
   if (isLoading) {
@@ -172,9 +146,7 @@ function AdminsTab({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          School Administrators
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">School Administrators</h3>
         {canManage && (
           <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
             Add Administrator
@@ -208,15 +180,9 @@ function AdminsTab({
             <tbody className="divide-y divide-gray-200">
               {admins.map((admin) => (
                 <tr key={admin.adminUid}>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    {admin.adminUid}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    -
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    {admin.role}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">{admin.adminUid}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">-</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{admin.role}</td>
                   {canManage && (
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button className="text-red-600 hover:text-red-900 text-sm font-medium">
@@ -250,28 +216,19 @@ function FacilitatorsTab({ schoolId }: { schoolId: string }) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {facilitators.map((facilitator) => (
-            <div
-              key={facilitator.uid}
-              className="bg-white border border-gray-200 rounded-lg p-4"
-            >
+            <div key={facilitator.uid} className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="font-medium text-gray-900">
                 {facilitator.displayName || facilitator.uid}
               </div>
-              <div className="text-sm text-gray-500 mt-1">
-                {facilitator.email}
-              </div>
+              <div className="text-sm text-gray-500 mt-1">{facilitator.email}</div>
               <div className="mt-3 space-y-1 text-sm">
                 <div>
                   <span className="text-gray-600">Cohorts: </span>
-                  <span className="font-medium text-gray-900">
-                    {facilitator.cohortCount}
-                  </span>
+                  <span className="font-medium text-gray-900">{facilitator.cohortCount}</span>
                 </div>
                 <div>
                   <span className="text-gray-600">Learners: </span>
-                  <span className="font-medium text-gray-900">
-                    {facilitator.learnerCount}
-                  </span>
+                  <span className="font-medium text-gray-900">{facilitator.learnerCount}</span>
                 </div>
               </div>
             </div>
@@ -385,9 +342,7 @@ function LearnersTab({ schoolId }: { schoolId: string }) {
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                     {learner.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    {learner.age}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{learner.age}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                     {learner.cohortName}
                   </td>

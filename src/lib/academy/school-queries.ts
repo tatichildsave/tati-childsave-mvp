@@ -12,15 +12,7 @@
  * - Cross-school access prevented by Firestore Rules
  */
 
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  type Firestore,
-} from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, where, type Firestore } from "firebase/firestore";
 import { getFirebaseFirestore } from "@/integrations/firebase/client";
 
 // ============================================================================
@@ -83,17 +75,16 @@ function validateSchoolId(schoolId: string): void {
  * Authorization: Query enforced by Firestore Rules
  * Returns: Unique facilitators with cohort and learner counts
  */
-export async function getFacilitatorsBySchool(schoolId: string): Promise<SchoolFacilitatorSummary[]> {
+export async function getFacilitatorsBySchool(
+  schoolId: string,
+): Promise<SchoolFacilitatorSummary[]> {
   validateSchoolId(schoolId);
 
   const db = getFirebaseFirestore();
   if (!db) throw new Error("Firestore not initialized");
 
   // Query academyCohorts filtered by schoolId
-  const cohortsQuery = query(
-    collection(db, "academyCohorts"),
-    where("schoolId", "==", schoolId),
-  );
+  const cohortsQuery = query(collection(db, "academyCohorts"), where("schoolId", "==", schoolId));
 
   const cohortsSnap = await getDocs(cohortsQuery);
   const facilitatorMap = new Map<string, SchoolFacilitatorSummary>();
@@ -171,10 +162,7 @@ export async function getCohortsBySchool(schoolId: string): Promise<SchoolCohort
   if (!db) throw new Error("Firestore not initialized");
 
   // Query academyCohorts filtered by schoolId
-  const cohortsQuery = query(
-    collection(db, "academyCohorts"),
-    where("schoolId", "==", schoolId),
-  );
+  const cohortsQuery = query(collection(db, "academyCohorts"), where("schoolId", "==", schoolId));
 
   const cohortsSnap = await getDocs(cohortsQuery);
   const cohorts: SchoolCohortSummary[] = [];
@@ -265,9 +253,7 @@ export async function getSchoolFacilatorAssignments(schoolId: string): Promise<
 
     const entry = facilitatorMap.get(facilitatorUid)!;
     entry.assignmentCount += 1;
-    entry.learnerCount = new Set(
-      [...(facilitatorMap.values())].map((v) => v.learnerCount),
-    ).size;
+    entry.learnerCount = new Set([...facilitatorMap.values()].map((v) => v.learnerCount)).size;
   }
 
   return Array.from(facilitatorMap.entries()).map(([facilitatorUid, counts]) => ({
@@ -384,7 +370,11 @@ export async function getLearnersBySchool(schoolId: string): Promise<SchoolLearn
  * This is called by React Query hooks before making queries
  * Firestore Rules provide server-side enforcement
  */
-export function validateSchoolAccess(schoolId: string, isAdmin: boolean, isSchoolAdmin: boolean): void {
+export function validateSchoolAccess(
+  schoolId: string,
+  isAdmin: boolean,
+  isSchoolAdmin: boolean,
+): void {
   if (!isAdmin && !isSchoolAdmin) {
     throw new Error(`User does not have access to school ${schoolId}`);
   }

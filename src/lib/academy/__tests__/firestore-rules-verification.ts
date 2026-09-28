@@ -1,15 +1,15 @@
 /**
  * H3.2.8 Firestore Security Rules Verification
- * 
+ *
  * This document provides a detailed analysis and test matrix for the academySessions
  * Firestore security rules. All tests are logic-based and do not require emulator.
- * 
+ *
  * Generated: 2026-09-26
  */
 
 export const FIRESTORE_RULES_ANALYSIS = {
   collection: "academySessions",
-  
+
   // CREATE RULE VERIFICATION
   createRule: {
     rule: `allow create: if signedIn() && hasRole('facilitator')
@@ -17,7 +17,7 @@ export const FIRESTORE_RULES_ANALYSIS = {
       && request.resource.data.status == 'active'
       && request.resource.data.startedAt != null
       && request.resource.data.endedAt == null`,
-    
+
     testCases: [
       {
         id: "CREATE-1",
@@ -32,7 +32,8 @@ export const FIRESTORE_RULES_ANALYSIS = {
           endedAt: null,
         },
         expected: "PASS ✓",
-        condition: "signedIn && hasRole('facilitator') && facilitatorUid match && status='active' && startedAt set && endedAt=null",
+        condition:
+          "signedIn && hasRole('facilitator') && facilitatorUid match && status='active' && startedAt set && endedAt=null",
       },
       {
         id: "CREATE-2",
@@ -132,7 +133,7 @@ export const FIRESTORE_RULES_ANALYSIS = {
   // READ RULE VERIFICATION
   readRule: {
     rule: `allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin()`,
-    
+
     testCases: [
       {
         id: "READ-1",
@@ -184,7 +185,7 @@ export const FIRESTORE_RULES_ANALYSIS = {
       && request.resource.data.learnerIds == resource.data.learnerIds
       && request.resource.data.startedAt == resource.data.startedAt
       && request.resource.data.createdAt == resource.data.createdAt`,
-    
+
     testCases: [
       {
         id: "UPDATE-1",
@@ -196,7 +197,7 @@ export const FIRESTORE_RULES_ANALYSIS = {
           attendance: { "child-1": "present" },
           updatedAt: "2026-09-26T10:05:00Z",
         },
-          immutableFields: {
+        immutableFields: {
           facilitatorUid: "unchanged",
           activityId: "unchanged",
           learnerIds: "unchanged",
@@ -313,7 +314,7 @@ export const FIRESTORE_RULES_ANALYSIS = {
   // DELETE RULE VERIFICATION
   deleteRule: {
     rule: `allow delete: if false`,
-    
+
     testCases: [
       {
         id: "DELETE-1",
@@ -381,13 +382,14 @@ export const SECURITY_TEST_RESULTS = {
   passedCases: 6,
   failedCases: 15,
   skippedCases: 0,
-  
+
   testResults: {
     createRuleTests: {
       total: 7,
       passed: 1,
       failed: 6,
-      details: "CREATE rule correctly restricts to facilitators creating own sessions with active status",
+      details:
+        "CREATE rule correctly restricts to facilitators creating own sessions with active status",
     },
     readRuleTests: {
       total: 4,
@@ -529,6 +531,7 @@ export const SECURITY_TEST_RESULTS = {
       low: 1,
     },
     status: "PASS with NOTED LIMITATIONS",
-    recommendation: "Rules are well-designed and secure. Recommend adding server-side validation for facilitatorNote character limit and learnerId assignment validation for defense-in-depth.",
+    recommendation:
+      "Rules are well-designed and secure. Recommend adding server-side validation for facilitatorNote character limit and learnerId assignment validation for defense-in-depth.",
   },
 };

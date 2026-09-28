@@ -20,9 +20,7 @@ function AdminLayout() {
               <a href="/academy" className="text-gray-600 hover:text-gray-900">
                 ← Back to Academy
               </a>
-              <h1 className="text-lg font-semibold text-gray-900">
-                School Administration
-              </h1>
+              <h1 className="text-lg font-semibold text-gray-900">School Administration</h1>
             </div>
           </div>
         </div>

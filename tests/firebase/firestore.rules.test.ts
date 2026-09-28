@@ -3,7 +3,12 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { Firestore, Auth, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "firebase/auth";
 import { deleteApp, FirebaseApp } from "firebase/app";
-import { createEmulatorApp, connectEmulatorFirestore, connectEmulatorAuth, createTestFixtures } from "./emulator-setup";
+import {
+  createEmulatorApp,
+  connectEmulatorFirestore,
+  connectEmulatorAuth,
+  createTestFixtures,
+} from "./emulator-setup";
 
 const USERS = {
   "parent-a": {
@@ -85,11 +90,12 @@ describe("Firestore security rules", () => {
   let db: Firestore;
   let auth: Auth;
   let currentUserUid: string | null = null; // Track authenticated user's UID
+  let userUidMap: Record<string, string> = {}; // Track all test users' UIDs
 
   beforeAll(async () => {
     process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
     process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
-    
+
     app = createEmulatorApp("demo-tati");
     db = connectEmulatorFirestore(app);
     auth = connectEmulatorAuth(app);
@@ -118,24 +124,27 @@ describe("Firestore security rules", () => {
         console.error(`[TEST] ERROR during user setup for ${key}:`, message);
       }
     });
-    
+
     await Promise.all(loginPromises);
 
     // Create Firestore test fixtures
     // Get UIDs by logging in first
     console.log("[TEST] Getting Firebase UIDs by logging in...");
-    const userUidMap: Record<string, string> = {};
+    userUidMap = {}; // Initialize global userUidMap
     for (const [key, user] of Object.entries(USERS)) {
       try {
         const credential = await signInWithEmailAndPassword(auth, user.email, user.password);
         userUidMap[key] = credential.user.uid;
         console.log(`[TEST] Logged in ${key}, UID: ${credential.user.uid}`);
       } catch (error) {
-        console.error(`[TEST] ERROR logging in ${key}:`, error instanceof Error ? error.message : error);
+        console.error(
+          `[TEST] ERROR logging in ${key}:`,
+          error instanceof Error ? error.message : error,
+        );
         throw error;
       }
     }
-    
+
     console.log("[TEST] UID map keys:", Object.keys(userUidMap));
 
     // Create Firestore test fixtures with actual Firebase UIDs
@@ -149,7 +158,7 @@ describe("Firestore security rules", () => {
     await signOut(auth).catch(() => undefined);
     currentUserUid = null;
   });
-  const login = async (user: typeof USERS[keyof typeof USERS]) => {
+  const login = async (user: (typeof USERS)[keyof typeof USERS]) => {
     const credential = await signInWithEmailAndPassword(auth, user.email, user.password);
     currentUserUid = credential.user.uid; // Capture current user's actual UID
     return credential;
@@ -180,15 +189,15 @@ describe("Firestore security rules", () => {
     });
     it("parent cannot modify role", async () => {
       await login(USERS["parent-a"]);
-      expectDenied(await tryUpdate(db, "users/parent-a", { roles: ["admin"] }));
+      expectDenied(await tryUpdate(db, `users/${currentUserUid}`, { roles: ["admin"] }));
     });
     it("parent cannot change status", async () => {
       await login(USERS["parent-a"]);
-      expectDenied(await tryUpdate(db, "users/parent-a", { status: "suspended" }));
+      expectDenied(await tryUpdate(db, `users/${currentUserUid}`, { status: "suspended" }));
     });
     it("parent cannot self-promote to admin", async () => {
       await login(USERS["parent-a"]);
-      expectDenied(await tryUpdate(db, "users/parent-a", { roles: ["admin"] }));
+      expectDenied(await tryUpdate(db, `users/${currentUserUid}`, { roles: ["admin"] }));
     });
     it("authenticat adult can read journey content", async () => {
       await login(USERS["parent-a"]);
@@ -291,12 +300,15 @@ describe("Firestore security rules", () => {
   describe("Role escalation prevention (6)", () => {
     it("cannot change family role", async () => {
       await login(USERS["parent-a"]);
-      expectDenied(await tryUpdate(db, `${familyA}/members/parent-a`, { role: "admin" }));
+      expectDenied(await tryUpdate(db, `${familyA}/members/${currentUserUid}`, { role: "admin" }));
     });
     it("cannot add itself as admin", async () => {
       await login(USERS["parent-a"]);
       expectDenied(
-        await tryWrite(db, `${familyA}/members/attacker`, { role: "admin", uid: "parent-a" }),
+        await tryWrite(db, `${familyA}/members/${currentUserUid}`, {
+          role: "admin",
+          uid: currentUserUid,
+        }),
       );
     });
     it("cannot change family owner", async () => {
@@ -319,7 +331,7 @@ describe("Firestore security rules", () => {
     });
     it("cannot forge an auth role field", async () => {
       await login(USERS["parent-a"]);
-      expectDenied(await tryUpdate(db, `${familyA}/members/parent-a`, { isAdmin: true }));
+      expectDenied(await tryUpdate(db, `${familyA}/members/${currentUserUid}`, { isAdmin: true }));
     });
   });
 
@@ -353,7 +365,8 @@ describe("Firestore security rules", () => {
     });
     it("admin can read users", async () => {
       await login(USERS["admin"]);
-      expectAllowed(await tryRead(db, "users/parent-a"));
+      // Admin should be able to read any user's profile (use parent-a's actual UID)
+      expectAllowed(await tryRead(db, `users/${userUidMap["parent-a"]}`));
     });
   });
 });

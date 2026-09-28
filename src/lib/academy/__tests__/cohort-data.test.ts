@@ -19,18 +19,12 @@ class MockTimestamp {
 
   static now(): MockTimestamp {
     const now = Date.now();
-    return new MockTimestamp(
-      Math.floor(now / 1000),
-      (now % 1000) * 1000000,
-    );
+    return new MockTimestamp(Math.floor(now / 1000), (now % 1000) * 1000000);
   }
 
   static fromDate(date: Date): MockTimestamp {
     const ms = date.getTime();
-    return new MockTimestamp(
-      Math.floor(ms / 1000),
-      (ms % 1000) * 1000000,
-    );
+    return new MockTimestamp(Math.floor(ms / 1000), (ms % 1000) * 1000000);
   }
 
   toMillis(): number {
@@ -190,12 +184,8 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
       const archivedStatus = "archived" as const;
 
       expect(initialStatus === archivedStatus).toBe(false);
-      expect(
-        ["active", "archived"].includes(initialStatus)
-      ).toBe(true);
-      expect(
-        ["active", "archived"].includes(archivedStatus)
-      ).toBe(true);
+      expect(["active", "archived"].includes(initialStatus)).toBe(true);
+      expect(["active", "archived"].includes(archivedStatus)).toBe(true);
     });
 
     it("should not allow invalid status values", () => {
@@ -236,9 +226,7 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
       const original = { createdAt: MockTimestamp.fromDate(new Date("2024-01-01")) };
       const attempted = { createdAt: MockTimestamp.fromDate(new Date("2024-12-31")) };
 
-      expect(original.createdAt.toMillis() === attempted.createdAt.toMillis()).toBe(
-        false
-      );
+      expect(original.createdAt.toMillis() === attempted.createdAt.toMillis()).toBe(false);
       // Should be prevented by Firestore rules
     });
   });
@@ -385,9 +373,7 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
       const cohortLearnerIds = ["child-1", "child-2"];
       const authorizedChildIds = ["child-1", "child-2", "child-3"];
 
-      const allAuthorized = cohortLearnerIds.every((id) =>
-        authorizedChildIds.includes(id)
-      );
+      const allAuthorized = cohortLearnerIds.every((id) => authorizedChildIds.includes(id));
 
       expect(allAuthorized).toBe(true);
     });
@@ -396,9 +382,7 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
       const cohortLearnerIds = ["child-1", "child-unauthorized"];
       const authorizedChildIds = ["child-1", "child-2"];
 
-      const allAuthorized = cohortLearnerIds.every((id) =>
-        authorizedChildIds.includes(id)
-      );
+      const allAuthorized = cohortLearnerIds.every((id) => authorizedChildIds.includes(id));
 
       expect(allAuthorized).toBe(false);
     });
@@ -406,9 +390,7 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
     it("should prevent learner ID injection", () => {
       // Validate learner IDs are non-empty strings
       const learnerIds = ["child-1", "child-2"];
-      const isValid = learnerIds.every(
-        (id) => typeof id === "string" && id.length > 0
-      );
+      const isValid = learnerIds.every((id) => typeof id === "string" && id.length > 0);
 
       expect(isValid).toBe(true);
     });
@@ -460,8 +442,7 @@ describe("H3.2.9 Cohort Data - Backward Compatibility", () => {
       // Parent data should never be here
     };
 
-    const hasParentData =
-      "parentInsights" in cohort || "parentUid" in cohort;
+    const hasParentData = "parentInsights" in cohort || "parentUid" in cohort;
     expect(hasParentData).toBe(false);
   });
 });

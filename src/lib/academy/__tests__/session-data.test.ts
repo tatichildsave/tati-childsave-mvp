@@ -1,7 +1,7 @@
 /**
  * H3.2.8 Session Data Layer Tests
  * Unit tests for academySessions collection schema, logic, and authorization
- * 
+ *
  * Run with: npm test src/lib/academy/__tests__/session-data.test.ts
  */
 
@@ -19,18 +19,12 @@ class MockTimestamp {
 
   static now(): MockTimestamp {
     const now = Date.now();
-    return new MockTimestamp(
-      Math.floor(now / 1000),
-      (now % 1000) * 1000000,
-    );
+    return new MockTimestamp(Math.floor(now / 1000), (now % 1000) * 1000000);
   }
 
   static fromDate(date: Date): MockTimestamp {
     const ms = date.getTime();
-    return new MockTimestamp(
-      Math.floor(ms / 1000),
-      (ms % 1000) * 1000000,
-    );
+    return new MockTimestamp(Math.floor(ms / 1000), (ms % 1000) * 1000000);
   }
 
   toMillis(): number {
@@ -440,8 +434,7 @@ describe("H3.2.8 Session - Backward Compatibility (H3.2.7)", () => {
       activityId: null,
     };
 
-    const effectiveActivityId =
-      newMode.sessionId !== null ? "session-1" : legacyMode.activityId;
+    const effectiveActivityId = newMode.sessionId !== null ? "session-1" : legacyMode.activityId;
 
     expect(effectiveActivityId).toBe("session-1");
     expect(legacyMode.activityId).toBe("activity-1");

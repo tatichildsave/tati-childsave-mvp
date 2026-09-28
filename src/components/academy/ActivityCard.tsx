@@ -63,11 +63,14 @@ export function ActivityCard({
             {typeLabels[type]}
             {duration && <> · {duration}</>}
           </p>
-          {description && (
-            <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
           {status !== "ready" && (
-            <div className={cn("mt-2 inline-block rounded px-2 py-1 text-xs font-bold", statusStyles[status])}>
+            <div
+              className={cn(
+                "mt-2 inline-block rounded px-2 py-1 text-xs font-bold",
+                statusStyles[status],
+              )}
+            >
               {status === "in-progress" && "In progress"}
               {status === "completed" && "Completed"}
             </div>

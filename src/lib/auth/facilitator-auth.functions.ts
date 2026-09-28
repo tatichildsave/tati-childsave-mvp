@@ -39,7 +39,7 @@ export async function getFacilitatorSession(): Promise<FacilitatorSession | null
   try {
     const auth = getFirebaseAuth();
     const user = auth?.currentUser;
-    
+
     if (!user) return null;
 
     const isFacilitator = await checkFacilitatorStatus(user.uid);
@@ -67,7 +67,7 @@ export async function loginFacilitator(
   try {
     const auth = getFirebaseAuth();
     if (!auth) return null;
-    
+
     const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
 
     // Verify facilitator role

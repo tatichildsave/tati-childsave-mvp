@@ -1,6 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
 import { Page, PageHeader, Card, CardTitle, CardNote, Button, Badge } from "@/components/tati";
@@ -44,7 +50,7 @@ function SignupPage() {
   useEffect(() => {
     const auth = getFirebaseAuth();
     if (!auth) return;
-    
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         navigate({ to: "/parent", replace: true });
@@ -77,15 +83,15 @@ function SignupPage() {
         setError("Authentication not available. Please reload the page.");
         return;
       }
-      
+
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      
+
       // Update user profile with display name
       await updateProfile(userCredential.user, { displayName: fullName.trim() });
-      
+
       // Track signup event
       void trackEvent("signup_completed", { eventKey: userCredential.user.uid });
-      
+
       navigate({ to: "/parent", replace: true });
     } catch (signupError) {
       const message = signupError instanceof Error ? signupError.message.toLowerCase() : "";
@@ -109,7 +115,7 @@ function SignupPage() {
         setError("Authentication not available. Please reload the page.");
         return;
       }
-      
+
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       void trackEvent("signup_completed", { eventKey: result.user.uid });

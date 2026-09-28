@@ -1,14 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import {
-  Avatar,
-  Button,
-  Card,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from "@/components/tati";
+import { Avatar, Button, Card, EmptyState, ErrorState, LoadingState } from "@/components/tati";
 import { AcademyShell } from "@/components/academy/AcademyShell";
 import { SupportSignalBadge } from "@/components/academy/SupportSignalBadge";
 import { getFacilitatorSession } from "@/lib/auth/facilitator-auth.functions";
@@ -47,7 +40,12 @@ function AcademyLearnerDetail() {
   });
 
   // Load learner detail data
-  const { data: learnerDetail, isLoading: detailLoading, error: detailError, refetch: refetchDetail } = useQuery({
+  const {
+    data: learnerDetail,
+    isLoading: detailLoading,
+    error: detailError,
+    refetch: refetchDetail,
+  } = useQuery({
     queryKey: ["academy-learner-detail", session?.uid, childId],
     queryFn: async () => {
       if (!session?.uid) throw new Error("Not authenticated");
@@ -67,9 +65,8 @@ function AcademyLearnerDetail() {
   // Set error message if detail load fails
   useEffect(() => {
     if (detailError) {
-      const message = detailError instanceof Error
-        ? detailError.message
-        : "Could not load learner progress";
+      const message =
+        detailError instanceof Error ? detailError.message : "Could not load learner progress";
       setErrorMessage(message);
     }
   }, [detailError]);
@@ -98,7 +95,7 @@ function AcademyLearnerDetail() {
           <Button to="/academy/cohorts" variant="outline" size="md">
             ← Back to cohorts
           </Button>
-          
+
           {isAuthError ? (
             <EmptyState
               title="Learner not found"
@@ -118,7 +115,8 @@ function AcademyLearnerDetail() {
   }
 
   const { child, progress, assessments, competencies, activityLog, supportSignal } = learnerDetail;
-  const completionPercent = (progress.journeyProgress.completed / progress.journeyProgress.total) * 100;
+  const completionPercent =
+    (progress.journeyProgress.completed / progress.journeyProgress.total) * 100;
 
   return (
     <AcademyShell>
@@ -148,13 +146,16 @@ function AcademyLearnerDetail() {
         <Card>
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-foreground">Journey Progress</h2>
-            
+
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-foreground font-medium">{Math.round(completionPercent)}% complete</span>
+                <span className="text-foreground font-medium">
+                  {Math.round(completionPercent)}% complete
+                </span>
                 <span className="text-muted-foreground">
-                  {progress.journeyProgress.completed} of {progress.journeyProgress.total} activities
+                  {progress.journeyProgress.completed} of {progress.journeyProgress.total}{" "}
+                  activities
                 </span>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
@@ -169,7 +170,9 @@ function AcademyLearnerDetail() {
             {progress.currentActivityName && (
               <div className="rounded-lg bg-surface p-3">
                 <p className="text-xs text-muted-foreground font-semibold">Current focus</p>
-                <p className="text-sm text-foreground font-medium mt-1">{progress.currentActivityName}</p>
+                <p className="text-sm text-foreground font-medium mt-1">
+                  {progress.currentActivityName}
+                </p>
               </div>
             )}
 
@@ -187,7 +190,7 @@ function AcademyLearnerDetail() {
           <Card>
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-foreground">Learning Journey</h2>
-              
+
               <div className="space-y-2">
                 {activityLog.slice(0, 10).map((activity, index) => (
                   <div key={`${activity.itemId}-${index}`} className="flex gap-3 py-2">
@@ -241,7 +244,7 @@ function AcademyLearnerDetail() {
           <Card>
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-foreground">Skills Developing</h2>
-              
+
               <div className="grid gap-2">
                 {competencies.map((comp) => (
                   <div key={comp.id} className="flex justify-between items-center py-2">
@@ -274,7 +277,7 @@ function AcademyLearnerDetail() {
           <Card>
             <div className="space-y-3">
               <h2 className="text-lg font-bold text-foreground">Assessments</h2>
-              
+
               <div className="space-y-2">
                 {assessments.map((assessment) => (
                   <div
@@ -319,7 +322,7 @@ function AcademyLearnerDetail() {
         <Card>
           <div className="space-y-3">
             <h2 className="text-lg font-bold text-foreground">Support Information</h2>
-            
+
             {supportSignal === "on-track" && (
               <div className="rounded-lg bg-surface p-3 space-y-2">
                 <p className="text-sm font-medium text-foreground">On track</p>
@@ -333,7 +336,8 @@ function AcademyLearnerDetail() {
               <div className="rounded-lg bg-surface p-3 space-y-2">
                 <p className="text-sm font-medium text-foreground">Not started</p>
                 <p className="text-sm text-muted-foreground">
-                  This learner hasn't started activities yet. Check in during the next session to provide support.
+                  This learner hasn't started activities yet. Check in during the next session to
+                  provide support.
                 </p>
               </div>
             )}
@@ -342,8 +346,8 @@ function AcademyLearnerDetail() {
               <div className="rounded-lg bg-surface p-3 space-y-2">
                 <p className="text-sm font-medium text-foreground">May need support</p>
                 <p className="text-sm text-muted-foreground">
-                  This learner has had limited recent activity. Consider checking in to see if they need help
-                  understanding a concept or if there are barriers to participation.
+                  This learner has had limited recent activity. Consider checking in to see if they
+                  need help understanding a concept or if there are barriers to participation.
                 </p>
               </div>
             )}

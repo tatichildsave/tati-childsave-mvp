@@ -1,6 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
@@ -38,7 +43,7 @@ function LoginPage() {
       setChecking(false);
       return;
     }
-    
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         navigate({ to: "/parent", replace: true });
@@ -54,7 +59,7 @@ function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    
+
     try {
       const auth = getFirebaseAuth();
       if (!auth) {
@@ -62,7 +67,7 @@ function LoginPage() {
         setBusy(false);
         return;
       }
-      
+
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       if (userCredential.user) {
         navigate({ to: "/parent", replace: true });
@@ -70,7 +75,9 @@ function LoginPage() {
     } catch (signInError) {
       const message = signInError instanceof Error ? signInError.message.toLowerCase() : "";
       setError(
-        message.includes("invalid") || message.includes("wrong-password") || message.includes("user-not-found")
+        message.includes("invalid") ||
+          message.includes("wrong-password") ||
+          message.includes("user-not-found")
           ? "That email and password don't match. Please try again."
           : "We couldn't sign you in right now. Please try again.",
       );
@@ -86,7 +93,7 @@ function LoginPage() {
         setError("Authentication not available. Please reload the page.");
         return;
       }
-      
+
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate({ to: "/parent", replace: true });

@@ -187,8 +187,7 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
       // Firestore rule: request.resource.data.facilitatorUid == resource.data.facilitatorUid
       const originalFacilitatorUid = "facilitator-123";
       const newFacilitatorUid = "facilitator-456";
-      const facilitatorUidUnchanged =
-        newFacilitatorUid === originalFacilitatorUid;
+      const facilitatorUidUnchanged = newFacilitatorUid === originalFacilitatorUid;
 
       expect(facilitatorUidUnchanged).toBe(false);
       // Assertion: Update fails - immutable field change detected
@@ -397,9 +396,7 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
       const mainCollectionSecured = true;
       const subcollectionsNotExplicitlySecured = true;
 
-      expect(mainCollectionSecured && subcollectionsNotExplicitlySecured).toBe(
-        true
-      );
+      expect(mainCollectionSecured && subcollectionsNotExplicitlySecured).toBe(true);
     });
   });
 });

@@ -6,12 +6,9 @@ import {
   type FirebaseOptions,
 } from "firebase/app";
 import { getAuth, type Auth, connectAuthEmulator } from "firebase/auth";
-import {
-  getFirestore,
-  type Firestore,
-  connectFirestoreEmulator,
-} from "firebase/firestore";
+import { getFirestore, type Firestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getFunctions, type Functions, connectFunctionsEmulator } from "firebase/functions";
 
 const browserOnly = typeof window !== "undefined";
 
@@ -93,4 +90,24 @@ export function getFirebaseFirestore(): Firestore | null {
 
 export function getFirebaseStorage(): FirebaseStorage | null {
   return browserOnly ? getStorage(getFirebaseApp()) : null;
+}
+
+export function getFirebaseFunctions(): Functions | null {
+  if (!browserOnly) return null;
+  
+  const app = getFirebaseApp();
+  const functions = getFunctions(app);
+  
+  // Connect to emulator if environment variables are set
+  if (import.meta.env["VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST"]) {
+    try {
+      const [host, port] = (import.meta.env["VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST"] as string).split(":");
+      connectFunctionsEmulator(functions, host, parseInt(port || "5001"));
+    } catch (error) {
+      // Emulator may already be connected, which is fine
+      console.debug("Functions emulator connection info:", error);
+    }
+  }
+  
+  return functions;
 }

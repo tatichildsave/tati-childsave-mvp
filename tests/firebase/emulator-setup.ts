@@ -77,10 +77,10 @@ export function connectEmulatorAuth(app: FirebaseApp): Auth {
 export function getAdminFirestore(projectId: string): admin.firestore.Firestore {
   // Set emulator environment variables before initializing
   process.env.FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080";
-  
+
   // Check if an admin app already exists for this project
   let adminApp: admin.app.App;
-  
+
   try {
     // Try to get existing app
     adminApp = admin.app(`admin-${projectId}`);
@@ -101,7 +101,7 @@ export function getAdminFirestore(projectId: string): admin.firestore.Firestore 
 /**
  * Create test fixtures in Firestore using Admin SDK
  * This bypasses security rules for test setup
- * 
+ *
  * @param projectId - Firebase project ID
  * @param users - User configuration with roles
  * @param userUidMap - Map of user keys to actual Firebase UIDs (from createUserWithEmailAndPassword)
@@ -116,7 +116,7 @@ export async function createTestFixtures(
   // Map user keys to their actual Firebase UIDs
   // If userUidMap provided, use real UIDs; otherwise use keys (for backward compatibility)
   const userDocs: Record<string, Record<string, unknown>> = {};
-  
+
   for (const [key, data] of Object.entries(users)) {
     // Use actual UID if provided, otherwise use key
     const uid = userUidMap?.[key] ?? key;
@@ -595,5 +595,3 @@ export const testData = {
     };
   },
 };
-
-

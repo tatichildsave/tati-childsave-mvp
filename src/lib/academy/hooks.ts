@@ -607,9 +607,7 @@ export function useSchoolFacilitators(
 /**
  * Hook: Fetch cohorts belonging to a school
  */
-export function useSchoolCohorts(
-  schoolId: string | null,
-): UseQueryResult<SchoolCohortSummary[]> {
+export function useSchoolCohorts(schoolId: string | null): UseQueryResult<SchoolCohortSummary[]> {
   return useQuery({
     queryKey: ["school-cohorts", schoolId],
     queryFn: () => {
@@ -625,9 +623,7 @@ export function useSchoolCohorts(
 /**
  * Hook: Fetch learners in a school (aggregated via cohorts)
  */
-export function useSchoolLearners(
-  schoolId: string | null,
-): UseQueryResult<SchoolLearnerSummary[]> {
+export function useSchoolLearners(schoolId: string | null): UseQueryResult<SchoolLearnerSummary[]> {
   return useQuery({
     queryKey: ["school-learners", schoolId],
     queryFn: () => {

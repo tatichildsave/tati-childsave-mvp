@@ -60,9 +60,7 @@ function SchoolsIndex() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {school.name}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{school.name}</h3>
                   <div className="mt-2 flex items-center space-x-2">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${

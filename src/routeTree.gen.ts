@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChildRouteRouteImport } from './routes/child/route'
 import { Route as LoginRouteImport } from './routes/login'
@@ -24,6 +26,7 @@ import { Route as AcademyDashboardRouteImport } from './routes/academy/dashboard
 import { Route as AcademyLoginRouteImport } from './routes/academy/login'
 import { Route as AcademyProfileRouteImport } from './routes/academy/profile'
 import { Route as AcademySessionRouteImport } from './routes/academy/session'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ChildHomeRouteImport } from './routes/child/home'
 import { Route as ChildLearnRouteImport } from './routes/child/learn'
 import { Route as ChildLoginRouteImport } from './routes/child/login'
@@ -59,6 +62,16 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -125,6 +138,11 @@ const AcademySessionRoute = AcademySessionRouteImport.update({
   id: '/academy/session',
   path: '/academy/session',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const ChildHomeRoute = ChildHomeRouteImport.update({
   id: '/home',
@@ -276,8 +294,10 @@ const AuthenticatedLearnChildIdScenarioScenarioIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/child': typeof ChildRouteRouteWithChildren
   '/parent': typeof ParentRouteRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -297,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/admin/': typeof AdminIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
   '/academy/session/monitor': typeof AcademySessionMonitorRoute
@@ -320,6 +341,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/child': typeof ChildRouteRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -339,6 +361,7 @@ export interface FileRoutesByTo {
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/admin': typeof AdminIndexRoute
   '/parent': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
   '/academy/session/monitor': typeof AcademySessionMonitorRoute
@@ -363,8 +386,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/child': typeof ChildRouteRouteWithChildren
   '/parent': typeof ParentRouteRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -384,6 +409,7 @@ export interface FileRoutesById {
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/admin/': typeof AdminIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
   '/academy/session/monitor': typeof AcademySessionMonitorRoute
@@ -408,8 +434,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/child'
     | '/parent'
+    | '/admin-login'
     | '/auth'
     | '/login'
     | '/onboarding'
@@ -429,6 +457,7 @@ export interface FileRouteTypes {
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
+    | '/admin/'
     | '/parent/'
     | '/academy/cohorts/$childId'
     | '/academy/session/monitor'
@@ -452,6 +481,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/child'
+    | '/admin-login'
     | '/auth'
     | '/login'
     | '/onboarding'
@@ -471,6 +501,7 @@ export interface FileRouteTypes {
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
+    | '/admin'
     | '/parent'
     | '/academy/cohorts/$childId'
     | '/academy/session/monitor'
@@ -494,8 +525,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/child'
     | '/parent'
+    | '/admin-login'
     | '/auth'
     | '/login'
     | '/onboarding'
@@ -515,6 +548,7 @@ export interface FileRouteTypes {
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
+    | '/admin/'
     | '/parent/'
     | '/academy/cohorts/$childId'
     | '/academy/session/monitor'
@@ -539,8 +573,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   ChildRouteRoute: typeof ChildRouteRouteWithChildren
   ParentRouteRoute: typeof ParentRouteRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
   AuthRoute: typeof AuthRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -567,6 +603,20 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -659,6 +709,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/academy/session'
       preLoaderRoute: typeof AcademySessionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/child/home': {
       id: '/child/home'
@@ -882,6 +939,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 interface ChildRouteRouteChildren {
   ChildHomeRoute: typeof ChildHomeRoute
   ChildLearnRoute: typeof ChildLearnRoute
@@ -975,8 +1044,10 @@ const AcademySessionRouteWithChildren = AcademySessionRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   ChildRouteRoute: ChildRouteRouteWithChildren,
   ParentRouteRoute: ParentRouteRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
   AuthRoute: AuthRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,

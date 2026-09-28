@@ -7,11 +7,11 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const auth = getFirebaseAuth();
     const user = auth?.currentUser;
-    
+
     if (!user) {
       throw redirect({ to: "/login" });
     }
-    
+
     return { user };
   },
   pendingComponent: AuthLoadingShell,
