@@ -11,8 +11,7 @@ import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
 import { Page, PageHeader, Card, CardTitle, CardNote, Button, Badge } from "@/components/tati";
 
-export const Route = createFileRoute("/signup")({
-  ssr: false,
+export const Route = createFileRoute("/(public)/signup")({
   head: () => ({
     meta: [
       { title: "Create your parent account — TATI ChildSave" },

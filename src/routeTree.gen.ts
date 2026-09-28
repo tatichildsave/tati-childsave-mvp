@@ -10,15 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as publicRouteRouteImport } from './routes/(public)/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChildRouteRouteImport } from './routes/child/route'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ParentRouteRouteImport } from './routes/parent/route'
-import { Route as SignupRouteImport } from './routes/signup'
+import { Route as publicAdminLoginRouteImport } from './routes/(public)/admin-login'
+import { Route as publicAuthRouteImport } from './routes/(public)/auth'
+import { Route as publicLoginRouteImport } from './routes/(public)/login'
+import { Route as publicSignupRouteImport } from './routes/(public)/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AcademyAdminRouteImport } from './routes/academy/admin'
 import { Route as AcademyCohortsRouteImport } from './routes/academy/cohorts'
@@ -60,6 +61,10 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const publicRouteRoute = publicRouteRouteImport.update({
+  id: '/(public)',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -69,24 +74,9 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin-login',
-  path: '/admin-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChildRouteRoute = ChildRouteRouteImport.update({
   id: '/child',
   path: '/child',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -99,10 +89,25 @@ const ParentRouteRoute = ParentRouteRouteImport.update({
   path: '/parent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupRoute = SignupRouteImport.update({
+const publicAdminLoginRoute = publicAdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
+  getParentRoute: () => publicRouteRoute,
+} as any)
+const publicAuthRoute = publicAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => publicRouteRoute,
+} as any)
+const publicLoginRoute = publicLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => publicRouteRoute,
+} as any)
+const publicSignupRoute = publicSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => publicRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -297,11 +302,11 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/child': typeof ChildRouteRouteWithChildren
   '/parent': typeof ParentRouteRouteWithChildren
-  '/admin-login': typeof AdminLoginRoute
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/signup': typeof SignupRoute
+  '/admin-login': typeof publicAdminLoginRoute
+  '/auth': typeof publicAuthRoute
+  '/login': typeof publicLoginRoute
+  '/signup': typeof publicSignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
@@ -341,11 +346,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/child': typeof ChildRouteRouteWithChildren
-  '/admin-login': typeof AdminLoginRoute
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/signup': typeof SignupRoute
+  '/admin-login': typeof publicAdminLoginRoute
+  '/auth': typeof publicAuthRoute
+  '/login': typeof publicLoginRoute
+  '/signup': typeof publicSignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
@@ -385,15 +390,16 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/(public)': typeof publicRouteRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
   '/child': typeof ChildRouteRouteWithChildren
   '/parent': typeof ParentRouteRouteWithChildren
-  '/admin-login': typeof AdminLoginRoute
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/signup': typeof SignupRoute
+  '/(public)/admin-login': typeof publicAdminLoginRoute
+  '/(public)/auth': typeof publicAuthRoute
+  '/(public)/login': typeof publicLoginRoute
+  '/(public)/signup': typeof publicSignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
@@ -437,10 +443,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/child'
     | '/parent'
+    | '/onboarding'
     | '/admin-login'
     | '/auth'
     | '/login'
-    | '/onboarding'
     | '/signup'
     | '/dashboard'
     | '/academy/admin'
@@ -481,10 +487,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/child'
+    | '/onboarding'
     | '/admin-login'
     | '/auth'
     | '/login'
-    | '/onboarding'
     | '/signup'
     | '/dashboard'
     | '/academy/admin'
@@ -524,15 +530,16 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/(public)'
     | '/_authenticated'
     | '/admin'
     | '/child'
     | '/parent'
-    | '/admin-login'
-    | '/auth'
-    | '/login'
     | '/onboarding'
-    | '/signup'
+    | '/(public)/admin-login'
+    | '/(public)/auth'
+    | '/(public)/login'
+    | '/(public)/signup'
     | '/_authenticated/dashboard'
     | '/academy/admin'
     | '/academy/cohorts'
@@ -572,15 +579,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  publicRouteRoute: typeof publicRouteRouteWithChildren
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   ChildRouteRoute: typeof ChildRouteRouteWithChildren
   ParentRouteRoute: typeof ParentRouteRouteWithChildren
-  AdminLoginRoute: typeof AdminLoginRoute
-  AuthRoute: typeof AuthRoute
-  LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
-  SignupRoute: typeof SignupRoute
   AcademyAdminRoute: typeof AcademyAdminRouteWithChildren
   AcademyCohortsRoute: typeof AcademyCohortsRouteWithChildren
   AcademyDashboardRoute: typeof AcademyDashboardRoute
@@ -598,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(public)': {
+      id: '/(public)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof publicRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -612,32 +623,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-login': {
-      id: '/admin-login'
-      path: '/admin-login'
-      fullPath: '/admin-login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/child': {
       id: '/child'
       path: '/child'
       fullPath: '/child'
       preLoaderRoute: typeof ChildRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -654,12 +644,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup': {
-      id: '/signup'
+    '/(public)/admin-login': {
+      id: '/(public)/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof publicAdminLoginRouteImport
+      parentRoute: typeof publicRouteRoute
+    }
+    '/(public)/auth': {
+      id: '/(public)/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof publicAuthRouteImport
+      parentRoute: typeof publicRouteRoute
+    }
+    '/(public)/login': {
+      id: '/(public)/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof publicLoginRouteImport
+      parentRoute: typeof publicRouteRoute
+    }
+    '/(public)/signup': {
+      id: '/(public)/signup'
       path: '/signup'
       fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof publicSignupRouteImport
+      parentRoute: typeof publicRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -909,6 +920,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface publicRouteRouteChildren {
+  publicAdminLoginRoute: typeof publicAdminLoginRoute
+  publicAuthRoute: typeof publicAuthRoute
+  publicLoginRoute: typeof publicLoginRoute
+  publicSignupRoute: typeof publicSignupRoute
+}
+
+const publicRouteRouteChildren: publicRouteRouteChildren = {
+  publicAdminLoginRoute: publicAdminLoginRoute,
+  publicAuthRoute: publicAuthRoute,
+  publicLoginRoute: publicLoginRoute,
+  publicSignupRoute: publicSignupRoute,
+}
+
+const publicRouteRouteWithChildren = publicRouteRoute._addFileChildren(
+  publicRouteRouteChildren,
+)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLearnChildIdFeedbackRoute: typeof AuthenticatedLearnChildIdFeedbackRoute
@@ -1043,15 +1072,12 @@ const AcademySessionRouteWithChildren = AcademySessionRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  publicRouteRoute: publicRouteRouteWithChildren,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   ChildRouteRoute: ChildRouteRouteWithChildren,
   ParentRouteRoute: ParentRouteRouteWithChildren,
-  AdminLoginRoute: AdminLoginRoute,
-  AuthRoute: AuthRoute,
-  LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
-  SignupRoute: SignupRoute,
   AcademyAdminRoute: AcademyAdminRouteWithChildren,
   AcademyCohortsRoute: AcademyCohortsRouteWithChildren,
   AcademyDashboardRoute: AcademyDashboardRoute,

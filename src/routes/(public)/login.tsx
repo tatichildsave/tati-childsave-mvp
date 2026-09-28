@@ -9,7 +9,7 @@ import {
 import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute("/(public)/login")({
   head: () => ({
     meta: [
       { title: "Sign in — TATI ChildSave" },

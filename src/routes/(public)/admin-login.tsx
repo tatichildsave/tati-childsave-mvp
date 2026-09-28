@@ -11,7 +11,7 @@ import { getFirebaseFirestore } from "@/integrations/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
-export const Route = createFileRoute("/admin-login")({
+export const Route = createFileRoute("/(public)/admin-login")({
   head: () => ({
     meta: [
       { title: "Admin Sign in — TATI ChildSave" },
@@ -152,7 +152,16 @@ function AdminLoginPage() {
   }
 
   if (checking) {
-    return <div className="flex items-center justify-center min-h-screen">Checking credentials...</div>;
+    return (
+      <Page>
+        <PageHeader title="Admin Sign In" description="Verifying your credentials..." />
+        <Card>
+          <p className="text-base font-bold text-center text-muted-foreground">
+            Checking credentials…
+          </p>
+        </Card>
+      </Page>
+    );
   }
 
   return (

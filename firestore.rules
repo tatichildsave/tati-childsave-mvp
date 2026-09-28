@@ -67,10 +67,12 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.roles is list
         && request.resource.data.status == 'pending';
-      allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.roles == resource.data.roles
-        && request.resource.data.status == resource.data.status;
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid == uid
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.status == resource.data.status
+          && (request.resource.data.roles == resource.data.roles
+            || resource.data.roles.size() == 0));  // Allow role change if roles was empty (bootstrap)
       allow delete: if isAdmin();
     }
 
