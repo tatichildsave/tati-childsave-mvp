@@ -82,9 +82,7 @@ function AdminDashboard() {
       setFamilies(familiesData);
 
       // Calculate stats
-      const adminsCount = usersData.filter((u) =>
-        (u.roles as string[])?.includes("admin"),
-      ).length;
+      const adminsCount = usersData.filter((u) => (u.roles as string[])?.includes("admin")).length;
       const parentsCount = usersData.filter((u) =>
         (u.roles as string[])?.includes("parent"),
       ).length;
@@ -98,11 +96,7 @@ function AdminDashboard() {
 
       setError(null);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load admin data",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load admin data");
     } finally {
       setLoading(false);
     }
@@ -128,11 +122,7 @@ function AdminDashboard() {
       setError(null);
       await loadAdminData();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create admin user",
-      );
+      setError(err instanceof Error ? err.message : "Failed to create admin user");
     } finally {
       setBusy(false);
     }
@@ -163,11 +153,7 @@ function AdminDashboard() {
       setError(null);
       await loadAdminData();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create school",
-      );
+      setError(err instanceof Error ? err.message : "Failed to create school");
     } finally {
       setBusy(false);
     }
@@ -196,11 +182,7 @@ function AdminDashboard() {
       setError(null);
       await loadAdminData();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create facilitator",
-      );
+      setError(err instanceof Error ? err.message : "Failed to create facilitator");
     } finally {
       setBusy(false);
     }
@@ -242,21 +224,19 @@ function AdminDashboard() {
 
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6 border-b border-border overflow-x-auto">
-        {(["overview", "users", "schools", "facilitators", "families"] as Tab[]).map(
-          (tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-semibold border-b-2 transition ${
-                activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ),
-        )}
+        {(["overview", "users", "schools", "facilitators", "families"] as Tab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 font-semibold border-b-2 transition ${
+              activeTab === tab
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Overview Tab */}
@@ -313,11 +293,7 @@ function AdminDashboard() {
                 required
                 disabled={busy}
               />
-              <Button
-                variant="primary"
-                onClick={handleCreateAdmin}
-                disabled={busy}
-              >
+              <Button variant="primary" onClick={handleCreateAdmin} disabled={busy}>
                 {busy ? "Creating..." : "Create Admin"}
               </Button>
             </form>
@@ -378,11 +354,7 @@ function AdminDashboard() {
                 required
                 disabled={busy}
               />
-              <Button
-                variant="primary"
-                onClick={handleCreateSchool}
-                disabled={busy}
-              >
+              <Button variant="primary" onClick={handleCreateSchool} disabled={busy}>
                 {busy ? "Creating..." : "Create School"}
               </Button>
             </form>
@@ -440,11 +412,7 @@ function AdminDashboard() {
                   </option>
                 ))}
               </select>
-              <Button
-                variant="primary"
-                onClick={handleCreateFacilitator}
-                disabled={busy}
-              >
+              <Button variant="primary" onClick={handleCreateFacilitator} disabled={busy}>
                 {busy ? "Creating..." : "Create Facilitator"}
               </Button>
             </form>

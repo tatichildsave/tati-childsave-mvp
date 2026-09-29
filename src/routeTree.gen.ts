@@ -33,6 +33,7 @@ import { Route as ChildLearnRouteImport } from './routes/child/learn'
 import { Route as ChildLoginRouteImport } from './routes/child/login'
 import { Route as ChildProgressRouteImport } from './routes/child/progress'
 import { Route as ChildResultsRouteImport } from './routes/child/results'
+import { Route as ChildTestLoginRouteImport } from './routes/child/test-login'
 import { Route as ParentIndexRouteImport } from './routes/parent/index'
 import { Route as ParentFeedbackRouteImport } from './routes/parent/feedback'
 import { Route as ParentFeedbackReviewRouteImport } from './routes/parent/feedback-review'
@@ -172,6 +173,11 @@ const ChildProgressRoute = ChildProgressRouteImport.update({
 const ChildResultsRoute = ChildResultsRouteImport.update({
   id: '/results',
   path: '/results',
+  getParentRoute: () => ChildRouteRoute,
+} as any)
+const ChildTestLoginRoute = ChildTestLoginRouteImport.update({
+  id: '/test-login',
+  path: '/test-login',
   getParentRoute: () => ChildRouteRoute,
 } as any)
 const ParentIndexRoute = ParentIndexRouteImport.update({
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -363,6 +370,7 @@ export interface FileRoutesByTo {
   '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/child/login': typeof ChildLoginRoute
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
+  '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -460,6 +469,7 @@ export interface FileRouteTypes {
     | '/child/login'
     | '/child/progress'
     | '/child/results'
+    | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/child/login'
     | '/child/progress'
     | '/child/results'
+    | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -552,6 +563,7 @@ export interface FileRouteTypes {
     | '/child/login'
     | '/child/progress'
     | '/child/results'
+    | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -761,6 +773,13 @@ declare module '@tanstack/react-router' {
       path: '/results'
       fullPath: '/child/results'
       preLoaderRoute: typeof ChildResultsRouteImport
+      parentRoute: typeof ChildRouteRoute
+    }
+    '/child/test-login': {
+      id: '/child/test-login'
+      path: '/test-login'
+      fullPath: '/child/test-login'
+      preLoaderRoute: typeof ChildTestLoginRouteImport
       parentRoute: typeof ChildRouteRoute
     }
     '/parent/': {
@@ -986,6 +1005,7 @@ interface ChildRouteRouteChildren {
   ChildLoginRoute: typeof ChildLoginRoute
   ChildProgressRoute: typeof ChildProgressRoute
   ChildResultsRoute: typeof ChildResultsRoute
+  ChildTestLoginRoute: typeof ChildTestLoginRoute
   ChildAssessmentAssessmentIdRoute: typeof ChildAssessmentAssessmentIdRoute
   ChildLessonLessonIdRoute: typeof ChildLessonLessonIdRoute
   ChildReflectionReflectionIdRoute: typeof ChildReflectionReflectionIdRoute
@@ -998,6 +1018,7 @@ const ChildRouteRouteChildren: ChildRouteRouteChildren = {
   ChildLoginRoute: ChildLoginRoute,
   ChildProgressRoute: ChildProgressRoute,
   ChildResultsRoute: ChildResultsRoute,
+  ChildTestLoginRoute: ChildTestLoginRoute,
   ChildAssessmentAssessmentIdRoute: ChildAssessmentAssessmentIdRoute,
   ChildLessonLessonIdRoute: ChildLessonLessonIdRoute,
   ChildReflectionReflectionIdRoute: ChildReflectionReflectionIdRoute,

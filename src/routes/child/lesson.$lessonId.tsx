@@ -61,7 +61,7 @@ function LessonPage() {
   const track = getTrack("save");
   const trackItem = track.sequence.find((item) => item.kind === "lesson" && item.id === lessonId);
   const stage = trackItem?.stage ?? "";
-  
+
   async function finish(draft: LessonDraft) {
     await record.mutateAsync({
       data: {

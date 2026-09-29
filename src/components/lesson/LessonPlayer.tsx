@@ -135,7 +135,11 @@ export function LessonPlayer({
           <ChapterBanner stage={chapterStage} dayNumber={dayNumber} daysTotal={daysTotal} />
         ) : null}
 
-        {goalLabel && goalTarget !== undefined && currentSaved !== undefined && dayNumber !== undefined && daysTotal !== undefined ? (
+        {goalLabel &&
+        goalTarget !== undefined &&
+        currentSaved !== undefined &&
+        dayNumber !== undefined &&
+        daysTotal !== undefined ? (
           <GoalWidget
             goalLabel={goalLabel}
             targetAmount={goalTarget}

@@ -1,15 +1,5 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  type Firestore,
-} from "firebase/firestore";
+import { FieldValue } from "firebase-admin/firestore";
+import type { Firestore } from "firebase-admin/firestore";
 import type { ChildProfile, CreateChildInput } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { RecordProgressInput } from "@/lib/progress/service";
@@ -31,14 +21,6 @@ import type {
   CompetencyService,
 } from "@/lib/backend/contracts";
 
-function familyRef(db: Firestore, familyId: string) {
-  return doc(db, "families", familyId);
-}
-
-function childRef(db: Firestore, familyId: string, childId: string) {
-  return doc(familyRef(db, familyId), "children", childId);
-}
-
 function toChildProfile(document: FirestoreChildDocument): ChildProfile {
   return {
     id: document.id,
@@ -52,8 +34,8 @@ function toChildProfile(document: FirestoreChildDocument): ChildProfile {
     curriculum_level: document.curriculum_level,
     onboarding_step: document.onboarding_step,
     onboarding_completed: document.onboarding_completed,
-    created_at: document.createdAt.toDate().toISOString(),
-    updated_at: document.updatedAt.toDate().toISOString(),
+    created_at: (document.createdAt as any).toDate?.().toISOString?.() || new Date(document.createdAt).toISOString(),
+    updated_at: (document.updatedAt as any).toDate?.().toISOString?.() || new Date(document.updatedAt).toISOString(),
   };
 }
 
@@ -64,25 +46,31 @@ export class FirebaseFamilyRepository implements FamilyService {
   ) {}
 
   async ensureFamily(): Promise<string> {
-    const members = await getDocs(collection(this.db, "users", this.userId, "familyMemberships"));
-    const active = members.docs.find((item) => item.data()["status"] === "active");
+    const memberships = await this.db
+      .collection("users")
+      .doc(this.userId)
+      .collection("familyMemberships")
+      .get();
+    const active = memberships.docs.find((item) => item.data()["status"] === "active");
     if (active) return active.id;
     throw new Error("No active family membership found.");
   }
 
   async getFamilyChildren(): Promise<ChildProfile[]> {
     const familyId = await this.ensureFamily();
-    const children = await getDocs(
-      query(collection(familyRef(this.db, familyId), "children"), orderBy("createdAt", "asc")),
-    );
+    const children = await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .orderBy("createdAt", "asc")
+      .get();
     return children.docs.map((item) => toChildProfile(item.data() as FirestoreChildDocument));
   }
 
   async createChild(input: CreateChildInput): Promise<ChildProfile> {
     const familyId = await this.ensureFamily();
     const childId = crypto.randomUUID();
-    const ref = childRef(this.db, familyId, childId);
-    const now = serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const document = {
       id: childId,
       familyId,
@@ -98,8 +86,18 @@ export class FirebaseFamilyRepository implements FamilyService {
       createdAt: now,
       updatedAt: now,
     };
-    await setDoc(ref, document);
-    const saved = await getDoc(ref);
+    await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(childId)
+      .set(document);
+    const saved = await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(childId)
+      .get();
     return toChildProfile(saved.data() as FirestoreChildDocument);
   }
 
@@ -115,15 +113,25 @@ export class FirebaseFamilyRepository implements FamilyService {
       ...(changes.onboarding_completed === undefined
         ? {}
         : { onboarding_completed: changes.onboarding_completed }),
-      updatedAt: serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
-    await updateDoc(childRef(this.db, familyId, id), allowed);
+    await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(id)
+      .update(allowed);
   }
 
   async assertChildAccess(childId: string): Promise<void> {
     const familyId = await this.ensureFamily();
-    const snapshot = await getDoc(childRef(this.db, familyId, childId));
-    if (!snapshot.exists()) throw new Error("That learner is not part of your family.");
+    const snapshot = await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(childId)
+      .get();
+    if (!snapshot.exists) throw new Error("That learner is not part of your family.");
   }
 }
 
@@ -131,7 +139,11 @@ export class FirebaseFamilyMemberRepository implements FamilyMemberService {
   constructor(private readonly db: Firestore) {}
 
   async getMembers(familyId: string): Promise<Array<{ userId: string; role: string }>> {
-    const members = await getDocs(collection(familyRef(this.db, familyId), "members"));
+    const members = await this.db
+      .collection("families")
+      .doc(familyId)
+      .collection("members")
+      .get();
     return members.docs.map((item) => {
       const member = item.data() as FirestoreFamilyMemberDocument;
       return { userId: member.uid, role: member.role };
@@ -146,8 +158,13 @@ export class FirebaseChildProfileRepository implements ChildProfileService {
   ) {}
 
   async getChild(childId: string): Promise<ChildProfile | null> {
-    const snapshot = await getDoc(childRef(this.db, this.familyId, childId));
-    return snapshot.exists() ? toChildProfile(snapshot.data() as FirestoreChildDocument) : null;
+    const snapshot = await this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .get();
+    return snapshot.exists ? toChildProfile(snapshot.data() as FirestoreChildDocument) : null;
   }
 }
 
@@ -158,12 +175,14 @@ export class FirebaseJourneyProgressRepository implements JourneyProgressService
   ) {}
 
   async getProgress(childId: string): Promise<ProgressEvent[]> {
-    const rows = await getDocs(
-      query(
-        collection(childRef(this.db, this.familyId, childId), "journeyProgress"),
-        orderBy("updatedAt", "asc"),
-      ),
-    );
+    const rows = await this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .collection("journeyProgress")
+      .orderBy("updatedAt", "asc")
+      .get();
     return rows.docs.map((item) => {
       const row = item.data() as FirestoreJourneyProgressDocument;
       return {
@@ -176,37 +195,39 @@ export class FirebaseJourneyProgressRepository implements JourneyProgressService
         score: row.score,
         max_score: row.max_score,
         details: row.details,
-        created_at: row.createdAt.toDate().toISOString(),
-        updated_at: row.updatedAt.toDate().toISOString(),
+        created_at: (row.createdAt as any).toDate?.().toISOString?.() || new Date(row.createdAt).toISOString(),
+        updated_at: (row.updatedAt as any).toDate?.().toISOString?.() || new Date(row.updatedAt).toISOString(),
       };
     });
   }
 
   async recordProgress(input: RecordProgressInput): Promise<void> {
     const itemKey = `${input.itemType}:${input.itemId}`;
-    const ref = doc(
-      collection(childRef(this.db, this.familyId, input.childId), "journeyProgress"),
-      itemKey,
-    );
-    await setDoc(
-      ref,
-      {
-        id: itemKey,
-        familyId: this.familyId,
-        childId: input.childId,
-        child_profile_id: input.childId,
-        track_id: "save",
-        item_type: input.itemType,
-        item_id: input.itemId,
-        status: "completed",
-        score: input.score ?? null,
-        max_score: input.maxScore ?? null,
-        details: input.details ?? {},
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true },
-    );
+    await this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(input.childId)
+      .collection("journeyProgress")
+      .doc(itemKey)
+      .set(
+        {
+          id: itemKey,
+          familyId: this.familyId,
+          childId: input.childId,
+          child_profile_id: input.childId,
+          track_id: "save",
+          item_type: input.itemType,
+          item_id: input.itemId,
+          status: "completed",
+          score: input.score ?? null,
+          max_score: input.maxScore ?? null,
+          details: input.details ?? {},
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
   }
 }
 
@@ -217,9 +238,13 @@ export class FirebaseCompetencyRepository implements CompetencyService {
   ) {}
 
   async getCompetencies(childId: string) {
-    const rows = await getDocs(
-      collection(childRef(this.db, this.familyId, childId), "competencies"),
-    );
+    const rows = await this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .collection("competencies")
+      .get();
     return rows.docs.map((item) => {
       const row = item.data() as FirestoreCompetencyDocument;
       return { competencyId: row.competencyId, score: row.score, level: row.level };
@@ -234,9 +259,13 @@ export class FirebaseAchievementRepository implements AchievementService {
   ) {}
 
   async getAchievements(childId: string): Promise<AwardedAchievement[]> {
-    const rows = await getDocs(
-      collection(childRef(this.db, this.familyId, childId), "achievements"),
-    );
+    const rows = await this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .collection("achievements")
+      .get();
     return rows.docs.map((item) => {
       const row = item.data() as FirestoreAchievementDocument;
       return { achievementId: row.achievementId, celebrated: row.celebrated };
@@ -246,11 +275,17 @@ export class FirebaseAchievementRepository implements AchievementService {
   async awardAchievements(childId: string, achievementIds: string[]): Promise<void> {
     await Promise.all(
       achievementIds.map((achievementId) =>
-        setDoc(
-          doc(collection(childRef(this.db, this.familyId, childId), "achievements"), achievementId),
-          { achievementId, celebrated: false, awardedAt: serverTimestamp() },
-          { merge: true },
-        ),
+        this.db
+          .collection("families")
+          .doc(this.familyId)
+          .collection("children")
+          .doc(childId)
+          .collection("achievements")
+          .doc(achievementId)
+          .set(
+            { achievementId, celebrated: false, awardedAt: FieldValue.serverTimestamp() },
+            { merge: true },
+          ),
       ),
     );
   }
@@ -258,10 +293,14 @@ export class FirebaseAchievementRepository implements AchievementService {
   async markCelebrated(childId: string, achievementIds: string[]): Promise<void> {
     await Promise.all(
       achievementIds.map((achievementId) =>
-        updateDoc(
-          doc(collection(childRef(this.db, this.familyId, childId), "achievements"), achievementId),
-          { celebrated: true },
-        ),
+        this.db
+          .collection("families")
+          .doc(this.familyId)
+          .collection("children")
+          .doc(childId)
+          .collection("achievements")
+          .doc(achievementId)
+          .update({ celebrated: true }),
       ),
     );
   }

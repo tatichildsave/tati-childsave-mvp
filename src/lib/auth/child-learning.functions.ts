@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
 import { optionPoints, questionMaxPoints, scoreAssessment } from "@/lib/assessment/engine";
 import { getTrack } from "@/lib/learning/track";
@@ -11,13 +8,9 @@ import { getLessonById } from "@/lib/lessons/registry";
 import { getScenarioDefinition, getEnhancedScenarioDefinition } from "@/lib/scenario/registry";
 import type { ScenarioState } from "@/lib/scenario/types";
 import { createInitialState, applyChoice, advance } from "@/lib/scenario/engine";
-import { validateChildSession } from "./child-identity.server";
-import { getAuthenticatedChild } from "./child-session.server";
-import type { AuthenticatedChildContext } from "./authorization.server";
-import { AuthorizationError } from "./authorization.server";
+import type { AuthenticatedChildContext } from "./types";
 
 const COOKIE_NAME = "tati_child_session";
-const supabase = supabaseAdmin as unknown as SupabaseClient;
 
 const progressInput = z.object({
   itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
@@ -90,8 +83,11 @@ export type ChildLearningData = {
  * Get authenticated child context (G3 integration).
  * Validates session, loads profile, resolves optional Firebase identity.
  * Throws AuthorizationError if context cannot be established.
+ * Uses dynamic import to avoid client-side server code contamination.
  */
 async function getCurrentChildContext(): Promise<AuthenticatedChildContext> {
+  const { getAuthenticatedChild } = await import("./child-session.server");
+  const { AuthorizationError } = await import("./authorization.server");
   const context = await getAuthenticatedChild();
   if (!context) throw new AuthorizationError("Child session required.");
   return context;
@@ -107,14 +103,65 @@ async function currentChildId(): Promise<string> {
   return context.childId;
 }
 
-async function loadProfile(childId: string): Promise<ChildLearningProfile> {
-  const { data, error } = await supabase
-    .from("child_profiles")
-    .select("id, tati_id, name, age, avatar, tier, curriculum_level")
-    .eq("id", childId)
-    .single();
-  if (error || !data) throw new Error("Child profile unavailable.");
-  return data as ChildLearningProfile;
+async function loadProfile(context: AuthenticatedChildContext): Promise<ChildLearningProfile> {
+  // H4.B: Load profile from Firebase instead of Supabase
+  // The profile is stored in Firebase during child account creation
+  const { loadChildProfile } = await import("./child-auth-firebase.server");
+
+  const profile = await loadChildProfile(context.childId, context.familyId);
+
+  if (!profile) throw new Error("Child profile unavailable.");
+
+  // Transform Firebase profile to expected format
+  return {
+    id: profile.id,
+    tati_id: profile.tatiId,
+    name: profile.name,
+    age: profile.age,
+    avatar: profile.avatar,
+    tier: profile.tier,
+    curriculum_level: profile.curriculumLevel,
+  } as ChildLearningProfile;
+}
+
+/**
+ * Load child learning data from Firebase (H4.B migration).
+ * Requires authenticated child context with childId and familyId.
+ */
+async function loadChildLearningDataFromFirebase(
+  context: AuthenticatedChildContext,
+): Promise<Omit<ChildLearningData, "profile">> {
+  try {
+    // H4.B: Dynamic imports to avoid client-side server code contamination
+    const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+    const {
+      FirebaseJourneyProgressRepository,
+      FirebaseCompetencyRepository,
+      FirebaseAchievementRepository,
+    } = await import("@/lib/backend/firebase/repositories");
+
+    const db = getFirebaseAdminDb();
+    const progressRepo = new FirebaseJourneyProgressRepository(db, context.familyId);
+    const competencyRepo = new FirebaseCompetencyRepository(db, context.familyId);
+    const achievementRepo = new FirebaseAchievementRepository(db, context.familyId);
+
+    const [progress, competencies, achievements] = await Promise.all([
+      progressRepo.getProgress(context.childId),
+      competencyRepo.getCompetencies(context.childId),
+      achievementRepo.getAchievements(context.childId),
+    ]);
+
+    // Transform from Firebase format to ChildLearningData format
+    return {
+      progress: progress || [],
+      competencies: competencies || [],
+      achievements: achievements || [],
+      assessments: [], // H4.C will handle assessments
+    };
+  } catch (error) {
+    console.error("[H4.B] Failed to load child learning data from Firebase:", error);
+    throw new Error("Learning data unavailable.");
+  }
 }
 
 function trackItemExists(itemType: string, itemId: string): boolean {
@@ -439,47 +486,29 @@ function verifyScenarioStateConsistency(
 }
 
 export const getChildLearningData = createServerFn({ method: "GET" }).handler(async () => {
-  const childId = await currentChildId();
-  const [profile, progressResult, competencyResult, achievementResult, assessmentResult] =
-    await Promise.all([
-      loadProfile(childId),
-      supabase
-        .from("journey_progress")
-        .select(
-          "id, track_id, item_type, item_id, status, score, max_score, details, created_at, updated_at",
-        )
-        .eq("child_profile_id", childId)
-        .eq("track_id", "save")
-        .order("updated_at", { ascending: true }),
-      supabase
-        .from("learner_competencies")
-        .select("competency_id, score, level, evidence")
-        .eq("child_profile_id", childId),
-      supabase
-        .from("learner_achievements")
-        .select("achievement_id, celebrated, awarded_at")
-        .eq("child_profile_id", childId),
-      supabase
-        .from("assessment_attempts")
-        .select(
-          "assessment_id, assessment_type, points, max_points, competency_scores, completed_at",
-        )
-        .eq("child_profile_id", childId),
-    ]);
-  if (
-    progressResult.error ||
-    competencyResult.error ||
-    achievementResult.error ||
-    assessmentResult.error
-  ) {
-    throw new Error("Learning data unavailable.");
-  }
+  console.log("[H4.B] getChildLearningData: Starting");
+
+  // Get authenticated child context (includes childId and familyId)
+  const context = await getCurrentChildContext();
+  const childId = context.childId;
+  const familyId = context.familyId;
+
+  console.log(`[H4.B] getChildLearningData: childId=${childId}, familyId=${familyId}`);
+
+  // Load profile and learning data in parallel
+  const [profile, learningData] = await Promise.all([
+    loadProfile(context),
+    loadChildLearningDataFromFirebase(context),
+  ]);
+
+  console.log(`[H4.B] getChildLearningData: Loaded profile and learning data`);
+
   return {
     profile,
-    progress: (progressResult.data ?? []) as ChildLearningData["progress"],
-    competencies: (competencyResult.data ?? []) as ChildLearningData["competencies"],
-    achievements: (achievementResult.data ?? []) as ChildLearningData["achievements"],
-    assessments: (assessmentResult.data ?? []) as ChildLearningData["assessments"],
+    progress: learningData.progress as ChildLearningData["progress"],
+    competencies: learningData.competencies as ChildLearningData["competencies"],
+    achievements: learningData.achievements as ChildLearningData["achievements"],
+    assessments: learningData.assessments as ChildLearningData["assessments"],
   } satisfies ChildLearningData;
 });
 
@@ -501,25 +530,39 @@ export const assertChildActivity = createServerFn({ method: "GET" })
 export const recordChildProgress = createServerFn({ method: "POST" })
   .validator(progressInput)
   .handler(async ({ data }) => {
-    const childId = await currentChildId();
+    console.log(`[H4.B] recordChildProgress: ${data.itemType}/${data.itemId}`);
+
+    // Get authenticated child context
+    const context = await getCurrentChildContext();
+    const childId = context.childId;
+    const familyId = context.familyId;
+
     if (!trackItemExists(data.itemType, data.itemId))
       throw new Error("That activity is not in this journey.");
-    const { error } = await supabase.from("journey_progress").upsert(
-      {
-        child_profile_id: childId,
-        track_id: "save",
-        item_type: data.itemType,
-        item_id: data.itemId,
-        status: "completed",
-        score: data.score ?? null,
-        max_score: data.maxScore ?? null,
-        details: data.details ?? {},
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "child_profile_id,item_type,item_id" },
-    );
-    if (error) throw error;
-    return { ok: true };
+
+    try {
+      // H4.B: Dynamic imports to avoid client-side server code contamination
+      const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+      const { FirebaseJourneyProgressRepository } = await import("@/lib/backend/firebase/repositories");
+
+      const db = getFirebaseAdminDb();
+      const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
+
+      await progressRepo.recordProgress({
+        childId,
+        itemType: data.itemType as "assessment" | "lesson" | "scenario" | "reflection",
+        itemId: data.itemId,
+        score: data.score,
+        maxScore: data.maxScore,
+        details: data.details,
+      });
+
+      console.log(`[H4.B] recordChildProgress: Successfully recorded`);
+      return { ok: true };
+    } catch (error) {
+      console.error("[H4.B] recordChildProgress error:", error);
+      throw error;
+    }
   });
 
 export const saveChildAssessment = createServerFn({ method: "POST" })
@@ -594,7 +637,7 @@ export const loadChildScenario = createServerFn({ method: "GET" })
 
     // G5: Validate child context state
     const contextCheck = validateChildContext(context);
-    if (!contextCheck.valid) throw new AuthorizationError(contextCheck.error || "Invalid context");
+    if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
 
     // G5: Validate scenario exists
     const definition = getScenarioDefinition(data.scenarioId);
@@ -640,7 +683,7 @@ export const saveChildScenario = createServerFn({ method: "POST" })
 
     // G5: Validate child context state
     const contextCheck = validateChildContext(context);
-    if (!contextCheck.valid) throw new AuthorizationError(contextCheck.error || "Invalid context");
+    if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
 
     // G5: Validate scenario exists
     const definition = getScenarioDefinition(data.scenarioId);
@@ -707,6 +750,12 @@ export const saveChildScenario = createServerFn({ method: "POST" })
 
     // All validations passed; persist the authoritative state
     // Use context.childId (server-derived) for ownership enforcement
+    
+    // H4.C: Scenario sessions stored in Supabase (deferred migration)
+    // Lazy import to avoid Supabase config requirement during H4.B Firebase-only testing
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin as unknown as any;
+    
     const { data: session, error } = await supabase
       .from("scenario_sessions")
       .upsert(

@@ -46,14 +46,17 @@ export const createAdminUser = functions.https.onCall(async (data, context) => {
     });
 
     // Create user document in Firestore
-    await db.collection("users").doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email,
-      roles: ["admin"],
-      status: "active",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: context.auth.uid,
-    });
+    await db
+      .collection("users")
+      .doc(userRecord.uid)
+      .set({
+        uid: userRecord.uid,
+        email,
+        roles: ["admin"],
+        status: "active",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: context.auth.uid,
+      });
 
     // Set custom claims
     await auth.setCustomUserClaims(userRecord.uid, { admin: true });
@@ -66,10 +69,7 @@ export const createAdminUser = functions.https.onCall(async (data, context) => {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    throw new functions.https.HttpsError(
-      "internal",
-      `Failed to create admin user: ${message}`,
-    );
+    throw new functions.https.HttpsError("internal", `Failed to create admin user: ${message}`);
   }
 });
 
@@ -124,25 +124,33 @@ export const createFacilitatorUser = functions.https.onCall(async (data, context
     });
 
     // Create user document in Firestore
-    await db.collection("users").doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email,
-      roles: ["facilitator"],
-      status: "active",
-      schoolId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: context.auth.uid,
-      tempPassword, // Store for admin to communicate to facilitator
-    });
+    await db
+      .collection("users")
+      .doc(userRecord.uid)
+      .set({
+        uid: userRecord.uid,
+        email,
+        roles: ["facilitator"],
+        status: "active",
+        schoolId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: context.auth.uid,
+        tempPassword, // Store for admin to communicate to facilitator
+      });
 
     // Create facilitator profile
-    await db.collection("schools").doc(schoolId).collection("facilitators").doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email,
-      name: email.split("@")[0],
-      status: "active",
-      joinedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    await db
+      .collection("schools")
+      .doc(schoolId)
+      .collection("facilitators")
+      .doc(userRecord.uid)
+      .set({
+        uid: userRecord.uid,
+        email,
+        name: email.split("@")[0],
+        status: "active",
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
     return {
       success: true,
@@ -202,9 +210,12 @@ export const assignSchoolAdmin = functions.https.onCall(async (data, context) =>
     const userDoc = await db.collection("users").doc(adminUid).get();
     const currentRoles = userDoc.data()?.roles || [];
     if (!currentRoles.includes("schoolAdmin")) {
-      await db.collection("users").doc(adminUid).update({
-        roles: [...currentRoles, "schoolAdmin"],
-      });
+      await db
+        .collection("users")
+        .doc(adminUid)
+        .update({
+          roles: [...currentRoles, "schoolAdmin"],
+        });
     }
 
     return {

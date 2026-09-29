@@ -15,22 +15,20 @@
  */
 
 import { getCookie } from "@tanstack/react-start/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { validateChildSession } from "./child-identity.server";
+import { validateChildSession } from "./child-auth-firebase.server";
 import {
   type AuthenticatedChildContext,
   type ChildSession,
   type FirebaseChildIdentity,
   AuthorizationError,
 } from "./authorization.server";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getChildFirebaseIdentity } from "@/lib/backend/firebase/child-auth.server";
 import type { AuthenticatedUser } from "./authorization.server";
 
 const COOKIE_NAME = "tati_child_session";
 
 /**
- * Type for the child profile row from Supabase.
+ * Type for the child profile row (from Firebase).
  */
 type ChildProfileRow = {
   id: string;
@@ -44,18 +42,71 @@ type ChildProfileRow = {
 };
 
 /**
- * Load child profile from Supabase.
+ * Load child profile from Firebase.
+ * H4.B: Replaced Supabase with Firebase for testing without requiring Supabase setup.
  * Used internally by getAuthenticatedChild().
+ *
+ * Process:
+ * 1. Query childCredentials collection to find familyId by childId
+ * 2. Load child profile from /families/{familyId}/children/{childId}
  */
 async function loadChildProfile(childId: string): Promise<ChildProfileRow | null> {
-  const { data, error } = await (supabaseAdmin as unknown as SupabaseClient)
-    .from("child_profiles")
-    .select("id, tati_id, name, age, avatar, tier, curriculum_level, family_id")
-    .eq("id", childId)
-    .maybeSingle();
+  try {
+    const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
 
-  if (error || !data) return null;
-  return data as ChildProfileRow;
+    const db = getFirebaseAdminDb();
+
+    // Step 1: Find the credential document to get familyId
+    // Use Admin SDK API (not web SDK API)
+    const credSnapshots = await db
+      .collection("childCredentials")
+      .where("childId", "==", childId)
+      .limit(1)
+      .get();
+
+    if (credSnapshots.empty) {
+      console.log(`[loadChildProfile] No credential found for childId=${childId}`);
+      return null;
+    }
+
+    const credData = credSnapshots.docs[0].data();
+    const familyId = credData.familyId as string;
+
+    if (!familyId) {
+      console.error(`[loadChildProfile] Credential missing familyId for childId=${childId}`);
+      return null;
+    }
+
+    // Step 2: Load child profile from family collection
+    // Use Admin SDK path notation
+    const childDocRef = db.collection("families").doc(familyId).collection("children").doc(childId);
+    const childDocSnapshot = await childDocRef.get();
+
+    if (!childDocSnapshot.exists) {
+      console.log(
+        `[loadChildProfile] Child profile not found at /families/${familyId}/children/${childId}`,
+      );
+      return null;
+    }
+
+    const childData = childDocSnapshot.data();
+    if (!childData) return null;
+
+    // Transform Firebase child document to expected format
+    return {
+      id: childDocSnapshot.id,
+      tati_id: childData.tatiId,
+      name: childData.name,
+      age: childData.age,
+      avatar: childData.avatar,
+      tier: childData.tier,
+      curriculum_level: childData.curriculumLevel ?? null,
+      family_id: familyId,
+    };
+  } catch (error) {
+    console.error("[H4.B] Failed to load child profile from Firebase:", error);
+    return null;
+  }
 }
 
 /**
@@ -134,7 +185,7 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
   if (!childSession) return null;
 
   // Step 2: Load child profile (existing logic)
-  const profile = await loadChildProfile(childSession.child_profile_id);
+  const profile = await loadChildProfile(childSession.childProfileId);
   if (!profile) return null;
 
   // Step 3: Optionally resolve Firebase identity (new, graceful degradation)
@@ -142,7 +193,7 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
 
   try {
     const firebaseIdentity = await resolveChildFirebaseIdentity(
-      childSession.child_profile_id,
+      childSession.childProfileId,
       profile.family_id,
     );
     if (firebaseIdentity) {
@@ -168,11 +219,11 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
   // Convert snake_case DB fields to camelCase ChildSession type
   const session: ChildSession = {
     kind: "child" as const,
-    childId: childSession.child_profile_id,
+    childId: childSession.childProfileId,
     sessionId: childSession.id,
-    createdAt: childSession.created_at,
-    expiresAt: childSession.expires_at,
-    revokedAt: childSession.revoked_at,
+    createdAt: childSession.createdAt,
+    expiresAt: childSession.expiresAt,
+    revokedAt: childSession.revokedAt,
   };
 
   const context: AuthenticatedChildContext = {

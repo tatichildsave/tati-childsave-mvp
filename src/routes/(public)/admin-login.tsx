@@ -143,8 +143,7 @@ function AdminLoginPage() {
 
       setError("You do not have admin privileges. Please contact support.");
     } catch (googleError) {
-      const message =
-        googleError instanceof Error ? googleError.message.toLowerCase() : "";
+      const message = googleError instanceof Error ? googleError.message.toLowerCase() : "";
       if (!message.includes("popup-closed")) {
         setError("We couldn't sign you in with Google right now. Please try again.");
       }
@@ -191,12 +190,7 @@ function AdminLoginPage() {
               required
             />
             {error && <CardNote variant="error" text={error} />}
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={busy}
-              className="w-full"
-            >
+            <Button variant="primary" onClick={handleSubmit} disabled={busy} className="w-full">
               {busy ? "Signing in..." : "Sign in"}
             </Button>
           </form>
@@ -205,12 +199,7 @@ function AdminLoginPage() {
         <Card>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-4">Or sign in with Google</p>
-            <Button
-              variant="secondary"
-              onClick={handleGoogle}
-              disabled={busy}
-              className="w-full"
-            >
+            <Button variant="secondary" onClick={handleGoogle} disabled={busy} className="w-full">
               {busy ? "Signing in..." : "Sign in with Google"}
             </Button>
           </div>

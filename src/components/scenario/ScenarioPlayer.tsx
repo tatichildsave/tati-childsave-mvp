@@ -98,7 +98,11 @@ export function ScenarioPlayer({
         </div>
       ) : null}
 
-      {goalLabel && goalTarget !== undefined && currentSaved !== undefined && dayNumber !== undefined && daysTotal !== undefined ? (
+      {goalLabel &&
+      goalTarget !== undefined &&
+      currentSaved !== undefined &&
+      dayNumber !== undefined &&
+      daysTotal !== undefined ? (
         <div className="mb-4">
           <GoalWidget
             goalLabel={goalLabel}

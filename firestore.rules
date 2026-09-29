@@ -102,11 +102,9 @@ service cloud.firestore {
 
         match /journeyProgress/{itemKey} {
           allow read: if canAccessChild(familyId, childId);
-          allow create, update: if (isFamilyAdult(familyId) || isAssignedFacilitator(familyId, childId) || isAdmin())
-            && request.resource.data.familyId == familyId
-            && request.resource.data.childId == childId
-            && request.resource.data.score == null
-            && request.resource.data.maxScore == null;
+          // H4.B: Allow read/write for competencies and achievements via Admin SDK (server-only)
+          // Client writes denied; server-side progress recording happens via Admin SDK
+          allow create, update: if false;  // Deny client writes; server uses Admin SDK
           allow delete: if isAdmin();
         }
 
@@ -126,13 +124,21 @@ service cloud.firestore {
         }
 
         match /competencies/{competencyId} {
+          // H4.B: Read allowed for parent/child access; write denied (server-only)
           allow read: if canAccessChild(familyId, childId);
-          allow write: if false;
+          allow write: if false;  // Server updates via Admin SDK
         }
 
         match /achievements/{achievementId} {
+          // H4.B: Read allowed for parent/child access; write denied (server-only)
           allow read: if canAccessChild(familyId, childId);
-          allow write: if false;
+          allow write: if false;  // Server awards via Admin SDK
+        }
+
+        match /sessions/{sessionId} {
+          // Child sessions are server-only (credential verification)
+          // Firestore rules deny all client access; Admin SDK bypasses rules for server operations
+          allow read, write: if false;
         }
 
         match /parentInsights/{insightId} {
@@ -185,7 +191,7 @@ service cloud.firestore {
       // Schema: { facilitatorUid, familyId, childId, createdAt, assignedBy, schoolId? }
       // Authorization: Facilitator can read own, school admin can read their school, admin can access all
       allow read: if signedIn() && hasRole('facilitator') && resource.data.facilitatorUid == request.auth.uid;
-      allow read: if resource.data.get('schoolId') != null && canAccessSchool(resource.data.schoolId);
+      allow read: if 'schoolId' in resource.data && canAccessSchool(resource.data.schoolId);
       allow read: if isAdmin();
       allow create, update: if isAdmin();
       allow delete: if isAdmin();
@@ -245,7 +251,7 @@ service cloud.firestore {
       // Facilitators can only see their own cohorts
       // School admins can see cohorts in their school
       allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
-      allow read: if resource.data.get('schoolId') != null && canAccessSchool(resource.data.schoolId);
+      allow read: if 'schoolId' in resource.data && canAccessSchool(resource.data.schoolId);
 
       // Update: Owner only, with immutability checks
       // Prevents: ownership change, timestamp modification

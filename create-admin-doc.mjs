@@ -6,26 +6,26 @@
 
 async function createAdminDoc() {
   try {
-    console.log('🚀 Create Admin Firestore Document\n');
+    console.log("🚀 Create Admin Firestore Document\n");
 
-    const email = 'admin@test.com';
-    const password = 'Admin@12345';
-    const displayName = 'Test Admin';
-    const projectId = 'demo-tati';
+    const email = "admin@test.com";
+    const password = "Admin@12345";
+    const displayName = "Test Admin";
+    const projectId = "demo-tati";
 
     // Step 1: Sign in to get ID token and UID
-    console.log('Step 1: Signing in to get ID token...');
+    console.log("Step 1: Signing in to get ID token...");
     const signInResponse = await fetch(
-      'http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key',
+      "http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           password,
           returnSecureToken: true,
         }),
-      }
+      },
     );
 
     if (!signInResponse.ok) {
@@ -39,26 +39,26 @@ async function createAdminDoc() {
     console.log(`✅ Signed in as: ${uid}\n`);
 
     // Step 2: Create Firestore document
-    console.log('Step 2: Creating Firestore admin document...');
-    
+    console.log("Step 2: Creating Firestore admin document...");
+
     const createUrl = `http://127.0.0.1:8080/v1/projects/${projectId}/databases/(default)/documents/users?documentId=${uid}`;
     console.log(`   URL: ${createUrl}`);
 
     const createResponse = await fetch(createUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
       },
       body: JSON.stringify({
         fields: {
           uid: { stringValue: uid },
           email: { stringValue: email },
           displayName: { stringValue: displayName },
-          status: { stringValue: 'pending' },  // Must be 'pending' for initial create
+          status: { stringValue: "pending" }, // Must be 'pending' for initial create
           roles: {
             arrayValue: {
-              values: [{ stringValue: 'admin' }],
+              values: [{ stringValue: "admin" }],
             },
           },
         },
@@ -71,16 +71,15 @@ async function createAdminDoc() {
       throw new Error(`Firestore POST failed`);
     }
 
-    console.log('✅ Firestore document created\n');
-    console.log('🎉 Admin user ready!\n');
-    console.log('📋 Credentials:');
+    console.log("✅ Firestore document created\n");
+    console.log("🎉 Admin user ready!\n");
+    console.log("📋 Credentials:");
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}`);
     console.log(`   UID: ${uid}\n`);
-    console.log('🌐 Sign in at: http://localhost:8080/admin-login\n');
-
+    console.log("🌐 Sign in at: http://localhost:8080/admin-login\n");
   } catch (error) {
-    console.error('❌ Failed:', error.message);
+    console.error("❌ Failed:", error.message);
     process.exit(1);
   }
 }

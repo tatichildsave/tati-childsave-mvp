@@ -94,20 +94,22 @@ export function getFirebaseStorage(): FirebaseStorage | null {
 
 export function getFirebaseFunctions(): Functions | null {
   if (!browserOnly) return null;
-  
+
   const app = getFirebaseApp();
   const functions = getFunctions(app);
-  
+
   // Connect to emulator if environment variables are set
   if (import.meta.env["VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST"]) {
     try {
-      const [host, port] = (import.meta.env["VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST"] as string).split(":");
+      const [host, port] = (
+        import.meta.env["VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST"] as string
+      ).split(":");
       connectFunctionsEmulator(functions, host, parseInt(port || "5001"));
     } catch (error) {
       // Emulator may already be connected, which is fine
       console.debug("Functions emulator connection info:", error);
     }
   }
-  
+
   return functions;
 }

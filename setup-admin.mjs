@@ -5,27 +5,27 @@
  */
 
 async function setupAdmin() {
-  console.log('🚀 Setting up admin in Firebase Emulator...\n');
+  console.log("🚀 Setting up admin in Firebase Emulator...\n");
 
   try {
     // Step 1: Sign in to get the UID
-    console.log('Step 1: Signing in to get UID...');
+    console.log("Step 1: Signing in to get UID...");
     const signInResponse = await fetch(
-      'http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key',
+      "http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=fake-key",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: 'admin@test.com',
-          password: 'Admin@12345',
+          email: "admin@test.com",
+          password: "Admin@12345",
           returnSecureToken: true,
         }),
-      }
+      },
     );
 
     const signInData = await signInResponse.json();
     if (!signInResponse.ok) {
-      throw new Error(`Sign in error: ${signInData.error?.message || 'Unknown error'}`);
+      throw new Error(`Sign in error: ${signInData.error?.message || "Unknown error"}`);
     }
 
     const uid = signInData.localId;
@@ -36,30 +36,30 @@ async function setupAdmin() {
     // We'll POST to localhost:8080 but target the Firestore emulator
     // Since dev server is on 8080, we need to restart without dev server first
     // Or use a workaround
-    
-    console.log('Step 2: Creating Firestore admin document...');
-    
+
+    console.log("Step 2: Creating Firestore admin document...");
+
     // Attempt direct Firestore API call
     const firestoreResponse = await fetch(
       `http://localhost:8080/v1/projects/demo-tati/databases/(default)/documents/users?documentId=${uid}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           fields: {
             uid: { stringValue: uid },
-            email: { stringValue: 'admin@test.com' },
-            displayName: { stringValue: 'Test Admin' },
-            roles: { arrayValue: { values: [{ stringValue: 'admin' }] } },
-            status: { stringValue: 'active' },
+            email: { stringValue: "admin@test.com" },
+            displayName: { stringValue: "Test Admin" },
+            roles: { arrayValue: { values: [{ stringValue: "admin" }] } },
+            status: { stringValue: "active" },
             createdAt: { timestampValue: new Date().toISOString() },
             updatedAt: { timestampValue: new Date().toISOString() },
           },
         }),
-      }
+      },
     );
 
     if (!firestoreResponse.ok) {
@@ -85,13 +85,12 @@ async function setupAdmin() {
     }
 
     console.log(`✅ Firestore admin document created\n`);
-    console.log('✨ Admin setup complete!\n');
-    console.log('📧 Email: admin@test.com');
-    console.log('🔐 Password: Admin@12345');
-    console.log('\n🌐 Sign in at: http://localhost:8080/admin-login\n');
-
+    console.log("✨ Admin setup complete!\n");
+    console.log("📧 Email: admin@test.com");
+    console.log("🔐 Password: Admin@12345");
+    console.log("\n🌐 Sign in at: http://localhost:8080/admin-login\n");
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error("❌ Error:", error.message);
     process.exit(1);
   }
 }

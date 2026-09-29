@@ -2,38 +2,39 @@
 /**
  * Test data setup script for Phase H3.4 E2E testing
  * Creates parent and child accounts with various progress states
- * 
+ *
  * Usage: node test-setup.mjs
  */
 
-import admin from 'firebase-admin';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import admin from "firebase-admin";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 // Initialize admin SDK
-const serviceAccountPath = resolve('./functions/.secret.local/demo-tati-key.json');
+const serviceAccountPath = resolve("./functions/.secret.local/demo-tati-key.json");
 let serviceAccount;
 
 try {
-  const keyFile = readFileSync(serviceAccountPath, 'utf8');
+  const keyFile = readFileSync(serviceAccountPath, "utf8");
   serviceAccount = JSON.parse(keyFile);
 } catch (e) {
   // Create a dummy service account for emulator
   serviceAccount = {
-    "type": "service_account",
-    "project_id": "demo-tati",
-    "private_key_id": "key-id",
-    "private_key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2a2j...truncated\n-----END RSA PRIVATE KEY-----\n",
-    "client_email": "firebase-adminsdk@demo-tati.iam.gserviceaccount.com",
-    "client_id": "123456789",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "http://127.0.0.1:9099/",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+    type: "service_account",
+    project_id: "demo-tati",
+    private_key_id: "key-id",
+    private_key:
+      "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA2a2j...truncated\n-----END RSA PRIVATE KEY-----\n",
+    client_email: "firebase-adminsdk@demo-tati.iam.gserviceaccount.com",
+    client_id: "123456789",
+    auth_uri: "https://accounts.google.com/o/oauth2/auth",
+    token_uri: "http://127.0.0.1:9099/",
+    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
   };
 }
 
 admin.initializeApp({
-  projectId: "demo-tati"
+  projectId: "demo-tati",
 });
 
 const auth = admin.auth();
@@ -54,13 +55,13 @@ async function setupJourneyA() {
 
   const parentEmail = "parent-a@test.com";
   const parentPassword = "TestPassword123!";
-  
+
   try {
     // Create parent user
     const parentUser = await auth.createUser({
       email: parentEmail,
       password: parentPassword,
-      displayName: "Parent A"
+      displayName: "Parent A",
     });
     const parentId = parentUser.uid;
     console.log(`✓ Parent A created: ${parentId}`);
@@ -73,18 +74,18 @@ async function setupJourneyA() {
       schools: [],
       children: [],
       createdAt: admin.firestore.Timestamp.now(),
-      updatedAt: admin.firestore.Timestamp.now()
+      updatedAt: admin.firestore.Timestamp.now(),
     });
     console.log(`✓ Parent A profile created`);
 
     // Create child user
     const childEmail = "child-a@test.com";
     const childPassword = "1234";
-    
+
     const childUser = await auth.createUser({
       email: childEmail,
       password: childPassword,
-      displayName: "Ama"
+      displayName: "Ama",
     });
     const childId = childUser.uid;
     console.log(`✓ Child A created: ${childId}`);
@@ -105,16 +106,19 @@ async function setupJourneyA() {
       pin: pin,
       parentId: parentId,
       createdAt: admin.firestore.Timestamp.now(),
-      updatedAt: admin.firestore.Timestamp.now()
+      updatedAt: admin.firestore.Timestamp.now(),
     });
     console.log(`✓ Child A profile created`);
     console.log(`   TATI ID: ${tatiId}`);
     console.log(`   PIN: ${pin}`);
 
     // Update parent's children list
-    await db.collection("users").doc(parentId).update({
-      children: [childId]
-    });
+    await db
+      .collection("users")
+      .doc(parentId)
+      .update({
+        children: [childId],
+      });
     console.log(`✓ Parent-child relationship established`);
 
     return { parentId, childId, tatiId, pin, childEmail, parentEmail };
@@ -141,13 +145,13 @@ async function setupJourneyB() {
 
   const parentEmail = "parent-b@test.com";
   const parentPassword = "TestPassword123!";
-  
+
   try {
     // Create parent user
     const parentUser = await auth.createUser({
       email: parentEmail,
       password: parentPassword,
-      displayName: "Parent B"
+      displayName: "Parent B",
     });
     const parentId = parentUser.uid;
     console.log(`✓ Parent B created: ${parentId}`);
@@ -155,11 +159,11 @@ async function setupJourneyB() {
     // Create child user
     const childEmail = "child-b@test.com";
     const childPassword = "1234";
-    
+
     const childUser = await auth.createUser({
       email: childEmail,
       password: childPassword,
-      displayName: "Kofi"
+      displayName: "Kofi",
     });
     const childId = childUser.uid;
     console.log(`✓ Child B created: ${childId}`);
@@ -179,30 +183,53 @@ async function setupJourneyB() {
       pin: pin,
       parentId: parentId,
       createdAt: admin.firestore.Timestamp.now(),
-      updatedAt: admin.firestore.Timestamp.now()
+      updatedAt: admin.firestore.Timestamp.now(),
     });
     console.log(`✓ Child B profile created`);
 
     // Create parent profile
-    await db.collection("users").doc(parentId).set({
-      email: parentEmail,
-      name: "Parent B",
-      role: "parent",
-      schools: [],
-      children: [childId],
-      createdAt: admin.firestore.Timestamp.now(),
-      updatedAt: admin.firestore.Timestamp.now()
-    });
+    await db
+      .collection("users")
+      .doc(parentId)
+      .set({
+        email: parentEmail,
+        name: "Parent B",
+        role: "parent",
+        schools: [],
+        children: [childId],
+        createdAt: admin.firestore.Timestamp.now(),
+        updatedAt: admin.firestore.Timestamp.now(),
+      });
     console.log(`✓ Parent B profile created`);
 
     // Create progress events (simulating completed pre-assessment + lessons)
     const eventsRef = db.collection(`users/${childId}/progress-events`);
     const events = [
-      { kind: "assessment-complete", id: "save-pre", timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 7)) },
-      { kind: "lesson-complete", id: "lesson-1", timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 6)) },
-      { kind: "lesson-complete", id: "lesson-2", timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 5)) },
-      { kind: "lesson-complete", id: "lesson-3", timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 4)) },
-      { kind: "scenario-start", id: "school-reopening", timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)) }
+      {
+        kind: "assessment-complete",
+        id: "save-pre",
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 7)),
+      },
+      {
+        kind: "lesson-complete",
+        id: "lesson-1",
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 6)),
+      },
+      {
+        kind: "lesson-complete",
+        id: "lesson-2",
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 5)),
+      },
+      {
+        kind: "lesson-complete",
+        id: "lesson-3",
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 4)),
+      },
+      {
+        kind: "scenario-start",
+        id: "school-reopening",
+        timestamp: admin.firestore.Timestamp.fromDate(new Date(Date.now() - 86400000 * 3)),
+      },
     ];
 
     for (const event of events) {
@@ -238,7 +265,7 @@ async function main() {
     console.log(`   Email: ${journeyA.childEmail}`);
     console.log(`   TATI ID: ${journeyA.tatiId}`);
     console.log(`   PIN: ${journeyA.pin}`);
-    
+
     if (journeyB) {
       console.log("\n📝 Journey B (Returning child with progress):");
       console.log(`   Email: ${journeyB.childEmail}`);
@@ -247,7 +274,7 @@ async function main() {
     }
 
     console.log("\n🌐 Visit http://localhost:8080/child/login to test\n");
-    
+
     await admin.app().delete();
     process.exit(0);
   } catch (error) {

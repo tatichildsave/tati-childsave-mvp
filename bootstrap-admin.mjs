@@ -9,27 +9,27 @@
 
 async function bootstrapAdmin() {
   try {
-    console.log('🚀 Bootstrap Admin User Setup\n');
+    console.log("🚀 Bootstrap Admin User Setup\n");
 
-    const email = 'admin@test.com';
-    const password = 'Admin@12345';
-    const displayName = 'Test Admin';
-    const projectId = 'demo-tati';
+    const email = "admin@test.com";
+    const password = "Admin@12345";
+    const displayName = "Test Admin";
+    const projectId = "demo-tati";
 
     // Step 1: Create auth user
-    console.log('Step 1: Creating Firebase Auth user...');
+    console.log("Step 1: Creating Firebase Auth user...");
     const signUpResponse = await fetch(
-      'http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-key',
+      "http://localhost:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake-key",
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
           password,
           displayName,
           returnSecureToken: true,
         }),
-      }
+      },
     );
 
     if (!signUpResponse.ok) {
@@ -43,78 +43,77 @@ async function bootstrapAdmin() {
     console.log(`✅ Auth user created: ${uid}\n`);
 
     // Step 2: Create Firestore document with admin role
-    console.log('Step 2: Creating Firestore admin document...');
-    
+    console.log("Step 2: Creating Firestore admin document...");
+
     const createResponse = await fetch(
       `http://127.0.0.1:8080/v1/projects/${projectId}/databases/(default)/documents/users?documentId=${uid}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           fields: {
             uid: { stringValue: uid },
             email: { stringValue: email },
             displayName: { stringValue: displayName },
-            status: { stringValue: 'active' },
+            status: { stringValue: "active" },
             roles: {
               arrayValue: {
-                values: [{ stringValue: 'admin' }],
+                values: [{ stringValue: "admin" }],
               },
             },
           },
         }),
-      }
+      },
     );
 
     if (!createResponse.ok) {
       const error = await createResponse.text();
       console.log(`⚠️  Firestore POST (create) failed: ${createResponse.status}`);
       console.log(`Error: ${error}\n`);
-      
+
       // Try PATCH instead if create fails
-      console.log('Trying PATCH to update document...');
+      console.log("Trying PATCH to update document...");
       const patchResponse = await fetch(
         `http://127.0.0.1:8080/v1/projects/${projectId}/databases/(default)/documents/users/${uid}?updateMask.fieldPaths=uid&updateMask.fieldPaths=email&updateMask.fieldPaths=displayName&updateMask.fieldPaths=status&updateMask.fieldPaths=roles`,
         {
-          method: 'PATCH',
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
           },
           body: JSON.stringify({
             fields: {
               uid: { stringValue: uid },
               email: { stringValue: email },
               displayName: { stringValue: displayName },
-              status: { stringValue: 'active' },
+              status: { stringValue: "active" },
               roles: {
                 arrayValue: {
-                  values: [{ stringValue: 'admin' }],
+                  values: [{ stringValue: "admin" }],
                 },
               },
             },
           }),
-        }
+        },
       );
 
       if (!patchResponse.ok) {
         throw new Error(`PATCH also failed: ${patchResponse.status}`);
       }
     }
-    
-    console.log('✅ Firestore document created\n');
-    console.log('🎉 Admin user bootstrapped successfully!\n');
-    console.log('📋 Credentials:');
+
+    console.log("✅ Firestore document created\n");
+    console.log("🎉 Admin user bootstrapped successfully!\n");
+    console.log("📋 Credentials:");
     console.log(`   Email: ${email}`);
     console.log(`   Password: ${password}`);
     console.log(`   UID: ${uid}\n`);
-    console.log('🌐 Sign in at: http://localhost:8080/admin-login\n');
-
+    console.log("🌐 Sign in at: http://localhost:8080/admin-login\n");
   } catch (error) {
-    console.error('❌ Bootstrap failed:', error.message);
+    console.error("❌ Bootstrap failed:", error.message);
     process.exit(1);
   }
 }
