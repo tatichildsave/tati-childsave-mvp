@@ -67,14 +67,14 @@ export class FirebaseFamilyRepository implements FamilyService {
       const familyId = `fam-${crypto.randomUUID()}`;
       const now = FieldValue.serverTimestamp();
 
-      // Create family document
+      // Create family document with all required fields per FirestoreFamilyDocument schema
       await this.db
         .collection("families")
         .doc(familyId)
         .set({
-          id: familyId,
-          familyId,
+          name: "My Family",  // Default family name
           createdBy: this.userId,
+          status: "active",
           createdAt: now,
           updatedAt: now,
         });
