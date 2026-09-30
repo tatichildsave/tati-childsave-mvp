@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { onAuthStateChanged } from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { trackEvent } from "@/lib/analytics";
+import {
+  getFamilyId,
+  getFamilyChildren,
+  createChildProfile as serverCreateChildProfile,
+  updateChildProfile as serverUpdateChildProfile,
+  assertChildInFamily as serverAssertChildInFamily,
+} from "@/lib/backend/firebase/family.functions";
 
 export interface ChildProfile {
   id: string;
@@ -29,50 +36,29 @@ export async function getCurrentUserId(): Promise<string> {
 /** Returns the family id for the signed-in parent, creating it on first use. */
 export async function ensureFamily(): Promise<string> {
   const userId = await getCurrentUserId();
-
-  const { data: membership, error: readError } = await supabase
-    .from("family_members")
-    .select("family_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle();
-  if (readError) throw readError;
-  if (membership?.family_id) return membership.family_id;
-
-  const { data: family, error: familyError } = await supabase
-    .from("families")
-    .insert({ created_by: userId })
-    .select("id")
-    .single();
-  if (familyError) throw familyError;
-
-  const { error: memberError } = await supabase
-    .from("family_members")
-    .insert({ family_id: family.id, user_id: userId, role: "parent" });
-  if (memberError) throw memberError;
-
-  return family.id;
+  return getFamilyId(userId);
 }
 
 export async function assertChildInCurrentFamily(childId: string): Promise<void> {
-  const familyId = await ensureFamily();
-  const { data, error } = await supabase
-    .from("child_profiles")
-    .select("id")
-    .eq("id", childId)
-    .eq("family_id", familyId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) throw new Error("That learner is not part of your family.");
+  const userId = await getCurrentUserId();
+  await serverAssertChildInFamily({ userId, childId });
 }
 
 export function useSession() {
   return useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      const auth = getFirebaseAuth();
-      return auth?.currentUser ?? null;
+      return new Promise((resolve) => {
+        const auth = getFirebaseAuth();
+        if (!auth) {
+          resolve(null);
+          return;
+        }
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          unsubscribe();
+          resolve(user);
+        });
+      });
     },
     staleTime: 30_000,
   });
@@ -84,14 +70,8 @@ export function childProfilesQuery() {
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<ChildProfile[]> => {
-      const familyId = await ensureFamily();
-      const { data, error } = await supabase
-        .from("child_profiles")
-        .select("*")
-        .eq("family_id", familyId)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as ChildProfile[];
+      const userId = await getCurrentUserId();
+      return getFamilyChildren(userId);
     },
   };
 }
@@ -117,7 +97,6 @@ export function useCreateChildProfile() {
   return useMutation({
     mutationFn: async (input: CreateChildInput): Promise<ChildProfile> => {
       const userId = await getCurrentUserId();
-      const familyId = await ensureFamily();
       const safeName = input.name.trim();
       const age = Number(input.age);
 
@@ -132,23 +111,18 @@ export function useCreateChildProfile() {
         throw new Error("Child age must be between 8 and 12 years old.");
       }
 
-      const { data, error } = await supabase
-        .from("child_profiles")
-        .insert({
-          family_id: familyId,
-          created_by: userId,
+      const result = await serverCreateChildProfile({
+        userId,
+        input: {
           name: safeName,
           age,
           avatar: input.avatar,
-          curriculum_level: `Primary ${Math.max(1, age - 5)}`,
-          onboarding_step: 0,
-          onboarding_completed: input.onboardingCompleted ?? true,
-        })
-        .select("*")
-        .single();
-      if (error) throw error;
-      void trackEvent("child_profile_created", { childProfileId: data.id, eventKey: data.id });
-      return data as ChildProfile;
+          onboardingCompleted: input.onboardingCompleted ?? true,
+        },
+      });
+
+      void trackEvent("child_profile_created", { childProfileId: result.id, eventKey: result.id });
+      return result;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["child-profiles"] }),
   });
@@ -158,11 +132,14 @@ export function useUpdateChildProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; changes: Partial<ChildProfile> }) => {
-      const { error } = await supabase
-        .from("child_profiles")
-        .update(input.changes)
-        .eq("id", input.id);
-      if (error) throw error;
+      const userId = await getCurrentUserId();
+      await serverUpdateChildProfile({
+        userId,
+        input: {
+          id: input.id,
+          changes: input.changes,
+        },
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["child-profiles"] }),
   });
