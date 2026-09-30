@@ -19,17 +19,17 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 const sizes = { sm: 40, md: 56, lg: 88, xl: 120 } as const;
 
-// Fallback colors for avatars when images fail to load
+// Fallback RGB colors for avatars when images fail to load
 const avatarColors: Record<AvatarKey, string> = {
-  ama: "bg-blue-200",
-  kojo: "bg-amber-200",
-  esi: "bg-pink-200",
-  kwame: "bg-green-200",
-  yaw: "bg-purple-200",
-  abena: "bg-red-200",
-  kofi: "bg-cyan-200",
-  efua: "bg-orange-200",
-  kwesi: "bg-indigo-200",
+  ama: "rgb(191, 219, 254)", // bg-blue-200
+  kojo: "rgb(253, 230, 138)", // bg-amber-200
+  esi: "rgb(252, 231, 243)", // bg-pink-200
+  kwame: "rgb(187, 247, 208)", // bg-green-200
+  yaw: "rgb(243, 232, 255)", // bg-purple-200
+  abena: "rgb(254, 226, 226)", // bg-red-200
+  kofi: "rgb(207, 250, 254)", // bg-cyan-200
+  efua: "rgb(254, 237, 210)", // bg-orange-200
+  kwesi: "rgb(224, 231, 255)", // bg-indigo-200
 };
 
 export function Avatar({
@@ -50,7 +50,7 @@ export function Avatar({
   const row = Math.floor(index / 3);
   const px = sizes[size];
   const avatarKey = (avatar as AvatarKey) || "ama";
-  const fallbackBg = avatarColors[avatarKey] || "bg-gray-200";
+  const fallbackColor = avatarColors[avatarKey] || "rgb(229, 231, 235)"; // bg-gray-200
   const spanRef = useRef<HTMLSpanElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -71,7 +71,6 @@ export function Avatar({
       aria-label={name ? `${name}'s avatar` : "Learner avatar"}
       className={cn(
         "inline-flex items-center justify-center shrink-0 overflow-hidden rounded-full font-bold text-lg",
-        imageLoaded ? "bg-secondary" : fallbackBg,
         ring === "primary" && "ring-4 ring-primary",
         ring === "success" && "ring-4 ring-success",
         ring === "accent" && "ring-4 ring-accent",
@@ -80,12 +79,11 @@ export function Avatar({
       style={{
         width: px,
         height: px,
-        ...(imageLoaded && {
-          backgroundImage: `url(${avatarSheet.url})`,
-          backgroundSize: "300% 300%",
-          backgroundPosition: `${col * 50}% ${row * 50}%`,
-          backgroundRepeat: "no-repeat",
-        }),
+        backgroundColor: imageLoaded ? "rgb(229, 231, 235)" : fallbackColor,
+        backgroundImage: imageLoaded ? `url(${avatarSheet.url})` : "none",
+        backgroundSize: "300% 300%",
+        backgroundPosition: `${col * 50}% ${row * 50}%`,
+        backgroundRepeat: "no-repeat",
       }}
       data-avatar={avatarKey}
     />
