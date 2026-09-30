@@ -41,10 +41,13 @@ function initializeAdminApp() {
     try {
       const serviceAccount = JSON.parse(serviceAccountJson);
       serviceAccountCredential = admin.credential.cert(serviceAccount);
+      console.log("[Firebase] Service account initialized for project:", serviceAccount.project_id);
     } catch (error) {
-      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
-      throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT JSON format");
+      console.error("[Firebase] Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
+      throw new Error(`Invalid FIREBASE_SERVICE_ACCOUNT JSON format: ${error instanceof Error ? error.message : String(error)}`);
     }
+  } else if (!isEmulatorMode()) {
+    console.warn("[Firebase] No FIREBASE_SERVICE_ACCOUNT provided. Admin SDK will use default credentials.");
   }
 
   // For emulator: initialize with demo project ID, no service account needed
@@ -58,6 +61,7 @@ function initializeAdminApp() {
     initConfig.credential = serviceAccountCredential;
   }
 
+  console.log("[Firebase] Initializing Admin SDK with project:", initConfig.projectId);
   adminApp = initializeApp(initConfig);
 
   return adminApp;

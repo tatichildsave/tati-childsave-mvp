@@ -27,9 +27,16 @@ const updateChildInput = z.object({
 export const getFamilyId = createServerFn({ method: "POST" })
   .validator(userIdInput)
   .handler(async ({ data: userId }) => {
-    const db = getFirebaseAdminDb();
-    const repo = new FirebaseFamilyRepository(db, userId);
-    return repo.ensureFamily();
+    try {
+      const db = getFirebaseAdminDb();
+      const repo = new FirebaseFamilyRepository(db, userId);
+      const familyId = await repo.ensureFamily();
+      console.log("[getFamilyId] Success for user:", userId, "family:", familyId);
+      return familyId;
+    } catch (error) {
+      console.error("[getFamilyId] Error for user:", userId, error);
+      throw error;
+    }
   });
 
 /**
