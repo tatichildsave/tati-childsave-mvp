@@ -69,6 +69,8 @@ export class FirebaseFamilyRepository implements FamilyService {
       .doc(familyId)
       .set({
         id: familyId,
+        familyId,
+        createdBy: this.userId,
         createdAt: now,
         updatedAt: now,
       });
