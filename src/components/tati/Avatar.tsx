@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import avatarSheet from "@/assets/tati-avatars.png.asset.json";
 import { cn } from "@/lib/utils";
 
@@ -31,19 +32,6 @@ const avatarColors: Record<AvatarKey, string> = {
   kwesi: "bg-indigo-200",
 };
 
-// Emoji representations for avatars as additional fallback
-const avatarEmoji: Record<AvatarKey, string> = {
-  ama: "👧",
-  kojo: "👦",
-  esi: "👧",
-  kwame: "👨",
-  yaw: "👦",
-  abena: "👩",
-  kofi: "👨",
-  efua: "👩",
-  kwesi: "👦",
-};
-
 export function Avatar({
   avatar = "ama",
   name,
@@ -62,15 +50,28 @@ export function Avatar({
   const row = Math.floor(index / 3);
   const px = sizes[size];
   const avatarKey = (avatar as AvatarKey) || "ama";
-  const fallbackColor = avatarColors[avatarKey] || "bg-gray-200";
+  const fallbackBg = avatarColors[avatarKey] || "bg-gray-200";
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Check if image loads, otherwise show fallback
+  useEffect(() => {
+    if (!spanRef.current || imageLoaded) return;
+
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(false);
+    img.src = avatarSheet.url;
+  }, [imageLoaded]);
 
   return (
     <span
+      ref={spanRef}
       role="img"
       aria-label={name ? `${name}'s avatar` : "Learner avatar"}
       className={cn(
-        "inline-block shrink-0 overflow-hidden rounded-full flex items-center justify-center font-bold text-lg",
-        fallbackColor,
+        "inline-flex items-center justify-center shrink-0 overflow-hidden rounded-full font-bold text-lg",
+        imageLoaded ? "bg-secondary" : fallbackBg,
         ring === "primary" && "ring-4 ring-primary",
         ring === "success" && "ring-4 ring-success",
         ring === "accent" && "ring-4 ring-accent",
@@ -79,18 +80,14 @@ export function Avatar({
       style={{
         width: px,
         height: px,
-        backgroundImage: `url(${avatarSheet.url})`,
-        backgroundSize: "300% 300%",
-        backgroundPosition: `${col * 50}% ${row * 50}%`,
-        backgroundRepeat: "no-repeat",
-        backgroundColor: `var(--fallback-color)`,
+        ...(imageLoaded && {
+          backgroundImage: `url(${avatarSheet.url})`,
+          backgroundSize: "300% 300%",
+          backgroundPosition: `${col * 50}% ${row * 50}%`,
+          backgroundRepeat: "no-repeat",
+        }),
       }}
       data-avatar={avatarKey}
-    >
-      {/* Fallback emoji displayed if image fails */}
-      <span className="opacity-0 pointer-events-none">
-        {avatarEmoji[avatarKey] || "👤"}
-      </span>
-    </span>
+    />
   );
 }
