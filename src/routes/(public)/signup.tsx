@@ -91,7 +91,7 @@ function SignupPage() {
       // Track signup event
       void trackEvent("signup_completed", { eventKey: userCredential.user.uid });
 
-      navigate({ to: "/parent", replace: true });
+      navigate({ to: "/onboarding", replace: true });
     } catch (signupError) {
       const message = signupError instanceof Error ? signupError.message.toLowerCase() : "";
       setError(
@@ -118,7 +118,7 @@ function SignupPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       void trackEvent("signup_completed", { eventKey: result.user.uid });
-      navigate({ to: "/parent", replace: true });
+      navigate({ to: "/onboarding", replace: true });
     } catch (googleError) {
       const message = googleError instanceof Error ? googleError.message : "";
       if (message.includes("popup-closed")) {
