@@ -52,7 +52,7 @@ function SignupPage() {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        navigate({ to: "/parent", replace: true });
+        navigate({ to: "/onboarding", replace: true });
       }
     });
 
