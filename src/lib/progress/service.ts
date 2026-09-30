@@ -6,11 +6,12 @@
 
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { getTrack } from "@/lib/learning/track";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import { useChild } from "@/lib/learning/progress";
 import { computeProgressSnapshot, type ProgressSnapshot } from "./snapshot";
+import { getChildJourneyProgress } from "@/lib/backend/firebase/family.functions";
+import { recordChildProgress } from "@/lib/auth/child-learning.functions";
 
 export type { ProgressSnapshot, ItemProgress } from "./snapshot";
 
@@ -41,21 +42,19 @@ async function syncPending(childId: string, events: ProgressEvent[]) {
   const remaining: ProgressEvent[] = [];
   try {
     for (const event of events) {
-      const { error } = await supabase.from("journey_progress").upsert(
-        {
-          child_profile_id: event.child_profile_id,
-          track_id: event.track_id,
-          item_type: event.item_type,
-          item_id: event.item_id,
-          status: event.status,
-          score: event.score,
-          max_score: event.max_score,
-          details: event.details as never,
-          updated_at: event.updated_at,
-        },
-        { onConflict: "child_profile_id,item_type,item_id" },
-      );
-      if (error) remaining.push(event);
+      try {
+        // Call the server function to record progress
+        await recordChildProgress({
+          itemType: event.item_type,
+          itemId: event.item_id,
+          score: event.score ?? undefined,
+          maxScore: event.max_score ?? undefined,
+          details: event.details,
+        });
+      } catch (error) {
+        console.error("[syncPending] Failed to sync event:", event, error);
+        remaining.push(event);
+      }
     }
     if (remaining.length === 0) {
       try {
@@ -76,18 +75,20 @@ export function progressQuery(childId: string) {
     queryKey: progressKey(childId),
     queryFn: async (): Promise<ProgressEvent[]> => {
       const pending = readPending(childId);
-      const { data, error } = await supabase
-        .from("journey_progress")
-        .select("*")
-        .eq("child_profile_id", childId);
-      if (error) return pending;
-      if (pending.length > 0) void syncPending(childId, pending);
-      const serverEvents = (data ?? []) as unknown as ProgressEvent[];
-      const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
-      return [
-        ...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)),
-        ...pending,
-      ];
+      try {
+        // Fetch progress from Firebase via server function
+        const serverEvents = await getChildJourneyProgress(childId);
+        if (pending.length > 0) void syncPending(childId, pending);
+        const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
+        return [
+          ...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)),
+          ...pending,
+        ];
+      } catch (error) {
+        console.error("[progressQuery] Error loading progress:", error);
+        // Return pending events only if server fetch fails
+        return pending;
+      }
     },
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -134,25 +135,23 @@ export function useRecordProgress() {
   return useMutation({
     mutationFn: async (input: RecordProgressInput) => {
       const event = optimisticEvent(input);
-      const { error } = await supabase.from("journey_progress").upsert(
-        {
-          child_profile_id: input.childId,
-          track_id: "save",
-          item_type: input.itemType,
-          item_id: input.itemId,
-          status: "completed",
-          score: input.score ?? null,
-          max_score: input.maxScore ?? null,
-          details: (input.details ?? {}) as never,
-          updated_at: event.updated_at,
-        },
-        { onConflict: "child_profile_id,item_type,item_id" },
-      );
-      if (error) {
+      try {
+        // Call server function to record progress in Firebase
+        await recordChildProgress({
+          itemType: input.itemType,
+          itemId: input.itemId,
+          score: input.score,
+          maxScore: input.maxScore,
+          details: input.details,
+        });
+      } catch (error) {
+        console.error("[useRecordProgress] Failed to record progress:", error);
+        // Store pending event for retry
         const pending = readPending(input.childId).filter(
           (item) => !(item.item_type === event.item_type && item.item_id === event.item_id),
         );
         writePending(input.childId, [...pending, event]);
+        throw error;
       }
     },
     onMutate: async (input) => {

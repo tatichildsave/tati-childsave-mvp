@@ -6,8 +6,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
-import { FirebaseFamilyRepository } from "@/lib/backend/firebase/repositories";
+import { FirebaseFamilyRepository, FirebaseJourneyProgressRepository } from "@/lib/backend/firebase/repositories";
 import type { ChildProfile } from "@/lib/family";
+import type { ProgressEvent } from "@/lib/learning/progress";
 
 const userIdInput = z.string().uuid().or(z.string().min(1));
 const createChildInput = z.object({
@@ -96,4 +97,44 @@ export const assertChildInFamily = createServerFn({ method: "POST" })
     const db = getFirebaseAdminDb();
     const repo = new FirebaseFamilyRepository(db, userId);
     await repo.assertChildAccess(childId);
+  });
+
+/**
+ * Get journey progress for a child
+ * Used by child learning routes to load progress history
+ */
+export const getChildJourneyProgress = createServerFn({ method: "POST" })
+  .validator(z.string().min(1))
+  .handler(async ({ data: childId }) => {
+    try {
+      const db = getFirebaseAdminDb();
+      
+      // Get the child document to find their family
+      const familyDocs = await db
+        .collectionGroup("children")
+        .where("id", "==", childId)
+        .limit(1)
+        .get();
+      
+      if (familyDocs.empty) {
+        console.log("[getChildJourneyProgress] Child not found:", childId);
+        return [];
+      }
+      
+      const childDoc = familyDocs.docs[0];
+      const childData = childDoc.data();
+      const familyId = childData.familyId;
+      
+      console.log("[getChildJourneyProgress] Found child:", childId, "family:", familyId);
+      
+      // Get journey progress using the repository
+      const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
+      const progress = await progressRepo.getProgress(childId);
+      
+      console.log("[getChildJourneyProgress] Loaded progress for child:", childId, "events:", progress.length);
+      return progress;
+    } catch (error) {
+      console.error("[getChildJourneyProgress] Error for child:", childId, error);
+      throw error;
+    }
   });
