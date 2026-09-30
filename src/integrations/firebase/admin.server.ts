@@ -9,6 +9,7 @@
  */
 
 import { initializeApp, getApps } from "firebase-admin/app";
+import * as admin from "firebase-admin";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
@@ -28,16 +29,36 @@ function initializeAdminApp() {
   if (adminApp) return adminApp;
 
   const projectId = process.env["FIREBASE_PROJECT_ID"];
+  const serviceAccountJson = process.env["FIREBASE_SERVICE_ACCOUNT"];
+
   if (!projectId && !isEmulatorMode()) {
     throw new Error("FIREBASE_PROJECT_ID env var is required for production Firebase.");
   }
 
+  // Parse service account if provided
+  let serviceAccountCredential: ReturnType<typeof admin.credential.cert> | undefined;
+  if (serviceAccountJson) {
+    try {
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      serviceAccountCredential = admin.credential.cert(serviceAccount);
+    } catch (error) {
+      console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
+      throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT JSON format");
+    }
+  }
+
   // For emulator: initialize with demo project ID, no service account needed
-  // For production: service account will be loaded from GOOGLE_APPLICATION_CREDENTIALS
+  // For production: use service account credential if available
   // The Admin SDK automatically respects emulator env vars
-  adminApp = initializeApp({
+  const initConfig: Record<string, any> = {
     projectId: projectId || "demo-tati", // emulator default
-  });
+  };
+
+  if (serviceAccountCredential) {
+    initConfig.credential = serviceAccountCredential;
+  }
+
+  adminApp = initializeApp(initConfig);
 
   return adminApp;
 }
