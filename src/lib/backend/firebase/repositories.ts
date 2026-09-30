@@ -46,14 +46,49 @@ export class FirebaseFamilyRepository implements FamilyService {
   ) {}
 
   async ensureFamily(): Promise<string> {
+    // Check for existing active family membership
     const memberships = await this.db
       .collection("users")
       .doc(this.userId)
       .collection("familyMemberships")
       .get();
     const active = memberships.docs.find((item) => item.data()["status"] === "active");
-    if (active) return active.id;
-    throw new Error("No active family membership found.");
+    if (active) {
+      console.log("[ensureFamily] Found existing family:", active.id);
+      return active.id;
+    }
+
+    // No family exists - create a new one
+    console.log("[ensureFamily] Creating new family for user:", this.userId);
+    const familyId = `fam-${crypto.randomUUID()}`;
+    const now = FieldValue.serverTimestamp();
+
+    // Create family document
+    await this.db
+      .collection("families")
+      .doc(familyId)
+      .set({
+        id: familyId,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+    // Create family membership for this user
+    await this.db
+      .collection("users")
+      .doc(this.userId)
+      .collection("familyMemberships")
+      .doc(familyId)
+      .set({
+        familyId,
+        userId: this.userId,
+        role: "parent",
+        status: "active",
+        createdAt: now,
+      });
+
+    console.log("[ensureFamily] Family created:", familyId);
+    return familyId;
   }
 
   async getFamilyChildren(): Promise<ChildProfile[]> {
