@@ -46,9 +46,21 @@ export const getFamilyId = createServerFn({ method: "POST" })
 export const getFamilyChildren = createServerFn({ method: "POST" })
   .validator(userIdInput)
   .handler(async ({ data: userId }) => {
-    const db = getFirebaseAdminDb();
-    const repo = new FirebaseFamilyRepository(db, userId);
-    return repo.getFamilyChildren();
+    try {
+      console.log("[getFamilyChildren] Starting for user:", userId);
+      const db = getFirebaseAdminDb();
+      console.log("[getFamilyChildren] Firebase Admin DB initialized");
+      
+      const repo = new FirebaseFamilyRepository(db, userId);
+      console.log("[getFamilyChildren] Repository created");
+      
+      const children = await repo.getFamilyChildren();
+      console.log("[getFamilyChildren] Success! Found", children.length, "children");
+      return children;
+    } catch (error) {
+      console.error("[getFamilyChildren] Error for user:", userId, error);
+      throw error;
+    }
   });
 
 /**
@@ -62,9 +74,21 @@ export const createChildProfile = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data: { userId, input } }) => {
-    const db = getFirebaseAdminDb();
-    const repo = new FirebaseFamilyRepository(db, userId);
-    return repo.createChild(input);
+    try {
+      console.log("[createChildProfile] Starting for user:", userId, "child name:", input.name);
+      const db = getFirebaseAdminDb();
+      console.log("[createChildProfile] Firebase Admin DB initialized");
+      
+      const repo = new FirebaseFamilyRepository(db, userId);
+      console.log("[createChildProfile] Repository created");
+      
+      const child = await repo.createChild(input);
+      console.log("[createChildProfile] Success! Created child:", child.id);
+      return child;
+    } catch (error) {
+      console.error("[createChildProfile] Error for user:", userId, error);
+      throw error;
+    }
   });
 
 /**
