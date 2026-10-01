@@ -59,8 +59,9 @@ export const awardAchievementsServerFn = createServerFn({ method: "POST" })
       console.log(`[H4.B] awardAchievementsServerFn: Successfully awarded`);
       return { ok: true };
     } catch (error) {
-      console.error("[H4.B] awardAchievementsServerFn error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[H4.B] awardAchievementsServerFn error:", message);
+      throw new Error(`Failed to award achievements: ${message}`);
     }
   });
 
@@ -101,8 +102,9 @@ export const markCelebratedServerFn = createServerFn({ method: "POST" })
       console.log(`[H4.B] markCelebratedServerFn: Successfully marked`);
       return { ok: true };
     } catch (error) {
-      console.error("[H4.B] markCelebratedServerFn error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[H4.B] markCelebratedServerFn error:", message);
+      throw new Error(`Failed to mark achievements celebrated: ${message}`);
     }
   });
 

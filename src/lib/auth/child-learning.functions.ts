@@ -560,8 +560,9 @@ export const recordChildProgress = createServerFn({ method: "POST" })
       console.log(`[H4.B] recordChildProgress: Successfully recorded`);
       return { ok: true };
     } catch (error) {
-      console.error("[H4.B] recordChildProgress error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[H4.B] recordChildProgress error:", message);
+      throw new Error(`Failed to record progress: ${message}`);
     }
   });
 

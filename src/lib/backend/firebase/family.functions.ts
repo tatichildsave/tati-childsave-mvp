@@ -57,8 +57,9 @@ export const getFamilyId = createServerFn({ method: "POST" })
       const familyId = await repo.ensureFamily();
       return familyId;
     } catch (error) {
-      console.error("[getFamilyId] Error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[getFamilyId] Error:", message);
+      throw new Error(`Failed to get family: ${message}`);
     }
   });
 
@@ -76,8 +77,9 @@ export const getFamilyChildren = createServerFn({ method: "POST" })
       const children = await repo.getFamilyChildren();
       return children;
     } catch (error) {
-      console.error("[getFamilyChildren] Error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[getFamilyChildren] Error:", message);
+      throw new Error(`Failed to get children: ${message}`);
     }
   });
 
@@ -95,8 +97,9 @@ export const createChildProfile = createServerFn({ method: "POST" })
       const child = await repo.createChild(input);
       return child;
     } catch (error) {
-      console.error("[createChildProfile] Error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[createChildProfile] Error:", message);
+      throw new Error(`Failed to create child: ${message}`);
     }
   });
 
@@ -118,8 +121,9 @@ export const updateChildProfile = createServerFn({ method: "POST" })
       // Update the child
       await repo.updateChild(input.id, input.changes as Partial<ChildProfile>);
     } catch (error) {
-      console.error("[updateChildProfile] Error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[updateChildProfile] Error:", message);
+      throw new Error(`Failed to update child: ${message}`);
     }
   });
 
@@ -138,8 +142,9 @@ export const assertChildInFamily = createServerFn({ method: "POST" })
       const repo = new FirebaseFamilyRepository(db, uid);
       await repo.assertChildAccess(childId);
     } catch (error) {
-      console.error("[assertChildInFamily] Error:", error);
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[assertChildInFamily] Error:", message);
+      throw new Error(`Failed to verify child access: ${message}`);
     }
   });
 
