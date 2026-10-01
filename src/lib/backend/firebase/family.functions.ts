@@ -32,14 +32,10 @@ const updateChildInput = z.object({
 export const createParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.object({ idToken: z.string().min(1) }))
   .handler(async ({ data: { idToken } }) => {
-    console.log("[createParentSessionFn] CALLED with idToken:", idToken.substring(0, 50) + "...");
     try {
-      console.log("[createParentSessionFn] Calling createParentSession...");
       await createParentSession(idToken);
-      console.log("[createParentSessionFn] SUCCESS - session cookie created");
       return { success: true };
     } catch (error) {
-      console.error("[createParentSessionFn] Error:", error);
       // Throw a plain Error, not the original error which may contain unserializable objects
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to create session: ${message}`);

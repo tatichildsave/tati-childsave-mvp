@@ -27,33 +27,21 @@ export type AuthenticatedParentContext = {
  * and includes the parent's uid. It is set as an HTTP-only cookie.
  */
 export async function createParentSession(idToken: string): Promise<void> {
-  try {
-    console.log("[createParentSession] START - idToken:", idToken.substring(0, 50) + "...");
-    
-    const auth = getFirebaseAdmin();
-    console.log("[createParentSession] Auth instance obtained");
-    
-    // Verify the ID token and create a session cookie
-    const sessionCookie = await auth.createSessionCookie(idToken, {
-      expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
-    });
-    console.log("[createParentSession] Session cookie created, length:", sessionCookie.length);
+  const auth = getFirebaseAdmin();
+  
+  // Verify the ID token and create a session cookie
+  const sessionCookie = await auth.createSessionCookie(idToken, {
+    expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
+  });
 
-    // Set the session cookie with strict security options
-    console.log("[createParentSession] Calling setCookie with name:", SESSION_COOKIE_NAME);
-    setCookie(SESSION_COOKIE_NAME, sessionCookie, {
-      httpOnly: true,
-      secure: process.env["NODE_ENV"] === "production",
-      sameSite: "lax" as const,
-      path: "/",
-      maxAge: SESSION_COOKIE_MAX_AGE,
-    });
-    console.log("[createParentSession] setCookie completed");
-    console.log("[createParentSession] SUCCESS - cookie should be in response");
-  } catch (error) {
-    console.error("[createParentSession] Error:", error);
-    throw error;
-  }
+  // Set the session cookie with strict security options
+  setCookie(SESSION_COOKIE_NAME, sessionCookie, {
+    httpOnly: true,
+    secure: process.env["NODE_ENV"] === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: SESSION_COOKIE_MAX_AGE,
+  });
 }
 
 /**

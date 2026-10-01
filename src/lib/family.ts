@@ -95,9 +95,7 @@ export function useCreateChildProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateChildInput): Promise<ChildProfile> => {
-      console.log('[useCreateChildProfile.mutationFn] CALLED with input:', input);
       const userId = await getCurrentUserId();
-      console.log('[useCreateChildProfile.mutationFn] Got userId:', userId);
       const safeName = input.name.trim();
       const age = Number(input.age);
 
@@ -112,7 +110,6 @@ export function useCreateChildProfile() {
         throw new Error("Child age must be between 8 and 12 years old.");
       }
 
-      console.log('[useCreateChildProfile.mutationFn] Calling serverCreateChildProfile');
       const result = await serverCreateChildProfile({
         data: {
           name: safeName,
