@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
+import { createParentSessionFn } from "@/lib/backend/firebase/family.functions";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
 
 export const Route = createFileRoute("/(public)/login")({
@@ -70,6 +71,10 @@ function LoginPage() {
 
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       if (userCredential.user) {
+        // Create server session cookie with ID token
+        const idToken = await userCredential.user.getIdToken();
+        await createParentSessionFn({ data: { idToken } });
+        
         navigate({ to: "/parent", replace: true });
       }
     } catch (signInError) {
@@ -95,7 +100,12 @@ function LoginPage() {
       }
 
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Create server session cookie with ID token
+      const idToken = await result.user.getIdToken();
+      await createParentSessionFn({ data: { idToken } });
+      
       navigate({ to: "/parent", replace: true });
     } catch (googleError) {
       const message = googleError instanceof Error ? googleError.message : "";

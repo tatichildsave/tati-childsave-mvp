@@ -3,7 +3,7 @@
  *
  * - Admin SDK must never be imported into client/browser modules.
  * - Admin initialization is lazy and safe for both production and emulator.
- * - Emulator uses credentials from environment variables or defaults.
+ * - Emulator uses environment variables: FIRESTORE_EMULATOR_HOST and FIREBASE_AUTH_EMULATOR_HOST.
  * - Production uses credentials from secure deployment secrets.
  * - Never place Admin credentials in VITE_ variables.
  */
@@ -22,8 +22,8 @@ let adminDbCache: Firestore | null = null;
 /**
  * Initialize Firebase Admin SDK app (lazy singleton).
  * Supports both emulator and production modes.
- * The Firebase Admin SDK respects FIRESTORE_EMULATOR_HOST and
- * FIREBASE_AUTH_EMULATOR_HOST environment variables automatically.
+ * When FIRESTORE_EMULATOR_HOST and FIREBASE_AUTH_EMULATOR_HOST env vars are set,
+ * the Admin SDK automatically connects to the local emulator.
  */
 function initializeAdminApp() {
   if (adminApp) return adminApp;
@@ -50,21 +50,46 @@ function initializeAdminApp() {
     console.warn("[Firebase] No FIREBASE_SERVICE_ACCOUNT provided. Admin SDK will use default credentials.");
   }
 
-  // For emulator: initialize with demo project ID, no service account needed
-  // For production: use service account credential if available
-  // The Admin SDK automatically respects emulator env vars
+  // Initialize app
   const initConfig: Record<string, any> = {
-    projectId: projectId || "demo-tati", // emulator default
+    projectId: projectId || "demo-tati",
   };
 
   if (serviceAccountCredential) {
     initConfig.credential = serviceAccountCredential;
+  } else if (!isEmulatorMode()) {
+    // Production mode only - use application default
+    try {
+      initConfig.credential = admin.credential.applicationDefault();
+    } catch (error) {
+      console.warn("[Firebase] Could not get application default credentials:", error instanceof Error ? error.message : error);
+    }
   }
+  // Emulator mode: no credentials needed, Admin SDK uses FIRESTORE_EMULATOR_HOST env var
 
   console.log("[Firebase] Initializing Admin SDK with project:", initConfig.projectId);
+  if (isEmulatorMode()) {
+    console.log("[Firebase] Running in emulator mode");
+    console.log("[Firebase] FIRESTORE_EMULATOR_HOST:", process.env["FIRESTORE_EMULATOR_HOST"]);
+    console.log("[Firebase] FIREBASE_AUTH_EMULATOR_HOST:", process.env["FIREBASE_AUTH_EMULATOR_HOST"]);
+  }
+  
   adminApp = initializeApp(initConfig);
+  console.log("[Firebase] Admin SDK app initialized");
 
   return adminApp;
+}
+
+/**
+ * Get Firebase Admin Auth instance.
+ * Safe for use in server-only contexts.
+ * Automatically connects to Auth emulator if FIREBASE_AUTH_EMULATOR_HOST is set.
+ */
+export function getFirebaseAdmin(): Auth {
+  if (!adminAuthCache) {
+    adminAuthCache = getAuth(initializeAdminApp());
+  }
+  return adminAuthCache;
 }
 
 /**
@@ -75,8 +100,6 @@ function initializeAdminApp() {
 export function getFirebaseAdminAuth(): Auth {
   if (!adminAuthCache) {
     adminAuthCache = getAuth(initializeAdminApp());
-    // Note: Firebase Admin SDK automatically respects FIREBASE_AUTH_EMULATOR_HOST env var
-    // No explicit useEmulator() call needed - it's automatic
   }
   return adminAuthCache;
 }
@@ -89,8 +112,7 @@ export function getFirebaseAdminAuth(): Auth {
 export function getFirebaseAdminDb(): Firestore {
   if (!adminDbCache) {
     adminDbCache = getFirestore(initializeAdminApp());
-    // Note: Firebase Admin SDK automatically respects FIRESTORE_EMULATOR_HOST env var
-    // No explicit useEmulator() call needed - it's automatic
+    console.log("[Firebase] Firestore instance obtained from Admin SDK");
   }
   return adminDbCache;
 }

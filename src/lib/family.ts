@@ -29,19 +29,19 @@ export interface ChildProfile {
 export async function getCurrentUserId(): Promise<string> {
   const auth = getFirebaseAuth();
   const user = auth?.currentUser;
-  if (!user?.uid) throw new Error("You need to be signed in.");
+  if (!user?.uid) {
+    throw new Error("You need to be signed in.");
+  }
   return user.uid;
 }
 
 /** Returns the family id for the signed-in parent, creating it on first use. */
 export async function ensureFamily(): Promise<string> {
-  const userId = await getCurrentUserId();
-  return getFamilyId(userId);
+  return getFamilyId();
 }
 
 export async function assertChildInCurrentFamily(childId: string): Promise<void> {
-  const userId = await getCurrentUserId();
-  await serverAssertChildInFamily({ userId, childId });
+  await serverAssertChildInFamily({ data: { childId } });
 }
 
 export function useSession() {
@@ -70,8 +70,7 @@ export function childProfilesQuery() {
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<ChildProfile[]> => {
-      const userId = await getCurrentUserId();
-      return getFamilyChildren(userId);
+      return getFamilyChildren();
     },
   };
 }
@@ -112,8 +111,7 @@ export function useCreateChildProfile() {
       }
 
       const result = await serverCreateChildProfile({
-        userId,
-        input: {
+        data: {
           name: safeName,
           age,
           avatar: input.avatar,
@@ -132,10 +130,8 @@ export function useUpdateChildProfile() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; changes: Partial<ChildProfile> }) => {
-      const userId = await getCurrentUserId();
       await serverUpdateChildProfile({
-        userId,
-        input: {
+        data: {
           id: input.id,
           changes: input.changes,
         },

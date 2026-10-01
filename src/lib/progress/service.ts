@@ -45,11 +45,13 @@ async function syncPending(childId: string, events: ProgressEvent[]) {
       try {
         // Call the server function to record progress
         await recordChildProgress({
-          itemType: event.item_type,
-          itemId: event.item_id,
-          score: event.score ?? undefined,
-          maxScore: event.max_score ?? undefined,
-          details: event.details,
+          data: {
+            itemType: event.item_type as "assessment" | "lesson" | "scenario" | "reflection",
+            itemId: event.item_id,
+            score: event.score ?? undefined,
+            maxScore: event.max_score ?? undefined,
+            details: event.details,
+          },
         });
       } catch (error) {
         console.error("[syncPending] Failed to sync event:", event, error);
@@ -77,7 +79,8 @@ export function progressQuery(childId: string) {
       const pending = readPending(childId);
       try {
         // Fetch progress from Firebase via server function
-        const serverEvents = await getChildJourneyProgress(childId);
+        const serverEventsRaw = await getChildJourneyProgress({ data: childId });
+        const serverEvents = serverEventsRaw as ProgressEvent[];
         if (pending.length > 0) void syncPending(childId, pending);
         const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
         return [
@@ -138,11 +141,13 @@ export function useRecordProgress() {
       try {
         // Call server function to record progress in Firebase
         await recordChildProgress({
-          itemType: input.itemType,
-          itemId: input.itemId,
-          score: input.score,
-          maxScore: input.maxScore,
-          details: input.details,
+          data: {
+            itemType: input.itemType,
+            itemId: input.itemId,
+            score: input.score,
+            maxScore: input.maxScore,
+            details: input.details,
+          },
         });
       } catch (error) {
         console.error("[useRecordProgress] Failed to record progress:", error);

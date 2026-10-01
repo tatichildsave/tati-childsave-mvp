@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { useChildProfiles, useSession } from "@/lib/family";
+import { clearParentSessionFn } from "@/lib/backend/firebase/family.functions";
 import {
   Page,
   PageHeader,
@@ -44,10 +45,21 @@ function ParentHome() {
   async function handleSignOut() {
     await qc.cancelQueries();
     qc.clear();
+    
+    // Clear server-side session cookie
+    try {
+      await clearParentSessionFn({ data: undefined });
+    } catch (error) {
+      console.error("[handleSignOut] Error clearing session:", error);
+      // Continue with client logout even if server-side clear fails
+    }
+    
+    // Sign out from Firebase client
     const auth = getFirebaseAuth();
     if (auth) {
       await signOut(auth);
     }
+    
     navigate({ to: "/login", replace: true });
   }
 
@@ -106,6 +118,11 @@ function ParentHome() {
                 <p className="text-sm font-bold text-muted-foreground">
                   {child.curriculum_level ?? `Primary ${Math.max(1, child.age - 5)}`} learner
                 </p>
+                {child.tati_id ? (
+                  <p className="text-xs font-mono mt-1 text-muted-foreground">
+                    TATI: <span className="font-bold">{child.tati_id}</span>
+                  </p>
+                ) : null}
               </div>
             </div>
 

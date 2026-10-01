@@ -4,6 +4,7 @@ import type { ChildProfile, CreateChildInput } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { RecordProgressInput } from "@/lib/progress/service";
 import type { AwardedAchievement } from "@/lib/gamification/achievements";
+import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child-auth-firebase.server";
 import type {
   FirestoreAchievementDocument,
   FirestoreChildDocument,
@@ -47,26 +48,34 @@ export class FirebaseFamilyRepository implements FamilyService {
 
   async ensureFamily(): Promise<string> {
     try {
-      console.log("[ensureFamily] Checking for existing family membership for user:", this.userId);
+      console.log("\n========== ensureFamily CALLED ==========");
+      console.log("ensureFamily userId:", this.userId);
+      console.log("ensureFamily Checking for existing family membership");
+      
       // Check for existing active family membership
-      const memberships = await this.db
+      const membershipsRef = this.db
         .collection("users")
         .doc(this.userId)
-        .collection("familyMemberships")
-        .get();
+        .collection("familyMemberships");
       
-      console.log("[ensureFamily] Found", memberships.docs.length, "memberships");
+      const memberships = await membershipsRef.get();
+      
+      console.log("ensureFamily Query returned", memberships.docs.length, "documents");
       const active = memberships.docs.find((item) => item.data()["status"] === "active");
+      
       if (active) {
-        console.log("[ensureFamily] Found existing family:", active.id);
+        console.log("ensureFamily Found existing active family:", active.id);
+        console.log("========== ensureFamily RETURNING EXISTING ==========\n");
         return active.id;
       }
 
       // No family exists - create a new one
-      console.log("[ensureFamily] Creating new family for user:", this.userId);
+      console.log("ensureFamily No active family found - creating new one");
       const familyId = `fam-${crypto.randomUUID()}`;
       const now = FieldValue.serverTimestamp();
-
+      
+      console.log("ensureFamily New familyId:", familyId);
+      
       // Create family document with all required fields per FirestoreFamilyDocument schema
       await this.db
         .collection("families")
@@ -78,9 +87,10 @@ export class FirebaseFamilyRepository implements FamilyService {
           createdAt: now,
           updatedAt: now,
         });
-      console.log("[ensureFamily] Family document created:", familyId);
+      console.log("ensureFamily Family document written successfully");
 
       // Create family membership for this user
+      console.log("ensureFamily Writing membership document");
       await this.db
         .collection("users")
         .doc(this.userId)
@@ -93,12 +103,21 @@ export class FirebaseFamilyRepository implements FamilyService {
           status: "active",
           createdAt: now,
         });
-      console.log("[ensureFamily] Membership document created:", familyId);
+      console.log("ensureFamily Membership document written successfully");
 
-      console.log("[ensureFamily] Family created:", familyId);
+      console.log("ensureFamily SUCCESS - Family created:", familyId);
+      console.log("========== ensureFamily RETURNING NEW ==========\n");
       return familyId;
     } catch (error) {
-      console.error("[ensureFamily] Error for user:", this.userId, error);
+      console.error("\n========== ensureFamily ERROR ==========");
+      console.error("ensureFamily userId:", this.userId);
+      console.error("ensureFamily Error:", error);
+      if (error instanceof Error) {
+        console.error("ensureFamily Error name:", error.name);
+        console.error("ensureFamily Error message:", error.message);
+        console.error("ensureFamily Error code:", (error as any).code);
+      }
+      console.error("========== ensureFamily ERROR END ==========\n");
       throw error;
     }
   }
@@ -142,6 +161,11 @@ export class FirebaseFamilyRepository implements FamilyService {
       const childId = crypto.randomUUID();
       console.log("[createChild] Generated child ID:", childId);
       
+      // Generate TATI ID and PIN
+      const tatiId = generateTatiId();
+      const pin = generateChildPin();
+      console.log("[createChild] Generated TATI ID:", tatiId, "PIN: ****");
+      
       const now = FieldValue.serverTimestamp();
       const document = {
         id: childId,
@@ -154,20 +178,27 @@ export class FirebaseFamilyRepository implements FamilyService {
         curriculum_level: `Primary ${Math.max(1, input.age - 5)}`,
         onboarding_step: 0,
         onboarding_completed: input.onboardingCompleted ?? true,
-        tati_id: "",
+        tati_id: tatiId,
         createdAt: now,
         updatedAt: now,
       };
       
-      console.log("[createChild] Writing child document");
+      console.log("[createChild] Writing child document with tati_id:", tatiId);
       await this.db
         .collection("families")
         .doc(familyId)
         .collection("children")
         .doc(childId)
         .set(document);
-      console.log("[createChild] Document written, reading back");
+      console.log("[createChild] Child document written");
       
+      // Generate and save credential
+      console.log("[createChild] Saving credential for TATI ID:", tatiId);
+      await saveChildPin(childId, tatiId, familyId, pin);
+      console.log("[createChild] Credential saved for TATI ID:", tatiId);
+      
+      // Read back child document to verify
+      console.log("[createChild] Reading back child document");
       const saved = await this.db
         .collection("families")
         .doc(familyId)
@@ -181,7 +212,7 @@ export class FirebaseFamilyRepository implements FamilyService {
       
       console.log("[createChild] Document read, converting to profile");
       const profile = toChildProfile(saved.data() as FirestoreChildDocument);
-      console.log("[createChild] Success! Created child profile:", profile.id);
+      console.log("[createChild] Success! Created child profile:", profile.id, "with TATI ID:", profile.tati_id);
       return profile;
     } catch (error) {
       console.error("[createChild] Error for user:", this.userId, error);

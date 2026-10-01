@@ -8,6 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
+import { createParentSessionFn } from "@/lib/backend/firebase/family.functions";
 import { trackEvent } from "@/lib/analytics";
 import { Page, PageHeader, Card, CardTitle, CardNote, Button, Badge } from "@/components/tati";
 
@@ -84,15 +85,28 @@ function SignupPage() {
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      console.log("[signup] User created:", userCredential.user.uid);
 
       // Update user profile with display name
       await updateProfile(userCredential.user, { displayName: fullName.trim() });
+      console.log("[signup] Profile updated");
+
+      // Create server session cookie with ID token
+      console.log("[signup] Getting ID token...");
+      const idToken = await userCredential.user.getIdToken();
+      console.log("[signup] ID token obtained:", idToken.substring(0, 50) + "...");
+      
+      console.log("[signup] Calling createParentSessionFn...");
+      await createParentSessionFn({ data: { idToken } });
+      console.log("[signup] createParentSessionFn completed successfully");
 
       // Track signup event
       void trackEvent("signup_completed", { eventKey: userCredential.user.uid });
 
+      console.log("[signup] Navigating to /parent");
       navigate({ to: "/parent", replace: true });
     } catch (signupError) {
+      console.error("[signup] Error during signup:", signupError);
       const message = signupError instanceof Error ? signupError.message.toLowerCase() : "";
       setError(
         message.includes("already-in-use") || message.includes("email-already-in-use")
@@ -117,6 +131,11 @@ function SignupPage() {
 
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      
+      // Create server session cookie with ID token
+      const idToken = await result.user.getIdToken();
+      await createParentSessionFn({ data: { idToken } });
+      
       void trackEvent("signup_completed", { eventKey: result.user.uid });
       navigate({ to: "/parent", replace: true });
     } catch (googleError) {

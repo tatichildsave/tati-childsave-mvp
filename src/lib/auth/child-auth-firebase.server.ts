@@ -113,6 +113,20 @@ export function generateTatiId(): string {
 }
 
 /**
+ * Generate a random child PIN.
+ * Format: 4-6 random digits
+ * Uses randomBytes for cryptographically secure randomness
+ */
+export function generateChildPin(): string {
+  // Generate 4-digit PIN using cryptographically secure randomBytes
+  // Generate 2 random bytes and convert to number 0-65535
+  const randomValue = randomBytes(2).readUInt16BE(0);
+  // Map to 1000-9999 range (4-digit PIN)
+  const pin = 1000 + (randomValue % 9000);
+  return pin.toString();
+}
+
+/**
  * Hash a child's PIN using scrypt.
  * Returns a string with algorithm, cost parameters, salt, and derived key.
  * Format: scrypt$cost$blockSize$parallelization$salt$key
