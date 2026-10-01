@@ -16,7 +16,7 @@ import type { Json } from "@/integrations/supabase/types";
 const createChildInput = z.object({
   name: z.string().trim().min(2).max(30),
   age: z.number().int().min(8).max(12),
-  avatar: z.string().max(2),
+  avatar: z.string().max(10), // Emoji characters can be multi-byte
   onboardingCompleted: z.boolean().optional(),
 });
 const updateChildInput = z.object({

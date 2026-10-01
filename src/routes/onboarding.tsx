@@ -102,20 +102,31 @@ function Onboarding() {
   };
 
   async function startJourney() {
+    console.log('[startJourney] CALLED');
+    console.log('[startJourney] About to call setError(null)');
     setError(null);
     try {
+      console.log('[startJourney] About to call mutateAsync with:', {
+        name: draft.name.trim() || "Friend",
+        age: draft.age,
+        avatar: draft.avatar,
+        onboardingCompleted: true,
+      });
       const child = await createChild.mutateAsync({
         name: draft.name.trim() || "Friend",
         age: draft.age,
         avatar: draft.avatar,
         onboardingCompleted: true,
       });
+      console.log('[startJourney] mutateAsync returned:', child);
       window.localStorage.removeItem(DRAFT_KEY);
+      console.log('[startJourney] About to navigate to learn page');
       navigate({
         to: "/learn/$childId/assessment/$assessmentId",
         params: { childId: child.id, assessmentId: "save-pre" },
       });
     } catch (err) {
+      console.error('[startJourney] CAUGHT ERROR:', err);
       setError(
         err instanceof Error ? err.message : "We couldn't save that profile. Let's try once more.",
       );
