@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { testChildLogin } from "@/lib/auth/test-child-login.server";
+import { testChildLogin } from "@/lib/auth/test-child-login.functions";
 import { useNavigate } from "@tanstack/react-router";
 import { Page, PageHeader, Card, Button, CardTitle, CardNote } from "@/components/tati";
 

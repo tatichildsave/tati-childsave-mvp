@@ -17,7 +17,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setCookie, getCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
 import { randomBytes, createHash } from "crypto";
 
 const COOKIE_NAME = "tati_child_session";
@@ -51,6 +50,9 @@ const testLoginInput = z.object({
 export const testChildLogin = createServerFn({ method: "POST" })
   .validator(testLoginInput)
   .handler(async ({ data }) => {
+    // Import server-only modules inside handler to avoid client bundle contamination
+    const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+    
     if (!isEmulatorOnly()) {
       throw new Error("Test login only available in emulator mode");
     }
