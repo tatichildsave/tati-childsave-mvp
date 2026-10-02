@@ -9,7 +9,7 @@
   },
   "rewrites": [
     {
-      "source": "^/(?!(?:assets|favicon|robots)\\..*|.*\\.(?:js|css|jpeg|jpg|png|svg|ico|txt|woff|woff2|ttf|eot|map|webp|gif|webmanifest)$)(.*)",
+      "source": "/:path*",
       "destination": "/api"
     }
   ]
