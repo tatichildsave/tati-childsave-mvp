@@ -4,12 +4,12 @@
   "outputDirectory": "dist/client",
   "functions": {
     "api/**/*.ts": {
-      "includeFiles": "dist/**"
+      "includeFiles": "dist/server/**"
     }
   },
   "rewrites": [
     {
-      "source": "/(?!.*\\.(?:js|css|jpeg|jpg|png|svg|ico|txt|woff|woff2|ttf|eot|gz|map|webp|gif|webmanifest)$).*",
+      "source": "^/(?!(?:assets|favicon|robots)\\..*|.*\\.(?:js|css|jpeg|jpg|png|svg|ico|txt|woff|woff2|ttf|eot|map|webp|gif|webmanifest)$)(.*)",
       "destination": "/api"
     }
   ]
