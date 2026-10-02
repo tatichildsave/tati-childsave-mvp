@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...(body && { body }),
     });
 
-    const response = await server.fetch(request);
+    const response = await server.fetch(request, {}, {});
 
     res.status(response.status);
     
