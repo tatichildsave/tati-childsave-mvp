@@ -1,4 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 let serverCache: any;
 
@@ -16,11 +19,68 @@ async function getServer() {
   return serverCache;
 }
 
+const STATIC_EXTENSIONS = new Set(['.js', '.css', '.jpeg', '.jpg', '.png', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map']);
+
+function getStaticFile(pathname: string): Buffer | null {
+  try {
+    // Check if it's a static file
+    const hasStaticExtension = STATIC_EXTENSIONS.has(
+      pathname.substring(pathname.lastIndexOf('.'))
+    );
+    
+    if (!hasStaticExtension) return null;
+
+    // Resolve file path from dist/client
+    let filePath = join(process.cwd(), 'dist', 'client', pathname);
+    
+    // Security: prevent directory traversal
+    if (!filePath.startsWith(join(process.cwd(), 'dist', 'client'))) {
+      return null;
+    }
+
+    if (existsSync(filePath)) {
+      return readFileSync(filePath);
+    }
+  } catch (error) {
+    console.error('Error serving static file:', error);
+  }
+  return null;
+}
+
+function getMimeType(pathname: string): string {
+  const ext = pathname.substring(pathname.lastIndexOf('.'));
+  const mimeTypes: Record<string, string> = {
+    '.js': 'application/javascript',
+    '.css': 'text/css',
+    '.jpeg': 'image/jpeg',
+    '.jpg': 'image/jpeg',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.ttf': 'font/ttf',
+    '.eot': 'application/vnd.ms-fontobject',
+    '.map': 'application/json',
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    const pathname = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`).pathname;
+    
+    // Try to serve static files first
+    const staticFile = getStaticFile(pathname);
+    if (staticFile) {
+      res.setHeader('Content-Type', getMimeType(pathname));
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(staticFile);
+    }
+
+    // Otherwise, use the server handler
     const server = await getServer();
     
-    // Convert Vercel request to Web standard Request
     const protocol = req.headers['x-forwarded-proto'] as string || 'https';
     const host = req.headers['x-forwarded-host'] as string || req.headers.host || 'localhost';
     const url = new URL(`${protocol}://${host}${req.url || '/'}`);
@@ -39,13 +99,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ...(body && { body }),
     });
 
-    // Call the TanStack Start server's fetch handler
     const response = await server.fetch(request);
 
-    // Set status
     res.status(response.status);
     
-    // Copy headers (avoid setting certain headers that Vercel manages)
     const headersToSkip = new Set(['content-encoding', 'transfer-encoding']);
     response.headers.forEach((value, key) => {
       if (!headersToSkip.has(key.toLowerCase())) {
@@ -53,7 +110,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
 
-    // Send body
     const buffer = await response.arrayBuffer();
     res.send(Buffer.from(buffer));
   } catch (error) {

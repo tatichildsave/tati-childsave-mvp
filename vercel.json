@@ -1,9 +1,10 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "public": "dist/client",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/(?!.*\\.(?:js|css|jpeg|jpg|png|svg|ico|woff|woff2|ttf|eot|gz)$).*",
       "destination": "/api"
     }
   ]
