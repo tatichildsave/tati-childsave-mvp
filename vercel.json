@@ -9,6 +9,10 @@
   },
   "rewrites": [
     {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
       "source": "/:path*",
       "destination": "/api"
     }
