@@ -1,9 +1,15 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "outputDirectory": "dist/client",
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "dist/**"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(?!.*\\.(?:js|css|jpeg|jpg|png|svg|ico|woff|woff2|ttf|eot|gz)$).*",
+      "source": "/(?!.*\\.(?:js|css|jpeg|jpg|png|svg|ico|txt|woff|woff2|ttf|eot|gz|map|webp|gif|webmanifest)$).*",
       "destination": "/api"
     }
   ]
