@@ -70,7 +70,7 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     }
 
     const credData = credSnapshots.docs[0].data();
-    const familyId = credData.familyId as string;
+    const familyId = credData['familyId'] as string;
 
     if (!familyId) {
       console.error(`[loadChildProfile] Credential missing familyId for childId=${childId}`);
@@ -95,12 +95,12 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     // Transform Firebase child document to expected format
     return {
       id: childDocSnapshot.id,
-      tati_id: childData.tatiId,
-      name: childData.name,
-      age: childData.age,
-      avatar: childData.avatar,
-      tier: childData.tier,
-      curriculum_level: childData.curriculumLevel ?? null,
+      tati_id: childData['tatiId'],
+      name: childData['name'],
+      age: childData['age'],
+      avatar: childData['avatar'],
+      tier: childData['tier'],
+      curriculum_level: childData['curriculumLevel'] ?? null,
       family_id: familyId,
     };
   } catch (error) {

@@ -185,7 +185,7 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
       
       const childDoc = familyDocs.docs[0];
       const childData = childDoc.data();
-      const familyId = childData.familyId;
+      const familyId = childData['familyId'];
       
       console.log("[getChildJourneyProgress] Found child:", childId, "family:", familyId);
       

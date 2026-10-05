@@ -56,18 +56,18 @@ function initializeAdminApp() {
   };
 
   if (serviceAccountCredential) {
-    initConfig.credential = serviceAccountCredential;
+    initConfig['credential'] = serviceAccountCredential;
   } else if (!isEmulatorMode()) {
     // Production mode only - use application default
     try {
-      initConfig.credential = admin.credential.applicationDefault();
+      initConfig['credential'] = admin.credential.applicationDefault();
     } catch (error) {
       console.warn("[Firebase] Could not get application default credentials:", error instanceof Error ? error.message : error);
     }
   }
   // Emulator mode: no credentials needed, Admin SDK uses FIRESTORE_EMULATOR_HOST env var
 
-  console.log("[Firebase] Initializing Admin SDK with project:", initConfig.projectId);
+  console.log("[Firebase] Initializing Admin SDK with project:", initConfig['projectId']);
   if (isEmulatorMode()) {
     console.log("[Firebase] Running in emulator mode");
     console.log("[Firebase] FIRESTORE_EMULATOR_HOST:", process.env["FIRESTORE_EMULATOR_HOST"]);

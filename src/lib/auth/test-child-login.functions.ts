@@ -72,7 +72,7 @@ export const testChildLogin = createServerFn({ method: "POST" })
 
     const childDoc = childSnapshot.docs[0];
     const childId = childDoc.id;
-    const familyId = childDoc.data().familyId;
+    const familyId = childDoc.data()['familyId'];
 
     // For test fixtures, PIN is stored in a separate test-data document
     // In real system this would be in Supabase
@@ -91,7 +91,7 @@ export const testChildLogin = createServerFn({ method: "POST" })
 
     // Simple PIN verification for test (not production-grade)
     const testData = testDataDoc.data();
-    if (testData?.testPin !== data.pin) {
+    if (testData?.['testPin'] !== data.pin) {
       throw new Error("That TATI ID or PIN could not be verified.");
     }
 
@@ -123,11 +123,11 @@ export const testChildLogin = createServerFn({ method: "POST" })
       profile: {
         id: childId,
         tati_id: data.tatiId,
-        name: childData.name,
-        age: childData.age,
-        avatar: childData.avatar,
-        tier: childData.tier,
-        curriculum_level: childData.curriculumLevel,
+        name: childData['name'],
+        age: childData['age'],
+        avatar: childData['avatar'],
+        tier: childData['tier'],
+        curriculum_level: childData['curriculumLevel'],
       },
     };
   });

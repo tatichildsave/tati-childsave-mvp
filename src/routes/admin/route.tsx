@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin")({
       const userDocSnap = await getDoc(userDocRef);
 
       if (userDocSnap.exists()) {
-        const roles = userDocSnap.data()?.roles as string[] | undefined;
+        const roles = userDocSnap.data()?.['roles'] as string[] | undefined;
         if (!Array.isArray(roles) || !roles.includes("admin")) {
           throw redirect({ to: "/" });
         }

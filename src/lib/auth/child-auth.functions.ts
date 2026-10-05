@@ -42,7 +42,7 @@ async function getChildContext(childId: string): Promise<{ familyId: string } | 
 
     if (snapshot.empty) return null;
     const cred = snapshot.docs[0].data();
-    return { familyId: cred.familyId };
+    return { familyId: cred['familyId'] };
   } catch {
     return null;
   }
