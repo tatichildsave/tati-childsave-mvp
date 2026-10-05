@@ -11,7 +11,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [
     // TanStack Router plugin (for route code generation)
-    TanStackRouterVite(),
+    // Use webpack HMR style instead of vite's to avoid collision
+    TanStackRouterVite({
+      plugin: {
+        hmr: {
+          style: 'webpack',
+        },
+      },
+    }),
     // TanStack Start Vite plugin (for SSR and dev server)
     tanstackStart(),
     // Vite React plugin for JSX
