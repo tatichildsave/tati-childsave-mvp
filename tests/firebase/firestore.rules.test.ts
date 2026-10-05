@@ -264,7 +264,7 @@ describe("Firestore security rules", () => {
     });
   });
 
-  describe("Server-only collections (10)", () => {
+  describe("Server-only collections (11)", () => {
     const cases = [
       ["assessmentAttempts/attempt-server", { score: 1 }],
       ["competencies/competency-server", { level: 1 }],
@@ -281,12 +281,9 @@ describe("Firestore security rules", () => {
       await login(USERS["parent-a"]);
       expectDenied(await tryWrite(db, `${childA}/${suffix}`, data));
     });
-  });
-
-  describe("Legitimate client writes (1)", () => {
-    it("allows a parent to create journey progress", async () => {
+    it("denies client write to journeyProgress", async () => {
       await login(USERS["parent-a"]);
-      expectAllowed(
+      expectDenied(
         await tryWrite(db, `${childA}/journeyProgress/test-write`, {
           familyId: "family-a",
           childId: "child-a1",

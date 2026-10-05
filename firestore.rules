@@ -67,12 +67,11 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.roles is list
         && request.resource.data.status == 'pending';
-      allow update: if isAdmin()
+      allow update: if (isAdmin() && request.auth.uid != uid)  // Admins can update others but not themselves
         || (signedIn() && request.auth.uid == uid
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.status == resource.data.status
-          && (request.resource.data.roles == resource.data.roles
-            || resource.data.roles.size() == 0));  // Allow role change if roles was empty (bootstrap)
+          && request.resource.data.roles == resource.data.roles);  // Roles cannot be self-modified
       allow delete: if isAdmin();
     }
 
@@ -102,9 +101,9 @@ service cloud.firestore {
 
         match /journeyProgress/{itemKey} {
           allow read: if canAccessChild(familyId, childId);
-          // H4.B: Allow read/write for competencies and achievements via Admin SDK (server-only)
-          // Client writes denied; server-side progress recording happens via Admin SDK
-          allow create, update: if false;  // Deny client writes; server uses Admin SDK
+          // Server-only: journeyProgress updates happen via Admin SDK
+          // Client writes are denied; use server functions to record progress
+          allow create, update: if false;
           allow delete: if isAdmin();
         }
 

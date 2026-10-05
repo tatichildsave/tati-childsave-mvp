@@ -8,6 +8,7 @@ import { z } from "zod";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
 import { getCurrentParentContext, createParentSession } from "@/lib/backend/firebase/parent-auth.server";
 import { FirebaseFamilyRepository, FirebaseJourneyProgressRepository } from "@/lib/backend/firebase/repositories";
+import { getUserRoles } from "@/lib/auth/roles.server";
 import type { ChildProfile } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { Json } from "@/integrations/supabase/types";
@@ -214,67 +215,47 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
   });
 
 
+/**
+ * Verify provisioning authorization (admin or provisioner role required)
+ * Throws AuthorizationError if user lacks provisioning privileges
+ */
+function requireProvisioningRole(roles: readonly string[]): void {
+  const hasProvisioningRole = roles.includes("admin") || roles.includes("provisioner");
+  if (!hasProvisioningRole) {
+    throw new Error("Provisioning requires admin or provisioner role");
+  }
+}
 
 /**
- * DIAGNOSTIC FUNCTION - Test Admin SDK connectivity
- * Step 1: Verify env vars reach the server
- * Step 2: Write a test document
- * Step 3: Read it back
- * Returns full diagnostic report
+ * Provision a family for the authenticated parent
+ *
+ * Responsibilities:
+ * - Require authenticated parent context
+ * - Verify parent has provisioning role (admin or provisioner)
+ * - Create or retrieve parent's family
+ * - Return the family ID
+ *
+ * Authorization: Admin or provisioner role only (parents cannot call)
  */
-// TEMPORARY: Diagnostic function (remove after debugging complete)
-export const testAdminSdkDiagnostics = createServerFn({ method: "POST" })
+export const ensureFamilyFn = createServerFn({ method: "POST" })
   .validator(z.void())
   .handler(async () => {
-    const report: Record<string, any> = {};
-    
     try {
-      // Log what we see at server runtime
-      report.env_vars = {
-        FIRESTORE_EMULATOR_HOST: process.env["FIRESTORE_EMULATOR_HOST"],
-        FIREBASE_AUTH_EMULATOR_HOST: process.env["FIREBASE_AUTH_EMULATOR_HOST"],
-        FIREBASE_PROJECT_ID: process.env["FIREBASE_PROJECT_ID"],
-        NODE_ENV: process.env["NODE_ENV"],
-      };
+      const context = await getCurrentParentContext();
+      const roles = await getUserRoles(context.uid);
       
-      console.log("[testAdminSdkDiagnostics] Environment variables:", report.env_vars);
+      // CRITICAL: Verify provisioning authorization
+      // Only admins/provisioners can create families
+      requireProvisioningRole(roles);
       
-      // Get the DB instance
       const db = getFirebaseAdminDb();
-      report.db_obtained = true;
-      console.log("[testAdminSdkDiagnostics] Successfully obtained Firestore instance");
-      
-      // Try to write a test document
-      const testDocId = `test-${Date.now()}`;
-      const testPath = `test-diagnostics/${testDocId}`;
-      await db.doc(testPath).set({
-        timestamp: new Date().toISOString(),
-        projectId: process.env["FIREBASE_PROJECT_ID"],
-        written_at: Date.now(),
-      });
-      report.write_test = { status: "success", path: testPath, docId: testDocId };
-      console.log("[testAdminSdkDiagnostics] Successfully wrote test document to:", testPath);
-      
-      // Try to read it back
-      const readResult = await db.doc(testPath).get();
-      if (readResult.exists) {
-        report.read_test = { status: "success", data: readResult.data() };
-        console.log("[testAdminSdkDiagnostics] Successfully read test document:", readResult.data());
-      } else {
-        report.read_test = { status: "failed", reason: "Document does not exist after write" };
-        console.error("[testAdminSdkDiagnostics] ERROR: Test document not found after write!");
-      }
-      
-      report.overall_status = "PASS";
-      console.log("[testAdminSdkDiagnostics] OVERALL: PASS - Admin SDK is working");
-      
+      const repo = new FirebaseFamilyRepository(db, context.uid);
+      const familyId = await repo.ensureFamily();
+      return familyId;
     } catch (error) {
-      report.overall_status = "FAIL";
-      report.error = error instanceof Error ? { message: error.message, stack: error.stack } : String(error);
-      console.error("[testAdminSdkDiagnostics] OVERALL: FAIL -", report.error);
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to ensure family: ${message}`);
     }
-    
-    return report;
   });
 
 /**
