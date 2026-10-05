@@ -339,6 +339,8 @@ export async function validateChildSession(
     if (snapshot.empty) return null;
 
     const sessionDoc = snapshot.docs[0];
+    if (!sessionDoc) return null;
+
     const sessionData = sessionDoc.data() as ChildSessionDoc;
 
     // Check if session is revoked

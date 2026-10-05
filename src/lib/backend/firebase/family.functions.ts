@@ -184,6 +184,11 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
       }
       
       const childDoc = familyDocs.docs[0];
+      if (!childDoc) {
+        console.log("[getChildJourneyProgress] Child doc unexpectedly missing:", childId);
+        return [];
+      }
+
       const childData = childDoc.data();
       const familyId = childData['familyId'];
       

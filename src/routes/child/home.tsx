@@ -99,14 +99,16 @@ function ChildHome() {
       <XPIndicator xp={snapshot.game.xp} level={snapshot.game.level} className="mb-6" />
 
       {/* Goal Widget */}
-      <GoalWidget
-        goalLabel={track.goal.title}
-        targetAmount={track.goal.target}
-        currentSaved={snapshot.journey.savedCedis}
-        daysTotal={track.goal.daysTotal}
-        dayNumber={snapshot.journey.dayNumber}
-        className="mb-6"
-      />
+      {track.goal && (
+        <GoalWidget
+          goalLabel={track.goal.title}
+          targetAmount={track.goal.target}
+          currentSaved={snapshot.journey.savedCedis}
+          daysTotal={track.goal.daysTotal}
+          dayNumber={snapshot.journey.dayNumber}
+          className="mb-6"
+        />
+      )}
 
       {/* Next Step Card */}
       <NextStepCard snapshot={snapshot} className="mb-6" />

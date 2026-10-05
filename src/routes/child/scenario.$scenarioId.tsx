@@ -93,10 +93,10 @@ function ScenarioPage() {
       saving={record.isPending}
       chapterStage={item?.stage}
       dayNumber={snapshot.journey.dayNumber}
-      daysTotal={track.goal.daysTotal}
+      daysTotal={track.goal?.daysTotal}
       currentSaved={snapshot.journey.savedCedis}
-      goalTarget={track.goal.target}
-      goalLabel={track.goal.title}
+      goalTarget={track.goal?.target}
+      goalLabel={track.goal?.title}
       onComplete={async ({ saved, available, decisions }) => {
         await record.mutateAsync({
           data: {

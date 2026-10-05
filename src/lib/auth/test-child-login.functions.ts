@@ -71,6 +71,10 @@ export const testChildLogin = createServerFn({ method: "POST" })
     }
 
     const childDoc = childSnapshot.docs[0];
+    if (!childDoc) {
+      throw new Error("That TATI ID or PIN could not be verified.");
+    }
+
     const childId = childDoc.id;
     const familyId = childDoc.data()['familyId'];
 
