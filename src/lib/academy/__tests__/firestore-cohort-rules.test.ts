@@ -53,7 +53,7 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
     it("should DENY: non-facilitator role cannot create cohort", () => {
       // Firestore rule checks: hasRole('facilitator')
       // Expected: DENIED if role is 'parent', 'admin', or missing
-      const userRole = "parent";
+      const userRole: string = "parent";
       const isFacilitator = userRole === "facilitator";
       expect(isFacilitator).toBe(false);
       // Assertion: Request fails with permission denied
@@ -71,8 +71,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: facilitator cannot create cohort with different owner", () => {
       // Firestore rule: request.resource.data.facilitatorUid == request.auth.uid
-      const requestAuthUid = "facilitator-123";
-      const resourceFacilitatorUid = "facilitator-456";
+      const requestAuthUid: string = "facilitator-123";
+      const resourceFacilitatorUid: string = "facilitator-456";
       const ownershipMatches = requestAuthUid === resourceFacilitatorUid;
 
       expect(ownershipMatches).toBe(false);
@@ -81,7 +81,7 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: status must be 'active' on creation", () => {
       // Firestore rule: request.resource.data.status == 'active'
-      const providedStatus = "archived";
+      const providedStatus: string = "archived";
       const isValidStatus = providedStatus === "active";
 
       expect(isValidStatus).toBe(false);
@@ -137,8 +137,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: different facilitator cannot read cohort", () => {
       // Firestore rule: request.auth.uid == resource.data.facilitatorUid || isAdmin()
-      const requestAuthUid = "facilitator-456";
-      const resourceFacilitatorUid = "facilitator-123";
+      const requestAuthUid: string = "facilitator-456";
+      const resourceFacilitatorUid: string = "facilitator-123";
       const isOwner = requestAuthUid === resourceFacilitatorUid;
 
       expect(isOwner).toBe(false);
@@ -175,8 +175,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: other facilitator cannot update cohort", () => {
       // Firestore rule: request.auth.uid == resource.data.facilitatorUid
-      const requestAuthUid = "facilitator-456";
-      const resourceFacilitatorUid = "facilitator-123";
+      const requestAuthUid: string = "facilitator-456";
+      const resourceFacilitatorUid: string = "facilitator-123";
       const isOwner = requestAuthUid === resourceFacilitatorUid;
 
       expect(isOwner).toBe(false);
@@ -185,8 +185,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: owner cannot change facilitatorUid", () => {
       // Firestore rule: request.resource.data.facilitatorUid == resource.data.facilitatorUid
-      const originalFacilitatorUid = "facilitator-123";
-      const newFacilitatorUid = "facilitator-456";
+      const originalFacilitatorUid: string = "facilitator-123";
+      const newFacilitatorUid: string = "facilitator-456";
       const facilitatorUidUnchanged = newFacilitatorUid === originalFacilitatorUid;
 
       expect(facilitatorUidUnchanged).toBe(false);
@@ -195,8 +195,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
     it("should DENY: owner cannot change createdAt", () => {
       // Firestore rule: request.resource.data.createdAt == resource.data.createdAt
-      const originalCreatedAt = 1609459200; // 2021-01-01
-      const newCreatedAt = 1640995200; // 2022-01-01
+      const originalCreatedAt: number = 1609459200; // 2021-01-01
+      const newCreatedAt: number = 1640995200; // 2022-01-01
       const createdAtUnchanged = newCreatedAt === originalCreatedAt;
 
       expect(createdAtUnchanged).toBe(false);
@@ -206,8 +206,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
     it("should DENY: owner cannot change cohort ID", () => {
       // Firestore does not allow changing document ID
       // This is enforced at database level, not in rules
-      const originalId = "cohort-123";
-      const newId = "cohort-456";
+      const originalId: string = "cohort-123";
+      const newId: string = "cohort-456";
       const idUnchanged = newId === originalId;
 
       expect(idUnchanged).toBe(false);
@@ -297,8 +297,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
 
   describe("Cross-Facilitator Isolation", () => {
     it("should DENY: facilitator A cannot read facilitator B cohort", () => {
-      const facilitatorA = "fac-a";
-      const facilitatorB = "fac-b";
+      const facilitatorA: string = "fac-a";
+      const facilitatorB: string = "fac-b";
       const cohortOwner = facilitatorB;
 
       const canAccess = facilitatorA === cohortOwner;
@@ -307,8 +307,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
     });
 
     it("should DENY: facilitator A cannot modify facilitator B cohort", () => {
-      const facilitatorA = "fac-a";
-      const facilitatorB = "fac-b";
+      const facilitatorA: string = "fac-a";
+      const facilitatorB: string = "fac-b";
       const cohortOwner = facilitatorB;
 
       const canAccess = facilitatorA === cohortOwner;
@@ -317,8 +317,8 @@ describe("H3.2.9 Firestore Security Rules - academyCohorts Collection", () => {
     });
 
     it("should DENY: facilitator A cannot archive facilitator B cohort", () => {
-      const facilitatorA = "fac-a";
-      const facilitatorB = "fac-b";
+      const facilitatorA: string = "fac-a";
+      const facilitatorB: string = "fac-b";
       const cohortOwner = facilitatorB;
 
       const canAccess = facilitatorA === cohortOwner;

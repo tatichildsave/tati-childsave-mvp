@@ -180,8 +180,8 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
     });
 
     it("should transition from active to archived", () => {
-      const initialStatus = "active" as const;
-      const archivedStatus = "archived" as const;
+      const initialStatus: string = "active";
+      const archivedStatus: string = "archived";
 
       expect(initialStatus === archivedStatus).toBe(false);
       expect(["active", "archived"].includes(initialStatus)).toBe(true);
@@ -254,8 +254,8 @@ describe("H3.2.9 Cohort Data - Schema & Validation", () => {
     });
 
     it("should allow status updates", () => {
-      const original = { status: "active" as const };
-      const updated = { status: "archived" as const };
+      const original = { status: "active" as string };
+      const updated = { status: "archived" as string };
 
       expect(original.status !== updated.status).toBe(true);
     });
