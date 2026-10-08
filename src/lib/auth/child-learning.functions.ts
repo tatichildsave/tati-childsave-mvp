@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
-import { optionPoints, questionMaxPoints, scoreAssessment } from "@/lib/assessment/engine";
+import { scoreAssessment } from "@/lib/assessment/engine";
 import { getTrack } from "@/lib/learning/track";
 import { getLessonById } from "@/lib/lessons/registry";
 import { getScenarioDefinition, getEnhancedScenarioDefinition } from "@/lib/scenario/registry";
@@ -572,6 +572,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
     // G4: Use authenticated child context for server-side child identity
     const context = await getCurrentChildContext();
     const childId = context.childId;
+    const familyId = context.familyId;
 
     const definition = getAssessmentDefinition(data.assessmentId);
     if (!definition) throw new Error("That check-in is not available.");
@@ -585,49 +586,33 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
     // This ensures score integrity; client cannot submit arbitrary scores
     const calculatedResult = scoreAssessment(definition, data.responses);
 
-    const { data: attempt, error } = await supabase
-      .from("assessment_attempts")
-      .upsert(
-        {
-          child_profile_id: childId,
-          assessment_id: definition.id,
-          assessment_type: definition.assessmentType,
-          points: calculatedResult.points,
-          max_points: calculatedResult.maxPoints,
-          competency_scores: Object.fromEntries(
-            calculatedResult.competencies.map((c) => [
-              c.competency,
-              { points: c.points, maxPoints: c.maxPoints },
-            ]),
-          ),
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "child_profile_id,assessment_id" },
-      )
-      .select("id")
-      .single();
-    if (error || !attempt) throw new Error("Could not save that check-in.");
+    try {
+      // Phase 7C4B: Use Firebase persistence (atomic transaction)
+      const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+      const { FirebaseAssessmentRepository } = await import("@/lib/backend/firebase/repositories");
 
-    const responses = definition.questions
-      .filter((question) => data.responses[question.id])
-      .map((question) => ({
-        attempt_id: attempt.id,
-        child_profile_id: childId,
-        question_id: question.id,
-        competency: question.competency,
-        option_id: data.responses[question.id],
-        points: optionPoints(question, data.responses[question.id]),
-        max_points: questionMaxPoints(question),
-      }));
-    if (responses.length > 0) {
-      const { error: responseError } = await supabase
-        .from("assessment_responses")
-        .upsert(responses, { onConflict: "attempt_id,question_id" });
-      if (responseError) throw responseError;
+      const db = getFirebaseAdminDb();
+      const assessmentRepo = new FirebaseAssessmentRepository(db, familyId);
+
+      await assessmentRepo.saveAttempt({
+        childId,
+        definition,
+        result: {
+          assessmentId: definition.id,
+          assessmentType: definition.assessmentType,
+          points: calculatedResult.points,
+          maxPoints: calculatedResult.maxPoints,
+          responses: data.responses,
+          competencies: calculatedResult.competencies,
+        },
+      });
+
+      return { ok: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("[saveChildAssessment] Firebase persistence error:", message);
+      throw new Error(`Could not save that check-in: ${message}`);
     }
-    return { ok: true };
   });
 
 export const loadChildScenario = createServerFn({ method: "GET" })

@@ -11,43 +11,12 @@ export async function saveAssessmentAttempt(
   definition: AssessmentDefinition,
   result: AssessmentResult,
 ): Promise<void> {
-  const competencyScores = Object.fromEntries(
-    result.competencies.map((c) => [c.competency, { points: c.points, maxPoints: c.maxPoints }]),
+  // Phase 7C4B: Temporarily disable parent assessment submissions
+  // Child assessments are now persisted via Firebase (saveChildAssessment)
+  // Parent/facilitator submissions require Phase 7C4C server-side migration
+  // This prevents the legacy Supabase path from bypassing Firebase authorization
+  throw new Error(
+    "Parent assessment submissions are temporarily disabled during the Firebase migration phase. " +
+    "This feature will be restored with full server-side authorization in Phase 7C4C.",
   );
-
-  const { data, error } = await supabase
-    .from("assessment_attempts")
-    .upsert(
-      {
-        child_profile_id: childId,
-        assessment_id: result.assessmentId,
-        assessment_type: result.assessmentType,
-        points: result.points,
-        max_points: result.maxPoints,
-        competency_scores: competencyScores as never,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "child_profile_id,assessment_id" },
-    )
-    .select("id")
-    .maybeSingle();
-  if (error || !data?.id) return;
-
-  const rows = definition.questions
-    .filter((q) => result.responses[q.id])
-    .map((q) => ({
-      attempt_id: data.id,
-      child_profile_id: childId,
-      question_id: q.id,
-      competency: q.competency,
-      option_id: result.responses[q.id] ?? null,
-      points: optionPoints(q, result.responses[q.id]),
-      max_points: questionMaxPoints(q),
-    }));
-  if (rows.length === 0) return;
-  await supabase
-    .from("assessment_responses")
-    .upsert(rows, { onConflict: "attempt_id,question_id" });
 }

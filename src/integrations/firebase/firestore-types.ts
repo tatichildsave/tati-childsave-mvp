@@ -101,3 +101,54 @@ export interface FirestoreChildAuthIdentityDocument {
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
+
+// Phase 7C4B: Assessment persistence types
+export interface FirestoreAssessmentAttemptDocument {
+  // Identifiers
+  id: string; // assessmentId (e.g., "save-pre")
+  assessmentId: string; // Denormalized
+  childId: string; // Denormalized for queries
+  familyId: string; // Denormalized for isolation
+
+  // Assessment metadata
+  assessmentType: "pre" | "post";
+
+  // Scoring
+  points: number;
+  maxPoints: number;
+  competencyScores: Record<
+    string,
+    {
+      points: number;
+      maxPoints: number;
+    }
+  >;
+
+  // Status and timestamps
+  status: "completed";
+  completedAt: FirestoreTimestamp;
+  submittedAt: number; // Milliseconds (for stale detection, numeric for comparison)
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}
+
+export interface FirestoreAssessmentResponseDocument {
+  // Identifiers
+  id: string; // questionId
+  questionId: string;
+  assessmentId: string;
+
+  // Response data
+  optionId: string | null;
+
+  // Scoring
+  points: number;
+  maxPoints: number;
+
+  // Competency
+  competency: string;
+
+  // Timestamps
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}

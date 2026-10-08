@@ -110,6 +110,13 @@ service cloud.firestore {
         match /assessmentAttempts/{attemptId} {
           allow read: if canAccessChild(familyId, childId);
           allow write: if false;
+
+          // Phase 7C4B: Explicit rule for response subcollection
+          // Parent/facilitator reads allowed; all client writes denied
+          match /responses/{questionId} {
+            allow read: if canAccessChild(familyId, childId);
+            allow write: if false;
+          }
         }
 
         match /scenarioSessions/{scenarioKey} {

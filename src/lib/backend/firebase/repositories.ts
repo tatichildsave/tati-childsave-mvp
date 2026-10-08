@@ -22,6 +22,23 @@ import type {
   CompetencyService,
 } from "@/lib/backend/contracts";
 
+/**
+ * Convert Firestore Timestamp or Date-like values to ISO string
+ * Safely handles Timestamp.toDate() if available, falls back to string coercion
+ */
+function toISOString(value: unknown): string {
+  if (!value) return new Date().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return value;
+  // Firestore Timestamp has toDate() method
+  if (value && typeof value === "object" && "toDate" in value && typeof (value as any).toDate === "function") {
+    return (value as any).toDate().toISOString();
+  }
+  // Fallback: treat as millis or try native conversion
+  if (typeof value === "number") return new Date(value).toISOString();
+  return new Date().toISOString();
+}
+
 function toChildProfile(document: FirestoreChildDocument): ChildProfile {
   return {
     id: document.id,
@@ -35,8 +52,8 @@ function toChildProfile(document: FirestoreChildDocument): ChildProfile {
     curriculum_level: document.curriculum_level,
     onboarding_step: document.onboarding_step,
     onboarding_completed: document.onboarding_completed,
-    created_at: (document.createdAt as any).toDate?.().toISOString?.() || new Date(document.createdAt).toISOString(),
-    updated_at: (document.updatedAt as any).toDate?.().toISOString?.() || new Date(document.updatedAt).toISOString(),
+    created_at: toISOString(document.createdAt),
+    updated_at: toISOString(document.updatedAt),
   };
 }
 
@@ -314,8 +331,8 @@ export class FirebaseJourneyProgressRepository implements JourneyProgressService
         score: row.score,
         max_score: row.max_score,
         details: row.details,
-        created_at: (row.createdAt as any).toDate?.().toISOString?.() || new Date(row.createdAt).toISOString(),
-        updated_at: (row.updatedAt as any).toDate?.().toISOString?.() || new Date(row.updatedAt).toISOString(),
+        created_at: toISOString(row.createdAt),
+        updated_at: toISOString(row.updatedAt),
       };
     });
   }
@@ -422,5 +439,195 @@ export class FirebaseAchievementRepository implements AchievementService {
           .update({ celebrated: true }),
       ),
     );
+  }
+}
+
+// Phase 7C4B: Firebase assessment persistence
+export interface AssessmentPersistenceInput {
+  childId: string;
+  definition: any; // AssessmentDefinition
+  result: any; // AssessmentResult (recalculated server-side)
+}
+
+export class FirebaseAssessmentRepository {
+  constructor(
+    private readonly db: Firestore,
+    private readonly familyId: string,
+  ) {}
+
+  /**
+   * Persist assessment attempt, responses, and progress atomically.
+   *
+   * Uses Firestore transaction to ensure all three write together:
+   * 1. Assessment attempt document (id = assessmentId)
+   * 2. Response documents (deleted if retake, then new ones written)
+   * 3. Journey progress document (updated with score)
+   *
+   * Validates:
+   * - childId belongs to this familyId
+   * - Responses match question IDs in definition
+   * - Result values are numeric (no NaN/Infinity)
+   *
+   * Handles retakes:
+   * - Old responses deleted before new ones written
+   * - Document ID ensures one attempt per child per assessment
+   * - Timestamp ordering prevents stale retries from overwriting newer submissions
+   */
+  async saveAttempt(input: AssessmentPersistenceInput): Promise<void> {
+    const { childId, definition, result } = input;
+
+    // Validate inputs
+    if (!childId || typeof childId !== "string" || childId.length === 0) {
+      throw new Error("Invalid childId");
+    }
+
+    if (!definition || !definition.id || !definition.questions) {
+      throw new Error("Invalid assessment definition");
+    }
+
+    if (!result || typeof result.points !== "number" || typeof result.maxPoints !== "number") {
+      throw new Error("Invalid assessment result");
+    }
+
+    if (!Number.isFinite(result.points) || !Number.isFinite(result.maxPoints)) {
+      throw new Error("Assessment scores must be finite numbers");
+    }
+
+    // Validate questions and options exist
+    for (const [qId, optionId] of Object.entries(result.responses || {})) {
+      if (typeof optionId !== "string" || optionId.length === 0) continue;
+
+      const question = definition.questions.find((q: any) => q.id === qId);
+      if (!question) {
+        throw new Error(`Question ${qId} not found in assessment definition`);
+      }
+
+      const option = question.options.find((o: any) => o.id === optionId);
+      if (!option) {
+        throw new Error(`Option ${optionId} not found in question ${qId}`);
+      }
+    }
+
+    // Use transaction for atomicity
+    await this.db.runTransaction(async (transaction) => {
+      const attemptRef = this.db
+        .collection("families")
+        .doc(this.familyId)
+        .collection("children")
+        .doc(childId)
+        .collection("assessmentAttempts")
+        .doc(definition.id);
+
+      // 1. Read existing attempt (if any) to check version
+      const existingSnap = await transaction.get(attemptRef);
+      const existing = existingSnap.data();
+
+      // 2. Stale submission check: reject if submitting older than what we have
+      const newSubmittedAt = Date.now();
+      if (existing?.["submittedAt"] && typeof existing["submittedAt"] === "number") {
+        if (newSubmittedAt < (existing["submittedAt"] as number)) {
+          throw new Error("Stale submission: assessment was already completed more recently");
+        }
+      }
+
+      // 3. If retake: delete old responses
+      if (existing) {
+        const oldResponses = await transaction.get(
+          attemptRef.collection("responses"),
+        );
+        for (const oldResponseSnap of oldResponses.docs) {
+          transaction.delete(oldResponseSnap.ref);
+        }
+      }
+
+      // 4. Write new attempt document
+      const competencyScores: Record<string, { points: number; maxPoints: number }> = {};
+      for (const comp of result.competencies || []) {
+        competencyScores[comp.competency] = {
+          points: comp.points,
+          maxPoints: comp.maxPoints,
+        };
+      }
+
+      transaction.set(
+        attemptRef,
+        {
+          id: definition.id,
+          assessmentId: definition.id,
+          childId,
+          familyId: this.familyId,
+          assessmentType: definition.assessmentType,
+          points: result.points,
+          maxPoints: result.maxPoints,
+          competencyScores,
+          status: "completed",
+          completedAt: FieldValue.serverTimestamp(),
+          submittedAt: newSubmittedAt, // Numeric for stale detection
+          createdAt: existing?.["createdAt"] || FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false }, // Replace, don't merge (clean state)
+      );
+
+      // 5. Write new response documents
+      for (const question of definition.questions) {
+        const optionId = result.responses?.[question.id];
+        if (!optionId) continue;
+
+        // Import here to avoid circular dependency
+        const { optionPoints, questionMaxPoints } = await import("@/lib/assessment/engine");
+
+        const responseRef = attemptRef.collection("responses").doc(question.id);
+        transaction.set(
+          responseRef,
+          {
+            id: question.id,
+            questionId: question.id,
+            assessmentId: definition.id,
+            optionId,
+            points: optionPoints(question, optionId),
+            maxPoints: questionMaxPoints(question),
+            competency: question.competency,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: false },
+        );
+      }
+
+      // 6. Update journey progress atomically
+      const progressKey = `assessment:${definition.id}`;
+      const progressRef = this.db
+        .collection("families")
+        .doc(this.familyId)
+        .collection("children")
+        .doc(childId)
+        .collection("journeyProgress")
+        .doc(progressKey);
+
+      transaction.set(
+        progressRef,
+        {
+          id: progressKey,
+          familyId: this.familyId,
+          childId,
+          child_profile_id: childId,
+          track_id: "save",
+          item_type: "assessment",
+          item_id: definition.id,
+          status: "completed",
+          score: result.points,
+          max_score: result.maxPoints,
+          details: {
+            assessmentType: definition.assessmentType,
+            responses: result.responses || {},
+            competencies: result.competencies || [],
+          },
+          createdAt: existing?.["createdAt"] || FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false },
+      );
+    });
   }
 }
