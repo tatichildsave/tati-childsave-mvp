@@ -45,7 +45,7 @@ export const awardAchievementsServerFn = createServerFn({ method: "POST" })
       // H4.B: Import Firebase dependencies here to avoid client bundle issues
       const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
       const { FirebaseAchievementRepository } = await import("@/lib/backend/firebase/repositories");
-      const { getCurrentChildContext } = await import("@/lib/auth/child-session.server");
+      const { getCurrentChildContext } = await import("@/lib/auth/child-learning.functions");
 
       const context = await getCurrentChildContext();
       if (!context) {
@@ -88,7 +88,7 @@ export const markCelebratedServerFn = createServerFn({ method: "POST" })
       // H4.B: Import Firebase dependencies here to avoid client bundle issues
       const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
       const { FirebaseAchievementRepository } = await import("@/lib/backend/firebase/repositories");
-      const { getCurrentChildContext } = await import("@/lib/auth/child-session.server");
+      const { getCurrentChildContext } = await import("@/lib/auth/child-learning.functions");
 
       const context = await getCurrentChildContext();
       if (!context) {

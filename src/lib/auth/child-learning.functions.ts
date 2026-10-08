@@ -85,7 +85,7 @@ export type ChildLearningData = {
  * Throws AuthorizationError if context cannot be established.
  * Uses dynamic import to avoid client-side server code contamination.
  */
-async function getCurrentChildContext(): Promise<AuthenticatedChildContext> {
+export async function getCurrentChildContext(): Promise<AuthenticatedChildContext> {
   const { getAuthenticatedChild } = await import("./child-session.server");
   const { AuthorizationError } = await import("./authorization.server");
   const context = await getAuthenticatedChild();

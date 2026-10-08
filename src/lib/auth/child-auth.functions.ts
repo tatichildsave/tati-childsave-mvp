@@ -9,6 +9,7 @@ import {
   loadChildProfile as loadChildProfileFirebase,
 } from "./child-auth-firebase.server";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
+import { AuthorizationError } from "./authorization.server";
 
 const COOKIE_NAME = "tati_child_session";
 const genericFailure = "That TATI ID or PIN could not be verified.";
@@ -116,7 +117,45 @@ export const getChildSession = createServerFn({ method: "GET" }).handler(async (
   const profile = await loadChildProfileFirebase(session.childProfileId, context.familyId);
   if (!profile) return null;
 
-  return { profile, sessionId: session.id, expiresAt: session.expiresAt };
+  // Type guard for Firestore Timestamp-like objects
+  const isFirestoreTimestamp = (value: unknown): value is { toDate(): Date } => {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'toDate' in value &&
+      typeof (value as any).toDate === 'function'
+    );
+  };
+
+  // Normalize expiresAt to ISO string for serialization
+  const normalizeTimestamp = (fieldName: string, value: unknown): string => {
+    if (typeof value === 'string') {
+      // Validate it's a valid ISO string
+      try {
+        new Date(value).toISOString();
+        return value;
+      } catch {
+        throw new AuthorizationError(`Invalid ISO string for ${fieldName}: ${String(value)}`);
+      }
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (isFirestoreTimestamp(value)) {
+      try {
+        return value.toDate().toISOString();
+      } catch {
+        throw new AuthorizationError(`Failed to convert Firestore Timestamp for ${fieldName}`);
+      }
+    }
+
+    // Reject invalid or missing values
+    throw new AuthorizationError(`Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`);
+  };
+
+  return { profile, sessionId: session.id, expiresAt: normalizeTimestamp('expiresAt', session.expiresAt) };
 });
 
 export const childLogout = createServerFn({ method: "POST" }).handler(async () => {

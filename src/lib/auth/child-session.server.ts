@@ -69,7 +69,9 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
       return null;
     }
 
-    const credData = credSnapshots.docs[0].data();
+    const credDoc = credSnapshots.docs[0];
+    if (!credDoc) return null;
+    const credData = credDoc.data();
     const familyId = credData['familyId'] as string;
 
     if (!familyId) {
@@ -217,12 +219,59 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
 
   // Step 4: Construct unified context
   // Convert snake_case DB fields to camelCase ChildSession type
+  // Normalize Timestamp/Date values to ISO strings
+
+  /**
+   * Type guard for Firestore Timestamp-like objects.
+   * Strictly validates the object has a callable toDate method.
+   */
+  const isFirestoreTimestamp = (value: unknown): value is { toDate(): Date } => {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'toDate' in value &&
+      typeof (value as any).toDate === 'function'
+    );
+  };
+
+  /**
+   * Convert timestamp values to ISO string format.
+   * Accepts only: ISO strings, Date objects, or Firestore Timestamp objects.
+   * Rejects invalid or missing values by throwing AuthorizationError.
+   */
+  const normalizeTimestamp = (fieldName: string, value: unknown): string => {
+    if (typeof value === 'string') {
+      // Validate it's a valid ISO string
+      try {
+        new Date(value).toISOString();
+        return value;
+      } catch {
+        throw new AuthorizationError(`Invalid ISO string for ${fieldName}: ${String(value)}`);
+      }
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    if (isFirestoreTimestamp(value)) {
+      try {
+        return value.toDate().toISOString();
+      } catch {
+        throw new AuthorizationError(`Failed to convert Firestore Timestamp for ${fieldName}`);
+      }
+    }
+
+    // Reject invalid or missing values
+    throw new AuthorizationError(`Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`);
+  };
+
   const session: ChildSession = {
     kind: "child" as const,
     childId: childSession.childProfileId,
     sessionId: childSession.id,
-    createdAt: childSession.createdAt,
-    expiresAt: childSession.expiresAt,
+    createdAt: normalizeTimestamp('createdAt', childSession.createdAt),
+    expiresAt: normalizeTimestamp('expiresAt', childSession.expiresAt),
     revokedAt: childSession.revokedAt,
   };
 

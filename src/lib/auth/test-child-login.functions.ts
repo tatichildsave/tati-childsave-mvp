@@ -150,6 +150,7 @@ export async function createTestCredentials(
     throw new Error("Test credential creation only in emulator mode");
   }
 
+  const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
   const db = getFirebaseAdminDb();
 
   await db
