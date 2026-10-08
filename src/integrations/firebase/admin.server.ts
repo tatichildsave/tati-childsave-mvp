@@ -8,8 +8,7 @@
  * - Never place Admin credentials in VITE_ variables.
  */
 
-import { initializeApp, getApps } from "firebase-admin/app";
-import * as admin from "firebase-admin";
+import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
@@ -36,11 +35,11 @@ function initializeAdminApp() {
   }
 
   // Parse service account if provided
-  let serviceAccountCredential: ReturnType<typeof admin.credential.cert> | undefined;
+  let serviceAccountCredential: ReturnType<typeof cert> | undefined;
   if (serviceAccountJson) {
     try {
       const serviceAccount = JSON.parse(serviceAccountJson);
-      serviceAccountCredential = admin.credential.cert(serviceAccount);
+      serviceAccountCredential = cert(serviceAccount);
       console.log("[Firebase] Service account initialized for project:", serviceAccount.project_id);
     } catch (error) {
       console.error("[Firebase] Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
@@ -60,7 +59,7 @@ function initializeAdminApp() {
   } else if (!isEmulatorMode()) {
     // Production mode only - use application default
     try {
-      initConfig['credential'] = admin.credential.applicationDefault();
+      initConfig['credential'] = applicationDefault();
     } catch (error) {
       console.warn("[Firebase] Could not get application default credentials:", error instanceof Error ? error.message : error);
     }
