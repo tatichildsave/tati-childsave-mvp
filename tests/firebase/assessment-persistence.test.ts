@@ -313,8 +313,8 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
     });
   });
 
-  describe("Stale Submission Prevention", () => {
-    it("should reject submission older than existing attempt", async () => {
+  describe("Stale Submission Prevention (Version-based Concurrency)", () => {
+    it("should reject submission with mismatched version", async () => {
       const transactionMock: MockTransaction = {
         get: vi.fn(),
         set: vi.fn(),
@@ -325,15 +325,12 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
         await callback(transactionMock);
       });
 
-      const currentTime = Date.now();
-      const olderTime = currentTime - 10000;
-
-      // Mock: existing attempt with newer timestamp
+      // Mock: existing attempt with version 2
       vi.spyOn(transactionMock, "get").mockResolvedValueOnce({
         docs: [],
         data: () => ({
           id: "save-pre",
-          submittedAt: currentTime, // Newer
+          version: 2,
         }),
       } as any);
 
@@ -346,19 +343,114 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
         competencies: [],
       };
 
-      // Simulate older submission time
-      vi.useFakeTimers();
-      vi.setSystemTime(olderTime);
-
+      // Try to write with expectedVersion 1 when document has version 2
       await expect(
         repository.saveAttempt({
           childId,
           definition: sampleDefinition,
           result,
+          expectedVersion: 1, // Mismatch with server's version 2
         }),
-      ).rejects.toThrow(/stale/i);
+      ).rejects.toThrow(/version conflict|expected version/i);
+    });
 
-      vi.useRealTimers();
+    it("should accept submission with matching version and increment", async () => {
+      const transactionMock: MockTransaction = {
+        get: vi.fn(),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      vi.spyOn(db, "runTransaction").mockImplementation(async (callback) => {
+        await callback(transactionMock);
+      });
+
+      // Mock: existing attempt with version 1 (first get)
+      // Mock: responses collection (second get)
+      vi.spyOn(transactionMock, "get")
+        .mockResolvedValueOnce({
+          docs: [],
+          data: () => ({
+            id: "save-pre",
+            version: 1,
+            createdAt: 1000,
+          }),
+        } as any)
+        .mockResolvedValueOnce({
+          docs: [], // No existing responses
+        } as any);
+
+      const result: AssessmentResult = {
+        assessmentId: "save-pre",
+        assessmentType: "pre",
+        points: 1,
+        maxPoints: 2,
+        responses: { q1: "opt1a" },
+        competencies: [],
+      };
+
+      // Submit with matching expectedVersion 1
+      await repository.saveAttempt({
+        childId,
+        definition: sampleDefinition,
+        result,
+        expectedVersion: 1,
+      });
+
+      // Verify version was incremented to 2
+      const setCalls = (vi.mocked(transactionMock.set).mock.calls || []).filter(
+        (call) => call[0]._path?.[5] === "save-pre",
+      );
+      expect(setCalls.length).toBeGreaterThan(0);
+      const attemptData = setCalls[0][1];
+      expect(attemptData.version).toBe(2);
+    });
+
+    it("should default to version 0 for new submissions", async () => {
+      const transactionMock: MockTransaction = {
+        get: vi.fn(),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      vi.spyOn(db, "runTransaction").mockImplementation(async (callback) => {
+        await callback(transactionMock);
+      });
+
+      // Mock: no existing attempt (first get)
+      // Mock: responses collection (won't be called since no existing, but mock anyway for safety)
+      vi.spyOn(transactionMock, "get")
+        .mockResolvedValueOnce({
+          docs: [],
+          data: () => undefined,
+        } as any)
+        .mockResolvedValueOnce({
+          docs: [],
+        } as any);
+
+      const result: AssessmentResult = {
+        assessmentId: "save-pre",
+        assessmentType: "pre",
+        points: 1,
+        maxPoints: 2,
+        responses: { q1: "opt1a" },
+        competencies: [],
+      };
+
+      // Submit without expectedVersion (defaults to 0)
+      await repository.saveAttempt({
+        childId,
+        definition: sampleDefinition,
+        result,
+      });
+
+      // Verify version was set to 1 (0 + 1)
+      const setCalls = (vi.mocked(transactionMock.set).mock.calls || []).filter(
+        (call) => call[0]._path?.[5] === "save-pre",
+      );
+      expect(setCalls.length).toBeGreaterThan(0);
+      const attemptData = setCalls[0][1];
+      expect(attemptData.version).toBe(1);
     });
   });
 

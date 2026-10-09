@@ -41,6 +41,7 @@ const assessmentInput = z.object({
   points: z.number().int().min(0),
   maxPoints: z.number().int().min(0),
   competencyScores: z.record(z.string(), z.unknown()),
+  expectedVersion: z.number().int().min(0).default(0),
 });
 
 export type ChildLearningProfile = {
@@ -605,6 +606,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
           responses: data.responses,
           competencies: calculatedResult.competencies,
         },
+        expectedVersion: data.expectedVersion,
       });
 
       return { ok: true };

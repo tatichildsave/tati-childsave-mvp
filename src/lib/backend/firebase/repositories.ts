@@ -447,6 +447,7 @@ export interface AssessmentPersistenceInput {
   childId: string;
   definition: any; // AssessmentDefinition
   result: any; // AssessmentResult (recalculated server-side)
+  expectedVersion?: number; // Optimistic concurrency control (default 0)
 }
 
 export class FirebaseAssessmentRepository {
@@ -474,7 +475,7 @@ export class FirebaseAssessmentRepository {
    * - Timestamp ordering prevents stale retries from overwriting newer submissions
    */
   async saveAttempt(input: AssessmentPersistenceInput): Promise<void> {
-    const { childId, definition, result } = input;
+    const { childId, definition, result, expectedVersion = 0 } = input;
 
     // Validate inputs
     if (!childId || typeof childId !== "string" || childId.length === 0) {
@@ -522,12 +523,13 @@ export class FirebaseAssessmentRepository {
       const existingSnap = await transaction.get(attemptRef);
       const existing = existingSnap.data();
 
-      // 2. Stale submission check: reject if submitting older than what we have
-      const newSubmittedAt = Date.now();
-      if (existing?.["submittedAt"] && typeof existing["submittedAt"] === "number") {
-        if (newSubmittedAt < (existing["submittedAt"] as number)) {
-          throw new Error("Stale submission: assessment was already completed more recently");
-        }
+      // 2. Optimistic concurrency control: reject if version mismatch
+      // Allows detecting concurrent edits and preventing data loss
+      const existingVersion = existing?.["version"] ?? 0;
+      if (existingVersion !== expectedVersion) {
+        throw new Error(
+          `Version conflict: expected version ${expectedVersion}, but document has version ${existingVersion}`,
+        );
       }
 
       // 3. If retake: delete old responses
@@ -540,7 +542,7 @@ export class FirebaseAssessmentRepository {
         }
       }
 
-      // 4. Write new attempt document
+      // 4. Write new attempt document with incremented version
       const competencyScores: Record<string, { points: number; maxPoints: number }> = {};
       for (const comp of result.competencies || []) {
         competencyScores[comp.competency] = {
@@ -561,8 +563,9 @@ export class FirebaseAssessmentRepository {
           maxPoints: result.maxPoints,
           competencyScores,
           status: "completed",
+          version: existingVersion + 1, // Increment version on successful write
           completedAt: FieldValue.serverTimestamp(),
-          submittedAt: newSubmittedAt, // Numeric for stale detection
+          submittedAt: FieldValue.serverTimestamp(), // Server-set, informational
           createdAt: existing?.["createdAt"] || FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         },
