@@ -2,13 +2,13 @@ import { createFileRoute, redirect, useNavigate, useParams } from "@tanstack/rea
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { Screen, TopBar } from "@/components/learning/primitives";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
-import { saveAssessmentAttempt } from "@/lib/assessment/attempts";
+import { saveChildAssessment } from "@/lib/auth/child-learning.functions";
 import type { AssessmentResult } from "@/lib/assessment/types";
 import { useChild } from "@/lib/learning/progress";
 import { useRecordProgress } from "@/lib/progress/service";
 import { celebrateStep } from "@/components/gamification/celebrate";
 import { trackEvent } from "@/lib/analytics";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { assertChildInCurrentFamily } from "@/lib/family";
 
 export const Route = createFileRoute("/_authenticated/learn/$childId/assessment/$assessmentId")({
@@ -43,6 +43,7 @@ function AssessmentPage() {
   const navigate = useNavigate();
   const record = useRecordProgress();
   const child = useChild(childId);
+  const [notAllowed, setNotAllowed] = useState(false);
 
   useEffect(() => {
     if (assessmentId === "save-pre") {
@@ -62,8 +63,61 @@ function AssessmentPage() {
     );
   }
 
+  if (notAllowed) {
+    return (
+      <Screen>
+        <TopBar title="Not authorized" backTo={`/learn/${childId}`} />
+        <div className="flex flex-col items-center justify-center gap-6 p-6">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Assessments are completed by the child</h2>
+            <p className="text-gray-600">
+              Assessments are designed to be completed by {child.child?.name || "the child"} on their own device.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate({ to: "/learn/$childId", params: { childId } })}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Back to Learning
+          </button>
+        </div>
+      </Screen>
+    );
+  }
+
   async function finish(result: AssessmentResult) {
-    if (definition) await saveAssessmentAttempt(childId, definition, result);
+    try {
+      // Convert competencies array to record format for server function
+      const competencyScores: Record<string, unknown> = {};
+      for (const comp of result.competencies) {
+        competencyScores[comp.competency] = {
+          points: comp.points,
+          maxPoints: comp.maxPoints,
+        };
+      }
+
+      // Use server function for assessment submission (requires ChildSession)
+      const response = await saveChildAssessment({
+        data: {
+          assessmentId,
+          responses: result.responses,
+          points: result.points,
+          maxPoints: result.maxPoints,
+          competencyScores,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to save assessment");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Check if error is due to missing ChildSession (parent tried to access)
+      if (message.includes("Child session") || message.includes("not authenticated")) {
+        setNotAllowed(true);
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
+
     if (result.assessmentType === "pre") {
       void trackEvent("pre_assessment_completed", {
         childProfileId: childId,
