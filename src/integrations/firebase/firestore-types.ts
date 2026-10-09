@@ -152,3 +152,28 @@ export interface FirestoreAssessmentResponseDocument {
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
 }
+
+// Phase 7C4C: Scenario persistence types
+export interface FirestoreScenarioSessionDocument {
+  // Identifiers
+  id: string; // scenarioId (e.g., "kwame-request")
+  scenarioId: string; // Denormalized
+  childId: string; // Denormalized for queries
+  familyId: string; // Denormalized for isolation
+
+  // Full scenario state (ScenarioState JSON blob)
+  state: Record<string, unknown>; // Complete ScenarioState
+
+  // Status and phase
+  status: "in_progress" | "completed";
+  currentNodeId: string; // For queries
+  dayNumber: number; // For queries
+  completedAt?: FirestoreTimestamp;
+
+  // Optimistic concurrency control
+  version: number; // Starts at 0, incremented on each save
+
+  // Timestamps
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+}

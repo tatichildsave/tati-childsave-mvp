@@ -634,3 +634,193 @@ export class FirebaseAssessmentRepository {
     });
   }
 }
+
+/**
+ * Firebase persistence for branching scenario state.
+ *
+ * Gate A (Phase 7C4C): Data model and repository only.
+ * No server functions modified yet; not used in production.
+ *
+ * Path: /families/{familyId}/children/{childId}/scenarioSessions/{scenarioId}
+ * Document: FirestoreScenarioSessionDocument
+ *
+ * Manages:
+ * - Persisting full scenario state (14-day journey)
+ * - Version-based optimistic concurrency control
+ * - Status tracking (in_progress, completed)
+ * - Server-managed timestamps
+ *
+ * Uses transactions to ensure:
+ * - All-or-nothing writes (atomicity)
+ * - Version checks prevent stale overwrites
+ * - Timestamps are server-set (not client-controlled)
+ */
+export class FirebaseScenarioRepository {
+  constructor(
+    private readonly db: Firestore,
+    private readonly familyId: string,
+  ) {}
+
+  /**
+   * Load persisted scenario state from Firestore.
+   *
+   * Returns:
+   * - { state, version, status } if scenario has been started
+   * - undefined if no prior session exists
+   *
+   * Does NOT validate state bounds or choices (server functions do that).
+   * Just retrieves what was stored.
+   */
+  async loadSession(childId: string, scenarioId: string): Promise<{
+    state: Record<string, unknown> | null;
+    version: number;
+    status: "in_progress" | "completed";
+  } | null> {
+    const sessionRef = this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .collection("scenarioSessions")
+      .doc(scenarioId);
+
+    const snap = await sessionRef.get();
+    if (!snap.exists) {
+      return null;
+    }
+
+    const data = snap.data();
+    return {
+      state: data?.["state"] || null,
+      version: data?.["version"] ?? 0,
+      status: data?.["status"] ?? "in_progress",
+    };
+  }
+
+  /**
+   * Save validated scenario state with version checking.
+   *
+   * Input:
+   * - childId: Authenticated child (from server context, not request body)
+   * - scenarioId: Scenario ID (from request)
+   * - state: Full ScenarioState (already validated by server function)
+   * - expectedVersion: Current version (for optimistic concurrency)
+   *
+   * Behavior:
+   * - Reads existing version
+   * - If expectedVersion doesn't match, throws error (client must reload)
+   * - If match, writes new state with version++
+   * - If phase === "complete", sets completedAt timestamp
+   *
+   * Throws:
+   * - "Version conflict" if expectedVersion != current
+   * - "Invalid state" if state is null/malformed
+   *
+   * Returns:
+   * - { version: newVersion, status: "in_progress" | "completed" }
+   */
+  async saveSession(
+    childId: string,
+    scenarioId: string,
+    state: Record<string, unknown>,
+    expectedVersion: number,
+  ): Promise<{ version: number; status: "in_progress" | "completed" }> {
+    if (!state || typeof state !== "object") {
+      throw new Error("Invalid scenario state");
+    }
+
+    if (typeof expectedVersion !== "number" || expectedVersion < 0) {
+      throw new Error("Invalid expected version");
+    }
+
+    // Determine phase and status
+    const phase = (state as any)?.["phase"] as string | undefined;
+    const status = phase === "complete" ? "completed" : "in_progress";
+
+    return await this.db.runTransaction(async (transaction) => {
+      const sessionRef = this.db
+        .collection("families")
+        .doc(this.familyId)
+        .collection("children")
+        .doc(childId)
+        .collection("scenarioSessions")
+        .doc(scenarioId);
+
+      // 1. Read existing session (if any)
+      const existingSnap = await transaction.get(sessionRef);
+      const existing = existingSnap.data();
+
+      // 2. Check version: must match expectedVersion
+      const currentVersion = existing?.["version"] ?? 0;
+      if (currentVersion !== expectedVersion) {
+        throw new Error(
+          `Version conflict: expected version ${expectedVersion}, but document has version ${currentVersion}`,
+        );
+      }
+
+      // 3. Extract metadata from state (for queries)
+      const day = (state as any)?.["day"] as number | undefined;
+      const nodeId = (state as any)?.["nodeId"] as string | undefined;
+
+      // 4. Clean state: remove undefined values (Firestore doesn't allow them)
+      const cleanedState = JSON.parse(JSON.stringify(state));
+
+      // 5. Write new session document with incremented version
+      transaction.set(
+        sessionRef,
+        {
+          id: scenarioId,
+          scenarioId,
+          childId,
+          familyId: this.familyId,
+          state: cleanedState,
+          status,
+          currentNodeId: nodeId || "",
+          dayNumber: day || 1,
+          ...(status === "completed" && { completedAt: FieldValue.serverTimestamp() }),
+          version: currentVersion + 1,
+          createdAt: existing?.["createdAt"] || FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false }, // Replace, don't merge (clean state)
+      );
+
+      return {
+        version: currentVersion + 1,
+        status,
+      };
+    });
+  }
+
+  /**
+   * Check if a scenario session exists and return its current version.
+   *
+   * Used by server functions to decide between "create new" vs "load existing".
+   *
+   * Returns:
+   * - { exists: true, version } if scenario started
+   * - { exists: false, version: 0 } if not yet started
+   */
+  async getSessionVersion(childId: string, scenarioId: string): Promise<{
+    exists: boolean;
+    version: number;
+  }> {
+    const sessionRef = this.db
+      .collection("families")
+      .doc(this.familyId)
+      .collection("children")
+      .doc(childId)
+      .collection("scenarioSessions")
+      .doc(scenarioId);
+
+    const snap = await sessionRef.get();
+    if (!snap.exists) {
+      return { exists: false, version: 0 };
+    }
+
+    return {
+      exists: true,
+      version: snap.data()?.["version"] ?? 0,
+    };
+  }
+}
