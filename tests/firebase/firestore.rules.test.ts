@@ -366,4 +366,27 @@ describe("Firestore security rules", () => {
       expectAllowed(await tryRead(db, `users/${userUidMap["parent-a"]}`));
     });
   });
+
+  describe("Assessment responses subcollection (4)", () => {
+    const responseA = `${assessmentAttemptA}/responses/question-1`;
+    const responseB = `${childB}/assessmentAttempts/attempt-1/responses/question-1`;
+    
+    it("parent can read responses within their family's child", async () => {
+      await login(USERS["parent-a"]);
+      expectAllowed(await tryRead(db, responseA));
+    });
+    it("parent cannot read responses from another family's child", async () => {
+      await login(USERS["parent-a"]);
+      expectDenied(await tryRead(db, responseB));
+    });
+    it("parent cannot write to responses", async () => {
+      await login(USERS["parent-a"]);
+      expectDenied(await tryWrite(db, responseA, { questionId: "q1", selected: "A" }));
+    });
+    it("admin can read responses from any family", async () => {
+      await login(USERS["admin"]);
+      expectAllowed(await tryRead(db, responseA));
+      expectAllowed(await tryRead(db, responseB));
+    });
+  });
 });
