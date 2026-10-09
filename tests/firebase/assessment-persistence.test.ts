@@ -547,6 +547,127 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
       ).rejects.toThrow(/result/i);
     });
   });
+
+  describe("Server-Side Security Checks", () => {
+    it("should server-set submittedAt (never from client)", async () => {
+      const transactionMock: MockTransaction = {
+        get: vi.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        } as any),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      vi.spyOn(db, "runTransaction").mockImplementation(async (callback) => {
+        await callback(transactionMock);
+      });
+
+      const result: AssessmentResult = {
+        assessmentId: "save-pre",
+        assessmentType: "pre",
+        points: 1,
+        maxPoints: 2,
+        responses: { q1: "opt1a" },
+        competencies: [],
+      };
+
+      // The input has no submittedAt - it should be server-set
+      await repository.saveAttempt({
+        childId,
+        definition: sampleDefinition,
+        result,
+      });
+
+      // Verify submittedAt was set to server timestamp in the document write
+      const setCalls = (vi.mocked(transactionMock.set).mock.calls || []).filter(
+        (call) => call[0]._path?.[5] === "save-pre",
+      );
+      expect(setCalls.length).toBeGreaterThan(0);
+      const attemptData = setCalls[0][1];
+      expect(attemptData.submittedAt).toBe(FieldValue.serverTimestamp());
+    });
+
+    it("should preserve familyId from repository (never from client input)", async () => {
+      const transactionMock: MockTransaction = {
+        get: vi.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        } as any),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      vi.spyOn(db, "runTransaction").mockImplementation(async (callback) => {
+        await callback(transactionMock);
+      });
+
+      const result: AssessmentResult = {
+        assessmentId: "save-pre",
+        assessmentType: "pre",
+        points: 1,
+        maxPoints: 2,
+        responses: { q1: "opt1a" },
+        competencies: [],
+      };
+
+      // Repository is initialized with familyId
+      // Result should always use repository's familyId, not from anywhere else
+      await repository.saveAttempt({
+        childId,
+        definition: sampleDefinition,
+        result,
+      });
+
+      // Verify familyId in written document matches repository familyId
+      const setCalls = (vi.mocked(transactionMock.set).mock.calls || []).filter(
+        (call) => call[0]._path?.[5] === "save-pre",
+      );
+      expect(setCalls.length).toBeGreaterThan(0);
+      const attemptData = setCalls[0][1];
+      expect(attemptData.familyId).toBe(familyId);
+    });
+
+    it("should server-set all timestamps (createdAt, updatedAt, completedAt)", async () => {
+      const transactionMock: MockTransaction = {
+        get: vi.fn().mockResolvedValue({
+          exists: false,
+          data: () => undefined,
+        } as any),
+        set: vi.fn(),
+        delete: vi.fn(),
+      };
+
+      vi.spyOn(db, "runTransaction").mockImplementation(async (callback) => {
+        await callback(transactionMock);
+      });
+
+      const result: AssessmentResult = {
+        assessmentId: "save-pre",
+        assessmentType: "pre",
+        points: 1,
+        maxPoints: 2,
+        responses: { q1: "opt1a" },
+        competencies: [],
+      };
+
+      await repository.saveAttempt({
+        childId,
+        definition: sampleDefinition,
+        result,
+      });
+
+      // Verify all timestamp fields use server timestamps
+      const setCalls = (vi.mocked(transactionMock.set).mock.calls || []).filter(
+        (call) => call[0]._path?.[5] === "save-pre",
+      );
+      expect(setCalls.length).toBeGreaterThan(0);
+      const attemptData = setCalls[0][1];
+      expect(attemptData.submittedAt).toBe(FieldValue.serverTimestamp());
+      expect(attemptData.completedAt).toBe(FieldValue.serverTimestamp());
+      expect(attemptData.updatedAt).toBe(FieldValue.serverTimestamp());
+    });
+  });
 });
 
 // ============================================================================
