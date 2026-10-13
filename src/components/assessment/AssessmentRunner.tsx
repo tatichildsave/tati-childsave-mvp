@@ -3,6 +3,7 @@ import { ListenButton } from "@/components/tati/Layout";
 import { useAssessmentRunner } from "@/lib/assessment/useAssessmentRunner";
 import { COMPETENCY_LABELS } from "@/lib/assessment/types";
 import type { AssessmentDefinition, AssessmentResult } from "@/lib/assessment/types";
+import { SaveFeedback } from "@/components/learning/SaveFeedback";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -212,6 +213,11 @@ export function AssessmentRunner({
         <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
           🔒 Your answers stay private to your family
         </p>
+
+        <SaveFeedback
+          status={saving ? "saving" : submitError ? "error" : "idle"}
+          error={submitError}
+        />
       </Shell>
     );
   }
@@ -287,6 +293,11 @@ export function AssessmentRunner({
             {saving ? "Saving…" : completeLabel}
           </CtaButton>
         </div>
+
+        <SaveFeedback
+          status={saving ? "saving" : submitError ? "error" : "idle"}
+          error={submitError}
+        />
       </Shell>
     );
   }
@@ -438,6 +449,11 @@ export function AssessmentRunner({
             {runner.isLast ? "Finish ✨" : "Continue →"}
           </CtaButton>
         </div>
+
+        <SaveFeedback
+          status={saving ? "saving" : submitError ? "error" : "idle"}
+          error={submitError}
+        />
       </div>
     </Shell>
   );

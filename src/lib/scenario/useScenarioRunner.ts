@@ -142,6 +142,8 @@ export function useScenarioRunner(
   const [status, setStatus] = useState<RunnerStatus>("loading");
   const [state, setState] = useState<ScenarioState>(() => createInitialState(scenario));
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
   const sessionId = useRef<string | undefined>(undefined);
   const saveQueue = useRef<ScenarioSaveQueue>(createScenarioSaveQueue(0));
   const loadCoordinator = useRef(createScenarioLoadCoordinator());
@@ -276,6 +278,7 @@ export function useScenarioRunner(
       conflictKind.current = null;
       recoveryRemoteState.current = null;
       setSaveError(null);
+      setIsSaving(true);
 
       const queuedSave = queue.enqueue((expectedVersion) =>
         persistenceAtSaveStart.saveSession(childId, next, expectedVersion),
@@ -288,6 +291,8 @@ export function useScenarioRunner(
           writeCachedState(key, next, result.version);
           setStatus("ready");
           setSaveError(null);
+          setIsSaving(false);
+          setLastSaveTime(Date.now());
           if (isDecision) {
             void persistenceAtSaveStart.recordDecision(childId, result.sessionId, next);
           }
@@ -296,6 +301,7 @@ export function useScenarioRunner(
           if (saveQueue.current !== queue || error instanceof ScenarioSaveQueueBlockedError) return;
           const conflict = isScenarioVersionConflict(error);
           conflictKind.current = conflict ? "stale" : "retry";
+          setIsSaving(false);
           if (conflict) {
             setSaveError(
               "This story changed in another tab. Your local progress was preserved; reload to recover safely.",
@@ -314,6 +320,7 @@ export function useScenarioRunner(
 
   const retryLastSave = useCallback(() => {
     setSaveError(null);
+    setIsSaving(true);
     const queue = saveQueue.current;
     const persistenceAtRetryStart = persistenceRef.current;
     const queuedSave = queue.retry((expectedVersion) =>
@@ -324,6 +331,7 @@ export function useScenarioRunner(
         if (saveQueue.current !== queue) return undefined;
         const conflict = isScenarioVersionConflict(error);
         conflictKind.current = conflict ? "stale" : "retry";
+        setIsSaving(false);
         setSaveError(
           conflict
             ? "This story changed in another tab. Your local progress was preserved; reload to recover safely."
@@ -340,6 +348,8 @@ export function useScenarioRunner(
         conflictKind.current = null;
         setStatus("ready");
         setSaveError(null);
+        setIsSaving(false);
+        setLastSaveTime(Date.now());
       });
   }, [childId, key, state]);
 
@@ -414,6 +424,8 @@ export function useScenarioRunner(
     restart,
     clearSaved,
     saveError,
+    isSaving,
+    lastSaveTime,
     recoveryRequired: conflictKind.current !== null,
     retryLastSave,
     resolveSaveError,

@@ -5,6 +5,7 @@ import { useScenarioRunner, type ScenarioPersistence } from "@/lib/scenario/useS
 import type { ScenarioDefinition } from "@/lib/scenario/types";
 import { Screen, PrimaryButton } from "@/components/learning/primitives";
 import { ChapterBanner, GoalWidget } from "@/components/tati";
+import { SaveFeedback } from "@/components/learning/SaveFeedback";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/gamification/AnimatedNumber";
 
@@ -60,6 +61,8 @@ export function ScenarioPlayer({
     summary,
     status,
     saveError,
+    isSaving,
+    lastSaveTime,
     recoveryRequired,
     resolveSaveError,
     saveErrorActionLabel,
@@ -533,6 +536,12 @@ export function ScenarioPlayer({
           </button>
         </section>
       ) : null}
+
+      <SaveFeedback
+        status={isSaving ? "saving" : saveError ? "error" : lastSaveTime ? "saved" : "idle"}
+        error={saveError}
+        onRetry={saveError ? runner.retryLastSave : undefined}
+      />
     </Screen>
   );
 }
