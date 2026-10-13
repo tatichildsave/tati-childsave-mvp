@@ -90,17 +90,34 @@ function AdminLoginPage() {
 
       // Verify admin role
       const db = getFirebaseFirestore();
+      console.log("[Admin Login] Firestore available:", !!db);
+      
       if (db) {
         const userDocRef = doc(db, "users", userCredential.user.uid);
+        console.log("[Admin Login] Checking admin role for UID:", userCredential.user.uid);
+        
         const userDocSnap = await getDoc(userDocRef);
-
+        console.log("[Admin Login] User doc exists:", userDocSnap.exists());
+        
         if (userDocSnap.exists()) {
-          const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
+          const userData = userDocSnap.data();
+          console.log("[Admin Login] User data:", userData);
+          
+          const roles = userData?.["roles"] as string[] | undefined;
+          console.log("[Admin Login] User roles:", roles);
+          
           if (Array.isArray(roles) && roles.includes("admin")) {
+            console.log("[Admin Login] Admin role confirmed, navigating to /admin");
             navigate({ to: "/admin", replace: true });
             return;
+          } else {
+            console.log("[Admin Login] User exists but does not have admin role");
           }
+        } else {
+          console.log("[Admin Login] User document does not exist in Firestore");
         }
+      } else {
+        console.log("[Admin Login] Firestore not available");
       }
 
       setError("You do not have admin privileges. Please contact support.");
