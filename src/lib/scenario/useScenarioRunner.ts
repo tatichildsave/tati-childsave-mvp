@@ -278,6 +278,7 @@ export function useScenarioRunner(
       conflictKind.current = null;
       recoveryRemoteState.current = null;
       setSaveError(null);
+      setLastSaveTime(null);
       setIsSaving(true);
 
       const queuedSave = queue.enqueue((expectedVersion) =>
@@ -320,6 +321,7 @@ export function useScenarioRunner(
 
   const retryLastSave = useCallback(() => {
     setSaveError(null);
+    setLastSaveTime(null);
     setIsSaving(true);
     const queue = saveQueue.current;
     const persistenceAtRetryStart = persistenceRef.current;
