@@ -84,10 +84,10 @@ function Landing() {
 
       <div className="mt-6 space-y-3">
         <Button to="/child/login" size="lg">
-          Continue My Journey →
+          Child Sign In →
         </Button>
         <Button to="/login" variant="outline" size="lg">
-          I already have an account
+          Parent Sign In
         </Button>
         <Button to="/academy/login" variant="outline" size="lg">
           Facilitator Sign In
