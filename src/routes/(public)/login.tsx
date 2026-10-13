@@ -193,10 +193,15 @@ function LoginPage() {
       </Card>
 
       <p className="mt-5 text-center text-base">
-        New to TATI?{" "}
-        <Link to="/signup" className="font-extrabold text-primary">
-          Create an account
-        </Link>
+        New parent?{" "}
+        <a
+          href="https://forms.gle/KLesUiC4wQSUWVRM9"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-extrabold text-primary"
+        >
+          Get Started with TATI
+        </a>
       </p>
     </Page>
   );
