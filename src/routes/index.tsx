@@ -86,9 +86,6 @@ function Landing() {
         <Button to="/child/login" size="lg">
           Continue My Journey →
         </Button>
-        <Button to="/signup" variant="outline" size="lg">
-          Create Parent Account
-        </Button>
         <Button to="/login" variant="outline" size="lg">
           I already have an account
         </Button>
