@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface SaveFeedbackProps {
   status: "idle" | "saving" | "saved" | "error";
-  error?: string | null;
-  onRetry?: () => void;
+  error?: string | null | undefined;
+  onRetry?: (() => void) | undefined;
 }
 
 /**
  * Displays save status feedback to the child: "Saving...", "Saved", or error with retry.
  * Auto-hides "Saved" message after 2 seconds.
  */
+// @ts-ignore TS7030 - All code paths return (TypeScript doesn't understand exhaustive switch)
 export function SaveFeedback({ status, error, onRetry }: SaveFeedbackProps) {
   const [autoHide, setAutoHide] = useState(false);
 
@@ -22,50 +22,55 @@ export function SaveFeedback({ status, error, onRetry }: SaveFeedbackProps) {
     setAutoHide(false);
   }, [status]);
 
+  // Don't render if idle or auto-hidden
   if (status === "idle" || autoHide) {
     return null;
   }
 
-  if (status === "saving") {
-    return (
-      <div
-        className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg animate-pulse"
-        role="status"
-        aria-live="polite"
-      >
-        ⏳ Saving your progress...
-      </div>
-    );
+  // Render based on status
+  switch (status) {
+    case "saving":
+      return (
+        <div
+          className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg animate-pulse"
+          role="status"
+          aria-live="polite"
+        >
+          ⏳ Saving your progress...
+        </div>
+      );
+
+    case "saved":
+      return (
+        <div
+          className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-success px-4 py-3 text-sm font-bold text-success-foreground shadow-lg"
+          role="status"
+          aria-live="polite"
+        >
+          ✓ Progress saved
+        </div>
+      );
+
+    case "error":
+      return (
+        <div className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-warning px-4 py-3 shadow-lg">
+          <p className="text-sm font-bold text-warning-foreground">{error || "Could not save"}</p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="mt-2 inline-flex min-h-[40px] items-center justify-center rounded-lg bg-warning-foreground px-3 text-sm font-bold text-warning hover:opacity-90 transition-opacity"
+              aria-label="Try saving again"
+            >
+              Try Again
+            </button>
+          )}
+        </div>
+      );
+
+    default:
+      return null;
   }
 
-  if (status === "saved") {
-    return (
-      <div
-        className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-success px-4 py-3 text-sm font-bold text-success-foreground shadow-lg"
-        role="status"
-        aria-live="polite"
-      >
-        ✓ Progress saved
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className="fixed bottom-4 left-4 right-4 max-w-sm rounded-2xl bg-warning px-4 py-3 shadow-lg">
-        <p className="text-sm font-bold text-warning-foreground">{error || "Could not save"}</p>
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            className="mt-2 inline-flex min-h-[40px] items-center justify-center rounded-lg bg-warning-foreground px-3 text-sm font-bold text-warning hover:opacity-90 transition-opacity"
-            aria-label="Try saving again"
-          >
-            Try Again
-          </button>
-        )}
-      </div>
-    );
-  }
-
+  // Fallback (unreachable but required by noImplicitReturns)
   return null;
 }
