@@ -11,11 +11,13 @@
 ### Client-Side (Browser)
 
 **Configuration**:
+
 - File: `src/integrations/firebase/client.ts:L51-L70`
 - Firestore connects to emulator at: `127.0.0.1:8080` (from `VITE_FIRESTORE_EMULATOR_HOST`)
 - Auth Emulator connects to: `127.0.0.1:9099` (from `VITE_FIREBASE_AUTH_EMULATOR_HOST`)
 
 **Auth Setup**:
+
 ```typescript
 export function getFirebaseApp(): FirebaseApp {
   const app = initializeApp(getFirebaseConfig());
@@ -31,7 +33,8 @@ export function getFirebaseApp(): FirebaseApp {
 }
 ```
 
-**Problem**: 
+**Problem**:
+
 - No custom auth provider set up
 - No Supabase token bridge configured
 - Firestore SDK initialized with Firebase config (production tatichildsavemvp project)
@@ -40,12 +43,14 @@ export function getFirebaseApp(): FirebaseApp {
 ### Server-Side (Trusted Boundary)
 
 **Configuration**:
+
 - File: `src/integrations/supabase/auth-attacher.ts`
 - Middleware attaches Supabase JWT to server function calls as `Authorization: Bearer {token}`
 - File: `src/start.ts:L26`
 - Middleware registered: `functionMiddleware: [attachSupabaseAuth]`
 
 **Flow**:
+
 1. Browser calls server function via TanStack React Start
 2. Middleware intercepts call
 3. Retrieves Supabase session: `supabase.auth.getSession()`
@@ -62,6 +67,7 @@ export function getFirebaseApp(): FirebaseApp {
 ### In Firestore Rules
 
 **Rule Definition** (from `firestore.rules`):
+
 ```javascript
 function signedIn() {
   return request.auth != null;
@@ -75,6 +81,7 @@ function userDoc() {
 ```
 
 **Where It Comes From**:
+
 - `request.auth.uid` is populated from the **authentication token's subject (`sub`) claim**
 - In production Firestore, this can come from:
   - Firebase Auth tokens
@@ -82,6 +89,7 @@ function userDoc() {
   - Other OIDC-compliant providers
 
 **Value**:
+
 - Should be the **Supabase user UUID** (e.g., `zg3xWd0PT4Zz96rJ2NVZDTY0jARu`)
 - Used as the key to access: `/users/{uid}` documents
 - Used as the key to access: `/schools/{schoolId}/admins/{uid}` documents
@@ -92,11 +100,11 @@ function userDoc() {
 
 ### Analysis
 
-| System | UID Type | Used In Production | Used In Emulator | Status |
-|--------|----------|-------------------|------------------|--------|
-| **Supabase Auth** | UUID (e.g., `zg3xWd...`) | ✅ YES - active | ❌ NO - not connected | Active provider |
-| **Firebase Auth** | UUID (different format) | ❌ NO - not used | ❌ NO - not wired in | Dormant |
-| **Firestore Emulator** | Depends on auth setup | ? | ? | **AMBIGUOUS** |
+| System                 | UID Type                 | Used In Production | Used In Emulator      | Status          |
+| ---------------------- | ------------------------ | ------------------ | --------------------- | --------------- |
+| **Supabase Auth**      | UUID (e.g., `zg3xWd...`) | ✅ YES - active    | ❌ NO - not connected | Active provider |
+| **Firebase Auth**      | UUID (different format)  | ❌ NO - not used   | ❌ NO - not wired in  | Dormant         |
+| **Firestore Emulator** | Depends on auth setup    | ?                  | ?                     | **AMBIGUOUS**   |
 
 ### Critical Finding
 
@@ -109,11 +117,13 @@ function userDoc() {
 
 **Hypothesis**:
 The Firebase Emulator likely has one of these behaviors:
+
 - A) **Rules are NOT enforced in emulator** (permissive default) → All queries allowed
 - B) **Emulator accepts any auth token** → Treats all tokens as valid
 - C) **Emulator denies all requests without Firebase Auth** → Queries fail silently
 
-**Evidence Needed**: 
+**Evidence Needed**:
+
 - Run an actual Firestore query from browser
 - Observe whether:
   - Query succeeds (indicates rule bypass or permissive emulator)
@@ -146,7 +156,7 @@ Used directly as Firestore document keys:
 ```typescript
 export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
   const db = getFirebaseFirestore();
-  const userDocRef = doc(db, "users", userId);  // ← Supabase UID used as key
+  const userDocRef = doc(db, "users", userId); // ← Supabase UID used as key
   const userDocSnap = await getDoc(userDocRef);
   const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
   return Array.isArray(roles) && roles.includes("facilitator");
@@ -166,6 +176,7 @@ function isSchoolAdmin(schoolId) {
 ```
 
 **Usage in Rules**:
+
 ```javascript
 match /schools/{schoolId}/admins/{adminUid} {
   allow read: if canAccessSchool(schoolId);
@@ -177,6 +188,7 @@ match /schools/{schoolId}/admins/{adminUid} {
 ### Assumption
 
 **Critical Assumption**: The app assumes that:
+
 1. Supabase `user.id` and Firestore document path keys are **identical**
 2. No transformation or mapping occurs
 3. The relationship is **1:1 direct mapping**
@@ -192,6 +204,7 @@ match /schools/{schoolId}/admins/{adminUid} {
 ### Production Behavior
 
 **Firestore in Production**:
+
 - Firebase Firestore is configured to accept OIDC tokens
 - When a browser makes a request to production Firestore with a Supabase JWT:
   1. Firestore validates the JWT signature using Supabase's public key
@@ -199,7 +212,8 @@ match /schools/{schoolId}/admins/{adminUid} {
   3. Rules evaluate with `request.auth.uid` set to that UID
   4. Access decisions based on rules
 
-**Evidence**: 
+**Evidence**:
+
 - Firestore Rules specifically reference `request.auth.uid`
 - Rules documentation shows this is populated from OIDC providers
 - Production Firestore project (`tatichildsavemvp`) can trust Supabase JWTs
@@ -207,12 +221,14 @@ match /schools/{schoolId}/admins/{adminUid} {
 ### Emulator Behavior
 
 **Firebase Emulator in Emulator Mode**:
+
 - Runs locally at `127.0.0.1:8080`
 - Typically has limited or permissive authentication
 - **Does NOT automatically trust external OIDC providers** (like Supabase)
 - May require explicit Firebase Auth Emulator setup
 
 **Likely Behavior**:
+
 1. Browser connects to local Firestore Emulator
 2. Browser has NO Firebase Auth user (uses Supabase, not Firebase)
 3. Browser Firestore queries include NO authentication header
@@ -221,6 +237,7 @@ match /schools/{schoolId}/admins/{adminUid} {
 6. Queries should be **DENIED by rules**
 
 **BUT**: If queries are working (tests pass, QA data was loaded), then either:
+
 - A) Emulator is running in **permissive mode** (rules not enforced)
 - B) Emulator is configured to **bypass rules**
 - C) There's a **custom auth setup I haven't found**
@@ -228,12 +245,12 @@ match /schools/{schoolId}/admins/{adminUid} {
 
 ### Critical Gap for H3.3 QA
 
-| Aspect | Requirement | Current Status | Impact |
-|--------|-------------|-----------------|---------|
-| **Production Supabase Auth** | Works with production Firestore | ✅ Configured in .env | Can test real login |
-| **Emulator Supabase Bridge** | Emulator accepts Supabase JWTs | ❓ UNKNOWN | Blocks QA if not working |
-| **Firestore Rules Enforcement** | Rules are actually enforced in emulator | ❓ UNKNOWN | Security testing blocked if bypassed |
-| **Client Auth Flow** | Browser Firestore inherits Supabase auth | ❌ NOT SET UP | QA likely cannot work locally |
+| Aspect                          | Requirement                              | Current Status        | Impact                               |
+| ------------------------------- | ---------------------------------------- | --------------------- | ------------------------------------ |
+| **Production Supabase Auth**    | Works with production Firestore          | ✅ Configured in .env | Can test real login                  |
+| **Emulator Supabase Bridge**    | Emulator accepts Supabase JWTs           | ❓ UNKNOWN            | Blocks QA if not working             |
+| **Firestore Rules Enforcement** | Rules are actually enforced in emulator  | ❓ UNKNOWN            | Security testing blocked if bypassed |
+| **Client Auth Flow**            | Browser Firestore inherits Supabase auth | ❌ NOT SET UP         | QA likely cannot work locally        |
 
 ---
 
@@ -242,6 +259,7 @@ match /schools/{schoolId}/admins/{adminUid} {
 ### Phase 2 Verification (DO NOT ASSUME EMULATOR EQUIVALENCE)
 
 **Required Testing**:
+
 1. Create a dedicated Supabase QA test account
 2. Log in via browser at `/login` using Supabase auth
 3. Inspect browser localStorage for Supabase JWT token
@@ -254,10 +272,12 @@ match /schools/{schoolId}/admins/{adminUid} {
 ### Phase 3 Decision Tree
 
 **If Emulator Works With Supabase Auth**:
+
 - ✅ Proceed with H3.3 QA using test Supabase accounts
 - Document emulator configuration as deviation from production
 
 **If Emulator Does NOT Work With Supabase Auth**:
+
 - ❌ STOP - local QA is blocked by architecture gap
 - Options:
   1. Test against production Firestore (risky, requires credentials)
@@ -269,13 +289,13 @@ match /schools/{schoolId}/admins/{adminUid} {
 
 ## SUMMARY OF FINDINGS
 
-| Question | Answer | Status |
-|----------|--------|--------|
-| **A. How does Firestore receive identity?** | Browser → Emulator (auth method unknown); Server → Middleware attaches Supabase JWT | ⚠️ PARTIAL |
-| **B. What is `request.auth.uid`?** | Should be Supabase user UUID (extracted from JWT `sub` claim) | ✅ CLEAR |
-| **C. What type of UID?** | Supabase UUID (not Firebase UID, not custom) | ✅ CLEAR |
-| **D. How does app map users to Firestore?** | Direct 1:1 mapping: `Supabase user.id` → Firestore document key | ✅ CLEAR |
-| **E. Does emulator reproduce production auth?** | **LIKELY NO** — Emulator probably doesn't trust Supabase JWTs natively | ❌ CRITICAL GAP |
+| Question                                        | Answer                                                                              | Status          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- | --------------- |
+| **A. How does Firestore receive identity?**     | Browser → Emulator (auth method unknown); Server → Middleware attaches Supabase JWT | ⚠️ PARTIAL      |
+| **B. What is `request.auth.uid`?**              | Should be Supabase user UUID (extracted from JWT `sub` claim)                       | ✅ CLEAR        |
+| **C. What type of UID?**                        | Supabase UUID (not Firebase UID, not custom)                                        | ✅ CLEAR        |
+| **D. How does app map users to Firestore?**     | Direct 1:1 mapping: `Supabase user.id` → Firestore document key                     | ✅ CLEAR        |
+| **E. Does emulator reproduce production auth?** | **LIKELY NO** — Emulator probably doesn't trust Supabase JWTs natively              | ❌ CRITICAL GAP |
 
 ---
 
@@ -284,12 +304,13 @@ match /schools/{schoolId}/admins/{adminUid} {
 **The local Firebase Emulator is NOT configured to accept Supabase JWT tokens.**
 
 This means:
+
 - ❌ Browser Firestore queries likely CANNOT authenticate with Supabase credentials
 - ❌ Client-side Firestore access in browser may fail or be blocked by emulator
 - ❌ Server-side functions CAN work (they attach Supabase JWT explicitly via middleware)
 - ❌ Local manual QA may be impossible without additional setup
 
-**Next Action**: 
+**Next Action**:
 Conduct empirical verification in Phase 2 to determine if emulator has a workaround or permissive mode.
 
 ---

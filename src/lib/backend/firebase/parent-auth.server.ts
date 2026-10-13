@@ -10,9 +10,8 @@ import { getFirebaseAdmin } from "@/integrations/firebase/admin.server";
 
 // In dev (http://), __Secure- prefix is rejected by browsers unless secure=true.
 // Use plain name in dev, __Secure- in production.
-const SESSION_COOKIE_NAME = process.env["NODE_ENV"] === "production" 
-  ? "__Secure-parent-session" 
-  : "parent-session";
+const SESSION_COOKIE_NAME =
+  process.env["NODE_ENV"] === "production" ? "__Secure-parent-session" : "parent-session";
 const SESSION_COOKIE_MAX_AGE = 5 * 24 * 60 * 60; // 5 days in seconds
 
 export type AuthenticatedParentContext = {
@@ -22,13 +21,13 @@ export type AuthenticatedParentContext = {
 /**
  * Create a parent session cookie from a verified Firebase ID token.
  * This is called immediately after sign-in with a fresh ID token.
- * 
+ *
  * The returned session cookie is cryptographically verified by Firebase Admin SDK
  * and includes the parent's uid. It is set as an HTTP-only cookie.
  */
 export async function createParentSession(idToken: string): Promise<void> {
   const auth = getFirebaseAdmin();
-  
+
   // Verify the ID token and create a session cookie
   const sessionCookie = await auth.createSessionCookie(idToken, {
     expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
@@ -63,12 +62,12 @@ export async function getCurrentParentContext(): Promise<AuthenticatedParentCont
 
     const auth = getFirebaseAdmin();
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-    
+
     return { uid: decodedClaims.uid };
   } catch (error) {
     console.error(
       "[getCurrentParentContext] Error:",
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     throw error;
   }

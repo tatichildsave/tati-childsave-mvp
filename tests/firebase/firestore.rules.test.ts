@@ -370,7 +370,7 @@ describe("Firestore security rules", () => {
   describe("Assessment responses subcollection (4)", () => {
     const responseA = `${assessmentAttemptA}/responses/question-1`;
     const responseB = `${childB}/assessmentAttempts/attempt-1/responses/question-1`;
-    
+
     it("parent can read responses within their family's child", async () => {
       await login(USERS["parent-a"]);
       expectAllowed(await tryRead(db, responseA));

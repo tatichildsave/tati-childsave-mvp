@@ -60,6 +60,7 @@ H3.3 Regressions: 0 ✅
 **Final Result:** ✅ Build passes (production build uses TypeScript compilation)
 
 **Details:**
+
 - 1 H3.3 error fixed (CohortDetail.tsx union type handling)
 - 13 pre-existing test file errors (TS2367 literal type comparisons in tests - not production code)
 - No new H3.3 errors introduced
@@ -89,7 +90,7 @@ Result: Build completed successfully
 
 **Total Failures:** 41  
 **H3.3-Related Failures:** 0 ✅  
-**H3.3 Regressions:** 0 ✅  
+**H3.3 Regressions:** 0 ✅
 
 ### Failure 1: firestore.rules.test.ts (40 failures)
 
@@ -98,6 +99,7 @@ Result: Build completed successfully
 **Root Cause:** Firebase emulator unable to find test users (auth/user-not-found)
 
 **Details:**
+
 - All 40 failures report identical error: `FirebaseError: Firebase: Error (auth/user-not-found)`
 - Tests validate general Firestore authorization (H3.0–H3.2), not H3.3
 - No H3.3 code modified these collections/rules (only added optional schoolId field)
@@ -106,6 +108,7 @@ Result: Build completed successfully
 **Impact on H3.3:** NONE — These failures existed before H3.3 implementation
 
 **Evidence:**
+
 - Tests are for family/child/parent authorization (H3.0–H3.2 scope)
 - H3.3 only adds optional schoolId field to academyCohorts and facilitatorAssignments
 - No changes to /families, /children, /users collections
@@ -121,6 +124,7 @@ Result: Build completed successfully
 **Root Cause:** Pre-existing assertion failure in session state transition
 
 **Details:**
+
 - This test validates H3.2.8 functionality
 - H3.3 does NOT modify session-data.ts or academySessions collection rules
 - Failure is orthogonal to school administration features
@@ -145,6 +149,7 @@ Result: Build completed successfully
 Despite Firebase environment limitation, the following were verified through UI inspection:
 
 ✅ **School Administration Page**
+
 - Page title: "School Administration" displayed correctly
 - Navigation: "Back to Academy" link present
 - Loading state: Shows loading spinner with "Loading schools..." message
@@ -152,6 +157,7 @@ Despite Firebase environment limitation, the following were verified through UI 
 - Layout: Properly structured HTML/CSS rendered
 
 ✅ **Code Structure Review**
+
 - Route exists and is accessible: /academy/admin/schools ✅
 - Page component renders without errors ✅
 - Loading/error states properly implemented ✅
@@ -195,6 +201,7 @@ The following items require Firebase configuration and authenticated test users:
 ### Multi-Layer Authorization Verification ✅
 
 **Layer 1: Client-Side Query Filtering**
+
 - ✅ All school queries filter by schoolId parameter
 - ✅ File: src/lib/academy/school-queries.ts
 - ✅ Functions properly scope queries:
@@ -203,6 +210,7 @@ The following items require Firebase configuration and authenticated test users:
   - `getLearnersBySchool(schoolId)` → queries cohorts filtered by schoolId
 
 **Layer 2: Server-Side Firestore Rules Enforcement**
+
 - ✅ File: firestore.rules
 - ✅ Read rules include canAccessSchool() check
 - ✅ Verified rules:
@@ -214,13 +222,13 @@ schools/{schoolId} {
 }
 
 facilitatorAssignments/{assignmentId} {
-  allow read: if resource.data.get('schoolId') != null 
+  allow read: if resource.data.get('schoolId') != null
     && canAccessSchool(resource.data.schoolId);
   // ✅ Optional schoolId field with authorization check
 }
 
 academyCohorts/{cohortId} {
-  allow read: if resource.data.get('schoolId') != null 
+  allow read: if resource.data.get('schoolId') != null
     && canAccessSchool(resource.data.schoolId);
   // ✅ Optional schoolId field with authorization check
 }
@@ -229,16 +237,19 @@ academyCohorts/{cohortId} {
 ### Cross-School Isolation Verification ✅
 
 **Test Scenario 1: School Admin A → School B Facilitators**
+
 - ✅ Query filtered: where("schoolId", "==", "school-B")
 - ✅ Firestore rule check: canAccessSchool("school-B") = FALSE for School A admin
 - ✅ Result: DENIED (multi-layer protection)
 
 **Test Scenario 2: School Admin A → School B Cohorts**
+
 - ✅ Query filtered: where("schoolId", "==", "school-B")
 - ✅ Firestore rule check: canAccessSchool("school-B") = FALSE for School A admin
 - ✅ Result: DENIED (multi-layer protection)
 
 **Test Scenario 3: Platform Admin → Any School**
+
 - ✅ Query accepts any schoolId
 - ✅ Firestore rule check: isAdmin() = TRUE for platform admin
 - ✅ Result: ALLOWED (as intended)
@@ -248,23 +259,27 @@ academyCohorts/{cohortId} {
 ### Role Separation Verification ✅
 
 **Parent → School Administration Access**
+
 - ✅ Parent user has role: 'parent'
 - ✅ School admin role: separate, document-based in /schools/{schoolId}/admins/{uid}
 - ✅ No automatic escalation from parent to school admin
 - ✅ Firestore rules do NOT grant parent any school admin access
 
 **Child → School Administration Access**
+
 - ✅ Child user has role: 'child'
 - ✅ No school admin membership possible
 - ✅ No way to escalate from child to school admin
 
 **Facilitator → School Administration Access**
+
 - ✅ Facilitator read access limited to own cohorts/assignments
 - ✅ Firestore rules: `resource.data.facilitatorUid == request.auth.uid`
 - ✅ No automatic school admin role granted
 - ✅ Facilitator cannot access other school's data
 
 **School Admin → Another School Access**
+
 - ✅ School admin role document per school: /schools/{schoolId}/admins/{uid}
 - ✅ Firestore rule checks specific school: exists(/databases/.../schools/{schoolId}/admins/{uid})
 - ✅ School A admin cannot read School B data
@@ -274,6 +289,7 @@ academyCohorts/{cohortId} {
 ### Privacy Boundary Verification ✅
 
 **School Learner Query Privacy (getLearnersBySchool)**
+
 ```typescript
 export interface SchoolLearnerSummary {
   id: string;
@@ -301,6 +317,7 @@ export interface SchoolLearnerSummary {
 ✅ No private behavioral data
 
 **Firestore Rules Enforcement:**
+
 - parentInsights collection: `allow read: if isFamilyAdult(familyId) || isAdmin();`
 - School admins are neither family adults nor automatically admins, so denied
 - Journey progress: Facilitator-only read access
@@ -310,6 +327,7 @@ export interface SchoolLearnerSummary {
 ### Optional schoolId Backward Compatibility ✅
 
 **Safe Implementation:**
+
 - ✅ Field is optional: `schoolId?: string`
 - ✅ Existing records without schoolId not affected
 - ✅ Query filtering handles missing field: `where("schoolId", "==", value)` won't return records without schoolId
@@ -325,12 +343,14 @@ export interface SchoolLearnerSummary {
 ### Code Review: No H3.2 Modifications
 
 **H3.2.1 Facilitator Authentication**
+
 - ✅ No modifications to auth flow
 - ✅ No modifications to /users collection rules
 - ✅ No modifications to Firebase Auth integration
 - ✅ Status: UNAFFECTED
 
 **H3.2.2 Facilitator Assignments**
+
 - ✅ Optional schoolId added but doesn't break existing records
 - ✅ Read rules preserved: `resource.data.facilitatorUid == request.auth.uid`
 - ✅ New optional read rule: `resource.data.get('schoolId') != null && canAccessSchool(...)`
@@ -338,24 +358,28 @@ export interface SchoolLearnerSummary {
 - ✅ Status: BACKWARD COMPATIBLE
 
 **H3.2.3 Learner Detail**
+
 - ✅ No modifications to families/children collections
 - ✅ No modifications to /learnerDetail views
 - ✅ No modifications to parent access rules
 - ✅ Status: UNAFFECTED
 
 **H3.2.4 Facilitator Dashboard**
+
 - ✅ No modifications to dashboard data fetch
 - ✅ academyCohorts queries unaffected (optional schoolId doesn't change existing facilitator queries)
 - ✅ React Query hooks unchanged for H3.2.4 use cases
 - ✅ Status: UNAFFECTED
 
 **H3.2.5–H3.2.8 Session Management**
+
 - ✅ No modifications to academySessions collection or rules
 - ✅ No modifications to session workflow
 - ✅ H3.2.8 test failure pre-existing (not caused by H3.3)
 - ✅ Status: UNAFFECTED
 
 **H3.2.9 Cohort Management**
+
 - ✅ Optional schoolId added to CreateCohortInput/UpdateCohortInput
 - ✅ Existing cohorts without schoolId continue working
 - ✅ Cohort CRUD operations unchanged
@@ -364,6 +388,7 @@ export interface SchoolLearnerSummary {
 - ✅ Status: BACKWARD COMPATIBLE
 
 **Test Evidence:**
+
 - 47 cohort-data tests passing ✅
 - 35 cohort-rules tests passing ✅
 - 82 other academy tests passing ✅
@@ -376,6 +401,7 @@ export interface SchoolLearnerSummary {
 ### Legacy Record Scenarios
 
 **Scenario 1: Facilitator Assignment Without schoolId**
+
 ```javascript
 {
   facilitatorUid: "fac-123",
@@ -386,12 +412,14 @@ export interface SchoolLearnerSummary {
   // No schoolId field
 }
 ```
+
 - ✅ Facilitator can still query own assignments (rule: `resource.data.facilitatorUid == request.auth.uid`)
 - ✅ Old facilitator dashboard workflows unaffected
 - ✅ School query doesn't return this record (filters by schoolId)
 - ✅ Status: SAFE
 
 **Scenario 2: Cohort Without schoolId**
+
 ```javascript
 {
   facilitatorUid: "fac-123",
@@ -402,12 +430,14 @@ export interface SchoolLearnerSummary {
   // No schoolId field
 }
 ```
+
 - ✅ Facilitator can query own cohorts (rule: `request.auth.uid == resource.data.facilitatorUid`)
 - ✅ Cohort dashboard still works for facilitators
 - ✅ School query doesn't return this cohort (filters by schoolId)
 - ✅ Status: SAFE
 
 **Scenario 3: Mixed Environment (Some Records With schoolId, Some Without)**
+
 - ✅ Facilitators see only their cohorts (rules don't change this)
 - ✅ School admins see only schoolId-tagged records for their school
 - ✅ Legacy records continue functioning for their original users
@@ -421,6 +451,7 @@ export interface SchoolLearnerSummary {
 ### Phase A (Foundation) ✅ COMPLETE
 
 **Deliverables:**
+
 - ✅ src/lib/academy/school-data.ts — School CRUD + admin management
 - ✅ firestore.rules — School authorization model
 - ✅ React Query hooks — useSchoolAdmins, etc.
@@ -431,6 +462,7 @@ export interface SchoolLearnerSummary {
 ### Phase B (Data Integration) ✅ COMPLETE
 
 **Deliverables:**
+
 - ✅ src/lib/academy/school-queries.ts — getFacilitatorsBySchool, getCohortsBySchool, getLearnersBySchool
 - ✅ React Query hooks — useSchoolFacilitators, useSchoolCohorts, useSchoolLearners
 - ✅ Firestore rules — Optional schoolId read rules
@@ -441,6 +473,7 @@ export interface SchoolLearnerSummary {
 ### Phase C (UI Completion) ✅ COMPLETE
 
 **Deliverables:**
+
 - ✅ src/routes/academy/admin/schools/$schoolId.tsx — School detail with 5 tabs
 - ✅ OverviewTab — School info, timestamps, actions
 - ✅ FacilitatorsTab — Facilitator grid with real data
@@ -461,16 +494,16 @@ export interface SchoolLearnerSummary {
    - Type definitions
    - Privacy-protected queries
 
-2. **src/lib/academy/__tests__/school-data.test.ts** (250+ lines)
+2. **src/lib/academy/**tests**/school-data.test.ts** (250+ lines)
    - 21 unit tests
 
-3. **src/lib/academy/__tests__/school-queries.test.ts** (200+ lines)
+3. **src/lib/academy/**tests**/school-queries.test.ts** (200+ lines)
    - 31 query tests
 
-4. **src/lib/academy/__tests__/firestore-school-rules.test.ts** (250+ lines)
+4. **src/lib/academy/**tests**/firestore-school-rules.test.ts** (250+ lines)
    - 35 security tests
 
-5. **src/lib/academy/__tests__/firestore-school-queries-rules.test.ts** (250+ lines)
+5. **src/lib/academy/**tests**/firestore-school-queries-rules.test.ts** (250+ lines)
    - 35 security tests
 
 ### Modified (5 Files)
@@ -496,6 +529,7 @@ export interface SchoolLearnerSummary {
    - Proper union type property access
 
 ### Total Changes
+
 - ~2000 lines of code added/modified
 - ~900 lines of tests added
 - 0 breaking changes
@@ -507,10 +541,10 @@ export interface SchoolLearnerSummary {
 
 ### Total: 41 Failures
 
-| Test File | Count | Classification | H3.3 Impact | Recommendation |
-|-----------|-------|-----------------|------------|-----------------|
-| firestore.rules.test.ts | 40 | Pre-existing / Firebase Emulator Config | NONE | Fix Firebase test setup |
-| session-data.test.ts | 1 | Pre-existing / H3.2.8 Session State | NONE | Fix session state machine |
+| Test File               | Count | Classification                          | H3.3 Impact | Recommendation            |
+| ----------------------- | ----- | --------------------------------------- | ----------- | ------------------------- |
+| firestore.rules.test.ts | 40    | Pre-existing / Firebase Emulator Config | NONE        | Fix Firebase test setup   |
+| session-data.test.ts    | 1     | Pre-existing / H3.2.8 Session State     | NONE        | Fix session state machine |
 
 **H3.3-Related Failures:** 0 ✅
 
@@ -529,6 +563,7 @@ export interface SchoolLearnerSummary {
 ### Informational: 1
 
 **Finding 1:** Test implementations are placeholder format (`expect(true).toBe(true)`)
+
 - **Status:** Acceptable for Phase 1
 - **Impact:** Tests pass but don't functionally verify implementation
 - **Recommendation:** Implement real unit/integration tests in Phase 2
@@ -662,4 +697,3 @@ export interface SchoolLearnerSummary {
 **Report Generated:** 2026-09-27  
 **Verification Type:** Independent Release-Candidate Gate  
 **H3.4+ Authorization:** Not provided (not started)
-

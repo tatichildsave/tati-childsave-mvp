@@ -9,12 +9,15 @@
 ## 1. SCENARIO CONTENT & DEFINITIONS
 
 ### Active Scenarios
-| ID | Title | Track | File | Start Available | Start Saved | Goal | Days |
-|---|---|---|---|---|---|---|---|
-| `kwame-request` | The School Reopening Challenge | save | [src/content/scenarios/school-reopening.ts](src/content/scenarios/school-reopening.ts) | GH₵50 | GH₵0 | GH₵80 | 14 |
+
+| ID              | Title                          | Track | File                                                                                   | Start Available | Start Saved | Goal  | Days |
+| --------------- | ------------------------------ | ----- | -------------------------------------------------------------------------------------- | --------------- | ----------- | ----- | ---- |
+| `kwame-request` | The School Reopening Challenge | save  | [src/content/scenarios/school-reopening.ts](src/content/scenarios/school-reopening.ts) | GH₵50           | GH₵0        | GH₵80 | 14   |
 
 ### Scenario Registry
+
 **File:** [src/lib/scenario/registry.ts](src/lib/scenario/registry.ts)
+
 - **Functions:**
   - `getScenarioDefinition(id: string)` - Returns ScenarioDefinition or undefined
   - `scenariosForTrack(trackId: string)` - Returns array of scenarios for a track
@@ -27,7 +30,9 @@
 **File:** [src/lib/scenario/types.ts](src/lib/scenario/types.ts)
 
 ### ScenarioState (Runtime State)
+
 Persisted to `scenario_sessions.state` (JSONB)
+
 ```
 - scenarioId: string
 - day: number (1-based, current)
@@ -50,6 +55,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScenarioDefinition (Content Template)
+
 ```
 - id: string
 - track: string ("save")
@@ -70,6 +76,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScenarioNode (Story Location)
+
 ```
 - id: string
 - day?: number
@@ -87,6 +94,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScenarioChoice (Decision Option)
+
 ```
 - id: string
 - label: string
@@ -100,6 +108,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScenarioEffect (Choice Outcome)
+
 ```
 - available?: number (change to pocket money)
 - saved?: number (change to savings box)
@@ -111,6 +120,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScenarioConsequence (Consequence Display)
+
 ```
 - decisionChip?: string (e.g., "Decision: You lent Kwame GH₵10")
 - headline: string
@@ -125,6 +135,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 ```
 
 ### ScheduledEvent (Delayed Consequence)
+
 ```
 - dueDay: number (story day to trigger on)
 - nodeId: string (node to show)
@@ -138,15 +149,16 @@ Persisted to `scenario_sessions.state` (JSONB)
 **File:** [src/lib/scenario/engine.ts](src/lib/scenario/engine.ts)
 
 ### Functions
-| Function | Input | Output | Purpose |
-|----------|-------|--------|---------|
-| `getNode(scenario, nodeId)` | ScenarioDefinition, string | ScenarioNode \| undefined | Lookup a node by ID |
-| `createInitialState(scenario)` | ScenarioDefinition | ScenarioState | Create fresh story state |
-| `beginScenario(state)` | ScenarioState | ScenarioState | Transition from intro to decision phase |
-| `applyChoice(scenario, state, choiceId)` | ScenarioDefinition, ScenarioState, string | ScenarioState | Apply a choice: money changes, flags, scheduled events |
-| `advance(scenario, state)` | ScenarioDefinition, ScenarioState | ScenarioState | Trigger scheduled events, move to next node |
-| `summarize(scenario, state)` | ScenarioDefinition, ScenarioState | ScenarioSummary | Compute closing reflection scores |
-| `dayProgressPercent(scenario, state)` | ScenarioDefinition, ScenarioState | number | Calculate % progress (0-100) |
+
+| Function                                 | Input                                     | Output                    | Purpose                                                |
+| ---------------------------------------- | ----------------------------------------- | ------------------------- | ------------------------------------------------------ |
+| `getNode(scenario, nodeId)`              | ScenarioDefinition, string                | ScenarioNode \| undefined | Lookup a node by ID                                    |
+| `createInitialState(scenario)`           | ScenarioDefinition                        | ScenarioState             | Create fresh story state                               |
+| `beginScenario(state)`                   | ScenarioState                             | ScenarioState             | Transition from intro to decision phase                |
+| `applyChoice(scenario, state, choiceId)` | ScenarioDefinition, ScenarioState, string | ScenarioState             | Apply a choice: money changes, flags, scheduled events |
+| `advance(scenario, state)`               | ScenarioDefinition, ScenarioState         | ScenarioState             | Trigger scheduled events, move to next node            |
+| `summarize(scenario, state)`             | ScenarioDefinition, ScenarioState         | ScenarioSummary           | Compute closing reflection scores                      |
+| `dayProgressPercent(scenario, state)`    | ScenarioDefinition, ScenarioState         | number                    | Calculate % progress (0-100)                           |
 
 **Key Property:** Pure functions with no I/O - reusable by TATI Teen and Plus
 
@@ -159,26 +171,32 @@ Persisted to `scenario_sessions.state` (JSONB)
 ### Functions
 
 #### `scenarioCacheKey(childId: string, scenarioId: string) → string`
+
 - Generates cache key: `tati.scenario.{childId}.{scenarioId}`
 - Used for localStorage
 
 #### `readCachedState(key: string) → ScenarioState | undefined`
+
 - Reads from `window.localStorage`
 - Returns parsed state or undefined if invalid
 
 #### `writeCachedState(key: string, state: ScenarioState) → void`
+
 - Writes to `window.localStorage` for instant offline resume
 - Silently fails if storage unavailable
 
 #### `clearCachedState(key: string) → void`
+
 - Removes entry from `window.localStorage`
 
 #### `loadSession(childId: string, scenarioId: string) → Promise<ScenarioState | undefined>`
+
 - **Query:** SELECT state FROM scenario_sessions WHERE child_profile_id=? AND scenario_id=?
 - Returns ScenarioState from JSONB column or undefined
 - Validates structure before return (has "nodeId" property)
 
 #### `saveSession(childId: string, state: ScenarioState) → Promise<string | undefined>`
+
 - **Operation:** UPSERT into scenario_sessions on (child_profile_id, scenario_id)
 - **Columns written:**
   - state: JSONB (full ScenarioState)
@@ -190,6 +208,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 - Returns session.id or undefined on error
 
 #### `recordDecision(childId: string, sessionId: string, state: ScenarioState) → Promise<void>`
+
 - **Operation:** UPSERT into scenario_decisions on (session_id, node_id, day_number)
 - **Extract from state.decisions[last]:**
   - node_id: string
@@ -205,6 +224,7 @@ Persisted to `scenario_sessions.state` (JSONB)
 **File:** [src/lib/scenario/useScenarioRunner.ts](src/lib/scenario/useScenarioRunner.ts)
 
 ### ScenarioPersistence Interface
+
 ```typescript
 interface ScenarioPersistence {
   loadSession: (childId: string, scenarioId: string) => Promise<ScenarioState | undefined>;
@@ -216,6 +236,7 @@ interface ScenarioPersistence {
 ### useScenarioRunner Hook
 
 **Props:**
+
 ```typescript
 useScenarioRunner(
   scenario: ScenarioDefinition,
@@ -227,6 +248,7 @@ useScenarioRunner(
 **Default Persistence:** Uses [src/lib/scenario/session.ts](src/lib/scenario/session.ts) functions
 
 **State Returned:**
+
 ```
 - status: "loading" | "ready" | "resumed" | "interrupted"
 - state: ScenarioState (current)
@@ -238,12 +260,14 @@ useScenarioRunner(
 ```
 
 **Resume Logic:**
+
 1. Check localStorage (instant)
 2. Query backend scenario_sessions in parallel
 3. Use newest based on updatedAt timestamp
 4. Sync to localStorage
 
 **Persistence on Decision:**
+
 1. Call `persist(nextState, isDecision=true)`
 2. Call `saveSession()` → get sessionId
 3. If isDecision, call `recordDecision()`
@@ -255,12 +279,15 @@ useScenarioRunner(
 **File:** [src/lib/auth/child-learning.functions.ts](src/lib/auth/child-learning.functions.ts)
 
 ### loadChildScenario
+
 ```typescript
-export const loadChildScenario = createServerFn({ method: "GET" })
-  .validator(z.object({ scenarioId: z.string().min(1).max(128) }))
+export const loadChildScenario = createServerFn({ method: "GET" }).validator(
+  z.object({ scenarioId: z.string().min(1).max(128) }),
+);
 ```
 
 **Handler:**
+
 1. Validate child is authenticated (getCurrentChildContext)
 2. Validate scenario exists (getScenarioDefinition)
 3. Query: `SELECT id, state FROM scenario_sessions WHERE child_profile_id = ? AND scenario_id = ?`
@@ -271,12 +298,13 @@ export const loadChildScenario = createServerFn({ method: "GET" })
 ---
 
 ### saveChildScenario
+
 ```typescript
-export const saveChildScenario = createServerFn({ method: "POST" })
-  .validator(scenarioStateInput)
+export const saveChildScenario = createServerFn({ method: "POST" }).validator(scenarioStateInput);
 ```
 
 **Input Schema (scenarioStateInput):**
+
 ```typescript
 z.object({
   scenarioId: z.string().min(1).max(128),
@@ -288,10 +316,11 @@ z.object({
   goalTarget: z.number().min(0),
   decisions: z.array(z.unknown()).max(200),
   updatedAt: z.string().datetime(),
-}).passthrough()  // Allow additional fields
+}).passthrough(); // Allow additional fields
 ```
 
 **Handler:**
+
 1. Validate child is authenticated
 2. Validate scenario exists (getScenarioDefinition)
 3. UPSERT scenario_sessions on (child_profile_id, scenario_id):
@@ -327,16 +356,18 @@ z.object({
 ## 7. COMPONENTS
 
 ### ScenarioPlayer
+
 **File:** [src/components/scenario/ScenarioPlayer.tsx](src/components/scenario/ScenarioPlayer.tsx)
 
 **Props:**
+
 ```typescript
 interface Props {
   scenario: ScenarioDefinition;
   childId: string;
   onComplete: (payload: { available: number; saved: number; decisions: unknown[] }) => void;
   saving?: boolean;
-  pauseBefore?: string[];  // Node IDs to pause at
+  pauseBefore?: string[]; // Node IDs to pause at
   chapterTitle?: string;
   nextUpLabel?: string;
   onChapterPause?: (payload) => void;
@@ -345,6 +376,7 @@ interface Props {
 ```
 
 **Renders:**
+
 - Header with scenario title, subtitle, progress %
 - Day counter + money strip (pocket, saved, target)
 - Goal card with visual progress
@@ -359,9 +391,11 @@ interface Props {
 ---
 
 ### ScenarioCard (Track View)
+
 **File:** [src/components/tati/Cards.tsx](src/components/tati/Cards.tsx)
 
 Displays scenario as a card in the learning track with:
+
 - Scenario title
 - Status badge
 - Link to scenario route
@@ -371,20 +405,24 @@ Displays scenario as a card in the learning track with:
 ## 8. ROUTES & ROUTE HANDLERS
 
 ### Child Scenario Route (Simple Child Interface)
+
 **File:** [src/routes/child/scenario.$scenarioId.tsx](src/routes/child/scenario.$scenarioId.tsx)
 
 **Route:** `/child/scenario/$scenarioId`
 
 **beforeLoad:**
+
 - Validates scenario is in track via `assertChildActivity()`
 
 **Component:**
+
 - Uses `useChildLearning()` to get child profile
 - Calls `loadChildScenario()` server function
 - Passes custom persistence with `saveChildScenario()`
 - Renders `ScenarioPlayer`
 
 **Persistence Adapter:**
+
 ```typescript
 {
   loadSession: async (_childId, id) => {
@@ -402,26 +440,31 @@ Displays scenario as a card in the learning track with:
 ```
 
 **onComplete Callback:**
+
 - Calls `record.mutateAsync()` with details: `{ saved, available, decisions }`
 - Navigates to `/child/learn`
 
 ---
 
 ### Authenticated Scenario Route (Parent View)
+
 **File:** [src/routes/_authenticated/learn.$childId.scenario.$scenarioId.tsx](src/routes/_authenticated/learn.$childId.scenario.$scenarioId.tsx)
 
 **Route:** `/_authenticated/learn/$childId/scenario/$scenarioId`
 
 **beforeLoad:**
+
 - Validates child is in current family via `assertChildInCurrentFamily()`
 
 **Component:**
+
 - Gets track, scenario definition, chapter info
 - Renders `ScenarioPlayer` with full persistence
 - Supports chapter pause points via `pauseBefore` parameter
 - Calls `record.mutateAsync()` with itemType="scenario"
 
 **Callbacks:**
+
 - `onChapterPause`: Record progress with chapter=true, show celebration
 - `onComplete`: Record progress, navigate to parent dashboard
 
@@ -450,12 +493,15 @@ CREATE TABLE public.scenario_sessions (
 ```
 
 **Indexes:**
+
 - `idx_scenario_sessions_child` on (child_profile_id)
 
 **Triggers:**
+
 - `scenario_sessions_set_updated_at` - Auto-updates updated_at on row changes
 
 **Grants:**
+
 - SELECT, INSERT, UPDATE, DELETE to authenticated role
 - ALL to service_role
 
@@ -477,12 +523,14 @@ CREATE TABLE public.scenario_decisions (
 ```
 
 **Indexes:**
+
 - `idx_scenario_decisions_session` on (session_id)
 - `idx_scenario_decisions_child` on (child_profile_id)
 
 **Deduplication:** UPSERT uses `(session_id, node_id, day_number)` unique constraint with ignoreDuplicates=true
 
 **Grants:**
+
 - SELECT, INSERT, DELETE to authenticated role
 - ALL to service_role
 
@@ -493,6 +541,7 @@ CREATE TABLE public.scenario_decisions (
 **File:** [firestore.rules](firestore.rules) (Firebase) + Supabase RLS
 
 ### scenario_sessions RLS Policies
+
 ```
 Policy: "family manages scenario sessions"
 Type: ALL (SELECT, INSERT, UPDATE, DELETE)
@@ -507,6 +556,7 @@ WITH CHECK: public.owns_child_profile(child_profile_id)
 ---
 
 ### scenario_decisions RLS Policies
+
 ```
 Policy: "family manages scenario decisions"
 Type: ALL (SELECT, INSERT, UPDATE, DELETE)
@@ -521,6 +571,7 @@ WITH CHECK: public.owns_child_profile(child_profile_id)
 ---
 
 ### Firebase Firestore Rules
+
 **File:** [firestore.rules](firestore.rules)
 
 ```
@@ -536,6 +587,7 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ```
 
 **Authorization:**
+
 - `canAccessChild()` = isFamilyAdult OR isAssignedFacilitator OR isAdmin
 - All writes blocked (backend only via service role)
 
@@ -544,6 +596,7 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ## 11. IMPORTS & DEPENDENCIES
 
 ### Core Libraries
+
 - **@tanstack/react-router** - Routing, file routes
 - **@tanstack/react-start** - Server functions (createServerFn)
 - **@supabase/supabase-js** - Database client
@@ -553,6 +606,7 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ### Internal Dependencies
 
 **Scenario System:**
+
 - `@/lib/scenario/types` - Type definitions
 - `@/lib/scenario/engine` - Pure logic
 - `@/lib/scenario/session` - Persistence
@@ -560,26 +614,31 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 - `@/lib/scenario/registry` - Scenario lookup
 
 **Learning & Progress:**
+
 - `@/lib/learning/track` - Track definitions, item lookup
 - `@/lib/learning/types` - Scenario interfaces
 - `@/lib/progress/service` - Record progress
 - `@/lib/gamification/rules` - XP/badge definitions
 
 **Auth & Security:**
+
 - `@/lib/auth/child-learning.functions` - Server RPC
 - `@/lib/auth/use-child-learning` - Child learning hook
 - `@/lib/auth/authorization.server` - Auth checks
 - `@/lib/family` - Family access checks
 
 **Analytics:**
+
 - `@/lib/analytics` - Event tracking (scenario_started, etc.)
 
 **Database:**
+
 - `@/integrations/supabase/client` - Client instance
 - `@/integrations/supabase/client.server` - Admin/service role
 - `@/integrations/supabase/types` - Generated types
 
 **Content:**
+
 - `@/content/scenarios/school-reopening` - Scenario definition
 - `@/content/tracks/save` - Track with scenario items
 
@@ -590,10 +649,12 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 **File:** [src/lib/analytics.ts](src/lib/analytics.ts)
 
 Events tracked for scenarios:
+
 - `scenario_started` - User begins a scenario
 - (Others derived from scenario event name enum)
 
 **Event Structure:**
+
 ```typescript
 {
   eventName: "scenario_started" | ... ,
@@ -668,6 +729,7 @@ Events tracked for scenarios:
 **File:** [src/lib/auth/child-learning.functions.ts](src/lib/auth/child-learning.functions.ts)
 
 ### progressInput (journey_progress schema)
+
 ```typescript
 z.object({
   itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
@@ -675,10 +737,11 @@ z.object({
   score: z.number().int().min(0).nullable().optional(),
   maxScore: z.number().int().min(0).nullable().optional(),
   details: z.record(z.string(), z.unknown()).optional(),
-})
+});
 ```
 
 ### scenarioStateInput (saveChildScenario)
+
 ```typescript
 z.object({
   scenarioId: z.string().min(1).max(128),
@@ -690,15 +753,16 @@ z.object({
   goalTarget: z.number().min(0),
   decisions: z.array(z.unknown()).max(200),
   updatedAt: z.string().datetime(),
-}).passthrough()  // Extra fields allowed (competencies, flags, etc.)
+}).passthrough(); // Extra fields allowed (competencies, flags, etc.)
 ```
 
 ### assertChildActivity Input
+
 ```typescript
 z.object({
   itemType: z.enum(["lesson", "scenario", "assessment", "reflection"]),
   itemId: z.string().min(1).max(128),
-})
+});
 ```
 
 ---
@@ -733,10 +797,12 @@ z.object({
 ## 16. TESTING REFERENCES
 
 **Files with Tests:**
+
 - [tests/firebase/firestore.rules.test.ts](tests/firebase/firestore.rules.test.ts) - RLS validation
 - [src/lib/auth/authorization.test.ts](src/lib/auth/authorization.test.ts) - Child access blocks
 
 **Key Test Assertions:**
+
 ```
 ✓ allows parent/facilitator to read child's scenarioSessions
 ✓ rejects client write to scenarioSessions/session-server
@@ -747,24 +813,27 @@ z.object({
 
 ## 17. MIGRATION HISTORY
 
-| Migration | File | Changes |
-|-----------|------|---------|
-| 0002 | [drizzle/migrations/0002_tati_progress_architecture.sql](drizzle/migrations/0002_tati_progress_architecture.sql) | Initial scenario_sessions, scenario_decisions tables; RLS policies |
-| 0003 | [drizzle/migrations/0003_tati_security_and_journey.sql](drizzle/migrations/0003_tati_security_and_journey.sql) | ALTER scenario_sessions (security adjustments) |
-| 0006 | [drizzle/migrations/0006_tati_security_hardening.sql](drizzle/migrations/0006_tati_security_hardening.sql) | ALTER scenario_sessions (hardening updates) |
-| 0007 | [drizzle/migrations/0007_tati_privacy_integrity.sql](drizzle/migrations/0007_tati_privacy_integrity.sql) | Make scenario decisions idempotent |
+| Migration | File                                                                                                             | Changes                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 0002      | [drizzle/migrations/0002_tati_progress_architecture.sql](drizzle/migrations/0002_tati_progress_architecture.sql) | Initial scenario_sessions, scenario_decisions tables; RLS policies |
+| 0003      | [drizzle/migrations/0003_tati_security_and_journey.sql](drizzle/migrations/0003_tati_security_and_journey.sql)   | ALTER scenario_sessions (security adjustments)                     |
+| 0006      | [drizzle/migrations/0006_tati_security_hardening.sql](drizzle/migrations/0006_tati_security_hardening.sql)       | ALTER scenario_sessions (hardening updates)                        |
+| 0007      | [drizzle/migrations/0007_tati_privacy_integrity.sql](drizzle/migrations/0007_tati_privacy_integrity.sql)         | Make scenario decisions idempotent                                 |
 
 ---
 
 ## 18. CONFIGURATION & ENVIRONMENT
 
 **Drizzle Config:**
+
 - [drizzle.config.ts](drizzle.config.ts)
 
 **Supabase:**
+
 - [supabase/config.toml](supabase/config.toml)
 
 **Firebase:**
+
 - [firestore.rules](firestore.rules)
 - [firebase.json](firebase.json)
 
@@ -772,21 +841,21 @@ z.object({
 
 ## 19. SUMMARY TABLE
 
-| Component | Type | Location | Status |
-|-----------|------|----------|--------|
-| **Scenario Content** | Data | src/content/scenarios/ | 1 active (school-reopening) |
-| **Scenario Registry** | Registry | src/lib/scenario/registry.ts | Active |
-| **Core Engine** | Logic | src/lib/scenario/engine.ts | Pure, reusable |
-| **Persistence** | RPC | src/lib/scenario/session.ts | Database reads/writes |
-| **React Hook** | Hook | src/lib/scenario/useScenarioRunner.ts | Resume + cache logic |
-| **Server Functions** | RPC | src/lib/auth/child-learning.functions.ts | loadChildScenario, saveChildScenario |
-| **ScenarioPlayer** | Component | src/components/scenario/ScenarioPlayer.tsx | Full UI renderer |
-| **Route (Child)** | Route | src/routes/child/scenario.$scenarioId.tsx | Simple interface |
-| **Route (Parent)** | Route | src/routes/_authenticated/learn.$childId.scenario.$scenarioId.tsx | Full featured |
-| **Database** | Schema | scenario_sessions, scenario_decisions | Persisted state + decisions |
-| **Security** | RLS | Supabase + Firestore | Family-scoped access |
-| **Types** | TypeScript | src/lib/scenario/types.ts | Full interface definitions |
-| **Analytics** | Events | src/lib/analytics.ts | scenario_started event |
+| Component             | Type       | Location                                                          | Status                               |
+| --------------------- | ---------- | ----------------------------------------------------------------- | ------------------------------------ |
+| **Scenario Content**  | Data       | src/content/scenarios/                                            | 1 active (school-reopening)          |
+| **Scenario Registry** | Registry   | src/lib/scenario/registry.ts                                      | Active                               |
+| **Core Engine**       | Logic      | src/lib/scenario/engine.ts                                        | Pure, reusable                       |
+| **Persistence**       | RPC        | src/lib/scenario/session.ts                                       | Database reads/writes                |
+| **React Hook**        | Hook       | src/lib/scenario/useScenarioRunner.ts                             | Resume + cache logic                 |
+| **Server Functions**  | RPC        | src/lib/auth/child-learning.functions.ts                          | loadChildScenario, saveChildScenario |
+| **ScenarioPlayer**    | Component  | src/components/scenario/ScenarioPlayer.tsx                        | Full UI renderer                     |
+| **Route (Child)**     | Route      | src/routes/child/scenario.$scenarioId.tsx                         | Simple interface                     |
+| **Route (Parent)**    | Route      | src/routes/_authenticated/learn.$childId.scenario.$scenarioId.tsx | Full featured                        |
+| **Database**          | Schema     | scenario_sessions, scenario_decisions                             | Persisted state + decisions          |
+| **Security**          | RLS        | Supabase + Firestore                                              | Family-scoped access                 |
+| **Types**             | TypeScript | src/lib/scenario/types.ts                                         | Full interface definitions           |
+| **Analytics**         | Events     | src/lib/analytics.ts                                              | scenario_started event               |
 
 ---
 

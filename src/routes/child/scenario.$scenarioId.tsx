@@ -10,7 +10,29 @@ import {
   saveChildScenario,
 } from "@/lib/auth/child-learning.functions";
 import type { ScenarioState } from "@/lib/scenario/types";
+import type { ScenarioPersistence } from "@/lib/scenario/useScenarioRunner";
 import { Screen, Card, PrimaryButton } from "@/components/learning/primitives";
+
+const scenarioPersistence: ScenarioPersistence = {
+  loadSession: async (_childId, id) => {
+    const result = await loadChildScenario({ data: { scenarioId: id } });
+    return {
+      state: result.state as ScenarioState,
+      version: result.version,
+      sessionId: result.sessionId ?? undefined,
+    };
+  },
+  saveSession: async (_childId, state, expectedVersion) => {
+    const result = await saveChildScenario({
+      data: {
+        ...state,
+        expectedVersion,
+      },
+    });
+    return { sessionId: result.sessionId, version: result.version };
+  },
+  recordDecision: async () => undefined,
+};
 
 export const Route = createFileRoute("/child/scenario/$scenarioId")({
   beforeLoad: async ({ params }) => {
@@ -45,19 +67,6 @@ function ScenarioPage() {
   const item = track.sequence.find((entry) => entry.kind === "scenario" && entry.id === scenarioId);
   const scenario = getScenarioDefinition(item?.scenarioId ?? scenarioId.split("--")[0]!);
   const childId = data?.profile.id ?? "child";
-  const persistence = {
-    loadSession: async (_childId: string, id: string) => {
-      const result = await loadChildScenario({ data: { scenarioId: id } });
-      return result.state as ScenarioState | undefined;
-    },
-    saveSession: async (_childId: string, state: ScenarioState) => {
-      const result = await saveChildScenario({
-        data: state as unknown as Parameters<typeof saveChildScenario>[0]["data"],
-      });
-      return result.sessionId;
-    },
-    recordDecision: async () => undefined,
-  };
 
   if (isLoading || !data || !snapshot) {
     return (
@@ -89,7 +98,7 @@ function ScenarioPage() {
     <ScenarioPlayer
       scenario={scenario}
       childId={childId}
-      persistence={persistence}
+      persistence={scenarioPersistence}
       saving={record.isPending}
       chapterStage={item?.stage}
       dayNumber={snapshot.journey.dayNumber}

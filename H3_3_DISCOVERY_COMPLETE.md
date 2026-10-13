@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-26  
 **Phase:** H3.3 School Administration  
-**Status:** READ-ONLY DISCOVERY COMPLETE  
+**Status:** READ-ONLY DISCOVERY COMPLETE
 
 ---
 
@@ -24,6 +24,7 @@ H3.3 discovery has been comprehensively completed. All 27 phases have been execu
 ## WHAT WAS DISCOVERED
 
 ### Current State (H3.2.1–H3.2.9)
+
 - ✅ Firebase Auth + Firestore role-based authorization working
 - ✅ facilitatorAssignments → Links facilitators to learners (H3.2.2)
 - ✅ academyCohorts → Facilitator-owned learner groups (H3.2.9)
@@ -33,6 +34,7 @@ H3.3 discovery has been comprehensively completed. All 27 phases have been execu
 - ❌ NO school-level grouping of facilitators
 
 ### Proposed H3.3 Architecture
+
 - ✅ Create /schools/{schoolId} collection
 - ✅ Add optional schoolId to facilitatorAssignments (backward compatible)
 - ✅ Add optional schoolId to academyCohorts (backward compatible)
@@ -41,6 +43,7 @@ H3.3 discovery has been comprehensively completed. All 27 phases have been execu
 - ✅ Maintain full backward compatibility with H3.2.1–H3.2.9
 
 ### Security & Privacy
+
 - ✅ Multi-tenant isolation enforced at Firestore rules level
 - ✅ School admin access limited to own school
 - ✅ No access to parentInsights (family-private data)
@@ -48,6 +51,7 @@ H3.3 discovery has been comprehensively completed. All 27 phases have been execu
 - ✅ Cross-school access prevented
 
 ### Backward Compatibility
+
 - ✅ H3.2.1–H3.2.9 continue unchanged
 - ✅ Optional schoolId fields (don't break existing data)
 - ✅ Gradual migration path
@@ -93,9 +97,10 @@ No implementation work has begun or will begin until explicit authorization is p
 ### ❌ H3.4+ NOT CONSIDERED
 
 This discovery is scoped to H3.3 only. No work on:
+
 - H3.4 Analytics
 - H3.5 Notifications
-- H3.6 Parent Dashboard  
+- H3.6 Parent Dashboard
 - Other phases
 
 ---

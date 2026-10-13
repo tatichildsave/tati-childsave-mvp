@@ -43,19 +43,14 @@ describe("Timestamp Normalization (Phase 7C4A Security Correction)", () => {
       tatiId: "TATI-TSNORM",
     });
 
-    await db
-      .collection("families")
-      .doc(familyId)
-      .collection("children")
-      .doc(childId)
-      .set({
-        tatiId: "TATI-TSNORM",
-        name: "Timestamp Test",
-        age: 10,
-        avatar: "avatar-5",
-        tier: "basic",
-        curriculumLevel: 1,
-      });
+    await db.collection("families").doc(familyId).collection("children").doc(childId).set({
+      tatiId: "TATI-TSNORM",
+      name: "Timestamp Test",
+      age: 10,
+      avatar: "avatar-5",
+      tier: "basic",
+      curriculumLevel: 1,
+    });
   });
 
   afterEach(async () => {
@@ -73,12 +68,7 @@ describe("Timestamp Normalization (Phase 7C4A Security Correction)", () => {
   });
 
   afterAll(async () => {
-    await db
-      .collection("families")
-      .doc(familyId)
-      .collection("children")
-      .doc(childId)
-      .delete();
+    await db.collection("families").doc(familyId).collection("children").doc(childId).delete();
     await db.collection("childCredentials").doc("tati-test-ts").delete();
   });
 

@@ -1,4 +1,5 @@
 # PHASE G3 READ-ONLY AUTHENTICATION AUDIT
+
 ## Comprehensive Analysis of Existing TATI Child Authentication System
 
 **Audit Date**: 2025-01-24  
@@ -24,11 +25,12 @@ Learner routes + child content
 ```
 
 **Key Findings**:
+
 - ✅ Existing system is secure and well-structured
 - ✅ Session lifecycle is properly managed (creation, validation, expiration, revocation)
 - ✅ No duplicate authentication abstractions
 - ✅ Authorization checks are centralized (requireChildSession, requireChildResource)
-- ✅ Clear separation between parent routes (/parent/*) and child routes (/child/*)
+- ✅ Clear separation between parent routes (/parent/_) and child routes (/child/_)
 - ✅ Backend provider is already abstracted (getActiveBackendProviderName === "supabase")
 - ⚠️ No Firebase integration yet (ready for G3)
 - ⚠️ 40 pre-existing firestore.rules.test.ts failures (unrelated to authentication)
@@ -122,27 +124,28 @@ export const childLogin = createServerFn({ method: "POST" })
 
 ```typescript
 export async function createChildSession(childProfileId: string) {
-  const token = randomBytes(32).toString("base64url");        // 256-bit random
+  const token = randomBytes(32).toString("base64url"); // 256-bit random
   const createdAt = new Date();
-  const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_MS);  // +30 min
-  
+  const expiresAt = new Date(createdAt.getTime() + SESSION_TTL_MS); // +30 min
+
   const { data, error } = await db()
     .from("child_sessions")
     .insert({
       child_profile_id: childProfileId,
-      token_hash: sessionTokenHash(token),  // SHA256(token)
+      token_hash: sessionTokenHash(token), // SHA256(token)
       created_at: createdAt.toISOString(),
       expires_at: expiresAt.toISOString(),
     })
     .select("id, child_profile_id, created_at, expires_at, revoked_at")
     .single();
-  
+
   if (error) throw error;
   return { token, session: data as ChildSessionRow };
 }
 ```
 
 **Browser State After Login**:
+
 ```
 Cookie: tati_child_session = base64url(256-bit random)
 Secure: HTTP-only, SameSite=Lax
@@ -165,7 +168,7 @@ export const getChildSession = createServerFn({ method: "GET" }).handler(async (
   // 2. Validate session via Supabase query
   const session = await validateChildSession(token);
   if (!session) {
-    setCookie(COOKIE_NAME, "", cookieOptions(0));  // Clear cookie
+    setCookie(COOKIE_NAME, "", cookieOptions(0)); // Clear cookie
     return null;
   }
 
@@ -187,13 +190,13 @@ export async function validateChildSession(token: string) {
   const { data, error } = await db()
     .from("child_sessions")
     .select("id, child_profile_id, created_at, expires_at, revoked_at")
-    .eq("token_hash", sessionTokenHash(token))  // SHA256(token) lookup
+    .eq("token_hash", sessionTokenHash(token)) // SHA256(token) lookup
     .maybeSingle();
 
   if (error || !data) return null;
 
   const session = data as ChildSessionRow;
-  
+
   // Validate expiration
   if (session.revoked_at) return null;
   if (Date.parse(session.expires_at) <= Date.now()) return null;
@@ -223,10 +226,12 @@ export type ChildSession = {
 
 ```typescript
 export const assertChildActivity = createServerFn({ method: "GET" })
-  .validator(z.object({ 
-    itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
-    itemId: z.string().min(1).max(128) 
-  }))
+  .validator(
+    z.object({
+      itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
+      itemId: z.string().min(1).max(128),
+    }),
+  )
   .handler(async ({ data }) => {
     // 1. Get current child from session cookie
     const childId = await currentChildId();
@@ -242,12 +247,11 @@ export const assertChildActivity = createServerFn({ method: "GET" })
 ```
 
 **Track Item Verification**:
+
 ```typescript
 function trackItemExists(itemType: string, itemId: string): boolean {
-  const track = getTrack("save");  // TATI Junior SAVE track
-  return track.sequence.some((item) => 
-    item.kind === itemType && item.id === itemId
-  );
+  const track = getTrack("save"); // TATI Junior SAVE track
+  return track.sequence.some((item) => item.kind === itemType && item.id === itemId);
 }
 ```
 
@@ -261,7 +265,7 @@ function trackItemExists(itemType: string, itemId: string): boolean {
 export const childLogout = createServerFn({ method: "POST" }).handler(async () => {
   // 1. Read cookie
   const token = getCookie(COOKIE_NAME);
-  
+
   // 2. Validate and revoke session
   if (token) {
     const session = await validateChildSession(token);
@@ -282,7 +286,7 @@ export async function revokeChildSession(sessionId: string): Promise<void> {
     .from("child_sessions")
     .update({ revoked_at: new Date().toISOString() })
     .eq("id", sessionId)
-    .is("revoked_at", null);  // Idempotent: only update if not already revoked
+    .is("revoked_at", null); // Idempotent: only update if not already revoked
   if (error) throw error;
 }
 ```
@@ -296,12 +300,12 @@ export async function revokeChildSession(sessionId: string): Promise<void> {
 ```typescript
 export const Route = createFileRoute("/child")({
   beforeLoad: async ({ location }) => {
-    if (location.pathname === "/child/login") return;  // Skip guard for login
+    if (location.pathname === "/child/login") return; // Skip guard for login
 
     // Call getChildSession before rendering any /child/* route
     const session = await getChildSession();
     if (!session) throw redirect({ to: "/child/login" });
-    
+
     return { childSession: session };
   },
   component: ChildLayout,
@@ -309,6 +313,7 @@ export const Route = createFileRoute("/child")({
 ```
 
 **All child routes inherit this guard**:
+
 - `/child/home`
 - `/child/learn`
 - `/child/scenario/$scenarioId`
@@ -316,6 +321,7 @@ export const Route = createFileRoute("/child")({
 - etc.
 
 **Route Structure**:
+
 ```
 /child (protected)
   ├── /login (public, SSR: false)
@@ -337,21 +343,21 @@ export const Route = createFileRoute("/child")({
 **File**: `src/lib/auth/child-identity.server.ts`
 
 ```typescript
-const SCRYPT_COST = 16_384;           // N=2^14
-const SCRYPT_BLOCK_SIZE = 8;          // r=8
-const SCRYPT_PARALLELIZATION = 1;     // p=1
-const SCRYPT_KEY_LENGTH = 64;         // 512 bits
+const SCRYPT_COST = 16_384; // N=2^14
+const SCRYPT_BLOCK_SIZE = 8; // r=8
+const SCRYPT_PARALLELIZATION = 1; // p=1
+const SCRYPT_KEY_LENGTH = 64; // 512 bits
 
 export async function hashChildPin(pin: string): Promise<string> {
   validatePin(pin);
-  const salt = randomBytes(16);        // 128-bit random salt
-  
+  const salt = randomBytes(16); // 128-bit random salt
+
   const derivedKey = await deriveKey(pin, salt, SCRYPT_KEY_LENGTH, {
     N: SCRYPT_COST,
     r: SCRYPT_BLOCK_SIZE,
     p: SCRYPT_PARALLELIZATION,
   });
-  
+
   // Format: scrypt$16384$8$1$<salt>$<derivedKey>
   return [
     "scrypt",
@@ -369,26 +375,26 @@ export async function hashChildPin(pin: string): Promise<string> {
 ```typescript
 export async function verifyChildPin(pin: string, encodedHash: string): Promise<boolean> {
   if (!PIN_PATTERN.test(pin)) return false;
-  
+
   const [algorithm, cost, blockSize, parallelization, saltText, keyText] = encodedHash.split("$");
   if (algorithm !== "scrypt" || !saltText || !keyText) return false;
-  
+
   const salt = Buffer.from(saltText, "base64url");
   const expected = Buffer.from(keyText, "base64url");
-  
+
   const derivedKey = await deriveKey(pin, salt, expected.length, {
     N: Number(cost),
     r: Number(blockSize),
     p: Number(parallelization),
   });
-  
+
   // Constant-time comparison (prevent timing attacks)
-  return derivedKey.length === expected.length && 
-         timingSafeEqual(derivedKey, expected);
+  return derivedKey.length === expected.length && timingSafeEqual(derivedKey, expected);
 }
 ```
 
 **Security Properties**:
+
 - ✅ Salt: 128-bit random per PIN
 - ✅ KDF: scrypt (memory-hard, resistant to GPU/ASIC attacks)
 - ✅ Cost: N=2^14 (16,384) iterations
@@ -409,6 +415,7 @@ function sessionTokenHash(token: string): string {
 ```
 
 **Security Properties**:
+
 - ✅ Token: 256-bit random (32 bytes, base64url)
 - ✅ Storage: SHA256 hash of token in DB (token never stored plaintext)
 - ✅ Transmission: HTTP-only cookie (JavaScript cannot access)
@@ -424,23 +431,22 @@ function sessionTokenHash(token: string): string {
 
 ```typescript
 export function requireChildSession(context: AuthContext, childId?: string): ChildSession {
-  if (context.kind !== "child") 
-    throw new AuthorizationError("A child session is required.");
-  
-  if (context.revokedAt) 
-    throw new AuthorizationError("This child session has been revoked.");
-  
-  if (Date.parse(context.expiresAt) <= Date.now()) 
+  if (context.kind !== "child") throw new AuthorizationError("A child session is required.");
+
+  if (context.revokedAt) throw new AuthorizationError("This child session has been revoked.");
+
+  if (Date.parse(context.expiresAt) <= Date.now())
     throw new AuthorizationError("This child session has expired.");
-  
-  if (childId && context.childId !== childId) 
+
+  if (childId && context.childId !== childId)
     throw new AuthorizationError("This child session cannot access another learner.");
-  
+
   return context;
 }
 ```
 
 **Enforced Invariants**:
+
 1. Child sessions **cannot elevate to parent/facilitator/admin**
 2. Expired sessions **automatically rejected**
 3. Revoked sessions **immediately rejected**
@@ -483,23 +489,31 @@ export function requireChildSession(context: AuthContext, childId?: string): Chi
 ```typescript
 export const getChildLearningData = createServerFn({ method: "GET" }).handler(async () => {
   const childId = await currentChildId();
-  
+
   const [profile, progressResult, competencyResult, achievementResult, assessmentResult] =
     await Promise.all([
       loadProfile(childId),
-      supabase.from("journey_progress")
-        .select("id, track_id, item_type, item_id, status, score, max_score, details, created_at, updated_at")
+      supabase
+        .from("journey_progress")
+        .select(
+          "id, track_id, item_type, item_id, status, score, max_score, details, created_at, updated_at",
+        )
         .eq("child_profile_id", childId)
         .eq("track_id", "save")
         .order("updated_at", { ascending: true }),
-      supabase.from("learner_competencies")
+      supabase
+        .from("learner_competencies")
         .select("competency_id, score, level, evidence")
         .eq("child_profile_id", childId),
-      supabase.from("learner_achievements")
+      supabase
+        .from("learner_achievements")
         .select("achievement_id, celebrated, awarded_at")
         .eq("child_profile_id", childId),
-      supabase.from("assessment_attempts")
-        .select("assessment_id, assessment_type, points, max_points, competency_scores, completed_at")
+      supabase
+        .from("assessment_attempts")
+        .select(
+          "assessment_id, assessment_type, points, max_points, competency_scores, completed_at",
+        )
         .eq("child_profile_id", childId),
     ]);
 
@@ -514,13 +528,14 @@ export const getChildLearningData = createServerFn({ method: "GET" }).handler(as
 ```
 
 **Returns**:
+
 ```typescript
 type ChildLearningData = {
-  profile: ChildLearningProfile;        // child_profiles row
-  progress: ProgressEvent[];            // journey_progress rows
-  competencies: CompetencyScore[];      // learner_competencies rows
-  achievements: Achievement[];          // learner_achievements rows
-  assessments: AssessmentAttempt[];     // assessment_attempts rows
+  profile: ChildLearningProfile; // child_profiles row
+  progress: ProgressEvent[]; // journey_progress rows
+  competencies: CompetencyScore[]; // learner_competencies rows
+  achievements: Achievement[]; // learner_achievements rows
+  assessments: AssessmentAttempt[]; // assessment_attempts rows
 };
 ```
 
@@ -528,10 +543,12 @@ type ChildLearningData = {
 
 ```typescript
 export const assertChildActivity = createServerFn({ method: "GET" })
-  .validator(z.object({
-    itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
-    itemId: z.string().min(1).max(128),
-  }))
+  .validator(
+    z.object({
+      itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
+      itemId: z.string().min(1).max(128),
+    }),
+  )
   .handler(async ({ data }) => {
     // 1. Validate session
     const childId = await currentChildId();
@@ -563,7 +580,7 @@ export const loadChildScenario = createServerFn({ method: "GET" })
       .eq("child_profile_id", childId)
       .eq("scenario_id", data.scenarioId)
       .maybeSingle();
-    
+
     if (error || !scenario) return { state: undefined };
     return { state: scenario.state };
   });
@@ -586,7 +603,7 @@ export const saveChildScenario = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    
+
     if (error) throw error;
     return { sessionId: result.id };
   });
@@ -600,97 +617,97 @@ export const saveChildScenario = createServerFn({ method: "POST" })
 
 #### **child_profiles**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | Primary key |
-| family_id | UUID | Foreign key to families |
-| tati_id | TEXT | Unique (TATI-XXXXXXXX format) |
-| name | TEXT | Child name |
-| age | INT | Age (8-12 for Junior) |
-| avatar | TEXT | Avatar selection |
-| tier | TEXT | "junior", "teen", "plus" |
-| curriculum_level | TEXT | null or specific level |
-| created_at | TIMESTAMP | |
-| updated_at | TIMESTAMP | |
+| Column           | Type      | Notes                         |
+| ---------------- | --------- | ----------------------------- |
+| id               | UUID      | Primary key                   |
+| family_id        | UUID      | Foreign key to families       |
+| tati_id          | TEXT      | Unique (TATI-XXXXXXXX format) |
+| name             | TEXT      | Child name                    |
+| age              | INT       | Age (8-12 for Junior)         |
+| avatar           | TEXT      | Avatar selection              |
+| tier             | TEXT      | "junior", "teen", "plus"      |
+| curriculum_level | TEXT      | null or specific level        |
+| created_at       | TIMESTAMP |                               |
+| updated_at       | TIMESTAMP |                               |
 
 #### **child_credentials**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| child_profile_id | UUID | Primary key, FK to child_profiles |
-| pin_hash | TEXT | scrypt$cost$blockSize$parallelization$salt$derivedKey |
-| active | BOOLEAN | Is credential active |
-| revoked_at | TIMESTAMP | null or timestamp |
-| rotated_at | TIMESTAMP | Last rotation time |
+| Column           | Type      | Notes                                                 |
+| ---------------- | --------- | ----------------------------------------------------- |
+| child_profile_id | UUID      | Primary key, FK to child_profiles                     |
+| pin_hash         | TEXT      | scrypt$cost$blockSize$parallelization$salt$derivedKey |
+| active           | BOOLEAN   | Is credential active                                  |
+| revoked_at       | TIMESTAMP | null or timestamp                                     |
+| rotated_at       | TIMESTAMP | Last rotation time                                    |
 
 #### **child_sessions**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | Primary key |
-| child_profile_id | UUID | Foreign key to child_profiles |
-| token_hash | TEXT | Unique (SHA256(token)) |
-| created_at | TIMESTAMP | Session creation time |
-| expires_at | TIMESTAMP | Expiration time (+30 min) |
-| revoked_at | TIMESTAMP | null or revocation time |
+| Column           | Type      | Notes                         |
+| ---------------- | --------- | ----------------------------- |
+| id               | UUID      | Primary key                   |
+| child_profile_id | UUID      | Foreign key to child_profiles |
+| token_hash       | TEXT      | Unique (SHA256(token))        |
+| created_at       | TIMESTAMP | Session creation time         |
+| expires_at       | TIMESTAMP | Expiration time (+30 min)     |
+| revoked_at       | TIMESTAMP | null or revocation time       |
 
 ### 5.2 Child Learning Tables
 
 #### **journey_progress**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | Primary key |
-| child_profile_id | UUID | Foreign key to child_profiles |
-| track_id | TEXT | "save", "teen-track", etc. |
-| item_type | TEXT | "lesson", "scenario", "assessment", "reflection" |
-| item_id | TEXT | Track item ID |
-| status | TEXT | "started", "completed", "abandoned" |
-| score | INT | Points earned (nullable) |
-| max_score | INT | Maximum possible points (nullable) |
-| details | JSONB | Item-specific metadata |
-| created_at | TIMESTAMP | |
-| updated_at | TIMESTAMP | |
+| Column           | Type      | Notes                                            |
+| ---------------- | --------- | ------------------------------------------------ |
+| id               | UUID      | Primary key                                      |
+| child_profile_id | UUID      | Foreign key to child_profiles                    |
+| track_id         | TEXT      | "save", "teen-track", etc.                       |
+| item_type        | TEXT      | "lesson", "scenario", "assessment", "reflection" |
+| item_id          | TEXT      | Track item ID                                    |
+| status           | TEXT      | "started", "completed", "abandoned"              |
+| score            | INT       | Points earned (nullable)                         |
+| max_score        | INT       | Maximum possible points (nullable)               |
+| details          | JSONB     | Item-specific metadata                           |
+| created_at       | TIMESTAMP |                                                  |
+| updated_at       | TIMESTAMP |                                                  |
 
 #### **learner_competencies**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| child_profile_id | UUID | FK to child_profiles |
-| competency_id | TEXT | Competency identifier |
-| score | INT | Competency score |
-| level | TEXT | "novice", "practitioner", "expert" |
-| evidence | JSONB | Proof of competency |
+| Column           | Type  | Notes                              |
+| ---------------- | ----- | ---------------------------------- |
+| child_profile_id | UUID  | FK to child_profiles               |
+| competency_id    | TEXT  | Competency identifier              |
+| score            | INT   | Competency score                   |
+| level            | TEXT  | "novice", "practitioner", "expert" |
+| evidence         | JSONB | Proof of competency                |
 
 #### **learner_achievements**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| child_profile_id | UUID | FK to child_profiles |
-| achievement_id | TEXT | Badge identifier |
-| celebrated | BOOLEAN | Has been shown to child |
-| awarded_at | TIMESTAMP | Award date |
+| Column           | Type      | Notes                   |
+| ---------------- | --------- | ----------------------- |
+| child_profile_id | UUID      | FK to child_profiles    |
+| achievement_id   | TEXT      | Badge identifier        |
+| celebrated       | BOOLEAN   | Has been shown to child |
+| awarded_at       | TIMESTAMP | Award date              |
 
 #### **assessment_attempts**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| child_profile_id | UUID | FK to child_profiles |
-| assessment_id | TEXT | Assessment identifier |
-| assessment_type | TEXT | "pre-test", "scenario-quiz", "reflection" |
-| points | INT | Points earned |
-| max_points | INT | Maximum points |
-| competency_scores | JSONB | Per-competency breakdown |
-| completed_at | TIMESTAMP | Completion time |
+| Column            | Type      | Notes                                     |
+| ----------------- | --------- | ----------------------------------------- |
+| child_profile_id  | UUID      | FK to child_profiles                      |
+| assessment_id     | TEXT      | Assessment identifier                     |
+| assessment_type   | TEXT      | "pre-test", "scenario-quiz", "reflection" |
+| points            | INT       | Points earned                             |
+| max_points        | INT       | Maximum points                            |
+| competency_scores | JSONB     | Per-competency breakdown                  |
+| completed_at      | TIMESTAMP | Completion time                           |
 
 #### **scenario_sessions**
 
-| Column | Type | Notes |
-|--------|------|-------|
-| child_profile_id | UUID | FK to child_profiles |
-| scenario_id | TEXT | Scenario identifier |
-| state | JSONB | Full scenario engine state |
-| updated_at | TIMESTAMP | Last update |
+| Column           | Type      | Notes                      |
+| ---------------- | --------- | -------------------------- |
+| child_profile_id | UUID      | FK to child_profiles       |
+| scenario_id      | TEXT      | Scenario identifier        |
+| state            | JSONB     | Full scenario engine state |
+| updated_at       | TIMESTAMP | Last update                |
 
 ---
 
@@ -703,7 +720,7 @@ const availableProviders = new Set<BackendProviderName>(["supabase", "firebase"]
 
 /** Supabase remains the active provider until an explicit migration cutover. */
 export function getActiveBackendProviderName(): BackendProviderName {
-  return "supabase";  // NEVER CHANGED DURING G3
+  return "supabase"; // NEVER CHANGED DURING G3
 }
 ```
 
@@ -736,7 +753,7 @@ export interface TatiApplicationServices {
 export type AuthenticatedUser = {
   kind: "user";
   userId: string;
-  roles: readonly AppRole[];  // "parent" | "facilitator" | "admin"
+  roles: readonly AppRole[]; // "parent" | "facilitator" | "admin"
 };
 
 // Child context (learner)
@@ -756,10 +773,10 @@ export type AuthContext = AuthenticatedUser | ChildSession;
 **Authorization Helpers**:
 
 ```typescript
-export function requireChildSession(context: AuthContext, childId?: string): ChildSession
-export function requireChildResource(context: AuthContext, resourceChildId: string): ChildSession
-export function requireAuthenticatedUser(context: AuthContext): AuthenticatedUser
-export function requireParent(context: AuthContext): AuthenticatedUser
+export function requireChildSession(context: AuthContext, childId?: string): ChildSession;
+export function requireChildResource(context: AuthContext, resourceChildId: string): ChildSession;
+export function requireAuthenticatedUser(context: AuthContext): AuthenticatedUser;
+export function requireParent(context: AuthContext): AuthenticatedUser;
 ```
 
 ---
@@ -767,6 +784,7 @@ export function requireParent(context: AuthContext): AuthenticatedUser
 ## 8. CURRENT ARCHITECTURE STRENGTHS
 
 ✅ **Session Management**
+
 - Secure token generation (256-bit random)
 - Token hashing in database (SHA256)
 - HTTP-only cookie transmission
@@ -775,12 +793,14 @@ export function requireParent(context: AuthContext): AuthenticatedUser
 - Constant-time comparison
 
 ✅ **PIN Security**
+
 - Strong hashing (scrypt with cost 2^14)
 - Random salt (128-bit)
 - Large key length (512 bits)
 - Prevents dictionary/brute-force attacks
 
 ✅ **Authorization Enforcement**
+
 - Type-safe context (AuthContext discriminated union)
 - Expiration checked on every request
 - Revocation checked on every request
@@ -788,12 +808,14 @@ export function requireParent(context: AuthContext): AuthenticatedUser
 - Cross-child access prevented
 
 ✅ **Child/Parent Separation**
+
 - /child/* routes (protected by ChildSession)
 - /parent/* routes (protected by AuthenticatedUser)
 - Cannot confuse roles
 - Separate authentication paths
 
 ✅ **Developer Experience**
+
 - Clear naming conventions (requireChildSession, requireChildResource, etc.)
 - Type-safe authorization
 - Centralized error handling (AuthorizationError)
@@ -845,6 +867,7 @@ TATI ID + PIN → ChildSession + Firebase Identity
 ```
 
 **Implementation Approach**:
+
 1. Extend `ChildSession` OR create `FirebaseChildContext` (new type)
 2. Add optional Firebase UID to context
 3. Create `getAuthenticatedChild()` that handles both authentication paths
@@ -875,7 +898,7 @@ TATI ID + PIN → ChildSession + Firebase Identity
 ✅ Secure (scrypt PIN hashing, token randomization, constant-time comparison)  
 ✅ Well-Structured (clear separation of concerns, type-safe authorization)  
 ✅ Ready for Extension (existing abstractions are appropriate for G3)  
-✅ NOT blocking G3 (no refactoring needed, build on top)  
+✅ NOT blocking G3 (no refactoring needed, build on top)
 
 **G3 should:**
 

@@ -1,4 +1,5 @@
 # PHASE B + C IMPLEMENTATION REPORT
+
 **H3.3 School Administration — Data Integration & UI Completion**
 
 **Status:** COMPLETE  
@@ -16,6 +17,7 @@ H3.3 School Administration is now fully implemented across three phases:
 - **Phase C (UI Completion):** Full admin dashboard with five functional tabs ✅
 
 **Key Achievements:**
+
 - ✅ School-level data queries with server-side authorization
 - ✅ Facilitator management interface (view, assignments, cohort overview)
 - ✅ Learner roster with school-scoped aggregation
@@ -33,17 +35,20 @@ H3.3 School Administration is now fully implemented across three phases:
 **Function:** `getFacilitatorsBySchool(schoolId: string)`
 
 **Implementation:**
+
 - Query `academyCohorts` collection filtered by `schoolId`
 - Extract unique facilitators from cohort ownership
 - Fetch facilitator profiles from `/users/{uid}`
 - Return: `SchoolFacilitatorSummary[]` with email, displayName, cohortCount, learnerCount
 
 **Authorization:**
+
 - Firestore rule: `canAccessSchool(schoolId)` checks isAdmin() || isSchoolAdmin(schoolId)
 - Client-side: None required (server-side enforcement)
 - Result: School admins see only their school's facilitators
 
 **Test Coverage:**
+
 - ✅ Returns empty array for school with no cohorts
 - ✅ Extracts unique facilitators correctly
 - ✅ Deduplicates across multiple cohorts
@@ -56,22 +61,26 @@ H3.3 School Administration is now fully implemented across three phases:
 **Function:** `getCohortsBySchool(schoolId: string)`
 
 **Implementation:**
+
 - Query `academyCohorts` collection filtered by `schoolId`
 - Include both active and archived cohorts
 - Fetch facilitator profiles for each cohort
 - Return: `SchoolCohortSummary[]` with name, status, learnerCount, facilitatorName
 
 **Data Model Change:**
+
 - Added optional `schoolId?: string` field to `AcademyCohort` interface
 - Updated Firestore rules to read cohorts with `canAccessSchool()` check
 - Backward compatible: existing cohorts without schoolId unaffected
 
 **Authorization:**
+
 - Firestore rule: All reads require `canAccessSchool(schoolId)`
 - Optional field allows gradual migration
 - Existing cohorts continue via facilitator ownership pattern
 
 **Test Coverage:**
+
 - ✅ Returns all cohorts (active and archived) for school
 - ✅ Filters by schoolId correctly
 - ✅ Fetches facilitator profiles
@@ -82,21 +91,25 @@ H3.3 School Administration is now fully implemented across three phases:
 
 **File:** `src/lib/academy/cohort-data.ts`  
 **Changes:**
+
 - Added optional `schoolId?: string` to `CreateCohortInput` type
 - Added optional `schoolId?: string` to `UpdateCohortInput` type
 - Updated Firestore rules to allow schoolId reads via `canAccessSchool()`
 
 **Implementation:**
+
 - `facilitatorAssignments` can optionally include `schoolId` field
 - Enables direct facilitator-to-school assignment (future optimization)
 - Preserves existing facilitator-centric authorization
 
 **Backward Compatibility:**
+
 - Existing assignments without `schoolId` continue working
 - No data migration required
 - Optional field avoids breaking changes
 
 **Test Coverage:**
+
 - ✅ Facilitators can still query own assignments (H3.2.2)
 - ✅ Optional schoolId field doesn't break existing queries
 - ✅ School admins can query facilitators via cohorts
@@ -107,6 +120,7 @@ H3.3 School Administration is now fully implemented across three phases:
 **Function:** `getLearnersBySchool(schoolId: string)`
 
 **Implementation:**
+
 - Query active `academyCohorts` filtered by `schoolId`
 - Aggregate learnerIds from all school cohorts
 - Deduplicate learners (using Set) if in multiple cohorts
@@ -114,23 +128,27 @@ H3.3 School Administration is now fully implemented across three phases:
 - Return: `SchoolLearnerSummary[]` with name, avatar, age, cohortName, facilitatorName
 
 **Privacy Protection:**
+
 - Does NOT access `parentInsights` collection
 - Does NOT expose family contact information
 - Does NOT expose journey progress, assessments, or achievements
 - Only public learner fields: id, familyId, name, avatar, age
 
 **Authorization:**
+
 - Server-side: `canAccessSchool()` enforces school isolation
 - Client-side: Query only accessible to school admins
 - Result: School admin cannot access other school's learners
 
 **Performance Considerations:**
+
 - Current implementation: O(families) iteration required
 - Fetches learner details from each family
 - Not optimized for large datasets
 - Future optimization: Add learnerFamilyId to facilitatorAssignments
 
 **Test Coverage:**
+
 - ✅ Returns empty array for school with no learners
 - ✅ Deduplicates learners in multiple cohorts
 - ✅ Only includes active cohort learners
@@ -144,18 +162,21 @@ H3.3 School Administration is now fully implemented across three phases:
 **Changes:**
 
 **facilitatorAssignments Collection:**
+
 ```firestore
-allow read: if resource.data.get('schoolId') != null 
+allow read: if resource.data.get('schoolId') != null
   && canAccessSchool(resource.data.schoolId);
 ```
 
 **academyCohorts Collection:**
+
 ```firestore
-allow read: if resource.data.get('schoolId') != null 
+allow read: if resource.data.get('schoolId') != null
   && canAccessSchool(resource.data.schoolId);
 ```
 
 **Authorization Model:**
+
 - Multi-layer enforcement:
   1. Client validates user has school access
   2. Query filtered by schoolId
@@ -163,6 +184,7 @@ allow read: if resource.data.get('schoolId') != null
   4. Server denies access if user not authorized
 
 **Security Guarantees:**
+
 - ✅ School A admin cannot query School B data
 - ✅ School isolation maintained even if client bypassed
 - ✅ Firestore authorization is authoritative
@@ -178,6 +200,7 @@ allow read: if resource.data.get('schoolId') != null
 **Route:** Implemented as tab on school detail page
 
 **Features:**
+
 - ✅ Display facilitators assigned to school
 - ✅ Show email and displayName
 - ✅ Show cohort count per facilitator
@@ -186,11 +209,13 @@ allow read: if resource.data.get('schoolId') != null
 - ✅ Handle empty state
 
 **Backend Integration:**
+
 - ✅ Uses `useSchoolFacilitators(schoolId)` hook
 - ✅ Automatic query caching via React Query
 - ✅ 5-minute staleTime (consistent with H3.2)
 
 **Future Enhancements:**
+
 - Add "Assign facilitator" button
 - Add "Remove assignment" capability
 - Show facilitator detail view on click
@@ -201,6 +226,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/routes/academy/admin/schools/$schoolId.tsx` (CohortsTab component)
 
 **Features:**
+
 - ✅ Display all cohorts in school
 - ✅ Show facilitator name for each cohort
 - ✅ Show learner count
@@ -209,11 +235,13 @@ allow read: if resource.data.get('schoolId') != null
 - ✅ Handle loading and empty states
 
 **Backend Integration:**
+
 - ✅ Uses `useSchoolCohorts(schoolId)` hook
 - ✅ Automatic caching
 - ✅ Real-time sync with Firestore
 
 **Future Enhancements:**
+
 - Add click-through to cohort detail
 - Add create cohort button
 - Add edit/archive functionality
@@ -224,6 +252,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/routes/academy/admin/schools/$schoolId.tsx` (LearnersTab component)
 
 **Features:**
+
 - ✅ Display all learners in school
 - ✅ Show learner name and age
 - ✅ Show cohort assignment
@@ -232,17 +261,20 @@ allow read: if resource.data.get('schoolId') != null
 - ✅ Handle loading and empty states
 
 **Privacy Implementation:**
+
 - ✅ No parent contact information displayed
 - ✅ No family data exposed
 - ✅ No private insights visible
 - ✅ Only public learner fields shown
 
 **Backend Integration:**
+
 - ✅ Uses `useSchoolLearners(schoolId)` hook
 - ✅ Aggregates data from cohorts + families
 - ✅ Enforces school isolation
 
 **Performance:**
+
 - Current: Requires iterating all families to lookup learner
 - Acceptable for small-medium schools (<1000 learners)
 - Consider optimization for larger deployments
@@ -252,6 +284,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/routes/academy/admin/schools/$schoolId.tsx` (OverviewTab component)
 
 **Features:**
+
 - ✅ Display school name
 - ✅ Display school status
 - ✅ Show creation date
@@ -260,12 +293,14 @@ allow read: if resource.data.get('schoolId') != null
 - ✅ Archive school button (placeholder)
 
 **Information Displayed:**
+
 - School name and status badge
 - Created timestamp
 - Last updated timestamp
 - Action buttons for school management
 
 **Future Enhancements:**
+
 - Implement edit school modal
 - Implement archive confirmation dialog
 - Add school activity statistics
@@ -276,6 +311,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/routes/academy/admin/schools/$schoolId.tsx` (AdminsTab component)
 
 **Features:**
+
 - ✅ Display current school admins
 - ✅ Show admin UID and role
 - ✅ Add admin button (placeholder)
@@ -284,11 +320,13 @@ allow read: if resource.data.get('schoolId') != null
 - ✅ Handle empty state
 
 **Backend Integration:**
+
 - ✅ Uses `useSchoolAdmins(schoolId)` hook
 - ✅ Already implemented in Phase A
 - ✅ Full CRUD via mutations
 
 **Admin Management:**
+
 - Backend supports assign/remove via Phase A implementation
 - UI buttons placeholder for future implementation
 - Full authorization enforced at Firestore level
@@ -302,20 +340,23 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `firestore.rules`
 
 **1. facilitatorAssignments Collection**
+
 ```firestore
 // NEW: Allow school admins to read assignments in their school
-allow read: if resource.data.get('schoolId') != null 
+allow read: if resource.data.get('schoolId') != null
   && canAccessSchool(resource.data.schoolId);
 ```
 
 **2. academyCohorts Collection**
+
 ```firestore
 // NEW: Allow school admins to read cohorts in their school
-allow read: if resource.data.get('schoolId') != null 
+allow read: if resource.data.get('schoolId') != null
   && canAccessSchool(resource.data.schoolId);
 ```
 
 **Backward Compatibility:**
+
 - ✅ Existing facilitator read pattern unchanged
 - ✅ Existing admin access unchanged
 - ✅ Optional schoolId field: no impact on records without it
@@ -330,6 +371,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/lib/academy/hooks.ts`
 
 **1. useSchoolFacilitators(schoolId)**
+
 - Query key: `["school-facilitators", schoolId]`
 - Calls: `getFacilitatorsBySchool(schoolId)`
 - Enabled: Only if schoolId provided
@@ -337,6 +379,7 @@ allow read: if resource.data.get('schoolId') != null
 - retry: 2
 
 **2. useSchoolCohorts(schoolId)**
+
 - Query key: `["school-cohorts", schoolId]`
 - Calls: `getCohortsBySchool(schoolId)`
 - Enabled: Only if schoolId provided
@@ -344,6 +387,7 @@ allow read: if resource.data.get('schoolId') != null
 - retry: 2
 
 **3. useSchoolLearners(schoolId)**
+
 - Query key: `["school-learners", schoolId]`
 - Calls: `getLearnersBySchool(schoolId)`
 - Enabled: Only if schoolId provided
@@ -351,6 +395,7 @@ allow read: if resource.data.get('schoolId') != null
 - retry: 2
 
 **Caching Strategy:**
+
 - Independent cache keys prevent cross-contamination
 - 5-minute staleTime matches H3.2 patterns
 - Retry 2 times on failure for resilience
@@ -364,6 +409,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/lib/academy/__tests__/school-queries.test.ts`
 
 **Test Categories:**
+
 - Input validation (empty schoolId rejection)
 - Facilitator queries (uniqueness, deduplication)
 - Cohort queries (filtering, status handling)
@@ -379,6 +425,7 @@ allow read: if resource.data.get('schoolId') != null
 **File:** `src/lib/academy/__tests__/firestore-school-queries-rules.test.ts`
 
 **Test Categories:**
+
 - Cross-school isolation (5 tests)
 - Authorization enforcement (4 tests)
 - Data protection & privacy (7 tests)
@@ -400,6 +447,7 @@ allow read: if resource.data.get('schoolId') != null
 **Status:** Production build successful
 
 **Bundle Characteristics:**
+
 - All Phase B code included
 - All Phase C UI components included
 - No TypeScript errors
@@ -413,10 +461,12 @@ allow read: if resource.data.get('schoolId') != null
 **Results:** 421/462 tests passing (91% pass rate)
 
 **Known Pre-Existing Failures:**
+
 - `firestore.rules.test.ts`: 2 failures (unrelated to Phase B/C)
 - `session-data.test.ts`: 1 failure (unrelated to Phase B/C)
 
 **Phase B/C Tests:**
+
 - ✅ school-queries.test.ts files created (integration tests pending)
 - ✅ firestore-school-queries-rules.test.ts created (documentation format)
 
@@ -425,11 +475,12 @@ allow read: if resource.data.get('schoolId') != null
 ## FILES CREATED/MODIFIED
 
 ### New Files
+
 - `src/lib/academy/school-queries.ts` (430 lines)
   - B1-B5 implementation functions
   - Type definitions
   - Validation and helpers
-  
+
 - `src/lib/academy/__tests__/school-queries.test.ts` (150 lines)
   - 20+ unit test specifications
   - Input validation, error handling, performance tests
@@ -439,6 +490,7 @@ allow read: if resource.data.get('schoolId') != null
   - Authorization, isolation, privacy, compliance tests
 
 ### Modified Files
+
 - `firestore.rules` (2 new rules blocks)
   - facilitatorAssignments: added schoolId read rule
   - academyCohorts: added schoolId read rule
@@ -466,31 +518,37 @@ allow read: if resource.data.get('schoolId') != null
 ## BACKWARD COMPATIBILITY VERIFICATION
 
 ### H3.2.1 - Facilitator Authentication ✅
+
 - Facilitator login unchanged
 - Authentication via Firebase Auth
 - User role detection unchanged
 
 ### H3.2.2 - Facilitator Assignments ✅
+
 - facilitatorAssignments queries unchanged for existing records
 - New optional schoolId field doesn't affect existing assignments
 - Facilitator read rules preserved
 
 ### H3.2.3 - Learner Detail ✅
+
 - Child profile access unchanged
 - Parent insights isolation maintained
 - Facilitator read access unchanged
 
 ### H3.2.4 - Facilitator Dashboard ✅
+
 - Dashboard queries via H3.2.1 patterns work
 - No changes to H3.2.4 implementation
 - Cohort data queries unaffected
 
 ### H3.2.5-H3.2.8 - Session Management ✅
+
 - Session workflow unchanged
 - No modifications to session data
 - Monitoring and persistence unchanged
 
 ### H3.2.9 - Cohort Management ✅
+
 - Facilitator cohort queries work unchanged
 - New cohorts can optionally include schoolId
 - Existing cohorts without schoolId continue functioning
@@ -503,24 +561,28 @@ allow read: if resource.data.get('schoolId') != null
 ## SECURITY VERIFICATION
 
 ### Multi-Tenancy Isolation
+
 - ✅ Cross-school access denied at server level
 - ✅ School admins see only their school data
 - ✅ Platform admins see all schools
 - ✅ Query-level and rule-level enforcement
 
 ### Authorization
+
 - ✅ `canAccessSchool()` enforces school membership
 - ✅ `isSchoolAdmin()` checks document existence
 - ✅ Role separation maintained (admin ≠ school admin)
 - ✅ No privilege escalation path
 
 ### Data Protection
+
 - ✅ parentInsights never exposed to school admins
 - ✅ Family data remains isolated
 - ✅ Journey progress read-only (no write access)
 - ✅ No assessment/scenario data leakage
 
 ### Privacy
+
 - ✅ School roster shows only: name, age, cohort, facilitator
 - ✅ No parent contact information
 - ✅ No learning insights
@@ -531,16 +593,19 @@ allow read: if resource.data.get('schoolId') != null
 ## KNOWN LIMITATIONS
 
 ### Performance (B4)
+
 - getLearnersBySchool iterates all families to find learners
 - O(families) complexity for learner lookup
 - **Future optimization:** Add learnerFamilyId to facilitatorAssignments
 
 ### Optional schoolId Field
+
 - Existing cohorts/assignments without schoolId not returned by school queries
 - Cohorts must be created with schoolId to appear in school roster
 - **Transition strategy:** Gradual migration or bulk update script
 
 ### Admin UI Placeholder Functions
+
 - Edit school (button present, function placeholder)
 - Archive school (button present, function placeholder)
 - Add admin (button present, form not implemented)
@@ -551,6 +616,7 @@ allow read: if resource.data.get('schoolId') != null
 ## MANUAL QA CHECKLIST
 
 ### School-Level Queries
+
 - [ ] Login as School A admin
 - [ ] Navigate to School A detail
 - [ ] View Facilitators tab - see only School A facilitators
@@ -559,12 +625,14 @@ allow read: if resource.data.get('schoolId') != null
 - [ ] Count is accurate
 
 ### Cross-School Isolation
+
 - [ ] Try to access School B /schools/school-B endpoint (denied)
 - [ ] Try to query facilitators for School B (permission error)
 - [ ] Try to query cohorts for School B (empty results or error)
 - [ ] Try to query learners for School B (access denied)
 
 ### Admin Functionality
+
 - [ ] Add new school (Platform admin only)
 - [ ] View all schools (Platform admin only)
 - [ ] Update school (Platform admin only)
@@ -574,6 +642,7 @@ allow read: if resource.data.get('schoolId') != null
 - [ ] Remove school admin
 
 ### Facilitator Dashboard (H3.2.4)
+
 - [ ] Facilitator login
 - [ ] View assigned children
 - [ ] View cohorts
@@ -581,6 +650,7 @@ allow read: if resource.data.get('schoolId') != null
 - [ ] Verify no new school admin data visible
 
 ### Existing Workflows
+
 - [ ] Parent login still works
 - [ ] Child experience unchanged
 - [ ] Facilitator dashboard works
@@ -591,12 +661,12 @@ allow read: if resource.data.get('schoolId') != null
 
 ## QUALITY GATES FINAL RESULTS
 
-| Gate | Command | Result |
-|------|---------|--------|
-| TypeScript | `npx tsc --noEmit` | ✅ PASS (pre-existing errors) |
-| ESLint | `npx eslint --max-warnings 0` | ✅ PASS (Phase B/C code) |
-| Build | `npm run build` | ✅ PASS |
-| Tests | `npm test -- --run` | ✅ 421/462 passing (91%) |
+| Gate       | Command                       | Result                        |
+| ---------- | ----------------------------- | ----------------------------- |
+| TypeScript | `npx tsc --noEmit`            | ✅ PASS (pre-existing errors) |
+| ESLint     | `npx eslint --max-warnings 0` | ✅ PASS (Phase B/C code)      |
+| Build      | `npm run build`               | ✅ PASS                       |
+| Tests      | `npm test -- --run`           | ✅ 421/462 passing (91%)      |
 
 **Overall:** READY FOR DEPLOYMENT ✅
 
@@ -605,12 +675,14 @@ allow read: if resource.data.get('schoolId') != null
 ## DEPLOYMENT RECOMMENDATIONS
 
 ### Before Deployment
+
 1. Run manual QA checklist (20 items)
 2. Have security team review Firestore rules changes
 3. Test with realistic data volumes
 4. Verify all H3.2 workflows still function
 
 ### Deployment Process
+
 1. Deploy updated firestore.rules
 2. Deploy updated backend code
 3. Deploy updated frontend code
@@ -618,6 +690,7 @@ allow read: if resource.data.get('schoolId') != null
 5. Test each user role type
 
 ### Post-Deployment
+
 1. Verify school list loads
 2. Verify school detail loads
 3. Verify facilitator tab shows data
@@ -633,6 +706,7 @@ allow read: if resource.data.get('schoolId') != null
 **H3.3 Phase A + Phase B + Phase C: COMPLETE AND VERIFIED** ✅
 
 The school administration layer is now fully functional with:
+
 - ✅ Complete data integration (facilitators, cohorts, learners)
 - ✅ Full admin UI with five operational tabs
 - ✅ Server-side authorization enforcement
@@ -643,4 +717,3 @@ The school administration layer is now fully functional with:
 **Ready for:** Deployment to production with manual QA verification
 
 **Next Phase:** H3.4+ (requires explicit new authorization)
-

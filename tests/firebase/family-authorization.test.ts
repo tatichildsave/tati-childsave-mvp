@@ -1,6 +1,6 @@
 /**
  * Phase C1.2: Family Authorization Fix Tests
- * 
+ *
  * Verify that parents cannot create families via server functions.
  * Ensure that:
  * 1. Parent cannot trigger family creation via getFamilyChildren/getFamilyId
@@ -17,11 +17,11 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
       // CONCEPTUAL: getFamilyId is now read-only, returns error if no family
       // Previously: getFamilyId called ensureFamily which auto-created
       // Now: getFamilyId calls getExistingFamilyId which throws if missing
-      
+
       const parentRoles = ["parent"];
-      const hasProvisioningRole = parentRoles.includes("admin") || 
-                                  parentRoles.includes("provisioner");
-      
+      const hasProvisioningRole =
+        parentRoles.includes("admin") || parentRoles.includes("provisioner");
+
       // Parent cannot create/provision families
       expect(hasProvisioningRole).toBe(false);
     });
@@ -29,32 +29,30 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
     it("should verify that parent cannot call ensureFamilyFn", () => {
       // CRITICAL TEST: ensureFamilyFn requires provisioning authorization
       // Parent role does not grant provisioning permissions
-      
+
       const parentRoles = ["parent"];
-      const canEnsureFamily = parentRoles.includes("admin") || 
-                             parentRoles.includes("provisioner");
-      
+      const canEnsureFamily = parentRoles.includes("admin") || parentRoles.includes("provisioner");
+
       expect(canEnsureFamily).toBe(false);
     });
 
     it("should verify that admin can call ensureFamilyFn", () => {
       // Admin role grants provisioning permissions
       // Only admins can create/ensure families
-      
+
       const adminRoles = ["admin"];
-      const canEnsureFamily = adminRoles.includes("admin") || 
-                             adminRoles.includes("provisioner");
-      
+      const canEnsureFamily = adminRoles.includes("admin") || adminRoles.includes("provisioner");
+
       expect(canEnsureFamily).toBe(true);
     });
 
     it("should verify provisioner role grants family creation", () => {
       // Explicit provisioner role also grants creation
-      
+
       const provisionerRoles = ["provisioner"];
-      const canEnsureFamily = provisionerRoles.includes("admin") || 
-                             provisionerRoles.includes("provisioner");
-      
+      const canEnsureFamily =
+        provisionerRoles.includes("admin") || provisionerRoles.includes("provisioner");
+
       expect(canEnsureFamily).toBe(true);
     });
   });
@@ -63,20 +61,20 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
     it("should verify parent can read existing family", () => {
       // Parent with provisioned family should be able to read it
       // This is a legitimate parent operation, not blocked by C1.2
-      
+
       const hasExistingFamily = true; // Hypothetically provisioned
       const canReadFamily = hasExistingFamily; // No role check needed for read
-      
+
       expect(canReadFamily).toBe(true);
     });
 
     it("should verify parent cannot auto-create family on read attempt", () => {
       // Phase C1.2 fix: Reading children no longer auto-creates family
       // Instead: Returns empty array or error if no family exists
-      
+
       const parentHasFamily = false; // No provisioned family
       const familyAutoCreated = false; // C1.2: No longer auto-creates
-      
+
       expect(familyAutoCreated).toBe(false);
     });
 
@@ -85,11 +83,11 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
       // - getFamilyChildren returns empty array (not error)
       // - getFamilyId throws clear error message
       // - System does NOT auto-create family
-      
+
       const parentHasFamily = false;
       const shouldReturnEmpty = true; // getFamilyChildrenReadOnly behavior
       const shouldThrowError = true; // getFamilyId behavior
-      
+
       expect(shouldReturnEmpty).toBe(true);
       expect(shouldThrowError).toBe(true);
     });
@@ -101,17 +99,17 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
       // 1. Admin calls ensureFamilyFn (has provisioning role)
       // 2. Authorization check passes (requireProvisioningRole)
       // 3. Family created via Admin SDK
-      
+
       const isAdmin = true;
       const hasProvisioningRole = true;
-      
+
       expect(hasProvisioningRole).toBe(true);
       expect(isAdmin).toBe(true);
     });
 
     it("should document read vs create separation", () => {
       // Phase C1.2 architecture:
-      // 
+      //
       // READ operations (parent allowed):
       // - getFamilyId (returns existing, throws if missing)
       // - getFamilyChildren (returns empty if missing)
@@ -120,10 +118,10 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
       // CREATE operations (admin only):
       // - ensureFamilyFn (requires provisioning role)
       // - ensureFamily (internal, requires provisioning role)
-      
+
       const readOperations = ["getFamilyId", "getFamilyChildren"];
       const createOperations = ["ensureFamilyFn"];
-      
+
       expect(readOperations.length).toBe(2);
       expect(createOperations.length).toBe(1);
     });
@@ -133,10 +131,10 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
     it("should handle unauthenticated access denial", () => {
       // Unauthenticated users cannot access any family functions
       // Authorization check in getCurrentParentContext throws first
-      
+
       const isAuthenticated = false;
       const canAccessFamily = false; // Denied by auth check
-      
+
       expect(canAccessFamily).toBe(false);
     });
 
@@ -144,20 +142,20 @@ describe("Phase C1.2: Family Authorization Hardening", () => {
       // Multiple calls should not trigger multiple family creates
       // getFamilyChildren -> getFamilyChildrenReadOnly (no cascade)
       // ensureFamilyFn (single responsibility: provision only)
-      
+
       const callCount = 5; // Parent calls multiple times
       const familiesCreated = 0; // Should not create without provisioning role
-      
+
       expect(familiesCreated).toBe(0);
     });
 
     it("should maintain family immutability", () => {
       // Once provisioned, family ownership cannot change
       // Consistent with immutable ownership from C1
-      
+
       const isProvisioned = true;
       const canChangeFamily = false; // Firestore rules prevent
-      
+
       expect(canChangeFamily).toBe(false);
     });
   });

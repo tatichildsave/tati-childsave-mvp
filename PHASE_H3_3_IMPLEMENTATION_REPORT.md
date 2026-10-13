@@ -1,4 +1,3 @@
-
 # PHASE_H3_3_IMPLEMENTATION_REPORT
 
 **Status:** COMPLETE  
@@ -13,6 +12,7 @@
 H3.3 School Administration (Phase A Foundation) has been fully implemented and tested. The implementation introduces persistent school entities with school-level admin roles, maintains 100% backward compatibility with H3.2.1–H3.2.9, and enforces school isolation at the Firestore rules level (server-side security).
 
 **Key Metrics:**
+
 - **Files Created:** 8 new files
 - **Files Modified:** 3 existing files
 - **Lines of Code:** ~800 new lines (data access + hooks)
@@ -28,11 +28,13 @@ H3.3 School Administration (Phase A Foundation) has been fully implemented and t
 ### New Authorization Functions
 
 **`isSchoolAdmin(schoolId)`**
+
 - Checks if user has admin assignment at `/schools/{schoolId}/admins/{uid}`
 - Returns true if user is a school admin for that specific school
 - Enables school-scoped authorization model
 
 **`canAccessSchool(schoolId)`**
+
 - Combined authorization check: `isAdmin() || isSchoolAdmin(schoolId)`
 - Allows platform admins to access any school
 - Allows school admins to access only their school
@@ -41,6 +43,7 @@ H3.3 School Administration (Phase A Foundation) has been fully implemented and t
 ### New Collections & Rules
 
 **`/schools/{schoolId}` (School Collection)**
+
 ```
 - CREATE: Platform admin only (isAdmin())
 - READ: School admin or platform admin (canAccessSchool)
@@ -50,6 +53,7 @@ H3.3 School Administration (Phase A Foundation) has been fully implemented and t
 ```
 
 **`/schools/{schoolId}/admins/{adminUid}` (Subcollection)**
+
 ```
 - CREATE: Platform admin only (isAdmin())
 - READ: School admin or platform admin (canAccessSchool)
@@ -60,6 +64,7 @@ H3.3 School Administration (Phase A Foundation) has been fully implemented and t
 ### Backward Compatibility
 
 ✅ **No changes to existing H3.2.1–H3.2.9 rules:**
+
 - `/families/{familyId}` - Unchanged
 - `/facilitatorAssignments/{assignmentId}` - Unchanged
 - `/academyCohorts/{cohortId}` - Unchanged
@@ -75,23 +80,25 @@ H3.3 School Administration (Phase A Foundation) has been fully implemented and t
 **Purpose:** Data access layer for school CRUD operations and admin assignment
 
 **Type Definitions:**
+
 ```typescript
-type SchoolStatus = "active" | "archived"
+type SchoolStatus = "active" | "archived";
 interface School {
-  id: string
-  name: string
-  status: SchoolStatus
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  id: string;
+  name: string;
+  status: SchoolStatus;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 interface SchoolAdmin {
-  adminUid: string
-  role: "school_admin"
-  assignedAt: Timestamp
+  adminUid: string;
+  role: "school_admin";
+  assignedAt: Timestamp;
 }
 ```
 
 **Core Functions:**
+
 - `createSchool(input)` - Create new school (validation: name 1-200 chars)
 - `getSchool(schoolId)` - Fetch single school
 - `getAllSchools()` - Fetch all schools (platform admin only)
@@ -103,11 +110,13 @@ interface SchoolAdmin {
 - `isUserSchoolAdmin(schoolId, uid)` - Check admin membership
 
 **Error Handling:**
+
 - Input validation throws synchronously
 - Firestore errors propagated to caller
 - All operations include error messages
 
 **Security Properties:**
+
 - ✅ Authorization enforced at server (Firestore rules)
 - ✅ Immutability constraints prevent tampering
 - ✅ Client-side validation provides UX feedback
@@ -116,6 +125,7 @@ interface SchoolAdmin {
 ### Updated Module: `src/lib/academy/hooks.ts`
 
 **New React Query Hooks:**
+
 - `useSchool(schoolId)` - Fetch single school (queryKey: ['school', schoolId])
 - `useAllSchools()` - Fetch all schools (queryKey: ['all-schools'])
 - `useCreateSchool()` - Mutation for creating school
@@ -126,6 +136,7 @@ interface SchoolAdmin {
 - `useSchoolAdmins(schoolId)` - Fetch school admins (queryKey: ['school-admins', schoolId])
 
 **Cache Invalidation Strategy:**
+
 - `useCreateSchool`: Invalidates `['all-schools']`
 - `useUpdateSchool`: Invalidates both `['school', id]` and `['all-schools']`
 - `useArchiveSchool`: Invalidates both `['school', id]` and `['all-schools']`
@@ -145,12 +156,14 @@ Added export for school-data module to make functions available throughout acade
 ### Routes Created
 
 **`src/routes/academy/admin.tsx`** (Layout)
+
 - Entry point for school administration
 - Navigation header with back link
 - `<Outlet />` for nested routes
 - Simple auth guard structure (can be extended)
 
 **`src/routes/academy/admin/schools/index.tsx`** (School List)
+
 - Displays all schools in grid layout
 - Shows school name, status (active/archived), creation date
 - Link to create new school
@@ -158,6 +171,7 @@ Added export for school-data module to make functions available throughout acade
 - Loading and error states
 
 **`src/routes/academy/admin/schools/$schoolId.tsx`** (School Detail)
+
 - Tabbed interface:
   - **Overview:** School name, status, timestamps, edit/archive buttons
   - **Admins:** Manage school admin assignments (stub)
@@ -166,6 +180,7 @@ Added export for school-data module to make functions available throughout acade
   - **Learners:** View learner roster (stub)
 
 **`src/routes/academy/admin/schools/create.tsx`** (Create School)
+
 - Form for creating new school
 - Input validation (school name required, 1-200 chars)
 - Character counter for name field
@@ -176,6 +191,7 @@ Added export for school-data module to make functions available throughout acade
 ### Component Design
 
 **Key Principles:**
+
 - Simple, functional React components
 - TanStack Router navigation
 - React Query for data fetching
@@ -184,6 +200,7 @@ Added export for school-data module to make functions available throughout acade
 - Type-safe parameter extraction
 
 **Extensibility Points:**
+
 - Admin tabs are currently stubs but structured for future implementation
 - Easy to add facilitator/cohort/learner management UI
 - Authorization logic can be enhanced in layout component
@@ -197,6 +214,7 @@ Added export for school-data module to make functions available throughout acade
 **25 tests covering:**
 
 **Input Validation (5 tests):**
+
 - Empty/whitespace-only school name rejected
 - School name exceeding 200 chars rejected
 - Valid school names accepted
@@ -204,10 +222,12 @@ Added export for school-data module to make functions available throughout acade
 - Invalid status values rejected
 
 **Utility Functions (2 tests):**
+
 - `computeSchoolSummary` for active school
 - `computeSchoolSummary` for archived school
 
 **Authorization Documentation (5 tests):**
+
 - `createSchool` requires platform admin
 - `getSchool` requires school admin or platform admin
 - `updateSchool` requires platform admin
@@ -215,14 +235,17 @@ Added export for school-data module to make functions available throughout acade
 - School admin operations require platform admin
 
 **Error Handling (1 test):**
+
 - Firestore errors propagated to caller
 - Validation errors thrown synchronously
 
 **Type Safety (2 tests):**
+
 - School type includes all required fields
 - School status restricted to valid values
 
 **Integration Notes (3 tests):**
+
 - Firestore rules enforcement documented
 - Client-side validation provides early feedback
 - Immutability enforced by server rules
@@ -232,22 +255,26 @@ Added export for school-data module to make functions available throughout acade
 **31 tests covering:**
 
 **Authorization Model (2 tests):**
+
 - `isSchoolAdmin(schoolId)` checks admin assignment
 - `canAccessSchool(schoolId)` checks both roles
 
 **School Collection Rules (4 tests):**
+
 - READ enforces school isolation
 - CREATE requires platform admin
 - UPDATE prevents immutable field changes
 - DELETE is always prevented
 
 **Admin Subcollection Rules (4 tests):**
+
 - READ requires school access
 - CREATE requires platform admin
 - UPDATE requires platform admin
 - DELETE requires platform admin
 
 **Multi-Tenancy Isolation (5 tests):**
+
 - School A admin cannot read School B
 - School A admin cannot write School B
 - School A admin cannot assign admins to School B
@@ -255,11 +282,13 @@ Added export for school-data module to make functions available throughout acade
 - Platform admin can manage all schools
 
 **Privacy & Data Protection (3 tests):**
+
 - School admin cannot access parentInsights (family-scoped)
 - School admin has read-only progress access (via UI aggregates)
 - School admin cannot modify learner assignments
 
 **Backward Compatibility (5 tests):**
+
 - facilitatorAssignments rules unchanged
 - academyCohorts rules unchanged
 - academySessions rules unchanged
@@ -267,17 +296,20 @@ Added export for school-data module to make functions available throughout acade
 - All H3.2 functionality preserved
 
 **Edge Cases (4 tests):**
+
 - User is both platform admin and school admin
 - User is school admin for multiple schools
 - Deleted admin document (race condition)
 - School without admins (isolation works)
 
 **Implementation Validation (3 tests):**
+
 - `isSchoolAdmin` uses `exists()` for efficiency
 - `canAccessSchool` uses OR logic
 - School collection uses `canAccessSchool`
 
 **Compliance (5 tests):**
+
 - Point 1: Minimal school data model
 - Point 2: Distinct school admin role
 - Point 3: Multi-tenancy enforcement
@@ -301,6 +333,7 @@ Added export for school-data module to make functions available throughout acade
 **Result:** ✅ PASSED (0 errors)
 
 **Modules Checked:**
+
 - `src/lib/academy/school-data.ts` - Strict types, no `any`
 - `src/lib/academy/hooks.ts` - Proper generic types for useQuery/useMutation
 - `src/routes/academy/admin*.tsx` - Type-safe route components
@@ -312,6 +345,7 @@ Added export for school-data module to make functions available throughout acade
 **Result:** ✅ PASSED (0 errors, 0 warnings)
 
 **Files Checked:**
+
 - `src/lib/academy/school-data.ts`
 - `src/lib/academy/hooks.ts`
 - `src/lib/academy/__tests__/school-data.test.ts`
@@ -471,30 +505,31 @@ Added export for school-data module to make functions available throughout acade
 
 ### New Files (8 Total)
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `src/lib/academy/school-data.ts` | School CRUD + admin ops | 430 |
-| `src/routes/academy/admin.tsx` | Admin layout route | 35 |
-| `src/routes/academy/admin/schools/index.tsx` | School list route | 80 |
-| `src/routes/academy/admin/schools/$schoolId.tsx` | School detail route | 180 |
-| `src/routes/academy/admin/schools/create.tsx` | Create school route | 75 |
-| `src/lib/academy/__tests__/school-data.test.ts` | Unit tests | 280 |
-| `src/lib/academy/__tests__/firestore-school-rules.test.ts` | Security tests | 520 |
-| Total | | ~1600 |
+| File                                                       | Purpose                 | Lines |
+| ---------------------------------------------------------- | ----------------------- | ----- |
+| `src/lib/academy/school-data.ts`                           | School CRUD + admin ops | 430   |
+| `src/routes/academy/admin.tsx`                             | Admin layout route      | 35    |
+| `src/routes/academy/admin/schools/index.tsx`               | School list route       | 80    |
+| `src/routes/academy/admin/schools/$schoolId.tsx`           | School detail route     | 180   |
+| `src/routes/academy/admin/schools/create.tsx`              | Create school route     | 75    |
+| `src/lib/academy/__tests__/school-data.test.ts`            | Unit tests              | 280   |
+| `src/lib/academy/__tests__/firestore-school-rules.test.ts` | Security tests          | 520   |
+| Total                                                      |                         | ~1600 |
 
 ### Modified Files (3 Total)
 
-| File | Changes |
-|------|---------|
-| `firestore.rules` | Added `isSchoolAdmin()`, `canAccessSchool()`, school collection rules, admin subcollection rules |
-| `src/lib/academy/hooks.ts` | Added 8 school-related hooks with proper cache invalidation |
-| `src/lib/academy/index.ts` | Exported school-data module |
+| File                       | Changes                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `firestore.rules`          | Added `isSchoolAdmin()`, `canAccessSchool()`, school collection rules, admin subcollection rules |
+| `src/lib/academy/hooks.ts` | Added 8 school-related hooks with proper cache invalidation                                      |
+| `src/lib/academy/index.ts` | Exported school-data module                                                                      |
 
 ---
 
 ## 9. Dependencies & Imports
 
 **No new external dependencies added.** Implementation uses existing:
+
 - Firebase/Firestore SDK (already in project)
 - React Query (already in project)
 - TanStack Router (already in project)
@@ -562,6 +597,7 @@ Added export for school-data module to make functions available throughout acade
 ### Rollback Plan
 
 If issues occur:
+
 1. Remove school routes from router (remove admin.tsx and admin/ directory)
 2. Revert firestore.rules to previous version
 3. Clear any cached school data from React Query
@@ -574,6 +610,7 @@ If issues occur:
 **H3.3 Phase A (Foundation) is COMPLETE and READY FOR DEPLOYMENT.**
 
 The implementation:
+
 - ✅ Adds school entity with minimal data model
 - ✅ Introduces distinct school admin role
 - ✅ Enforces multi-tenancy at server-side via Firestore rules
@@ -584,8 +621,8 @@ The implementation:
 - ✅ Ready for phase B (backend queries) and phase C (UI completion)
 
 **Next Steps:**
+
 1. Execute manual QA checklist (section 7)
 2. Deploy Firestore rules and code
 3. Begin Phase B (school-level data queries)
 4. Continue with Phase C (UI completion) and Phase D (documentation)
-

@@ -52,7 +52,7 @@ export const testChildLogin = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // Import server-only modules inside handler to avoid client bundle contamination
     const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
-    
+
     if (!isEmulatorOnly()) {
       throw new Error("Test login only available in emulator mode");
     }
@@ -76,7 +76,7 @@ export const testChildLogin = createServerFn({ method: "POST" })
     }
 
     const childId = childDoc.id;
-    const familyId = childDoc.data()['familyId'];
+    const familyId = childDoc.data()["familyId"];
 
     // For test fixtures, PIN is stored in a separate test-data document
     // In real system this would be in Supabase
@@ -95,7 +95,7 @@ export const testChildLogin = createServerFn({ method: "POST" })
 
     // Simple PIN verification for test (not production-grade)
     const testData = testDataDoc.data();
-    if (testData?.['testPin'] !== data.pin) {
+    if (testData?.["testPin"] !== data.pin) {
       throw new Error("That TATI ID or PIN could not be verified.");
     }
 
@@ -127,11 +127,11 @@ export const testChildLogin = createServerFn({ method: "POST" })
       profile: {
         id: childId,
         tati_id: data.tatiId,
-        name: childData['name'],
-        age: childData['age'],
-        avatar: childData['avatar'],
-        tier: childData['tier'],
-        curriculum_level: childData['curriculumLevel'],
+        name: childData["name"],
+        age: childData["age"],
+        avatar: childData["avatar"],
+        tier: childData["tier"],
+        curriculum_level: childData["curriculumLevel"],
       },
     };
   });

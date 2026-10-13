@@ -95,7 +95,7 @@ function SignupPage() {
       console.log("[signup] Getting ID token...");
       const idToken = await userCredential.user.getIdToken();
       console.log("[signup] ID token obtained:", idToken.substring(0, 50) + "...");
-      
+
       console.log("[signup] Calling createParentSessionFn...");
       await createParentSessionFn({ data: { idToken } });
       console.log("[signup] createParentSessionFn completed successfully");
@@ -131,11 +131,11 @@ function SignupPage() {
 
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
+
       // Create server session cookie with ID token
       const idToken = await result.user.getIdToken();
       await createParentSessionFn({ data: { idToken } });
-      
+
       void trackEvent("signup_completed", { eventKey: result.user.uid });
       navigate({ to: "/parent", replace: true });
     } catch (googleError) {

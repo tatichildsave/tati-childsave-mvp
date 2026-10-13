@@ -40,7 +40,9 @@ type MockDocumentSnapshot = {
 };
 
 type MockTransaction = {
-  get: (ref: MockDocumentRef | MockCollectionRef) => Promise<MockDocumentSnapshot | MockQuerySnapshot>;
+  get: (
+    ref: MockDocumentRef | MockCollectionRef,
+  ) => Promise<MockDocumentSnapshot | MockQuerySnapshot>;
   set: (ref: MockDocumentRef, data: Record<string, unknown>, options?: { merge: boolean }) => void;
   delete: (ref: MockDocumentRef) => void;
 };
@@ -135,7 +137,9 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
       });
 
       // Verify attempt was written
-      expect(db.collection("families").doc(familyId).collection("children").doc(childId)).toBeDefined();
+      expect(
+        db.collection("families").doc(familyId).collection("children").doc(childId),
+      ).toBeDefined();
     });
 
     it("should persist post-assessment with different competencies", async () => {
@@ -164,7 +168,9 @@ describe("FirebaseAssessmentRepository - Assessment Persistence", () => {
         result,
       });
 
-      expect(db.collection("families").doc(familyId).collection("children").doc(childId)).toBeDefined();
+      expect(
+        db.collection("families").doc(familyId).collection("children").doc(childId),
+      ).toBeDefined();
     });
   });
 

@@ -84,7 +84,9 @@ export function progressQuery(childId: string) {
         if (pending.length > 0) void syncPending(childId, pending);
         const pendingKeys = new Set(pending.map((event) => `${event.item_type}:${event.item_id}`));
         return [
-          ...serverEvents.filter((event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`)),
+          ...serverEvents.filter(
+            (event) => !pendingKeys.has(`${event.item_type}:${event.item_id}`),
+          ),
           ...pending,
         ];
       } catch (error) {

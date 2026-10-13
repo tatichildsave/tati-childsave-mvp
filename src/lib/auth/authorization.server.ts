@@ -9,7 +9,14 @@ import {
 } from "./types";
 
 // Re-export types for backward compatibility with existing imports
-export type { AppRole, AuthenticatedUser, ChildSession, AuthContext, FirebaseChildIdentity, AuthenticatedChildContext };
+export type {
+  AppRole,
+  AuthenticatedUser,
+  ChildSession,
+  AuthContext,
+  FirebaseChildIdentity,
+  AuthenticatedChildContext,
+};
 
 export class AuthorizationError extends Error {
   readonly status = 403;

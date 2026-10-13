@@ -2,7 +2,7 @@
 
 **Status:** ✅ **COMPLETE & VERIFIED**  
 **Date:** 2026-09-29  
-**Duration:** Single session breakthrough and comprehensive testing  
+**Duration:** Single session breakthrough and comprehensive testing
 
 ---
 
@@ -24,19 +24,19 @@ Phase H4.A successfully migrated child authentication from Supabase PostgreSQL t
 
 ## TEST RESULTS
 
-| # | Test Scenario | Result | Evidence |
-|---|---|---|---|
-| 1 | **Valid Child Login** | ✅ PASS | TATI-824415B6 (Kwesi) + PIN 8451 authenticated successfully, session created in Firestore, child profile loaded, redirected to `/child/home` |
-| 2 | **Wrong PIN Rejection** | ✅ PASS | TATI-2CB84A90 + incorrect PIN 9999 rejected with generic error message "That TATI ID or PIN could not be verified." |
-| 3 | **Unknown TATI ID Rejection** | ✅ PASS | Invalid TATI ID (TATI-ABCDEFGH) rejected with same generic error message, no session created, no profile exposed |
-| 4a | **Empty Fields Validation** | ✅ PASS | Submit button disabled when TATI ID or PIN empty, no server call attempted |
-| 4b | **Invalid PIN Format** | ✅ PASS | Non-digit characters (e.g., "abcd") rejected by PIN input field, only digits accepted |
-| 4c | **Malformed TATI ID** | ✅ PASS | Malformed TATI ID (e.g., "INVALID-ID") accepted by form but rejected on submission |
-| 5 | **Session Persistence** | ✅ PASS | After successful login: (a) navigated from `/child/home` → `/child/learn` → back to `/child/home`, (b) refreshed browser (F5), session remained valid, child remained authenticated |
-| 6 | **Logout Functionality** | ✅ PASS* | Code verified: `childLogout()` revokes session in Firestore via `revokeChildSession()`, clears HTTP-only cookie, sets TTL=0 |
-| 7 | **Protected Route Protection** | ✅ PASS* | Firestore rules deny client access to credentials and sessions (`allow read, write: if false;`), server-only access via Admin SDK |
-| 8 | **Cross-Child Isolation** | ✅ PASS* | Firestore rules enforce `canAccessChild(familyId, childId)` check, preventing access to other children's data |
-| 9 | **Cross-Family Isolation** | ✅ PASS* | Firestore rules enforce family-level access control via `isActiveFamilyMember()`, child sessions scoped to specific family |
+| #   | Test Scenario                  | Result   | Evidence                                                                                                                                                                            |
+| --- | ------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Valid Child Login**          | ✅ PASS  | TATI-824415B6 (Kwesi) + PIN 8451 authenticated successfully, session created in Firestore, child profile loaded, redirected to `/child/home`                                        |
+| 2   | **Wrong PIN Rejection**        | ✅ PASS  | TATI-2CB84A90 + incorrect PIN 9999 rejected with generic error message "That TATI ID or PIN could not be verified."                                                                 |
+| 3   | **Unknown TATI ID Rejection**  | ✅ PASS  | Invalid TATI ID (TATI-ABCDEFGH) rejected with same generic error message, no session created, no profile exposed                                                                    |
+| 4a  | **Empty Fields Validation**    | ✅ PASS  | Submit button disabled when TATI ID or PIN empty, no server call attempted                                                                                                          |
+| 4b  | **Invalid PIN Format**         | ✅ PASS  | Non-digit characters (e.g., "abcd") rejected by PIN input field, only digits accepted                                                                                               |
+| 4c  | **Malformed TATI ID**          | ✅ PASS  | Malformed TATI ID (e.g., "INVALID-ID") accepted by form but rejected on submission                                                                                                  |
+| 5   | **Session Persistence**        | ✅ PASS  | After successful login: (a) navigated from `/child/home` → `/child/learn` → back to `/child/home`, (b) refreshed browser (F5), session remained valid, child remained authenticated |
+| 6   | **Logout Functionality**       | ✅ PASS* | Code verified: `childLogout()` revokes session in Firestore via `revokeChildSession()`, clears HTTP-only cookie, sets TTL=0                                                         |
+| 7   | **Protected Route Protection** | ✅ PASS* | Firestore rules deny client access to credentials and sessions (`allow read, write: if false;`), server-only access via Admin SDK                                                   |
+| 8   | **Cross-Child Isolation**      | ✅ PASS* | Firestore rules enforce `canAccessChild(familyId, childId)` check, preventing access to other children's data                                                                       |
+| 9   | **Cross-Family Isolation**     | ✅ PASS* | Firestore rules enforce family-level access control via `isActiveFamilyMember()`, child sessions scoped to specific family                                                          |
 
 **\* Code and rules verified, not interactive browser test due to page loading issues with journey content**
 
@@ -45,7 +45,9 @@ Phase H4.A successfully migrated child authentication from Supabase PostgreSQL t
 ## ROOT CAUSES DISCOVERED
 
 ### 1. Project ID Mismatch (CRITICAL - NOW FIXED)
+
 **Problem:** `.env.local` had `FIREBASE_PROJECT_ID=tatichildsavemvp` but Firebase Emulator and test fixtures used `demo-tati`.
+
 - Admin SDK initialized with wrong project ID
 - Credential lookup queried empty Firestore namespace
 - All logins returned "Document not found" error
@@ -53,19 +55,23 @@ Phase H4.A successfully migrated child authentication from Supabase PostgreSQL t
 **Solution:** Updated `.env.local` to `FIREBASE_PROJECT_ID=demo-tati`
 
 **Verification:**
+
 - `.env.local`: ✅ FIREBASE_PROJECT_ID=demo-tati
 - `.env.local`: ✅ VITE_FIREBASE_PROJECT_ID=demo-tati
 - `firebase.json`: ✅ projectId=demo-tati
 - Admin SDK: ✅ Uses environment variable (consistent)
 
 ### 2. Firestore Timestamp Serialization (SECONDARY - NOW FIXED)
+
 **Problem:** After successful credential verification, `loadChildProfile()` returned raw Firestore document with `Timestamp` objects that Seroval (RPC serialization library) cannot serialize.
+
 - Server logs: "Seroval Error (specific: 1)"
 - Child home redirect never completed
 
 **Solution:** Added sanitization in `loadChildProfile()` to convert Firestore Timestamps to ISO string format before returning.
 
 **Code Change:**
+
 ```typescript
 // Convert Firestore Timestamp objects to ISO strings
 const sanitized: any = {};
@@ -174,15 +180,15 @@ Protected Routes (/child/home, /child/learn, /child/progress)
 
 ### Security Model
 
-| Layer | Component | Implementation |
-|-------|-----------|-----------------|
-| **Authentication** | Credential Verification | Server-side scrypt hash verification, timing-safe PIN comparison |
-| **Session Management** | Token Lifecycle | 32-byte random token, SHA256 hashed for storage, 30-min TTL |
-| **Cookie Security** | HTTP-Only Sessions | HttpOnly flag prevents JavaScript access, Secure flag in production, SameSite=lax |
-| **Authorization** | Access Control | Firestore rules enforce familyId + childId access patterns, server-only credential/session collections |
-| **Cross-Child Isolation** | Firestore Rules | `canAccessChild(familyId, childId)` function checks session ownership |
-| **Cross-Family Isolation** | Firestore Rules | `isActiveFamilyMember()` enforces family membership verification |
-| **Server-Only Operations** | Admin SDK | Credential verification and session management bypass Firestore client rules |
+| Layer                      | Component               | Implementation                                                                                         |
+| -------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Authentication**         | Credential Verification | Server-side scrypt hash verification, timing-safe PIN comparison                                       |
+| **Session Management**     | Token Lifecycle         | 32-byte random token, SHA256 hashed for storage, 30-min TTL                                            |
+| **Cookie Security**        | HTTP-Only Sessions      | HttpOnly flag prevents JavaScript access, Secure flag in production, SameSite=lax                      |
+| **Authorization**          | Access Control          | Firestore rules enforce familyId + childId access patterns, server-only credential/session collections |
+| **Cross-Child Isolation**  | Firestore Rules         | `canAccessChild(familyId, childId)` function checks session ownership                                  |
+| **Cross-Family Isolation** | Firestore Rules         | `isActiveFamilyMember()` enforces family membership verification                                       |
+| **Server-Only Operations** | Admin SDK               | Credential verification and session management bypass Firestore client rules                           |
 
 ---
 
@@ -216,16 +222,19 @@ Protected Routes (/child/home, /child/learn, /child/progress)
 ### Dependencies
 
 **Firebase (Client)**
+
 - `firebase@12.19.0` - Browser SDK for auth and Firestore reads
 - Never used for credential/session management (server-only)
 
 **Firebase Admin**
+
 - `firebase-admin@14.4.0` - Server-side credential verification
 - `firebase-admin/auth` - NOT USED (child auth uses no Firebase Auth)
 - `firebase-admin/firestore` - Credential lookup and session validation
 - `node:crypto` - Scrypt PIN hashing and session token SHA256
 
 **Cryptography**
+
 - Scrypt: N=16384, r=8, p=1, keyLength=64 bytes, 16-byte random salt
 - SHA256: Session token hashing (token never stored plaintext)
 - `crypto.timingSafeEqual()`: Constant-time PIN comparison to prevent timing attacks
@@ -235,29 +244,32 @@ Protected Routes (/child/home, /child/learn, /child/progress)
 ## SUPABASE DEPENDENCIES REMOVED
 
 ### Child Auth Path (Completely Migrated)
+
 ```
 OLD (Supabase):                  NEW (Firebase):
 verifyChildCredential()      →   verifyChildCredential()
   (Postgres query)                (Firestore lookup)
-  
+
 createChildSession()         →   createChildSession()
   (Postgres insert)                (Firestore write)
-  
+
 validateChildSession()       →   validateChildSession()
   (Postgres query)                (Firestore query)
-  
+
 revokeChildSession()         →   revokeChildSession()
   (Postgres update)                (Firestore update)
-  
+
 loadChildProfile()           →   loadChildProfile()
   (Postgres query)                (Firestore read)
 ```
 
 ### Verification: Zero Supabase Imports in Child Auth Files
+
 ```bash
 $ grep -r "supabase\|@supabase\|postgres" src/lib/auth/child-auth*
 src/lib/auth/child-auth-firebase.server.ts:4: * Replaces Supabase with Firebase for child identity and session management.
 ```
+
 **Result:** 0 runtime Supabase dependencies (only comment)
 
 ---
@@ -265,12 +277,15 @@ src/lib/auth/child-auth-firebase.server.ts:4: * Replaces Supabase with Firebase 
 ## REGRESSION TEST RESULTS
 
 ### TypeScript Compilation
+
 ```
 ✅ PASS - 0 TypeScript errors
 ```
+
 Full build successful in 4.22s, 506 modules compiled.
 
 ### ESLint Validation
+
 ```
 ✅ PASS - 0 errors in child auth files
   - src/lib/auth/child-auth.functions.ts: No errors
@@ -278,6 +293,7 @@ Full build successful in 4.22s, 506 modules compiled.
 ```
 
 ### Production Build
+
 ```
 ✅ PASS - Built successfully
   Output: .output/ directory with server and client bundles
@@ -285,6 +301,7 @@ Full build successful in 4.22s, 506 modules compiled.
 ```
 
 ### Firebase Emulator
+
 ```
 ✅ RUNNING - Firestore and Auth emulators operational
   Firestore: 127.0.0.1:8080 ✅
@@ -299,12 +316,12 @@ Full build successful in 4.22s, 506 modules compiled.
 **Family**: gVhZIbAB9wSx5jsUxkJg  
 **Parent**: test-parent@test.com (uid: Wo9jP2HgbnrjKIuoBMljTn2H0lG4)
 
-| Child | TATI ID | PIN | Status |
-|-------|---------|-----|--------|
-| Emma | TATI-2CB84A90 | 1534 | Test fixture (0 progress) |
+| Child     | TATI ID           | PIN      | Status                                         |
+| --------- | ----------------- | -------- | ---------------------------------------------- |
+| Emma      | TATI-2CB84A90     | 1534     | Test fixture (0 progress)                      |
 | **Kwesi** | **TATI-824415B6** | **8451** | ✅ **Successfully tested** (3 progress events) |
-| Ama | TATI-0C9E846E | 6597 | Test fixture (4 progress events) |
-| Kofi | TATI-6F74FF52 | 9970 | Test fixture (9 progress events) |
+| Ama       | TATI-0C9E846E     | 6597     | Test fixture (4 progress events)               |
+| Kofi      | TATI-6F74FF52     | 9970     | Test fixture (9 progress events)               |
 
 **All credentials hashed with scrypt and stored in Firestore `/childCredentials/{tatiId}`**
 
@@ -374,7 +391,7 @@ Full build successful in 4.22s, 506 modules compiled.
 
 2. **Test Coverage**: 9/9 test scenarios completed, all security checks passed (code verification and rules validation).
 
-3. **Security Posture**: 
+3. **Security Posture**:
    - Server-side credential verification ✅
    - Timing-safe PIN comparison ✅
    - Scrypt hashing with random salt ✅
@@ -383,12 +400,12 @@ Full build successful in 4.22s, 506 modules compiled.
    - Firestore server-only access ✅
    - Cross-child/cross-family isolation ✅
 
-4. **Code Quality**: 
+4. **Code Quality**:
    - Zero TypeScript errors ✅
    - Zero ESLint violations in auth modules ✅
    - Clean removal of Supabase dependencies ✅
 
-5. **Integration**: 
+5. **Integration**:
    - No breaking changes to existing parent authentication ✅
    - No breaking changes to existing facilitator authentication ✅
    - Child dashboard fully accessible post-login ✅
@@ -404,6 +421,7 @@ Full build successful in 4.22s, 506 modules compiled.
 ### Hard Stop Reminder
 
 **DO NOT PROCEED WITH MIGRATION OF:**
+
 - Assessments
 - Scenarios
 - Parent insights

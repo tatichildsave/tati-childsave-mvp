@@ -1,4 +1,5 @@
 # H5.1 — Identity Onboarding Completion Report
+
 **Date:** 2026-10-01  
 **Status:** IMPLEMENTATION COMPLETE  
 **Testing:** Ready for Vercel/Production Verification
@@ -12,8 +13,9 @@ Child profiles were created with `tati_id: ""` (empty string) because `generateC
 
 **Solution Implemented:**  
 Modified `FirebaseFamilyRepository.createChild()` to:
+
 1. Generate unique TATI ID
-2. Generate secure 4-digit PIN  
+2. Generate secure 4-digit PIN
 3. Create `/childCredentials/{tatiId}` document with PIN hash
 4. Set child profile `tati_id` field
 5. Return child profile with credentials activated
@@ -28,6 +30,7 @@ Newly created children now have fully functional TATI ID + PIN credentials for i
 ### What Was Broken
 
 **Before H5.1:**
+
 ```
 Parent creates child
   ↓
@@ -43,12 +46,14 @@ Child cannot login independently
 ```
 
 **Why It Broke:**
+
 - `generateTatiId()`, `generateChildPin()`, `hashChildPin()`, `saveChildPin()` all existed in `child-auth-firebase.server.ts`
 - These functions were proven functional (existing fixture uses them)
 - But they were **never called** during normal onboarding
 - `createChild()` ended with `tati_id: ""` without generating credentials
 
 ### Code Location
+
 **File:** `src/lib/backend/firebase/repositories.ts`  
 **Method:** `FirebaseFamilyRepository.createChild()`  
 **Lines affected:** ~160-180 (before H5.1)
@@ -78,6 +83,7 @@ export function generateChildPin(): string {
 ```
 
 **Security Properties:**
+
 - ✅ Cryptographically secure (uses `crypto.randomBytes`)
 - ✅ Non-predictable (random 2-byte value modulo 9000)
 - ✅ Non-sequential (not just incrementing)
@@ -97,14 +103,14 @@ async createChild(input: CreateChildInput): Promise<ChildProfile> {
   try {
     // 1. Get or create family
     const familyId = await this.ensureFamily();
-    
+
     // 2. Generate child ID
     const childId = crypto.randomUUID();
-    
+
     // 3. GENERATE CREDENTIALS (NEW)
     const tatiId = generateTatiId();  // e.g., "TATI-A7B2C9D1"
     const pin = generateChildPin();   // e.g., "5432"
-    
+
     // 4. Create child document
     const now = FieldValue.serverTimestamp();
     const document = {
@@ -122,17 +128,17 @@ async createChild(input: CreateChildInput): Promise<ChildProfile> {
       createdAt: now,
       updatedAt: now,
     };
-    
+
     // 5. Write child document
     await this.db.collection("families")
       .doc(familyId)
       .collection("children")
       .doc(childId)
       .set(document);
-    
+
     // 6. SAVE CREDENTIAL (NEW)
     await saveChildPin(childId, tatiId, familyId, pin);
-    
+
     // 7. Read back and return
     const saved = await ...get();
     return toChildProfile(saved.data());
@@ -144,14 +150,20 @@ async createChild(input: CreateChildInput): Promise<ChildProfile> {
 ```
 
 **Key Changes:**
+
 - Lines +170: `const tatiId = generateTatiId();`
 - Lines +171: `const pin = generateChildPin();`
 - Lines +193: `tati_id: tatiId` (was `""`)
 - Lines +204: `await saveChildPin(childId, tatiId, familyId, pin);`
 
 **New Imports:**
+
 ```typescript
-import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child-auth-firebase.server";
+import {
+  generateTatiId,
+  generateChildPin,
+  saveChildPin,
+} from "@/lib/auth/child-auth-firebase.server";
 ```
 
 ---
@@ -179,6 +191,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
 
 **Child Profile Document:**  
 `/families/{familyId}/children/{childId}`
+
 ```javascript
 {
   id: UUID,
@@ -199,6 +212,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
 
 **Credential Document (Server-Only):**  
 `/childCredentials/{tatiId}`
+
 ```javascript
 {
   tatiId: "TATI-A7B2C9D1",
@@ -212,6 +226,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
 ```
 
 **Security:**
+
 - ✅ PIN never stored plaintext
 - ✅ PIN hash uses scrypt (memory-hard, timing-safe)
 - ✅ Credentials inaccessible to client (Firestore rules deny all)
@@ -228,20 +243,20 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
    POST /signup
    → Firebase Auth creates user
    → Redirect /parent
-   
+
 2. PARENT PORTAL LOADS
    GET /parent
    → useChildProfiles()
    → getFamilyChildren(userId)
    → ensureFamily() creates /families/{fId}
    → Query children (empty at first)
-   
+
 3. PARENT INITIATES ONBOARDING
    GET /onboarding
    → Parent fills: name, age, avatar
    → POST /onboarding
    → startJourney() calls createChild.mutateAsync()
-   
+
 4. CHILD CREATED (WITH CREDENTIALS)
    Server: createChildProfile()
    → FirebaseFamilyRepository.createChild()
@@ -250,7 +265,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
    → Create child doc with tati_id
    → Save credential to /childCredentials
    → Return profile
-   
+
 5. CHILD LOGS IN INDEPENDENTLY
    GET /child/login
    → Child enters: TATI ID + PIN
@@ -263,7 +278,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
    → Set HTTP-only cookie with session token
    → Navigate /child/home
    → Child learns independently
-   
+
 6. PARENT VIEWS PROGRESS
    GET /parent/child/{childId}
    → Parent sees progress recorded by independent child
@@ -277,6 +292,7 @@ import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child
 ### Authentication Chain
 
 **Child-Independent Login (Verified):**
+
 ```
 TATI ID + PIN (user input)
   ↓
@@ -302,26 +318,28 @@ Child authenticated ✓
 ### Authorization Checks
 
 **Firestore Security Rules:**
+
 - ✅ `/childCredentials`: `allow read, write: if false` (server-only)
 - ✅ `/childSessions`: `allow read, write: if false` (server-only)
 - ✅ `/families/{fId}/children/{cId}`: `allow read: if canAccessChild()`
 - ✅ `/journeyProgress`: `allow create, update: if false` (server-only writes via Admin SDK)
 
 **Server-Side Checks:**
+
 - ✅ `verifyChildPin()`: Timing-safe comparison (prevents timing attacks)
 - ✅ `validateChildSession()`: Token hash matches, session not revoked, not expired
 - ✅ `loadChildProfile()`: Reads from correct family + child path
 
 ### Attack Vectors Addressed
 
-| Attack | Defense |
-|--------|---------|
-| PIN brute force | Scrypt (memory-hard, slow) |
-| Timing attack on PIN | `timingSafeEqual()` |
-| Session hijacking | SHA256 token hash, HttpOnly cookie |
+| Attack                           | Defense                                     |
+| -------------------------------- | ------------------------------------------- |
+| PIN brute force                  | Scrypt (memory-hard, slow)                  |
+| Timing attack on PIN             | `timingSafeEqual()`                         |
+| Session hijacking                | SHA256 token hash, HttpOnly cookie          |
 | Child accessing wrong child data | Firestore RLS + server-side family ID check |
-| Parent accessing wrong family | Family ownership checks in server functions |
-| Credentials in plaintext | Never stored; only hash persists |
+| Parent accessing wrong family    | Family ownership checks in server functions |
+| Credentials in plaintext         | Never stored; only hash persists            |
 
 ---
 
@@ -350,6 +368,7 @@ Attempt 2 (retry with same params):
 **Mitigation:** Implement deduplication on client (mutation key = parent + child name) or server (unique constraint on name per family)
 
 **Recommended Fix (Not In H5.1):**
+
 ```typescript
 // In parent portal mutation
 useMutation({
@@ -366,6 +385,7 @@ useMutation({
 ### Initialization
 
 **Still On-Demand During Page Load:**
+
 ```
 Parent portal loads
   ↓
@@ -392,14 +412,16 @@ Else:
 
 ### Assessment Storage
 
-**Current Status:** Hybrid (Firestore + Supabase)  
+**Current Status:** Hybrid (Firestore + Supabase)
+
 - ✅ Child profile: Firestore
-- ✅ Child progress: Firestore  
+- ✅ Child progress: Firestore
 - ✅ Child credentials: Firestore
 - ❌ Assessment attempts: Supabase
 - ❌ Assessment responses: Supabase
 
 **Code Location:** `src/lib/auth/child-learning.functions.ts::saveChildAssessment()`
+
 ```typescript
 // Storing to Supabase instead of Firestore
 await supabase.from("assessment_attempts").upsert({...});
@@ -413,6 +435,7 @@ await supabase.from("assessment_responses").upsert({...});
 ### Child Learning with Credentials
 
 **Credentials + Learning Flow:**
+
 ```
 Child logs in independently
   ↓
@@ -504,11 +527,11 @@ Step 2: Parent Creates Child
   Result: Child created, profile returned
   ✓ PASS: Child has tati_id field (not empty)
   ✓ PASS: Parent can see TATI ID on portal
-  
+
 Step 3: Parent Logs Out
   Action: Click "Sign out"
   Result: Cleared auth, navigated to /
-  
+
 Step 4: Child Logs In Independently
   URL: http://[host]/child/login (FRESH BROWSER/PRIVATE WINDOW)
   Input: [TATI ID from Step 2], [PIN from backend logs]
@@ -516,7 +539,7 @@ Step 4: Child Logs In Independently
   Result: ChildSession created, authenticated
   ✓ PASS: Navigated to /child/home
   ✓ PASS: Child can see own profile
-  
+
 Step 5: Child Learns
   Action: Navigate to pre-assessment
   Action: Complete assessment
@@ -524,14 +547,14 @@ Step 5: Child Learns
   Result: Progress recorded
   ✓ PASS: Score calculated
   ✓ PASS: No errors in console
-  
+
 Step 6: Parent Logs In
   URL: http://[host]/login
   Action: Sign in with credentials from Step 1
   Result: Authenticated, on /parent
   ✓ PASS: Same child visible
   ✓ PASS: Child's progress shows (matches Step 5 activity)
-  
+
 Step 7: Isolation Test
   Action: Try to access other child's data (manipulate URL childId)
   Result: Access denied (404 or redirect)
@@ -635,22 +658,21 @@ npm run dev
 ✅ Credentials secured (hashed, server-only)  
 ✅ Existing test fixture still works  
 ✅ Parent-guided learning unaffected  
-✅ Authorization model maintained  
+✅ Authorization model maintained
 
 ### What's Fixed
 
 ✅ Empty `tati_id` fields → Now populated  
 ✅ Missing `/childCredentials` documents → Now created  
 ✅ Child login always fails → Now succeeds  
-✅ Child independence blocked → Now possible  
+✅ Child independence blocked → Now possible
 
 ### What Needs Verification
 
 ⏳ End-to-end on Vercel (new parent → child → independent login → parent views)  
 ⏳ Assessment + Credentials interaction (data flows correctly)  
 ⏳ Isolation enforcement (security tests pass)  
-⏳ Regression: All existing flows still work  
+⏳ Regression: All existing flows still work
 
 **Status:** Ready for Vercel Verification  
 **Confidence:** HIGH (credential infrastructure proven, implementation matches pattern)
-

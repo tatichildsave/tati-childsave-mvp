@@ -3,6 +3,7 @@
 ## What We've Accomplished
 
 ### ✅ Completed
+
 1. **Test User Infrastructure Created**
    - 9 test users created in Firebase Auth Emulator
    - Test data includes proper school, role, and family relationships
@@ -24,6 +25,7 @@
 ### ⚠️ Current Blocker
 
 **Authentication Infrastructure Mismatch:**
+
 - App uses Supabase Auth (production cloud instance)
 - Test users were created in Firebase Auth Emulator (local)
 - Academy/admin routes verify facilitator role via Firestore after Supabase login
@@ -31,6 +33,7 @@
 
 **Why This Matters:**
 The manual QA cannot proceed without:
+
 - Either: Creating test users in production Supabase (risky, pollutes prod data)
 - Or: Access to existing test credentials in production Supabase
 - Or: Switching dev environment to use Supabase local emulation
@@ -40,6 +43,7 @@ The manual QA cannot proceed without:
 Based on code review, H3.3 is **FEATURE COMPLETE**:
 
 ### Core Functionality ✅
+
 - `src/routes/academy/admin/schools/index.tsx` - School list view
 - `src/routes/academy/admin/schools/$schoolId.tsx` - School detail dashboard with 5 tabs:
   - Overview (school info)
@@ -49,6 +53,7 @@ Based on code review, H3.3 is **FEATURE COMPLETE**:
   - Admins (admin assignment/removal interface)
 
 ### Data Queries ✅
+
 - `getAllSchools()` - Platform admin view of all schools
 - `getSchool(schoolId)` - School detail with auth check
 - `getFacilitatorsBySchool()` - Scoped facilitator query
@@ -56,14 +61,16 @@ Based on code review, H3.3 is **FEATURE COMPLETE**:
 - `getLearnersBySchool()` - Scoped learner query
 
 ### Security & Privacy ✅
+
 - Firestore rules: Multi-tenant isolation via schoolId
 - Role check: `checkFacilitatorStatus()` verifies facilitator role
 - Privacy: No parentInsights or family data exposed in admin views
 - School boundary: Admin A cannot access school B's data per rules
 
 ### H3.2 Integration ✅
+
 - Academy routes remain intact
-- Facilitator dashboard unaffected  
+- Facilitator dashboard unaffected
 - Existing authenticat ed flows preserved
 
 ## Recommended Next Step
@@ -71,6 +78,7 @@ Based on code review, H3.3 is **FEATURE COMPLETE**:
 To complete actual browser-based manual QA:
 
 **Option A (Quick - Recommended)**
+
 1. Ask user for test credentials in production Supabase
 2. Log in to /academy/admin/schools
 3. Execute 20-item manual QA checklist with actual browser interaction
@@ -78,6 +86,7 @@ To complete actual browser-based manual QA:
 5. Mark results as PASS/FAIL/BLOCKED
 
 **Option B (Infrastructure)**
+
 1. Set up Supabase local emulation
 2. Create test users in local Supabase
 3. Point app to local Supabase instead of production
@@ -85,6 +94,7 @@ To complete actual browser-based manual QA:
 
 **Option C (Compliance Alternative)**
 Document that manual QA is blocked by auth infrastructure mismatch, but:
+
 - All H3.3 code is implemented and passes automated tests (122/122)
 - Security rules prevent cross-school access (verified)
 - Privacy boundaries enforced (code review confirmed)
@@ -100,6 +110,7 @@ Document that manual QA is blocked by auth infrastructure mismatch, but:
 ## Next Decision Required
 
 Would you like to:
+
 1. **Provide Supabase test credentials** for production env manual QA?
 2. **Set up local Supabase emulation** for isolated testing?
 3. **Proceed with verified documentation** of H3.3 status based on code + automated tests?

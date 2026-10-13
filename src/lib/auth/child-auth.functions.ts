@@ -43,7 +43,7 @@ async function getChildContext(childId: string): Promise<{ familyId: string } | 
 
     if (snapshot.empty) return null;
     const cred = snapshot.docs[0].data();
-    return { familyId: cred['familyId'] };
+    return { familyId: cred["familyId"] };
   } catch {
     return null;
   }
@@ -120,16 +120,16 @@ export const getChildSession = createServerFn({ method: "GET" }).handler(async (
   // Type guard for Firestore Timestamp-like objects
   const isFirestoreTimestamp = (value: unknown): value is { toDate(): Date } => {
     return (
-      typeof value === 'object' &&
+      typeof value === "object" &&
       value !== null &&
-      'toDate' in value &&
-      typeof (value as any).toDate === 'function'
+      "toDate" in value &&
+      typeof (value as any).toDate === "function"
     );
   };
 
   // Normalize expiresAt to ISO string for serialization
   const normalizeTimestamp = (fieldName: string, value: unknown): string => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       // Validate it's a valid ISO string
       try {
         new Date(value).toISOString();
@@ -152,10 +152,16 @@ export const getChildSession = createServerFn({ method: "GET" }).handler(async (
     }
 
     // Reject invalid or missing values
-    throw new AuthorizationError(`Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`);
+    throw new AuthorizationError(
+      `Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`,
+    );
   };
 
-  return { profile, sessionId: session.id, expiresAt: normalizeTimestamp('expiresAt', session.expiresAt) };
+  return {
+    profile,
+    sessionId: session.id,
+    expiresAt: normalizeTimestamp("expiresAt", session.expiresAt),
+  };
 });
 
 export const childLogout = createServerFn({ method: "POST" }).handler(async () => {

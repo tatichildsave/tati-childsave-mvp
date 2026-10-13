@@ -54,7 +54,16 @@ export function ScenarioPlayer({
   goalLabel,
 }: Props) {
   const runner = useScenarioRunner(scenario, childId, persistence);
-  const { state, node, summary, status, saveError, retryLastSave } = runner;
+  const {
+    state,
+    node,
+    summary,
+    status,
+    saveError,
+    recoveryRequired,
+    resolveSaveError,
+    saveErrorActionLabel,
+  } = runner;
   const dayPct = dayProgressPercent(scenario, state);
   const atChapterEnd =
     !!pauseBefore?.length &&
@@ -129,11 +138,11 @@ export function ScenarioPlayer({
           <p className="text-sm text-warning-foreground">{saveError}</p>
           <button
             type="button"
-            onClick={retryLastSave}
+            onClick={resolveSaveError}
             disabled={!!saving}
             className="mt-2 inline-flex items-center justify-center rounded-lg bg-warning px-3 py-1.5 text-sm font-semibold text-warning-foreground disabled:opacity-50"
           >
-            Try again
+            {saveErrorActionLabel}
           </button>
         </div>
       ) : null}
@@ -189,7 +198,9 @@ export function ScenarioPlayer({
           <h2 className="text-xl font-bold">{scenario.intro.title}</h2>
           <p className="mt-2 text-muted-foreground">{scenario.intro.body}</p>
           <div className="mt-5">
-            <PrimaryButton onClick={runner.start}>{scenario.intro.cta ?? "Let's go"}</PrimaryButton>
+            <PrimaryButton onClick={runner.start} disabled={recoveryRequired}>
+              {scenario.intro.cta ?? "Let's go"}
+            </PrimaryButton>
           </div>
         </section>
       ) : null}
@@ -219,7 +230,7 @@ export function ScenarioPlayer({
                 decisions: state.decisions,
               })
             }
-            disabled={!!saving}
+            disabled={!!saving || recoveryRequired}
           >
             {saving ? "Saving…" : "Back to my journey →"}
           </PrimaryButton>
@@ -275,7 +286,8 @@ export function ScenarioPlayer({
                 key={choice.id}
                 type="button"
                 onClick={() => runner.choose(choice.id)}
-                className="flex min-h-[64px] w-full items-center gap-3 rounded-3xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-[transform,border-color] duration-150 hover:border-primary active:scale-[0.98]"
+                disabled={recoveryRequired}
+                className="flex min-h-[64px] w-full items-center gap-3 rounded-3xl border border-border bg-card px-4 py-3 text-left shadow-sm transition-[transform,border-color] duration-150 hover:border-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span
                   aria-hidden="true"
@@ -403,7 +415,9 @@ export function ScenarioPlayer({
           </div>
 
           <div className="mt-4">
-            <PrimaryButton onClick={runner.continueOn}>Continue journey →</PrimaryButton>
+            <PrimaryButton onClick={runner.continueOn} disabled={recoveryRequired}>
+              Continue journey →
+            </PrimaryButton>
           </div>
         </section>
       ) : null}
@@ -505,13 +519,14 @@ export function ScenarioPlayer({
                 decisions: state.decisions,
               });
             }}
-            disabled={!!saving}
+            disabled={!!saving || recoveryRequired}
           >
             {saving ? "Saving…" : "Save and continue"}
           </PrimaryButton>
           <button
             type="button"
             onClick={runner.restart}
+            disabled={recoveryRequired}
             className="min-h-[48px] w-full rounded-2xl border border-border bg-card text-base font-semibold"
           >
             Try the story a different way

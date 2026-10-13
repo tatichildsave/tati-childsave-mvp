@@ -13,6 +13,7 @@
 ### New Components Created (4 total)
 
 #### 1. **ChapterBanner.tsx**
+
 - **File**: `src/components/tati/ChapterBanner.tsx`
 - **Purpose**: Display chapter/day context at top of lesson and scenario pages
 - **Data**: stage (string, e.g., "Chapter 2 — Market Day"), dayNumber (number), daysTotal (number)
@@ -20,6 +21,7 @@
 - **Integration Points**: LessonPlayer, ScenarioPlayer
 
 #### 2. **GoalWidget.tsx**
+
 - **File**: `src/components/tati/GoalWidget.tsx`
 - **Purpose**: Show persistent goal progress (GH₵X of GH₵80, days remaining) across lesson/scenario pages
 - **Data**: goalLabel, targetAmount, currentSaved, daysTotal, dayNumber
@@ -28,6 +30,7 @@
 - **Integration Points**: LessonPlayer, ScenarioPlayer
 
 #### 3. **NextStepCard.tsx**
+
 - **File**: `src/components/tati/NextStepCard.tsx`
 - **Purpose**: Answer "What should I do now?" with single contextual CTA
 - **State Machine** (8 possible states):
@@ -42,6 +45,7 @@
 - **Integration Points**: /child/home.tsx (primary location)
 
 #### 4. **LearningObjectiveBadge.tsx**
+
 - **File**: `src/components/tati/LearningObjectiveBadge.tsx`
 - **Purpose**: Display "You're learning: [objective]" as prominent badge
 - **Data**: objective (string, from lesson.learningObjective)
@@ -53,6 +57,7 @@
 
 **File**: `src/components/tati/index.ts`  
 **Changes**: Added 4 new exports:
+
 ```typescript
 export { ChapterBanner } from "./ChapterBanner";
 export { GoalWidget } from "./GoalWidget";
@@ -63,6 +68,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
 ### Route Layer: Data Wiring
 
 #### LessonPlayer Route
+
 - **File**: `src/routes/child/lesson.$lessonId.tsx`
 - **Changes**:
   - Added import: `import { getTrack } from "@/lib/learning/track"`
@@ -78,6 +84,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
     - `goalLabel`: string from track.goal.title
 
 #### ScenarioPlayer Route
+
 - **File**: `src/routes/child/scenario.$scenarioId.tsx`
 - **Changes**:
   - Extended useChildLearning destructuring: Added `snapshot`
@@ -87,6 +94,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
 ### Component Layer: UI Integration
 
 #### LessonPlayer Component
+
 - **File**: `src/components/lesson/LessonPlayer.tsx`
 - **Changes**:
   - Added imports: `import { ChapterBanner, GoalWidget, LearningObjectiveBadge } from "@/components/tati"`
@@ -102,6 +110,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
     8. Content blocks, activity, knowledge check, reflection (unchanged)
 
 #### ScenarioPlayer Component
+
 - **File**: `src/components/scenario/ScenarioPlayer.tsx`
 - **Changes**:
   - Added imports: `import { ChapterBanner, GoalWidget } from "@/components/tati"`
@@ -112,6 +121,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
   - Note: Consequence rendering already implemented (lines 300+); no changes needed
 
 #### Home Page Integration
+
 - **File**: `src/routes/child/home.tsx`
 - **Changes**:
   - Added imports: `import { NextStepCard, GoalWidget } from "@/components/tati"`
@@ -124,6 +134,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
 ## B. Journey Impact: Before & After
 
 ### Before P0
+
 - Child landed on home page, saw XP level and list of activities
 - No sense of which "chapter" or "day" they were on
 - No visibility into progress toward the GH₵80 goal
@@ -131,6 +142,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
 - Learning objective shown as plain text under lesson title
 
 ### After P0
+
 - Child lands on home page and immediately sees:
   - **"Day 4 of 14"** → understands progression through structured 14-day arc
   - **"Saving GH₵45 of GH₵80"** with progress bar → tangible goal visualization
@@ -151,6 +163,7 @@ export { LearningObjectiveBadge } from "./LearningObjectiveBadge";
 Provide thematic and progress context at the top of lesson/scenario pages.
 
 **Props**
+
 ```typescript
 {
   stage: string;          // e.g., "Chapter 2 — Market Day"
@@ -160,12 +173,14 @@ Provide thematic and progress context at the top of lesson/scenario pages.
 }
 ```
 
-**Data Reuse**  
+**Data Reuse**
+
 - `stage`: Extracted from TrackItem (stored in track.sequence)
 - `dayNumber`: Computed by snapshot (journey.dayNumber)
 - `daysTotal`: From TrackGoal (track.goal.daysTotal)
 
-**Implementation**  
+**Implementation**
+
 ```typescript
 export function ChapterBanner({ stage, dayNumber, daysTotal, className }: Props) {
   return (
@@ -186,7 +201,8 @@ export function ChapterBanner({ stage, dayNumber, daysTotal, className }: Props)
 }
 ```
 
-**Integration**  
+**Integration**
+
 - LessonPlayer: Rendered after header, before content
 - ScenarioPlayer: Rendered after header, before status
 
@@ -198,6 +214,7 @@ export function ChapterBanner({ stage, dayNumber, daysTotal, className }: Props)
 Display savings progress and days remaining as persistent sidebar widget.
 
 **Props**
+
 ```typescript
 {
   goalLabel: string;      // e.g., "School Bag Goal"
@@ -209,14 +226,16 @@ Display savings progress and days remaining as persistent sidebar widget.
 }
 ```
 
-**Data Reuse**  
+**Data Reuse**
+
 - `goalLabel`: From TrackGoal (track.goal.title)
 - `targetAmount`: From TrackGoal (track.goal.target)
 - `currentSaved`: Computed by snapshot (journey.savedCedis = sum of done item rewards)
 - `daysTotal`: From TrackGoal (track.goal.daysTotal)
 - `dayNumber`: Computed by snapshot (journey.dayNumber)
 
-**Implementation**  
+**Implementation**
+
 ```typescript
 export function GoalWidget({ goalLabel, targetAmount, currentSaved, daysTotal, dayNumber, className }: Props) {
   const pct = Math.min(100, Math.round((currentSaved / targetAmount) * 100));
@@ -240,7 +259,8 @@ export function GoalWidget({ goalLabel, targetAmount, currentSaved, daysTotal, d
 }
 ```
 
-**Integration**  
+**Integration**
+
 - LessonPlayer: Rendered after ChapterBanner, before content
 - ScenarioPlayer: Rendered after ChapterBanner, before status
 - Home page: Rendered after XPIndicator
@@ -253,6 +273,7 @@ export function GoalWidget({ goalLabel, targetAmount, currentSaved, daysTotal, d
 Show single, contextual call-to-action based on journey state.
 
 **Props**
+
 ```typescript
 {
   snapshot: ProgressSnapshot;  // Full snapshot from useChildLearning
@@ -260,14 +281,16 @@ Show single, contextual call-to-action based on journey state.
 }
 ```
 
-**Data Reuse**  
+**Data Reuse**
+
 - `snapshot.journey.complete`: Boolean (all items done + assessments complete)
 - `snapshot.assessments.postReady` & `postDone`: Booleans (computed by snapshot)
 - `snapshot.assessments.preDone`: Boolean (pre-assessment completed)
 - `snapshot.currentItem`: TrackItem or undefined (next incomplete item)
 - `snapshot.steps`: Array of step info (used to detect if current item is actively in progress)
 
-**State Machine**  
+**State Machine**
+
 ```
 1. journey.complete? → "View Learning Summary" → /child/results
 2. postReady && !postDone? → "Take Final Check-In" → /child/assessment/save-post
@@ -282,7 +305,8 @@ Show single, contextual call-to-action based on journey state.
 **Implementation**  
 Computes nextState using useMemo. Renders Link wrapping Card with icon, label, description, action text.
 
-**Integration**  
+**Integration**
+
 - Home page: Rendered after GoalWidget, before current challenge section
 
 ---
@@ -293,6 +317,7 @@ Computes nextState using useMemo. Renders Link wrapping Card with icon, label, d
 Display lesson's learning objective as a visually prominent badge.
 
 **Props**
+
 ```typescript
 {
   objective: string;    // e.g., "Understand why saving matters"
@@ -300,10 +325,12 @@ Display lesson's learning objective as a visually prominent badge.
 }
 ```
 
-**Data Reuse**  
+**Data Reuse**
+
 - `objective`: From lesson.learningObjective (passed from LessonPlayer)
 
-**Implementation**  
+**Implementation**
+
 ```typescript
 export function LearningObjectiveBadge({ objective, className }: Props) {
   return (
@@ -315,7 +342,8 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 }
 ```
 
-**Integration**  
+**Integration**
+
 - LessonPlayer: Replaces old text rendering at line showing lesson objective
 
 ---
@@ -325,6 +353,7 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 **Finding**: Consequence rendering is **already fully implemented** in ScenarioPlayer (lines 300+).
 
 **Evidence**:
+
 - Phase in engine.ts: applyChoice() transitions state.phase to "consequence"
 - State data: scenario.engine.state.consequence contains {decisionChip, headline, title, body, ledgerNote}
 - Render code: ScenarioPlayer checks `phase === "consequence"` and renders full consequence card with:
@@ -342,24 +371,28 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 ## E. Security Verification
 
 ### Authentication Layer
+
 - ✅ No changes to auth model
 - ✅ No changes to session management
 - ✅ No changes to child/user identification
 - ✅ Prerequisite: useChildLearning already performs auth check via beforeLoad hook
 
 ### Authorization Layer
+
 - ✅ No changes to RLS queries
 - ✅ No changes to family/child relationship validation
 - ✅ No changes to resource ownership checks
 - ✅ All new components receive data from snapshot (which is already auth-gated)
 
 ### Correctness Layer
+
 - ✅ No user input accepted by new components
 - ✅ All values (dayNumber, savedCedis, etc.) are computed by authoritative server functions (snapshot engine, track definitions)
 - ✅ No client-side calculation introduced
 - ✅ No state mutation in new components (all React.useMemo with no setState)
 
 ### Summary
+
 **Security boundaries remain intact.** P0 components are pure UI rendering of server-computed values.
 
 ---
@@ -367,25 +400,30 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 ## F. Testing & Validation Results
 
 ### TypeScript Compilation
+
 - ✅ **PASS** — `npm run build` completed successfully
 - Output: 506 modules transformed, 0 errors
 - All 4 new components included in bundle
 - File sizes: ChapterBanner (0.63 kB gzip), GoalWidget (1.54 kB gzip), NextStepCard (analyzed), LearningObjectiveBadge (included in home route)
 
 ### ESLint Validation
+
 - ✅ **PASS** — No lint errors in new components
 
 ### Type Safety
+
 - ✅ **FIXED** — NextStepCard initially used `item.title` (property doesn't exist on TrackItem)
   - Solution: Import `itemTitle()` function from track module and compute description using track + item
   - Verified: TypeScript now recognizes all properties
 
 ### Bundle Impact
+
 - ✅ Minimal — All components follow existing patterns (Card, Link, cn utility)
 - ✅ No new dependencies added
 - ✅ No breaking changes to existing components
 
 ### Browser Testing (Status: PENDING)
+
 - ⏳ Ready for E2E test: 8 journey states (A-H) should be manually tested
 - ⏳ Mobile responsiveness: 375px viewport should be tested
 - ⏳ Consequence screen: Verify already-implemented flow renders correctly
@@ -419,6 +457,7 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 ## H. Remaining P0 Gaps
 
 **None identified.** All 5 P0 improvements are implemented:
+
 1. ✅ Chapter/day context on lesson pages
 2. ✅ Chapter/day context on scenario pages
 3. ✅ Goal progress widget on lesson/scenario/home pages
@@ -432,6 +471,7 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 ### Status: **READY FOR END-TO-END USER TESTING**
 
 **What was delivered**:
+
 - 4 new components (ChapterBanner, GoalWidget, NextStepCard, LearningObjectiveBadge)
 - 2 route layers updated with data wiring (lesson, scenario)
 - 2 player components integrated (LessonPlayer, ScenarioPlayer)
@@ -439,12 +479,14 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 - Zero backend changes, zero security changes, zero feature additions
 
 **What passed validation**:
+
 - TypeScript compilation: ✅ PASS
 - ESLint linting: ✅ PASS
 - Build process: ✅ PASS (506 modules)
 - Type safety: ✅ PASS (fixed NextStepCard type error)
 
 **What requires next-step testing**:
+
 1. **Dedicated E2E UX Test**: Launch app, test 8 journey states (A-H), verify context is visible and helpful
 2. **Mobile Responsiveness**: Confirm 375px viewport displays all new components without scroll issues
 3. **Consequence Flow**: Verify scenario consequence screen renders correctly with full narrative
@@ -452,6 +494,7 @@ export function LearningObjectiveBadge({ objective, className }: Props) {
 5. **Narrative Coherence**: Child tester should confirm the journey "feels like one coherent Money Journey"
 
 **Next step**: Do NOT proceed to P1 features. Instead, run a real, unscripted TATI Junior pilot journey test with children (ages 8-12). Observe:
+
 - Do they understand they're on "Day X of 14"?
 - Does the progress bar motivate continued engagement?
 - Does the clear "Next Step" prevent confusion about what to do?

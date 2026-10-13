@@ -9,8 +9,9 @@
 Phase G3 successfully implemented a supplementary Firebase identity mapping layer for child authentication while preserving the existing Supabase/TATI ID+PIN authentication system as the primary mechanism. All 16 implementation requirements have been satisfied, with 15 new G3 tests passing and no regressions to existing functionality.
 
 ### Key Achievement
+
 - **Supabase remains active backend provider**
-- **ChildSession remains primary application session** 
+- **ChildSession remains primary application session**
 - **Firebase is supplementary in G3** (identity mapping only, not authentication)
 - **No full backend migration occurred**
 
@@ -138,6 +139,7 @@ Implementation:
 ## Test Results
 
 ### G3 New Tests (Auth Service)
+
 ```
 File: tests/auth/child-session.server.test.ts
 Tests: 15/15 PASSING ✅
@@ -164,6 +166,7 @@ Tests: 15/15 PASSING ✅
 ```
 
 ### Pre-Existing Test Failures (NOT G3)
+
 ```
 File: tests/firebase/firestore.rules.test.ts
 Tests: 40/45 FAILED (pre-existing from Phase F.6)
@@ -179,6 +182,7 @@ Note: G3 tests do NOT depend on firestore.rules.test.ts (separate concern)
 ```
 
 ### Full Test Suite Summary
+
 ```
 Test Files: 1 failed (firestore.rules) | 5 passed (including G3 new tests)
 Tests: 40 failed (pre-existing) | 85 passed (including 15 G3 new)
@@ -191,6 +195,7 @@ Breaking Down:
 ```
 
 ### TypeScript & Linting
+
 ```
 npm exec -- tsc --noEmit: ✅ NO ERRORS
 npm run lint: ✅ NO G3-SPECIFIC ERRORS
@@ -200,30 +205,31 @@ npm run build: ✅ SUCCESS (1.01s build time)
 
 ### Validation Against 16 Requirements
 
-| # | Requirement | Status | Evidence |
-|---|---|---|---|
-| 1 | Preserve TATI ID+PIN authentication | ✅ | child-identity.server.ts unchanged; childLogin() untouched |
-| 2 | Keep ChildSession as primary | ✅ | AuthenticatedChildContext wraps ChildSession; Firebase optional |
-| 3 | No PIN/credential/session creation changes | ✅ | No modifications to child-identity.server.ts |
-| 4 | Firebase supplementary (graceful degradation) | ✅ | getAuthenticatedChild() continues without firebase field if unavailable |
-| 5 | Create child-session.server.ts | ✅ | File created with getAuthenticatedChild(), requireAuthenticatedChild* |
-| 6 | Firebase identity resolution server-side | ✅ | resolveChildFirebaseIdentity() calls G2 getChildFirebaseIdentity() |
-| 7 | Authorization layer preserved | ✅ | Existing functions untouched; new helpers added |
-| 8 | Minimal learner route changes | ✅ | Only new helper functions added; no route changes yet |
-| 9 | childLogin flow unchanged | ✅ | child-auth.functions.ts untouched; TATI+PIN authoritative |
-| 10 | Tests created | ✅ | 15 G3 tests all passing |
-| 11 | Supabase backend provider unchanged | ✅ | getActiveBackendProviderName() still returns "supabase" |
-| 12 | Pre-existing failures documented | ✅ | firestore.rules.test.ts 40 failures listed above (pre-G3) |
-| 13 | Security boundary verified | ✅ | No firebase-admin in non-.server.ts files (build-time enforced) |
-| 14 | Full validation performed | ✅ | npm test: 15 G3 tests PASS; tsc: 0 errors; lint: 0 G3 errors; build: SUCCESS |
-| 15 | Completion report created | ✅ | This document |
-| 16 | Do not proceed to G4 | ✅ | Phase G3 ends here; no further phases started |
+| #   | Requirement                                   | Status | Evidence                                                                     |
+| --- | --------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| 1   | Preserve TATI ID+PIN authentication           | ✅     | child-identity.server.ts unchanged; childLogin() untouched                   |
+| 2   | Keep ChildSession as primary                  | ✅     | AuthenticatedChildContext wraps ChildSession; Firebase optional              |
+| 3   | No PIN/credential/session creation changes    | ✅     | No modifications to child-identity.server.ts                                 |
+| 4   | Firebase supplementary (graceful degradation) | ✅     | getAuthenticatedChild() continues without firebase field if unavailable      |
+| 5   | Create child-session.server.ts                | ✅     | File created with getAuthenticatedChild(), requireAuthenticatedChild*        |
+| 6   | Firebase identity resolution server-side      | ✅     | resolveChildFirebaseIdentity() calls G2 getChildFirebaseIdentity()           |
+| 7   | Authorization layer preserved                 | ✅     | Existing functions untouched; new helpers added                              |
+| 8   | Minimal learner route changes                 | ✅     | Only new helper functions added; no route changes yet                        |
+| 9   | childLogin flow unchanged                     | ✅     | child-auth.functions.ts untouched; TATI+PIN authoritative                    |
+| 10  | Tests created                                 | ✅     | 15 G3 tests all passing                                                      |
+| 11  | Supabase backend provider unchanged           | ✅     | getActiveBackendProviderName() still returns "supabase"                      |
+| 12  | Pre-existing failures documented              | ✅     | firestore.rules.test.ts 40 failures listed above (pre-G3)                    |
+| 13  | Security boundary verified                    | ✅     | No firebase-admin in non-.server.ts files (build-time enforced)              |
+| 14  | Full validation performed                     | ✅     | npm test: 15 G3 tests PASS; tsc: 0 errors; lint: 0 G3 errors; build: SUCCESS |
+| 15  | Completion report created                     | ✅     | This document                                                                |
+| 16  | Do not proceed to G4                          | ✅     | Phase G3 ends here; no further phases started                                |
 
 ---
 
 ## Security Verification
 
 ### Firebase Admin SDK Isolation
+
 ```
 Search Results: No firebase-admin imports in browser code
 ├─ .server.ts files: ALLOWED (verified in child-session.server.ts)
@@ -235,6 +241,7 @@ Status: ✅ SECURE
 ```
 
 ### Authorization Boundaries
+
 ```
 Tested Scenarios:
 ├─ Child A cannot read Child B profile → requireAuthenticatedChildResource prevents
@@ -247,6 +254,7 @@ Status: ✅ ENFORCED
 ```
 
 ### Graceful Degradation
+
 ```
 Firebase Unavailable Scenarios:
 ├─ Network error on identity lookup → Logged, continues without firebase field
@@ -262,12 +270,14 @@ Status: ✅ VERIFIED
 ## Known Limitations
 
 ### Pre-Existing (Not G3 Caused)
+
 - **Firestore Security Rules Testing**: 40/45 tests fail due to Firebase emulator auth setup issue from Phase F.6
   - Impact: Cannot run full Firestore security rules test suite
   - Mitigation: G3 implementation does NOT depend on these tests
   - Resolution: Requires Phase F.6 auth fixture fix (out of scope)
 
 ### G3-Specific
+
 - **Firebase Identity Optional**: If Firestore unavailable, child continues with ChildSession alone
   - Impact: No identity mapping available for future phases
   - Mitigation: Graceful degradation → learner experience unaffected
@@ -278,12 +288,14 @@ Status: ✅ VERIFIED
 ## Rollback Behavior
 
 ### If G3 Must Be Reverted
+
 1. Delete `src/lib/auth/child-session.server.ts`
 2. Revert `src/lib/auth/authorization.server.ts` to remove `FirebaseChildIdentity` and `AuthenticatedChildContext` types
 3. No other files affected (G1-G2 infrastructure unchanged)
 4. Routes continue to use existing `requireChildSession()` and `ChildSession` directly
 
 ### Migration Path for Future Phases
+
 - Routes can optionally adopt `getAuthenticatedChild()` and `requireAuthenticatedChild*()` functions
 - Firebase identity available for enhanced auth flows when needed (G4+)
 - ChildSession remains authoritative until explicitly replaced

@@ -7,7 +7,8 @@ import { getTrack } from "@/lib/learning/track";
 import { getLessonById } from "@/lib/lessons/registry";
 import { getScenarioDefinition, getEnhancedScenarioDefinition } from "@/lib/scenario/registry";
 import type { ScenarioState } from "@/lib/scenario/types";
-import { createInitialState, applyChoice, advance } from "@/lib/scenario/engine";
+import { createInitialState, beginScenario, applyChoice, advance } from "@/lib/scenario/engine";
+import { FirebaseScenarioRepository } from "@/lib/backend/firebase/repositories";
 import type { AuthenticatedChildContext } from "./types";
 
 const COOKIE_NAME = "tati_child_session";
@@ -20,20 +21,66 @@ const progressInput = z.object({
   details: z.record(z.string(), z.unknown()).optional(),
 });
 
-const scenarioStateInput = z
-  .object({
-    scenarioId: z.string().min(1).max(128),
-    nodeId: z.string().min(1).max(128),
-    phase: z.string().min(1).max(32),
-    day: z.number().int().min(1).max(366),
-    available: z.number().min(0),
-    saved: z.number().min(0),
-    goalTarget: z.number().min(0),
-    decisions: z.array(z.unknown()).max(200),
-    updatedAt: z.string().datetime(),
-    endingId: z.string().min(1).max(128).optional(),
-  })
-  .passthrough();
+export type ScenarioStateInput = ScenarioState & { expectedVersion: number };
+
+const scenarioConsequenceInput = z.object({
+  decisionChip: z.string().optional(),
+  headline: z.string(),
+  title: z.string(),
+  body: z.string(),
+  image: z.string().optional(),
+  imageCaption: z.string().optional(),
+  ledgerNote: z.string().optional(),
+  debtNote: z.string().optional(),
+  laterHint: z.string().optional(),
+  reflection: z.string().optional(),
+});
+
+const scenarioStateInput: z.ZodType<ScenarioStateInput> = z.object({
+  scenarioId: z.string().min(1).max(128),
+  day: z.number().int().min(1).max(366),
+  available: z.number().min(0),
+  saved: z.number().min(0),
+  goalTarget: z.number().min(0),
+  competencies: z.record(z.string(), z.number()),
+  flags: z.record(z.string(), z.union([z.number(), z.string(), z.boolean()])),
+  scheduled: z
+    .array(
+      z.object({
+        dueDay: z.number().int().min(1).max(366),
+        nodeId: z.string().min(1).max(128),
+        requiresFlag: z.string().optional(),
+      }),
+    )
+    .max(200),
+  nodeId: z.string().min(1).max(128),
+  nextNodeId: z.string().min(1).max(128).optional(),
+  phase: z.enum(["intro", "decision", "consequence", "complete"]),
+  consequence: scenarioConsequenceInput.optional(),
+  decisions: z
+    .array(
+      z.object({
+        day: z.number().int().min(1).max(366),
+        nodeId: z.string().min(1).max(128),
+        nodeTitle: z.string(),
+        choiceId: z.string().min(1).max(128),
+        choiceLabel: z.string(),
+        availableAfter: z.number().min(0),
+        savedAfter: z.number().min(0),
+      }),
+    )
+    .max(200),
+  endingId: z.string().min(1).max(128).optional(),
+  previousAvailable: z.number().min(0).optional(),
+  previousSaved: z.number().min(0).optional(),
+  totals: z.object({
+    earned: z.number().min(0),
+    spent: z.number().min(0),
+    movedToSavings: z.number().min(0),
+  }),
+  updatedAt: z.string().datetime(),
+  expectedVersion: z.number().int().min(0),
+});
 
 const assessmentInput = z.object({
   assessmentId: z.string().min(1).max(128),
@@ -168,6 +215,24 @@ async function loadChildLearningDataFromFirebase(
 function trackItemExists(itemType: string, itemId: string): boolean {
   const track = getTrack("save");
   return track.sequence.some((item) => item.kind === itemType && item.id === itemId);
+}
+
+/**
+ * Gate B: Track membership check for scenario *definitions*.
+ *
+ * The track sequence stores scenarios as per-chapter stops
+ * (e.g. "kwame-request--ch1") that each reference a single underlying
+ * scenario definition id ("kwame-request"). The scenario engine, the
+ * persisted ScenarioState and the client all work in terms of the definition
+ * id, so membership must be resolved through `item.scenarioId` as well as
+ * `item.id`. Checking only `item.id` rejects every real request.
+ */
+function trackScenarioExists(scenarioId: string): boolean {
+  const track = getTrack("save");
+  return track.sequence.some(
+    (item) =>
+      item.kind === "scenario" && (item.id === scenarioId || item.scenarioId === scenarioId),
+  );
 }
 
 // ============================================================================
@@ -316,14 +381,12 @@ function validateScenarioState(
   // 4. Validate all decisions in the history
   for (let i = 0; i < state.decisions.length; i++) {
     const decision = state.decisions[i];
-    if (!decision || typeof decision !== "object") {
+    if (!decision) {
       return { valid: false, error: `Invalid decision at index ${i}` };
     }
 
-    // @ts-expect-error decision is narrowed to object by typeof guard above
-    const d = decision as Record<string, unknown>;
-    const decNodeId = d["nodeId"] as string | undefined;
-    const decChoiceId = d["choiceId"] as string | undefined;
+    const decNodeId = decision.nodeId;
+    const decChoiceId = decision.choiceId;
 
     if (!decNodeId || !decChoiceId) {
       return { valid: false, error: `Missing nodeId or choiceId in decision ${i}` };
@@ -392,10 +455,20 @@ function verifyScenarioStateConsistency(
     return { valid: false, error: "Scenario definition not available" };
   }
 
-  // Start with initial state
   let verifiedState = createInitialState(definition);
 
-  // Replay all decisions through engine
+  if (submittedState.decisions.length === 0) {
+    const initialCheckpoint =
+      submittedState.phase === "intro" ? verifiedState : beginScenario(verifiedState);
+    if (submittedState.phase !== "intro" && submittedState.phase !== "decision") {
+      return {
+        valid: false,
+        error: `Invalid phase "${submittedState.phase}" before the first decision`,
+      };
+    }
+    return compareScenarioCheckpoint(initialCheckpoint, submittedState);
+  }
+
   for (let i = 0; i < submittedState.decisions.length; i++) {
     const decision = submittedState.decisions[i];
 
@@ -407,7 +480,7 @@ function verifyScenarioStateConsistency(
       };
     }
 
-    const choiceId = (decision as unknown as Record<string, unknown>)["choiceId"];
+    const choiceId = decision.choiceId;
     if (!choiceId || typeof choiceId !== "string") {
       return {
         valid: false,
@@ -415,75 +488,77 @@ function verifyScenarioStateConsistency(
       };
     }
 
-    // Apply choice to get next state
-    const nextState = applyChoice(definition, verifiedState, choiceId);
+    if (verifiedState.phase === "intro") {
+      verifiedState = beginScenario(verifiedState);
+    }
 
-    // Check if choice was actually valid (applyChoice returns unchanged state if choice invalid)
-    if (nextState === verifiedState && submittedState.decisions.length > 0) {
+    const consequenceState = applyChoice(definition, verifiedState, choiceId);
+
+    if (consequenceState === verifiedState) {
       return {
         valid: false,
         error: `Decision ${i}: choice "${choiceId}" could not be applied`,
       };
     }
 
-    // After consequence, advance to next node
-    verifiedState = advance(definition, nextState);
-  }
+    const isLastDecision = i === submittedState.decisions.length - 1;
+    if (isLastDecision && submittedState.phase === "consequence") {
+      return compareScenarioCheckpoint(consequenceState, submittedState);
+    }
 
-  // Compare critical money/competency values
-  const moneyMismatch =
-    Math.abs(verifiedState.available - submittedState.available) > 0.01 ||
-    Math.abs(verifiedState.saved - submittedState.saved) > 0.01;
-
-  if (moneyMismatch) {
-    return {
-      valid: false,
-      error: `State money mismatch: engine produced available=${verifiedState.available}, saved=${verifiedState.saved}, but received available=${submittedState.available}, saved=${submittedState.saved}`,
-      derivedState: verifiedState,
-    };
-  }
-
-  // Compare competencies
-  const submittedComps = submittedState.competencies || {};
-  const verifiedComps = verifiedState.competencies || {};
-  for (const [key, value] of Object.entries(submittedComps)) {
-    if (verifiedComps[key as never] !== value) {
+    verifiedState = advance(definition, consequenceState);
+    if (verifiedState.phase === "complete" && !isLastDecision) {
       return {
         valid: false,
-        error: `Competency mismatch for "${key}": engine produced ${verifiedComps[key as never]}, received ${value}`,
-        derivedState: verifiedState,
+        error: `Decision ${i + 1}: scenario was already complete`,
       };
     }
   }
 
-  // Compare current node
-  if (verifiedState.nodeId !== submittedState.nodeId && submittedState.decisions.length > 0) {
+  if (submittedState.phase !== "decision" && submittedState.phase !== "complete") {
     return {
       valid: false,
-      error: `Node mismatch: engine produced nodeId="${verifiedState.nodeId}", received "${submittedState.nodeId}"`,
+      error: `Invalid phase "${submittedState.phase}" after continuing`,
       derivedState: verifiedState,
     };
   }
 
-  // Compare day (must match after decision sequence)
-  if (verifiedState.day !== submittedState.day && submittedState.decisions.length > 0) {
+  return compareScenarioCheckpoint(verifiedState, submittedState);
+}
+
+function compareScenarioCheckpoint(
+  derivedState: ScenarioState,
+  submittedState: ScenarioState,
+): { valid: boolean; error?: string; derivedState?: ScenarioState } {
+  const comparable = (state: ScenarioState) => ({
+    scenarioId: state.scenarioId,
+    day: state.day,
+    available: state.available,
+    saved: state.saved,
+    goalTarget: state.goalTarget,
+    competencies: state.competencies,
+    flags: state.flags,
+    scheduled: state.scheduled,
+    nodeId: state.nodeId,
+    nextNodeId: state.nextNodeId,
+    phase: state.phase,
+    consequence: state.consequence,
+    decisions: state.decisions,
+    endingId: state.endingId,
+    previousAvailable: state.previousAvailable,
+    previousSaved: state.previousSaved,
+    totals: state.totals,
+  });
+
+  if (JSON.stringify(comparable(derivedState)) !== JSON.stringify(comparable(submittedState))) {
     return {
       valid: false,
-      error: `Day mismatch: engine produced day=${verifiedState.day}, received day=${submittedState.day}`,
-      derivedState: verifiedState,
+      error: "Submitted checkpoint does not match the authoritative scenario engine",
+      derivedState,
     };
   }
 
-  // Compare phase
-  if (verifiedState.phase !== submittedState.phase) {
-    return {
-      valid: false,
-      error: `Phase mismatch: engine produced phase="${verifiedState.phase}", received "${submittedState.phase}"`,
-      derivedState: verifiedState,
-    };
-  }
-
-  return { valid: true, derivedState: verifiedState };
+  return { valid: true, derivedState };
 }
 
 export const getChildLearningData = createServerFn({ method: "GET" }).handler(async () => {
@@ -544,7 +619,8 @@ export const recordChildProgress = createServerFn({ method: "POST" })
     try {
       // H4.B: Dynamic imports to avoid client-side server code contamination
       const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
-      const { FirebaseJourneyProgressRepository } = await import("@/lib/backend/firebase/repositories");
+      const { FirebaseJourneyProgressRepository } =
+        await import("@/lib/backend/firebase/repositories");
 
       const db = getFirebaseAdminDb();
       const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
@@ -617,170 +693,171 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
     }
   });
 
+/**
+ * Gate B: Scenario load logic, exported for direct server-side invocation.
+ *
+ * The TanStack Start Vite plugin replaces `createServerFn().handler()` bodies
+ * with transport stubs, so the handler itself cannot be executed under Vitest.
+ * Keeping the logic in a plain exported function lets integration tests drive
+ * the real authorization, validation and persistence path.
+ */
+export async function loadChildScenarioForContext(
+  context: AuthenticatedChildContext,
+  data: { scenarioId: string },
+) {
+  // Gate B: Validate child context state
+  const contextCheck = validateChildContext(context);
+  if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
+
+  // Gate B: Validate scenario exists
+  const definition = getScenarioDefinition(data.scenarioId);
+  if (!definition) throw new Error("That story is not available.");
+
+  // Gate B: Validate scenario is in the current track
+  if (!trackScenarioExists(data.scenarioId)) {
+    throw new Error("That story is not available in this journey.");
+  }
+
+  // Gate B: Use enhanced definition to validate any loaded state
+  const enhanced = getEnhancedScenarioDefinition(data.scenarioId);
+  if (!enhanced) throw new Error("Scenario definition unavailable.");
+
+  // Gate B: Load session from Firebase
+  const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+  const db = getFirebaseAdminDb();
+  const repo = new FirebaseScenarioRepository(db, context.familyId);
+
+  const session = await repo.loadSession(context.childId, data.scenarioId);
+
+  // Gate B: If state exists, validate it before returning
+  if (session && session.state) {
+    const stateCheck = validateScenarioStateBounds(session.state);
+    if (!stateCheck.valid) {
+      console.warn(`[Gate B] Invalid saved state for ${data.scenarioId}: ${stateCheck.error}`);
+      // Return a safe engine state; do not persist over the invalid document.
+      return {
+        sessionId: data.scenarioId,
+        state: createInitialState(definition),
+        version: session.version,
+        definition,
+      };
+    }
+  }
+
+  return {
+    sessionId: session ? data.scenarioId : null,
+    state: session?.state ?? createInitialState(definition),
+    version: session?.version ?? 0,
+    definition,
+  };
+}
+
 export const loadChildScenario = createServerFn({ method: "GET" })
   .validator(z.object({ scenarioId: z.string().min(1).max(128) }))
   .handler(async ({ data }) => {
-    // G5: Use explicit authenticated child context (G3 integration)
+    // Gate B: Use explicit authenticated child context (G3 integration)
     const context = await getCurrentChildContext();
-
-    // G5: Validate child context state
-    const contextCheck = validateChildContext(context);
-    if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
-
-    // G5: Validate scenario exists
-    const definition = getScenarioDefinition(data.scenarioId);
-    if (!definition) throw new Error("That story is not available.");
-
-    // G5: Validate scenario is in the current track
-    if (!trackItemExists("scenario", data.scenarioId)) {
-      throw new Error("That story is not available in this journey.");
-    }
-
-    // G5: Use enhanced definition to validate any loaded state
-    const enhanced = getEnhancedScenarioDefinition(data.scenarioId);
-    if (!enhanced) throw new Error("Scenario definition unavailable.");
-
-    // Fetch session (RLS enforces family isolation)
-    const { data: row, error } = await supabase
-      .from("scenario_sessions")
-      .select("id, state")
-      .eq("child_profile_id", context.childId) // Use context.childId (server-derived)
-      .eq("scenario_id", data.scenarioId)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    // G5: If state exists, validate it before returning
-    if (row && row.state) {
-      const stateCheck = validateScenarioStateBounds(row.state);
-      if (!stateCheck.valid) {
-        console.warn(`[G5] Invalid saved state for ${data.scenarioId}: ${stateCheck.error}`);
-        // Return null state to force reload; do not persist invalid state
-        return { sessionId: row.id, state: null, definition };
-      }
-    }
-
-    return { sessionId: row?.id ?? null, state: row?.state ?? null, definition };
+    return await loadChildScenarioForContext(context, data);
   });
 
 export const saveChildScenario = createServerFn({ method: "POST" })
   .validator(scenarioStateInput)
   .handler(async ({ data }) => {
-    // G5: Use explicit authenticated child context (G3 integration)
+    // Gate B: Use explicit authenticated child context (G3 integration)
     const context = await getCurrentChildContext();
-
-    // G5: Validate child context state
-    const contextCheck = validateChildContext(context);
-    if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
-
-    // G5: Validate scenario exists
-    const definition = getScenarioDefinition(data.scenarioId);
-    if (!definition) throw new Error("That story is not available.");
-
-    // G5: Validate scenario is in the current track
-    if (!trackItemExists("scenario", data.scenarioId)) {
-      throw new Error("That story is not available in this journey.");
-    }
-
-    // G5: Get enhanced definition for validation
-    const enhanced = getEnhancedScenarioDefinition(data.scenarioId);
-    if (!enhanced) throw new Error("Scenario definition unavailable.");
-
-    // G5: Validate submitted state bounds
-    const boundsCheck = validateScenarioStateBounds(data);
-    if (!boundsCheck.valid) throw new Error(boundsCheck.error || "Invalid story state");
-
-    // G5: Validate submitted day
-    const dayCheck = validateDay(enhanced, data.day);
-    if (!dayCheck.valid) throw new Error(dayCheck.error);
-
-    // G5: Validate submitted node is reachable
-    const nodeCheck = validateNodeReachability(enhanced, data.nodeId);
-    if (!nodeCheck.valid) throw new Error(nodeCheck.error);
-
-    // G5: Validate all choices in decision history
-    for (let i = 0; i < data.decisions.length; i++) {
-      const decision = data.decisions[i];
-      if (!decision || typeof decision !== "object") continue;
-
-      const d = decision as Record<string, unknown>;
-      const decNodeId = d["nodeId"] as string | undefined;
-      const decChoiceId = d["choiceId"] as string | undefined;
-
-      if (decNodeId && decChoiceId) {
-        const choiceCheck = validateChoice(enhanced, decNodeId, decChoiceId);
-        if (!choiceCheck.valid) {
-          throw new Error(`Decision ${i}: ${choiceCheck.error}`);
-        }
-      }
-    }
-
-    // G5: Validate ending ID if present
-    if (data.endingId && !enhanced.endingIds.has(data.endingId)) {
-      throw new Error("Invalid story ending");
-    }
-
-    // G5.1: Verify state was produced by scenario engine (integrity check)
-    // Replay decisions through engine and compare to submitted state
-    // Cast data to ScenarioState (should have all properties from client)
-    const integrityCheck = verifyScenarioStateConsistency(
-      definition,
-      data as unknown as ScenarioState,
-    );
-    if (!integrityCheck.valid) {
-      throw new Error(`Story state integrity violation: ${integrityCheck.error}`);
-    }
-
-    // Use engine-derived state as authoritative (prevents client fabrication)
-    // If legitimate client submitted correct state, derived equals submitted (no change)
-    // If client attempted fabrication, derived is the real state (replaces fabrication)
-    const authoritative = integrityCheck.derivedState || data;
-
-    // All validations passed; persist the authoritative state
-    // Use context.childId (server-derived) for ownership enforcement
-    
-    // H4.C: Scenario sessions stored in Supabase (deferred migration)
-    // Lazy import to avoid Supabase config requirement during H4.B Firebase-only testing
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const supabase = supabaseAdmin as unknown as any;
-    
-    const { data: session, error } = await supabase
-      .from("scenario_sessions")
-      .upsert(
-        {
-          child_profile_id: context.childId, // Use context.childId (server-derived)
-          scenario_id: data.scenarioId,
-          state: authoritative,
-          current_node_id: authoritative.nodeId,
-          day_number: authoritative.day,
-          status: authoritative.phase === "complete" ? "completed" : "in_progress",
-          completed_at: authoritative.phase === "complete" ? new Date().toISOString() : null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "child_profile_id,scenario_id" },
-      )
-      .select("id")
-      .single();
-
-    if (error || !session) throw new Error("Could not save that story.");
-
-    // G5: Record the last decision in audit trail (existing behavior preserved)
-    const lastDecision = authoritative.decisions[authoritative.decisions.length - 1];
-    if (lastDecision && typeof lastDecision === "object") {
-      const decision = lastDecision as Record<string, unknown>;
-      const { error: decisionError } = await supabase.from("scenario_decisions").upsert(
-        {
-          session_id: session.id,
-          child_profile_id: context.childId, // Use context.childId (server-derived)
-          node_id: String(decision["nodeId"] ?? authoritative.nodeId),
-          choice_id: String(decision["choiceId"] ?? "unknown"),
-          day_number: Number(decision["day"] ?? authoritative.day),
-          details: decision,
-        },
-        { onConflict: "session_id,node_id,day_number", ignoreDuplicates: true },
-      );
-      if (decisionError) throw decisionError;
-    }
-
-    return { sessionId: session.id };
+    return await saveChildScenarioForContext(context, data);
   });
+
+/**
+ * Gate B: Scenario save logic, exported for direct server-side invocation.
+ * See `loadChildScenarioForContext` for why this is split out of the handler.
+ */
+export async function saveChildScenarioForContext(
+  context: AuthenticatedChildContext,
+  data: ScenarioStateInput,
+) {
+  // Gate B: Validate child context state
+  const contextCheck = validateChildContext(context);
+  if (!contextCheck.valid) throw new Error(contextCheck.error || "Invalid context");
+
+  // Gate B: Validate scenario exists
+  const definition = getScenarioDefinition(data.scenarioId);
+  if (!definition) throw new Error("That story is not available.");
+
+  // Gate B: Validate scenario is in the current track
+  if (!trackScenarioExists(data.scenarioId)) {
+    throw new Error("That story is not available in this journey.");
+  }
+
+  // Gate B: Get enhanced definition for validation
+  const enhanced = getEnhancedScenarioDefinition(data.scenarioId);
+  if (!enhanced) throw new Error("Scenario definition unavailable.");
+
+  // Gate B: Validate submitted state bounds
+  const boundsCheck = validateScenarioStateBounds(data);
+  if (!boundsCheck.valid) throw new Error(boundsCheck.error || "Invalid story state");
+
+  // Gate B: Validate submitted day
+  const dayCheck = validateDay(enhanced, data.day);
+  if (!dayCheck.valid) throw new Error(dayCheck.error);
+
+  // Gate B: Validate submitted node is reachable
+  const nodeCheck = validateNodeReachability(enhanced, data.nodeId);
+  if (!nodeCheck.valid) throw new Error(nodeCheck.error);
+
+  // Gate B: Validate all choices in decision history
+  for (let i = 0; i < data.decisions.length; i++) {
+    const decision = data.decisions[i];
+    if (!decision || typeof decision !== "object") continue;
+
+    const choiceCheck = validateChoice(enhanced, decision.nodeId, decision.choiceId);
+    if (!choiceCheck.valid) {
+      throw new Error(`Decision ${i}: ${choiceCheck.error}`);
+    }
+  }
+
+  // Gate B: Validate ending ID if present
+  if (data.endingId && !enhanced.endingIds.has(data.endingId)) {
+    throw new Error("Invalid story ending");
+  }
+
+  // Gate B: Verify state was produced by scenario engine (integrity check)
+  // Replay decisions through engine and compare to submitted state
+  const integrityCheck = verifyScenarioStateConsistency(definition, data);
+  if (!integrityCheck.valid) {
+    throw new Error(`Story state integrity violation: ${integrityCheck.error}`);
+  }
+
+  // Use engine-derived state as authoritative (prevents client fabrication)
+  // The integrity check always returns a derived state on success; if it is
+  // missing we cannot vouch for the submission, so refuse to persist it.
+  const authoritative = integrityCheck.derivedState;
+  if (!authoritative) {
+    throw new Error("Story state could not be verified.");
+  }
+
+  // Gate B: Persist to Firebase with optimistic concurrency control
+  const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+  const db = getFirebaseAdminDb();
+  const repo = new FirebaseScenarioRepository(db, context.familyId);
+
+  // Save with version checking (optimistic concurrency)
+  try {
+    const result = await repo.saveSession(
+      context.childId,
+      data.scenarioId,
+      authoritative,
+      data.expectedVersion,
+    );
+
+    return { sessionId: data.scenarioId, version: result.version, status: result.status };
+  } catch (error) {
+    // Handle version conflicts (client should reload)
+    if (error instanceof Error && error.message.includes("Version conflict")) {
+      throw new Error(
+        "SCENARIO_VERSION_CONFLICT: Story state was modified elsewhere. Reload to recover your progress.",
+      );
+    }
+    throw error;
+  }
+}

@@ -12,7 +12,7 @@ Phase H4.B implementation is **COMPLETE**. All core child journey data functions
 
 - ✅ **getChildLearningData()** — Now loads all learning data from Firebase (progress, competencies, achievements)
 - ✅ **recordChildProgress()** — Records lesson/scenario completion to Firebase
-- ✅ **awardAchievements()** — Awarded achievements now saved to Firebase  
+- ✅ **awardAchievements()** — Awarded achievements now saved to Firebase
 - ✅ **markCelebrated()** — Achievement celebration state stored in Firebase
 - ✅ **Firestore Rules** — Updated to properly deny client writes, allow server writes via Admin SDK
 - ✅ **TypeScript Build** — 0 errors, all code compiles successfully
@@ -27,14 +27,17 @@ Phase H4.B implementation is **COMPLETE**. All core child journey data functions
 ### 1. Core Learning Data Migration
 
 #### getChildLearningData()
+
 **Before (Supabase)**:
+
 ```typescript
 // Loaded progress, competencies, achievements from 5 separate Supabase queries
-const [profileResult, progressResult, competencyResult, achievementResult, assessmentResult] = 
+const [profileResult, progressResult, competencyResult, achievementResult, assessmentResult] =
   await Promise.all([...])
 ```
 
 **After (Firebase)**:
+
 ```typescript
 const context = await getCurrentChildContext(); // Get childId + familyId
 const [profile, learningData] = await Promise.all([
@@ -45,23 +48,30 @@ return { profile, ...learningData };
 ```
 
 **Key Changes**:
+
 - Instantiates Firebase repositories: `FirebaseJourneyProgressRepository`, `FirebaseCompetencyRepository`, `FirebaseAchievementRepository`
 - Loads from Firestore paths: `/families/{familyId}/children/{childId}/(journey/progress|competencies|achievements)`
 - Returns data in same format as before—no breaking changes to consumers
 - Added logging with `[H4.B]` prefix for debugging
 
 #### recordChildProgress()
+
 **Before (Supabase)**:
+
 ```typescript
-const { error } = await supabase.from("journey_progress").upsert({
-  child_profile_id: childId,
-  track_id: "save",
-  item_type: data.itemType,
-  // ... 
-}, { onConflict: "..." })
+const { error } = await supabase.from("journey_progress").upsert(
+  {
+    child_profile_id: childId,
+    track_id: "save",
+    item_type: data.itemType,
+    // ...
+  },
+  { onConflict: "..." },
+);
 ```
 
 **After (Firebase)**:
+
 ```typescript
 const context = await getCurrentChildContext();
 const db = getFirebaseAdminDb();
@@ -77,27 +87,32 @@ await progressRepo.recordProgress({
 ```
 
 **Key Changes**:
+
 - Writes to: `/families/{familyId}/children/{childId}/journey/progress/{itemType}:{itemId}`
 - Uses Admin SDK to bypass Firestore write restrictions
 - Maintains same API (input validation, error handling)
 
 #### Achievement Operations
+
 **Before (Supabase)**:
+
 ```typescript
 // Direct Supabase upsert calls for awardAchievements and markCelebrated
 await supabase.from("learner_achievements").upsert([...])
 ```
 
 **After (Firebase)**:
+
 ```typescript
 // Wrapped as createServerFn for proper server-side execution
-export const awardAchievementsServerFn = createServerFn({ method: "POST" })
-  .handler(async ({ data: { childId, achievementIds } }) => {
+export const awardAchievementsServerFn = createServerFn({ method: "POST" }).handler(
+  async ({ data: { childId, achievementIds } }) => {
     const context = await getCurrentChildContext();
     const achievementRepo = new FirebaseAchievementRepository(db, context.familyId);
     await achievementRepo.awardAchievements(childId, achievementIds);
     return { ok: true };
-  });
+  },
+);
 
 // Public wrapper for client-side calls
 export async function awardAchievements(childId, achievementIds) {
@@ -106,6 +121,7 @@ export async function awardAchievements(childId, achievementIds) {
 ```
 
 **Key Changes**:
+
 - Uses `createServerFn()` to properly isolate server-only logic (fixes build errors)
 - Dynamic imports inside handler to prevent client bundle contamination
 - Writes to: `/families/{familyId}/children/{childId}/achievements/{achievementId}`
@@ -115,11 +131,11 @@ export async function awardAchievements(childId, achievementIds) {
 
 ## Files Modified
 
-| File | Changes | Status |
-|------|---------|--------|
-| [src/lib/auth/child-learning.functions.ts](src/lib/auth/child-learning.functions.ts) | Updated `getChildLearningData()` and `recordChildProgress()` to use Firebase repositories | ✅ Complete |
-| [src/lib/gamification/achievements.ts](src/lib/gamification/achievements.ts) | Refactored `awardAchievements()` and `markCelebrated()` as `createServerFn` wrappers for Firebase | ✅ Complete |
-| [firestore.rules](firestore.rules) | Updated rules for journey progress, competencies, achievements to clarify server-only write access | ✅ Complete |
+| File                                                                                 | Changes                                                                                            | Status      |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- | ----------- |
+| [src/lib/auth/child-learning.functions.ts](src/lib/auth/child-learning.functions.ts) | Updated `getChildLearningData()` and `recordChildProgress()` to use Firebase repositories          | ✅ Complete |
+| [src/lib/gamification/achievements.ts](src/lib/gamification/achievements.ts)         | Refactored `awardAchievements()` and `markCelebrated()` as `createServerFn` wrappers for Firebase  | ✅ Complete |
+| [firestore.rules](firestore.rules)                                                   | Updated rules for journey progress, competencies, achievements to clarify server-only write access | ✅ Complete |
 
 ---
 
@@ -128,6 +144,7 @@ export async function awardAchievements(childId, achievementIds) {
 All migrations use the Firebase repository implementations already present in [src/lib/backend/firebase/repositories.ts](src/lib/backend/firebase/repositories.ts):
 
 ### Journey Progress
+
 **Path**: `/families/{familyId}/children/{childId}/journey/progress/{itemType}:{itemId}`
 
 ```javascript
@@ -145,6 +162,7 @@ All migrations use the Firebase repository implementations already present in [s
 ```
 
 ### Competencies
+
 **Path**: `/families/{familyId}/children/{childId}/competencies/{competencyId}`
 
 ```javascript
@@ -159,6 +177,7 @@ All migrations use the Firebase repository implementations already present in [s
 ```
 
 ### Achievements
+
 **Path**: `/families/{familyId}/children/{childId}/achievements/{achievementId}`
 
 ```javascript
@@ -253,11 +272,13 @@ vite v8.1.5 building ssr environment for production...
 ## Remaining Work (Post H4.B)
 
 ### Phase H4.C — Assessment & Scenario Migration
+
 - Migrate `saveChildAssessment()` to Firebase
 - Migrate scenario decision storage
 - Update assessment-related Firestore rules
 
 ### Post-Migration Verification
+
 1. **Browser E2E Test** (Required)
    - Authenticate as test child
    - Load home → view journey state
@@ -314,12 +335,14 @@ vite v8.1.5 building ssr environment for production...
 **H4.B Completion Status**: ✅ Code implementation complete, ready for testing
 
 **What's Ready**:
+
 - All core journey data functions migrated to Firebase
 - Firestore schema aligned with repository implementations
 - Build and lint verification passed
 - Logging infrastructure in place for debugging
 
 **What Remains**:
+
 - Browser E2E testing to validate end-to-end flows
 - Assessment migration (H4.C scope)
 - Full regression test suite execution

@@ -17,6 +17,6 @@ export async function saveAssessmentAttempt(
   // This prevents the legacy Supabase path from bypassing Firebase authorization
   throw new Error(
     "Parent assessment submissions are temporarily disabled during the Firebase migration phase. " +
-    "This feature will be restored with full server-side authorization in Phase 7C4C.",
+      "This feature will be restored with full server-side authorization in Phase 7C4C.",
   );
 }

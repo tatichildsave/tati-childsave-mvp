@@ -16,7 +16,8 @@
 
 **Resolution**: Fixed 7 test cases to use actual Firebase UIDs captured during login (`currentUserUid`) and created global `userUidMap` to track all test users' UIDs.
 
-**Verification**: 
+**Verification**:
+
 - ✅ All 45 Firestore security rules tests now pass
 - ✅ All 61 G5 scenario authorization tests pass (verification still working)
 - ✅ All 462 total tests pass
@@ -27,9 +28,11 @@
 ## Investigation Timeline
 
 ### P0.1 - Configuration Review ✅
+
 **Objective**: Establish emulator configuration and dependencies
 
 **Findings**:
+
 - `firebase.json`: Defines auth:9099, firestore:8080, rules="firestore.rules"
 - `.firebaserc`: Default project "tatichildsavemvp" configured
 - `emulator-setup.ts`: Connects to localhost:8080/9099 using "demo-tati" test credentials
@@ -38,19 +41,23 @@
 **Conclusion**: Configuration appears correct; issue must be in test setup or emulator runtime
 
 ### P0.2 - Emulator Health Check ✅
+
 **Objective**: Verify Firebase emulator is operational
 
-**Before Investigation**: 
+**Before Investigation**:
+
 - Port 8080 (Firestore): NOT listening
 - Port 9099 (Auth): NOT listening
 - **Emulator not running**
 
-**Action Taken**: 
+**Action Taken**:
+
 ```powershell
 firebase emulators:start --only firestore,auth --project demo-tati
 ```
 
 **After Startup**:
+
 - Port 8080 (Firestore): ✅ Listening (Java process)
 - Port 9099 (Auth): ✅ Listening (Node process)
 - **Emulator operational**
@@ -58,20 +65,24 @@ firebase emulators:start --only firestore,auth --project demo-tati
 **Conclusion**: Emulator startup is working correctly
 
 ### P0.3 - Test Code Analysis (CRITICAL FINDINGS) ✅
+
 **Objective**: Identify specific test defects
 
 **Root Cause Discovered**: **Hardcoded Test Keys in Document Paths**
 
 Firestore fixture creation process:
+
 1. Tests authenticate users and get actual Firebase UIDs (e.g., "NjW8x9...")
 2. Fixtures created with **real UIDs** using Admin SDK: `/users/{real_uid}`, `/families/family-a/members/{real_uid}`
 3. Tests attempt client-side operations on **hardcoded test keys**: `/users/parent-a`, `/families/family-a/members/parent-a`
 
 **Result**: Tests accessed non-existent documents
+
 - Expected: "PERMISSION_DENIED" (rules blocking access)
 - Actual: Operation succeeds (documents don't exist, no rule blocking non-existent paths)
 
 **Affected Tests** (7 total):
+
 1. Line 191: `"parent cannot modify role"` - tried `users/parent-a` instead of `users/{currentUserUid}`
 2. Line 195: `"parent cannot change status"` - same issue
 3. Line 199: `"parent cannot self-promote to admin"` - same issue
@@ -81,9 +92,11 @@ Firestore fixture creation process:
 7. Line 396: `"admin can read users"` - tried `users/parent-a` which doesn't exist with that UID
 
 ### P0.4 - Authentication Context Verification ✅
+
 **Objective**: Confirm UID mapping is correct
 
 **Process**:
+
 1. `beforeAll()` creates test users via `createUserWithEmailAndPassword()`
 2. Each user gets unique Firebase UID (e.g., "NjW8x9...", "aBcDeF...")
 3. `userUidMap` variable now stores: `{"parent-a": "NjW8x9...", "parent-b": "aBcDeF...", ...}`
@@ -93,9 +106,11 @@ Firestore fixture creation process:
 **Verification**: ✅ UIDs correctly matched and fixtures created with real UIDs
 
 ### P0.5 - Role Fixtures Verification ✅
+
 **Objective**: Confirm fixture documents exist at correct paths
 
 **Fixtures Created** (verified via createTestFixtures):
+
 - `/users/{uid}` - One per test user with actual Firebase UID
 - `/families/family-a` and `/families/family-b` - Family documents
 - `/families/{familyId}/members/{uid}` - Member documents with actual UIDs
@@ -104,9 +119,11 @@ Firestore fixture creation process:
 **Status**: All fixtures created with real UIDs, accessible via authenticated users
 
 ### P0.6 - Project Isolation Verification ✅
+
 **Objective**: Confirm tests use correct project
 
 **Project Configuration**:
+
 - Test app: `"demo-tati"` (used in test environment)
 - Production: `"tatichildsavemvp"` (in .firebaserc)
 - Emulator: Started with `--project demo-tati`
@@ -114,21 +131,25 @@ Firestore fixture creation process:
 **Conclusion**: ✅ Test isolation correct, tests hit test project only
 
 ### P0.7 - Firestore Security Tests (3 Consecutive Runs) ✅
+
 **Objective**: Verify rules enforcement after fixes
 
 **Fixes Applied**:
+
 1. Updated 7 test cases to use `currentUserUid` instead of hardcoded test keys
 2. Made `userUidMap` global to describe block scope
 3. Fixed "admin can read users" to use `userUidMap["parent-a"]`
 
 **Results**:
+
 - **Run 1**: ✅ 45/45 Firestore rules tests PASS
-- **Run 2**: ✅ 45/45 Firestore rules tests PASS  
+- **Run 2**: ✅ 45/45 Firestore rules tests PASS
 - **Run 3**: ✅ 45/45 Firestore rules tests PASS
 
 **Conclusion**: 100% deterministic, rules enforcement verified
 
 ### P0.8 - G5 Scenario Verification Tests ✅
+
 **Objective**: Confirm G5 scenario replay verification still working
 
 **Result**: ✅ 61/61 scenario authorization tests PASS
@@ -136,9 +157,11 @@ Firestore fixture creation process:
 **Conclusion**: G5 implementation (`verifyScenarioStateConsistency()`) functioning correctly, no regressions
 
 ### P0.9 - Complete Test Suite ✅
+
 **Objective**: Full suite validation
 
 **Final Results** (3 consecutive runs):
+
 - Test Files: 16/16 passed
 - Total Tests: 462/462 passed
 - Failures: 0
@@ -146,8 +169,9 @@ Firestore fixture creation process:
 - Determinism: ✅ 100% consistent across all runs
 
 **Tests Passing**:
+
 - ✅ 45 Firestore security rules tests (was 9/45, now 45/45)
-- ✅ 61 Scenario authorization tests  
+- ✅ 61 Scenario authorization tests
 - ✅ 5 Admin server tests
 - ✅ 22 Child auth server tests
 - ✅ 329 Remaining tests across 13 other files
@@ -185,12 +209,14 @@ The test infrastructure bug masked the fact that rules were working perfectly!
 ### Changes to [tests/firebase/firestore.rules.test.ts](tests/firebase/firestore.rules.test.ts)
 
 **Change 1**: Made `userUidMap` global to test scope
+
 ```typescript
 // Before: const userUidMap: Record<string, string> = {}; (local)
 // After: let userUidMap: Record<string, string> = {}; (describe scope)
 ```
 
 **Change 2**: Fixed 7 test cases (examples)
+
 ```typescript
 // Before:
 expectDenied(await tryUpdate(db, "users/parent-a", { roles: ["admin"] }));
@@ -200,6 +226,7 @@ expectDenied(await tryUpdate(db, `users/${currentUserUid}`, { roles: ["admin"] }
 ```
 
 **Change 3**: Fixed member path tests
+
 ```typescript
 // Before:
 expectDenied(await tryUpdate(db, `${familyA}/members/parent-a`, { role: "admin" }));
@@ -209,6 +236,7 @@ expectDenied(await tryUpdate(db, `${familyA}/members/${currentUserUid}`, { role:
 ```
 
 **Change 4**: Fixed admin test to use actual parent-a UID
+
 ```typescript
 // Before:
 expectAllowed(await tryRead(db, "users/parent-a"));
@@ -222,6 +250,7 @@ expectAllowed(await tryRead(db, `users/${userUidMap["parent-a"]}`));
 ## Evidence & Proof
 
 ### Emulator Health
+
 ```
 ✅ Port 8080 (Firestore): Listening
 ✅ Port 9099 (Auth): Listening
@@ -230,6 +259,7 @@ expectAllowed(await tryRead(db, `users/${userUidMap["parent-a"]}`));
 ```
 
 ### Rule Enforcement
+
 ```
 ✅ Family isolation rules enforced: Parent A cannot read Family B
 ✅ Child data protection rules enforced: Cannot write to server-only collections
@@ -238,6 +268,7 @@ expectAllowed(await tryRead(db, `users/${userUidMap["parent-a"]}`));
 ```
 
 ### Test Determinism
+
 ```
 Run 1 (10:05:52): 462/462 PASS ✅
 Run 2 (10:06:13): 462/462 PASS ✅
@@ -268,6 +299,7 @@ Variance: 0% (all consistent)
 ### What This Proves for H3.4
 
 ✅ **Firestore rules ARE correctly enforced by emulator**
+
 - All 45 security tests pass, proving rules work as intended
 - Family isolation verified
 - Child data protection verified
@@ -275,11 +307,13 @@ Variance: 0% (all consistent)
 - Authentication requirement verified
 
 ✅ **G5 scenario verification still works**
+
 - 61/61 scenario tests pass
 - Fabrication detection working
 - State consistency verification functional
 
 ✅ **No security regressions**
+
 - 0 new failures
 - 0 unauthorized access observed
 - All authorization boundaries maintained
@@ -289,6 +323,7 @@ Variance: 0% (all consistent)
 **Status**: ✅ **BLOCKED condition RESOLVED**
 
 Can now proceed with:
+
 1. **H3.4 Systematic Journey Testing** - Firestore rules verified, can test all user paths
 2. **Cross-role authorization matrix** - Foundation proven, can test scenarios
 3. **Manual sign-off** - Security infrastructure validated

@@ -11,6 +11,7 @@
 **H3.2.2** implements the minimum secure data foundation required for the TATI Academy facilitator pilot.
 
 **Core Principle**:
+
 > The Academy is a **read/support layer over TATI's existing learning system**, NOT an authorization layer.
 
 Facilitators get enough information to teach and support learners. Facilitators do NOT gain authority over child learning records or access to family-private information.
@@ -33,6 +34,7 @@ Facilitators get enough information to teach and support learners. Facilitators 
 ### Finding 1: H3.2.1 Query Authorization Issue
 
 **Original Issue**:
+
 ```
 H3.2.1 code scans all families, then filters client-side.
 Firestore rules at /families/{familyId} allow read only for active family members or admins.
@@ -45,6 +47,7 @@ Firestore rules were designed for family isolation (parents, children only). Aca
 
 **Solution**:
 Created `/facilitatorAssignments` collection as an efficient index:
+
 ```
 facilitatorAssignments/{assignmentId}
 ├── facilitatorUid (indexed for query)
@@ -54,12 +57,14 @@ facilitatorAssignments/{assignmentId}
 ```
 
 **Why This Works**:
+
 - Firestore rules: facilitator can read only their own assignments
 - Query: `where("facilitatorUid", "==", uid)` is now authorization-compliant
 - Double-check: Client verifies facilitatorUids array on child (defense in depth)
 - No parent/family data leaked
 
-**Impact**: 
+**Impact**:
+
 - H3.2.1 queries now work within authorization model
 - Queries are efficient (indexed lookup vs full scan)
 - Firestore rules can strictly enforce authorization
@@ -73,6 +78,7 @@ facilitatorAssignments/{assignmentId}
 **Answer**: NO. For H3.2 MVP, only create `facilitatorAssignments`.
 
 **Rationale**:
+
 - H3.2 dashboard and cohorts view don't require organizations or sessions yet
 - Children already have facilitatorUids; that's enough for MVP assignment model
 - Cohort management, school administration, session scheduling defer to H3.3+
@@ -80,6 +86,7 @@ facilitatorAssignments/{assignmentId}
 - Each collection adds complexity, testing burden, and security surface
 
 **Collections for H3.2.2**:
+
 ```
 ✅ facilitatorAssignments - Required (authorization index)
 ❌ academyOrganizations - Deferred (H3.3+)
@@ -98,6 +105,7 @@ When cohort/organization features arrive, facilitatorAssignments data can be mig
 **Principle**: Facilitators are observers, not modifiers of child learning.
 
 **Authorization**:
+
 ```
 journeyProgress: read (via canAccessChild) ✓
                write: false (child/parent only) ✓
@@ -124,6 +132,7 @@ achievements: read ✓
 **Protection Level**: Firestore rule-enforced (not UI-enforced).
 
 **Parent-Only Data**:
+
 ```
 parentInsights: read (isFamilyAdult || isAdmin) → Facilitators BLOCKED ✓
                 write: false ✓
@@ -133,6 +142,7 @@ family document: read (isActiveFamilyMember || isAdmin) → Facilitators BLOCKED
 ```
 
 **How H3.2.1 Handles It**:
+
 - Client knows familyId + childId from facilitatorAssignments
 - Client does NOT read family documents directly
 - Client reads child documents (authorized via facilitatorUids)
@@ -147,6 +157,7 @@ family document: read (isActiveFamilyMember || isAdmin) → Facilitators BLOCKED
 ### 1. New Firestore Collection: facilitatorAssignments
 
 **Schema**:
+
 ```typescript
 facilitatorAssignments/{assignmentId} {
   facilitatorUid: string        // Indexed for efficient query
@@ -159,6 +170,7 @@ facilitatorAssignments/{assignmentId} {
 ```
 
 **Why These Fields Only**:
+
 - facilitatorUid: Required for scoped queries + authorization check
 - familyId + childId: Composite key to fetch child metadata
 - createdAt: Audit trail
@@ -166,6 +178,7 @@ facilitatorAssignments/{assignmentId} {
 - status: Reserved for future deactivation logic
 
 **Document ID Strategy**:
+
 - Format: `{facilitatorUid}-{familyId}-{childId}` (deterministic)
 - Or: Auto-generated unique ID (simpler, allows multiple records)
 - Current: Auto-generated (allows for future cohort/assignment flexibility)
@@ -179,12 +192,12 @@ facilitatorAssignments/{assignmentId} {
 ```firestore
 match /facilitatorAssignments/{assignmentId} {
   // Facilitator can read only their own assignments
-  allow read: if signedIn() && hasRole('facilitator') 
+  allow read: if signedIn() && hasRole('facilitator')
                 && resource.data.facilitatorUid == request.auth.uid;
-  
+
   // Admin can read all assignments
   allow read: if isAdmin();
-  
+
   // Only admin can create/update/delete
   allow create, update: if isAdmin();
   allow delete: if isAdmin();
@@ -192,6 +205,7 @@ match /facilitatorAssignments/{assignmentId} {
 ```
 
 **Authorization Guarantees**:
+
 - Facilitator X cannot read assignments for Facilitator Y
 - Facilitator cannot create/modify assignments (only admin)
 - Admin can manage all assignments
@@ -204,6 +218,7 @@ match /facilitatorAssignments/{assignmentId} {
 **Key Changes**:
 
 **Before (H3.2.1 - Inefficient)**:
+
 ```typescript
 // Scans ALL families (not authorized)
 const familiesSnap = await getDocs(collection(db, "families"));
@@ -212,31 +227,29 @@ if (facilitatorUids?.includes(facilitatorUid)) { ... }
 ```
 
 **After (H3.2.2 - Secure)**:
+
 ```typescript
 // Query only assigned children efficiently
 const assignmentsSnap = await getDocs(
-  query(
-    collection(db, "facilitatorAssignments"),
-    where("facilitatorUid", "==", facilitatorUid)
-  )
+  query(collection(db, "facilitatorAssignments"), where("facilitatorUid", "==", facilitatorUid)),
 );
 
 // Fetch child data with authorization
 for (const assignment of assignmentsSnap.docs) {
-  const childSnap = await getDoc(doc(
-    db, "families", familyId, "children", childId
-  ));
+  const childSnap = await getDoc(doc(db, "families", familyId, "children", childId));
   // Verify (defense in depth)
   if (!child.facilitatorUids.includes(facilitatorUid)) continue;
 }
 ```
 
 **Error Handling**:
+
 - Try facilitatorAssignments index first
 - Fallback to direct query if collection missing (for testing)
 - Continue on individual child fetch failures (one bad record doesn't break list)
 
 **Data Returned**:
+
 - Child metadata: id, name, avatar, age, tatiId ✅
 - Internal identifiers: familyId (for queries, not UI) ✅
 - NO parent names, emails, family metadata ✅
@@ -266,6 +279,7 @@ for (const assignment of assignmentsSnap.docs) {
 ```
 
 **NOT Used** (Explicitly):
+
 - Parent insights
 - Competency scores
 - Risk modeling or prediction
@@ -274,17 +288,19 @@ for (const assignment of assignmentsSnap.docs) {
 - Hidden metrics
 
 **Neutral Language**:
+
 - "On track" not "passing"
 - "Not started" not "behind"
 - "May need support" not "struggling" or "at risk"
 
 ---
 
-### 5. Security Test Suite (src/lib/academy/__tests__/security.test.ts)
+### 5. Security Test Suite (src/lib/academy/**tests**/security.test.ts)
 
 **Test Categories**:
 
 #### A. Facilitator Authorization (8 tests)
+
 ```
 ✓ Can read assigned child
 ✓ Can read journey progress of assigned child
@@ -297,6 +313,7 @@ for (const assignment of assignmentsSnap.docs) {
 ```
 
 #### B. Cross-Role Isolation (5 tests)
+
 ```
 ✓ Parent can access own family
 ✓ Parent can read parentInsights
@@ -306,17 +323,20 @@ for (const assignment of assignmentsSnap.docs) {
 ```
 
 #### C. Admin Access (2 tests)
+
 ```
 ✓ Admin can read any assignment
 ✓ Admin can create assignment
 ```
 
 #### D. Query-Level Security (1 test)
+
 ```
 ✓ Facilitator query returns only own assignments
 ```
 
 #### E. Support Signals (1 test)
+
 ```
 ✓ Signals use only permitted data (no parent info, no predictions)
 ```
@@ -324,6 +344,7 @@ for (const assignment of assignmentsSnap.docs) {
 **Total**: 17 security tests covering authorization, isolation, and data minimization
 
 **How to Run**:
+
 ```bash
 npm install --save-dev @firebase/rules-unit-testing
 
@@ -338,17 +359,17 @@ npm test -- src/lib/academy/__tests__/security.test.ts
 
 ## AUTHORIZATION MATRIX
 
-| Resource | Child | Parent | Facilitator | Admin | Notes |
-|----------|-------|--------|-------------|-------|-------|
-| **Assigned Child** | Own | Own | Assigned | All | facilitatorUids check |
-| **Journey Progress** | Own | Own child's | Assigned child's | All | canAccessChild() |
-| **Assessment Attempts** | Own | Own child's | Assigned child's (RO) | All | Read-only for facilitator |
-| **Scenario Sessions** | Own | Own child's | Assigned child's (RO) | All | Read-only for facilitator |
-| **Competencies** | Own | Own child's | Assigned child's (RO) | All | Read-only for facilitator |
-| **Achievements** | Own | Own child's | Assigned child's (RO) | All | Read-only for facilitator |
-| **Parent Insights** | ✗ | Own | ✗ **BLOCKED** | All | Firestore rule enforced |
-| **Family Document** | ✗ | Own | ✗ | All | Not accessible to facilitators |
-| **Facilitator Assignments** | ✗ | ✗ | Own | All | Query-scoped to self |
+| Resource                    | Child | Parent      | Facilitator           | Admin | Notes                          |
+| --------------------------- | ----- | ----------- | --------------------- | ----- | ------------------------------ |
+| **Assigned Child**          | Own   | Own         | Assigned              | All   | facilitatorUids check          |
+| **Journey Progress**        | Own   | Own child's | Assigned child's      | All   | canAccessChild()               |
+| **Assessment Attempts**     | Own   | Own child's | Assigned child's (RO) | All   | Read-only for facilitator      |
+| **Scenario Sessions**       | Own   | Own child's | Assigned child's (RO) | All   | Read-only for facilitator      |
+| **Competencies**            | Own   | Own child's | Assigned child's (RO) | All   | Read-only for facilitator      |
+| **Achievements**            | Own   | Own child's | Assigned child's (RO) | All   | Read-only for facilitator      |
+| **Parent Insights**         | ✗     | Own         | ✗ **BLOCKED**         | All   | Firestore rule enforced        |
+| **Family Document**         | ✗     | Own         | ✗                     | All   | Not accessible to facilitators |
+| **Facilitator Assignments** | ✗     | ✗           | Own                   | All   | Query-scoped to self           |
 
 **RO** = Read-Only (cannot create/update/delete)
 
@@ -358,32 +379,39 @@ npm test -- src/lib/academy/__tests__/security.test.ts
 
 ### Protected Systems Verification
 
-**✅ G5.1 Scenario Integrity**: 
+**✅ G5.1 Scenario Integrity**:
+
 - No changes to scenario state machine
 - Scenario write access still forbidden
 - Verified: No new write rules added to scenarioSessions
 
-**✅ G6.1 Error Recovery**: 
+**✅ G6.1 Error Recovery**:
+
 - No changes to error handling
 - Verified: No modifications to error-capture system
 
 **✅ Child Authentication**:
+
 - Firebase Auth + TATI ID + PIN unchanged
 - Verified: No changes to child routes or auth logic
 
 **✅ Parent Authentication**:
+
 - Supabase Auth for parent login unchanged
 - Verified: Parent routes unaffected
 
 **✅ Junior Routes** (10 routes):
+
 - /login, /home, /learn, /assessment, /lesson, /scenario, /reflection, /progress, /results
 - Verified: No changes to junior experience
 
 **✅ Parent Routes** (5 routes):
+
 - /dashboard, /child, /feedback, /feedback-review, /metrics
 - Verified: No changes to parent experience
 
 **✅ Existing Firestore Rules**:
+
 - 154 existing rule lines unchanged
 - New rules: +12 lines (facilitatorAssignments block)
 - Total: 166 lines
@@ -393,30 +421,35 @@ npm test -- src/lib/academy/__tests__/security.test.ts
 ## BUILD & COMPILATION
 
 **TypeScript Compilation**:
+
 ```bash
 $ npm run type-check
 ✅ No errors
 ```
 
 **ESLint**:
+
 ```bash
 $ npm run lint
 ✅ No violations
 ```
 
 **Build**:
+
 ```bash
 $ npm run build
 ✅ Successful
 ```
 
 **Files Changed**:
+
 - `src/lib/academy/data-access.ts` (+80 lines) - Query refactor for authorization
 - `firestore.rules` (+12 lines) - facilitatorAssignments authorization
 - `src/lib/academy/__tests__/security.test.ts` (+320 lines) - Security test suite
 
 **Files NOT Changed**:
-- Routes (/academy/*, /parent/*, /child/*)
+
+- Routes (/academy/_, /parent/_, /child/*)
 - Authentication system
 - G5.1, G6.1 systems
 - 154 existing firestore.rules lines
@@ -430,12 +463,14 @@ $ npm run build
 **Test Cases to Verify** (Manual):
 
 ### Scenario 1: Facilitator Dashboard with No Test Data
+
 1. Log in as facilitator → /academy/login
 2. Redirect to /academy/dashboard
 3. Verify: "No learners assigned" (facilitatorAssignments empty)
 4. Verify: No error (fallback working)
 
 ### Scenario 2: Facilitator Dashboard with Test Data (Manual Setup)
+
 1. Admin creates facilitatorAssignments document via Firebase Console:
    ```
    Collection: facilitatorAssignments
@@ -454,6 +489,7 @@ $ npm run build
 6. Verify: Learner roster shows child with progress bar and support signal
 
 ### Scenario 3: Authorization Isolation
+
 1. Two facilitators: Facilitator A, Facilitator B
 2. Facilitator A assigned to Child 1 only
 3. Facilitator A logs in:
@@ -545,22 +581,26 @@ $ npm run build
 ## WHAT'S NEXT (H3.3+)
 
 **H3.2.2 → H3.2.3** (Still H3.2 Phase):
+
 - Implement learner detail pages (/academy/cohorts/:childId)
 - Show detailed progress history and activity timeline
 - Add facilitator notes/reflections (if authorized for H3.2.3)
 
 **H3.2.3 → H3.2.4+**:
+
 - Session management
 - Today's activity scheduling
 - Facilitator guides for specific activities
 
 **H3.3 (Cohort Management)**:
+
 - Implement academyOrganizations collection
 - Implement cohorts collection
 - Batch enrollment
 - Facilitator self-management of assignments
 
 **H3.4+ (Advanced)**:
+
 - Facilitator notes and annotations
 - Progress export and reporting
 - Search and filtering
@@ -571,27 +611,32 @@ $ npm run build
 ## CORE PRINCIPLES MAINTAINED
 
 ### 1. Security is Primary
+
 ✅ Facilitator cannot access parent data (Firestore enforced)
 ✅ Facilitator cannot access unrelated children (authorization scoped)
 ✅ Facilitator cannot modify learning records (read-only access)
 
 ### 2. Academy is Read/Support, Not Authorization
+
 ✅ Learning system remains authoritative for child progress
 ✅ Facilitator UI observes learning state, doesn't modify it
 ✅ Scenario decisions, assessments, competencies all immutable
 
 ### 3. Data Minimization
+
 ✅ Return only necessary fields to UI
 ✅ No parent information exposed
 ✅ No family-private data accessible
 ✅ No hidden metrics or scores
 
 ### 4. Neutral, Non-Stigmatizing Language
+
 ✅ Support signals use neutral terms
 ✅ No ranking or risk scoring
 ✅ "May need support" not "struggling"
 
 ### 5. Existing Systems Protected
+
 ✅ G5.1 scenario integrity unchanged
 ✅ G6.1 error recovery unchanged
 ✅ Junior routes unchanged
@@ -605,6 +650,7 @@ $ npm run build
 **H3.2.2 — TATI Academy Security + Minimum Data Model** is complete and ready for testing.
 
 The implementation provides:
+
 - ✅ Secure, authorization-compliant data queries
 - ✅ Efficient facilitator assignment indexing
 - ✅ Strict facilitator authorization scoping
@@ -623,23 +669,23 @@ The implementation provides:
 
 **PHASE H3.2.2 STATUS**
 
-| Aspect | Status | Details |
-|--------|--------|---------|
-| Security | ✅ Verified | Firestore rules + tests |
-| Data Model | ✅ Minimal | facilitatorAssignments only |
-| Authorization | ✅ Scoped | Facilitator UID-based queries |
-| Tests | ✅ Created | 17 security test cases |
-| Regression | ✅ Verified | Protected systems unchanged |
-| Browser | ✅ Tested | Compiles, no errors |
-| Documentation | ✅ Complete | Rules, matrix, tests |
-| Protected Systems | ✅ Intact | G5.1, G6.1, auth, routes |
-| Files Changed | 3 | data-access.ts, firestore.rules, security.test.ts |
-| New Collections | 1 | facilitatorAssignments |
-| Known Issues | None | Documented as deferred scope |
-| Production Ready | ❌ Pending | Needs manual testing + H3.3 integration |
+| Aspect            | Status      | Details                                           |
+| ----------------- | ----------- | ------------------------------------------------- |
+| Security          | ✅ Verified | Firestore rules + tests                           |
+| Data Model        | ✅ Minimal  | facilitatorAssignments only                       |
+| Authorization     | ✅ Scoped   | Facilitator UID-based queries                     |
+| Tests             | ✅ Created  | 17 security test cases                            |
+| Regression        | ✅ Verified | Protected systems unchanged                       |
+| Browser           | ✅ Tested   | Compiles, no errors                               |
+| Documentation     | ✅ Complete | Rules, matrix, tests                              |
+| Protected Systems | ✅ Intact   | G5.1, G6.1, auth, routes                          |
+| Files Changed     | 3           | data-access.ts, firestore.rules, security.test.ts |
+| New Collections   | 1           | facilitatorAssignments                            |
+| Known Issues      | None        | Documented as deferred scope                      |
+| Production Ready  | ❌ Pending  | Needs manual testing + H3.3 integration           |
 
 ---
 
-*Generated: H3.2.2 Security Foundation Phase*  
-*Author: TATI Academy Development*  
-*Review Status: Implementation Complete, Security Verified*
+_Generated: H3.2.2 Security Foundation Phase_  
+_Author: TATI Academy Development_  
+_Review Status: Implementation Complete, Security Verified_

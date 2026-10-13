@@ -9,6 +9,7 @@
 ## Executive Summary
 
 Phase G5 successfully implements a comprehensive security and validation layer for the TATI ChildSave scenario engine. All scenario decisions are now:
+
 - ✅ **Authenticated** - verified against valid child sessions
 - ✅ **Authorized** - isolated by child and family ID through RLS
 - ✅ **Scenario-valid** - confirmed in track registry
@@ -29,6 +30,7 @@ Phase G5 successfully implements a comprehensive security and validation layer f
 **Purpose:** Precompute scenario graph metadata for O(1) validation lookups
 
 **Changes:**
+
 - Added `EnhancedScenarioDefinition` interface with:
   - `reachableNodes: Set<string>` - O(1) node reachability lookup
   - `nodeIndex: Map<string, ScenarioNode>` - O(1) node existence check
@@ -84,12 +86,14 @@ Phase G5 successfully implements a comprehensive security and validation layer f
 **Enhanced Server Functions:**
 
 `loadChildScenario({ scenarioId })`
+
 - Derives child ID from authenticated context (server-authoritative)
 - Validates context and scenario eligibility
 - Validates loaded state bounds before return
 - Uses RLS for family isolation
 
 `saveChildScenario(data: scenarioStateInput)`
+
 - Derives child ID from authenticated context (server-authoritative)
 - Validates context, scenario, and all state properties
 - Validates day bounds and node reachability
@@ -98,9 +102,11 @@ Phase G5 successfully implements a comprehensive security and validation layer f
 - Records last decision to scenario_decisions audit trail
 
 **Schema Update:**
+
 - Added `endingId: z.string().optional()` to `scenarioStateInput` validator
 
 **Security Stack:**
+
 - Layer 1: Route guards (assertChildActivity)
 - Layer 2: Server-side validation (G5 new)
 - Layer 3: RLS policies (database enforcement)
@@ -196,6 +202,7 @@ Phase G5 successfully implements a comprehensive security and validation layer f
 ## Validation Results
 
 ### TypeScript Compilation
+
 ```
 ✅ Status: PASSING
 Errors: 0 (previously 27 in child-learning.functions.ts)
@@ -204,6 +211,7 @@ Fixes: Property access with bracket notation on Record types; @ts-expect-error c
 ```
 
 ### Test Suite
+
 ```
 ✅ Status: ALL G5 TESTS PASSING
 Total: 53 tests
@@ -213,6 +221,7 @@ Regression: None (155 total suite tests passing; 40 pre-existing failures in fir
 ```
 
 ### Production Build
+
 ```
 ✅ Status: SUCCESSFUL
 Build time: 3.70s
@@ -222,6 +231,7 @@ Bundle: Generated successfully
 ```
 
 ### ESLint
+
 ```
 ✅ Status: G5 FILES PASSING
 child-learning.functions.ts: 0 errors
@@ -238,40 +248,44 @@ Fixes: Prettier auto-formatting, @ts-expect-error comment
 ### Multi-Layer Defense
 
 **Layer 1: Route Authorization (TanStack)**
+
 - `assertChildActivity()` verifies activity exists in track
 
 **Layer 2: Application Validation (G5 - NEW)**
+
 - `validateChildContext()` - session authenticity
 - `validateScenarioState()` - graph and state validity
 - `validateChoice()` - decision chain integrity
 - All performed server-side before persistence
 
 **Layer 3: Row-Level Security (Supabase)**
+
 - `owns_child_profile()` function enforces family isolation
 - Policies: `scenario_sessions.rls`, `scenario_decisions.rls`
 - RLS prevents cross-family/cross-child data access at database level
 
 **Layer 4: Structural Integrity (Database)**
+
 - Compound foreign keys: `(child_profile_id, scenario_id)`
 - UPSERT with `ignoreDuplicates` ensures idempotency
 - Prevents orphaned or inconsistent records
 
 ### Attack Resistance
 
-| Attack | Layer 1 | Layer 2 | Layer 3 | Layer 4 | Status |
-|--------|---------|---------|---------|---------|--------|
-| Expired session | ❌ | ✅ | ✅ | N/A | **Blocked** |
-| Revoked session | ❌ | ✅ | ✅ | N/A | **Blocked** |
-| Cross-child access | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Cross-family access | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Invalid scenario | ✅ | ✅ | N/A | N/A | **Blocked** |
-| Invalid node | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Invalid choice | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Node skipping | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Day tampering | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Money tampering | ❌ | ✅ | ✅ | ✅ | **Blocked** |
-| Replay attack | ✅ | ✅ | ✅ | ✅ | **Blocked** |
-| Client state hijacking | ❌ | ✅ | ✅ | ✅ | **Blocked** |
+| Attack                 | Layer 1 | Layer 2 | Layer 3 | Layer 4 | Status      |
+| ---------------------- | ------- | ------- | ------- | ------- | ----------- |
+| Expired session        | ❌      | ✅      | ✅      | N/A     | **Blocked** |
+| Revoked session        | ❌      | ✅      | ✅      | N/A     | **Blocked** |
+| Cross-child access     | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Cross-family access    | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Invalid scenario       | ✅      | ✅      | N/A     | N/A     | **Blocked** |
+| Invalid node           | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Invalid choice         | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Node skipping          | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Day tampering          | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Money tampering        | ❌      | ✅      | ✅      | ✅      | **Blocked** |
+| Replay attack          | ✅      | ✅      | ✅      | ✅      | **Blocked** |
+| Client state hijacking | ❌      | ✅      | ✅      | ✅      | **Blocked** |
 
 ---
 
@@ -332,6 +346,7 @@ Fixes: Prettier auto-formatting, @ts-expect-error comment
 ## Next Steps / Phase G6
 
 Phase G6 can now safely proceed with:
+
 - Lesson engine hardening (similar validation layer)
 - Assessment engine hardening
 - Reflection engine hardening
@@ -343,11 +358,11 @@ Phase G6 can now safely proceed with:
 
 ## Files Summary
 
-| File | Type | Lines | Status |
-|------|------|-------|--------|
-| `src/lib/scenario/registry.ts` | Modified | +140 | ✅ |
-| `src/lib/auth/child-learning.functions.ts` | Modified | +300 | ✅ |
-| `tests/auth/scenario-authorization.test.ts` | New | +650 | ✅ |
+| File                                        | Type     | Lines | Status |
+| ------------------------------------------- | -------- | ----- | ------ |
+| `src/lib/scenario/registry.ts`              | Modified | +140  | ✅     |
+| `src/lib/auth/child-learning.functions.ts`  | Modified | +300  | ✅     |
+| `tests/auth/scenario-authorization.test.ts` | New      | +650  | ✅     |
 
 **Total:** 3 files, +1,090 lines, 0 errors
 

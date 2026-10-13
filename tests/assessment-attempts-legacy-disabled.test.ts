@@ -63,17 +63,25 @@ describe("Legacy Assessment Submission Disabled", () => {
 
     it("should reject attempts to submit pre-assessments via legacy path", async () => {
       const preResult = { ...sampleResult, assessmentType: "pre" as const };
-      await expect(
-        saveAssessmentAttempt("child-2", sampleDefinition, preResult),
-      ).rejects.toThrow(/temporarily disabled/);
+      await expect(saveAssessmentAttempt("child-2", sampleDefinition, preResult)).rejects.toThrow(
+        /temporarily disabled/,
+      );
     });
 
     it("should reject attempts to submit post-assessments via legacy path", async () => {
-      const postDefinition = { ...sampleDefinition, id: "save-post", assessmentType: "post" as const };
-      const postResult = { ...sampleResult, assessmentType: "post" as const, assessmentId: "save-post" };
-      await expect(
-        saveAssessmentAttempt("child-3", postDefinition, postResult),
-      ).rejects.toThrow(/temporarily disabled/);
+      const postDefinition = {
+        ...sampleDefinition,
+        id: "save-post",
+        assessmentType: "post" as const,
+      };
+      const postResult = {
+        ...sampleResult,
+        assessmentType: "post" as const,
+        assessmentId: "save-post",
+      };
+      await expect(saveAssessmentAttempt("child-3", postDefinition, postResult)).rejects.toThrow(
+        /temporarily disabled/,
+      );
     });
 
     it("should reject retake submissions via legacy path", async () => {
@@ -94,9 +102,9 @@ describe("Legacy Assessment Submission Disabled", () => {
         competencies: [{ competency: "needs-vs-wants", points: 1, maxPoints: 1 }],
       };
       // Even with perfectly valid data, legacy path should be blocked
-      await expect(
-        saveAssessmentAttempt("child-5", sampleDefinition, validResult),
-      ).rejects.toThrow(/Firebase migration/);
+      await expect(saveAssessmentAttempt("child-5", sampleDefinition, validResult)).rejects.toThrow(
+        /Firebase migration/,
+      );
     });
 
     it("should reject any parent submission regardless of child ID", async () => {

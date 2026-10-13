@@ -4,7 +4,12 @@ import type { ChildProfile, CreateChildInput } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { RecordProgressInput } from "@/lib/progress/service";
 import type { AwardedAchievement } from "@/lib/gamification/achievements";
-import { generateTatiId, generateChildPin, saveChildPin } from "@/lib/auth/child-auth-firebase.server";
+import type { ScenarioState } from "@/lib/scenario/types";
+import {
+  generateTatiId,
+  generateChildPin,
+  saveChildPin,
+} from "@/lib/auth/child-auth-firebase.server";
 import type {
   FirestoreAchievementDocument,
   FirestoreChildDocument,
@@ -12,6 +17,7 @@ import type {
   FirestoreFamilyDocument,
   FirestoreFamilyMemberDocument,
   FirestoreJourneyProgressDocument,
+  FirestoreScenarioSessionDocument,
 } from "@/integrations/firebase/firestore-types";
 import type {
   AchievementService,
@@ -31,7 +37,12 @@ function toISOString(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === "string") return value;
   // Firestore Timestamp has toDate() method
-  if (value && typeof value === "object" && "toDate" in value && typeof (value as any).toDate === "function") {
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof (value as any).toDate === "function"
+  ) {
     return (value as any).toDate().toISOString();
   }
   // Fallback: treat as millis or try native conversion
@@ -68,18 +79,18 @@ export class FirebaseFamilyRepository implements FamilyService {
       console.log("\n========== ensureFamily CALLED ==========");
       console.log("ensureFamily userId:", this.userId);
       console.log("ensureFamily Checking for existing family membership");
-      
+
       // Check for existing active family membership
       const membershipsRef = this.db
         .collection("users")
         .doc(this.userId)
         .collection("familyMemberships");
-      
+
       const memberships = await membershipsRef.get();
-      
+
       console.log("ensureFamily Query returned", memberships.docs.length, "documents");
       const active = memberships.docs.find((item) => item.data()["status"] === "active");
-      
+
       if (active) {
         console.log("ensureFamily Found existing active family:", active.id);
         console.log("========== ensureFamily RETURNING EXISTING ==========\n");
@@ -90,20 +101,17 @@ export class FirebaseFamilyRepository implements FamilyService {
       console.log("ensureFamily No active family found - creating new one");
       const familyId = `fam-${crypto.randomUUID()}`;
       const now = FieldValue.serverTimestamp();
-      
+
       console.log("ensureFamily New familyId:", familyId);
-      
+
       // Create family document with all required fields per FirestoreFamilyDocument schema
-      await this.db
-        .collection("families")
-        .doc(familyId)
-        .set({
-          name: "My Family",  // Default family name
-          createdBy: this.userId,
-          status: "active",
-          createdAt: now,
-          updatedAt: now,
-        });
+      await this.db.collection("families").doc(familyId).set({
+        name: "My Family", // Default family name
+        createdBy: this.userId,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      });
       console.log("ensureFamily Family document written successfully");
 
       // Create family membership for this user
@@ -144,21 +152,23 @@ export class FirebaseFamilyRepository implements FamilyService {
       console.log("[getFamilyChildren] Getting family ID");
       const familyId = await this.ensureFamily();
       console.log("[getFamilyChildren] Got family:", familyId, "querying children");
-      
+
       const children = await this.db
         .collection("families")
         .doc(familyId)
         .collection("children")
         .orderBy("createdAt", "asc")
         .get();
-      
+
       console.log("[getFamilyChildren] Query succeeded, found", children.docs.length, "children");
       const result = children.docs.map((item) => {
         try {
           return toChildProfile(item.data() as FirestoreChildDocument);
         } catch (e) {
           console.error("[getFamilyChildren] Error mapping child document:", item.id, e);
-          throw new Error(`Failed to map child ${item.id}: ${e instanceof Error ? e.message : String(e)}`);
+          throw new Error(
+            `Failed to map child ${item.id}: ${e instanceof Error ? e.message : String(e)}`,
+          );
         }
       });
       console.log("[getFamilyChildren] Successfully converted", result.length, "children");
@@ -174,15 +184,15 @@ export class FirebaseFamilyRepository implements FamilyService {
       console.log("[createChild] Starting for user:", this.userId, "child name:", input.name);
       const familyId = await this.ensureFamily();
       console.log("[createChild] Got family:", familyId);
-      
+
       const childId = crypto.randomUUID();
       console.log("[createChild] Generated child ID:", childId);
-      
+
       // Generate TATI ID and PIN
       const tatiId = generateTatiId();
       const pin = generateChildPin();
       console.log("[createChild] Generated TATI ID:", tatiId, "PIN: ****");
-      
+
       const now = FieldValue.serverTimestamp();
       const document = {
         id: childId,
@@ -199,7 +209,7 @@ export class FirebaseFamilyRepository implements FamilyService {
         createdAt: now,
         updatedAt: now,
       };
-      
+
       console.log("[createChild] Writing child document with tati_id:", tatiId);
       await this.db
         .collection("families")
@@ -208,12 +218,12 @@ export class FirebaseFamilyRepository implements FamilyService {
         .doc(childId)
         .set(document);
       console.log("[createChild] Child document written");
-      
+
       // Generate and save credential
       console.log("[createChild] Saving credential for TATI ID:", tatiId);
       await saveChildPin(childId, tatiId, familyId, pin);
       console.log("[createChild] Credential saved for TATI ID:", tatiId);
-      
+
       // Read back child document to verify
       console.log("[createChild] Reading back child document");
       const saved = await this.db
@@ -222,14 +232,19 @@ export class FirebaseFamilyRepository implements FamilyService {
         .collection("children")
         .doc(childId)
         .get();
-      
+
       if (!saved.exists) {
         throw new Error("Child document was written but cannot be read back");
       }
-      
+
       console.log("[createChild] Document read, converting to profile");
       const profile = toChildProfile(saved.data() as FirestoreChildDocument);
-      console.log("[createChild] Success! Created child profile:", profile.id, "with TATI ID:", profile.tati_id);
+      console.log(
+        "[createChild] Success! Created child profile:",
+        profile.id,
+        "with TATI ID:",
+        profile.tati_id,
+      );
       return profile;
     } catch (error) {
       console.error("[createChild] Error for user:", this.userId, error);
@@ -275,11 +290,7 @@ export class FirebaseFamilyMemberRepository implements FamilyMemberService {
   constructor(private readonly db: Firestore) {}
 
   async getMembers(familyId: string): Promise<Array<{ userId: string; role: string }>> {
-    const members = await this.db
-      .collection("families")
-      .doc(familyId)
-      .collection("members")
-      .get();
+    const members = await this.db.collection("families").doc(familyId).collection("members").get();
     return members.docs.map((item) => {
       const member = item.data() as FirestoreFamilyMemberDocument;
       return { userId: member.uid, role: member.role };
@@ -534,9 +545,7 @@ export class FirebaseAssessmentRepository {
 
       // 3. If retake: delete old responses
       if (existing) {
-        const oldResponses = await transaction.get(
-          attemptRef.collection("responses"),
-        );
+        const oldResponses = await transaction.get(attemptRef.collection("responses"));
         for (const oldResponseSnap of oldResponses.docs) {
           transaction.delete(oldResponseSnap.ref);
         }
@@ -671,8 +680,11 @@ export class FirebaseScenarioRepository {
    * Does NOT validate state bounds or choices (server functions do that).
    * Just retrieves what was stored.
    */
-  async loadSession(childId: string, scenarioId: string): Promise<{
-    state: Record<string, unknown> | null;
+  async loadSession(
+    childId: string,
+    scenarioId: string,
+  ): Promise<{
+    state: ScenarioState | null;
     version: number;
     status: "in_progress" | "completed";
   } | null> {
@@ -689,11 +701,11 @@ export class FirebaseScenarioRepository {
       return null;
     }
 
-    const data = snap.data();
+    const data = snap.data() as Partial<FirestoreScenarioSessionDocument> | undefined;
     return {
-      state: data?.["state"] || null,
-      version: data?.["version"] ?? 0,
-      status: data?.["status"] ?? "in_progress",
+      state: data?.state ?? null,
+      version: data?.version ?? 0,
+      status: data?.status ?? "in_progress",
     };
   }
 
@@ -722,7 +734,7 @@ export class FirebaseScenarioRepository {
   async saveSession(
     childId: string,
     scenarioId: string,
-    state: Record<string, unknown>,
+    state: ScenarioState,
     expectedVersion: number,
   ): Promise<{ version: number; status: "in_progress" | "completed" }> {
     if (!state || typeof state !== "object") {
@@ -734,8 +746,7 @@ export class FirebaseScenarioRepository {
     }
 
     // Determine phase and status
-    const phase = (state as any)?.["phase"] as string | undefined;
-    const status = phase === "complete" ? "completed" : "in_progress";
+    const status = state.phase === "complete" ? "completed" : "in_progress";
 
     return await this.db.runTransaction(async (transaction) => {
       const sessionRef = this.db
@@ -759,11 +770,11 @@ export class FirebaseScenarioRepository {
       }
 
       // 3. Extract metadata from state (for queries)
-      const day = (state as any)?.["day"] as number | undefined;
-      const nodeId = (state as any)?.["nodeId"] as string | undefined;
+      const day = state.day;
+      const nodeId = state.nodeId;
 
       // 4. Clean state: remove undefined values (Firestore doesn't allow them)
-      const cleanedState = JSON.parse(JSON.stringify(state));
+      const cleanedState = JSON.parse(JSON.stringify(state)) as ScenarioState;
 
       // 5. Write new session document with incremented version
       transaction.set(
@@ -801,7 +812,10 @@ export class FirebaseScenarioRepository {
    * - { exists: true, version } if scenario started
    * - { exists: false, version: 0 } if not yet started
    */
-  async getSessionVersion(childId: string, scenarioId: string): Promise<{
+  async getSessionVersion(
+    childId: string,
+    scenarioId: string,
+  ): Promise<{
     exists: boolean;
     version: number;
   }> {

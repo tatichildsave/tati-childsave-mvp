@@ -6,7 +6,7 @@
  *
  * Seeds a deterministic test fixture for H4.B child journey E2E testing.
  * Uses fixed credentials from test-fixtures-credentials.json
- * 
+ *
  * Only runs against Firebase Emulator. Safe to run repeatedly (idempotent).
  *
  * Prerequisites:
@@ -124,7 +124,7 @@ async function seedTestFixture() {
     // Step 1: Create family
     console.log("1️⃣  Creating family...");
     const familyRef = db.collection("families").doc(TEST_FIXTURE.family.id);
-    
+
     const familyDoc = await familyRef.get();
     if (familyDoc.exists) {
       console.log("   ⚠️  Family already exists, skipping creation");
@@ -141,7 +141,7 @@ async function seedTestFixture() {
     // Step 2: Add parent to family
     console.log("\n2️⃣  Adding parent to family...");
     const parentMemberRef = familyRef.collection("members").doc(TEST_FIXTURE.parent.uid);
-    
+
     const parentMemberDoc = await parentMemberRef.get();
     if (parentMemberDoc.exists) {
       console.log("   ⚠️  Parent already in family, skipping");
@@ -160,7 +160,7 @@ async function seedTestFixture() {
     // Step 3: Create child profile
     console.log("\n3️⃣  Creating child profile...");
     const childRef = familyRef.collection("children").doc(TEST_FIXTURE.child.id);
-    
+
     const childDoc = await childRef.get();
     if (childDoc.exists) {
       console.log("   ⚠️  Child already exists, skipping creation");
@@ -186,7 +186,7 @@ async function seedTestFixture() {
     console.log("\n4️⃣  Creating child credentials...");
     const pinHash = await hashPin(TEST_FIXTURE.child.pin);
     const credRef = db.collection("childCredentials").doc(TEST_FIXTURE.child.tatiId);
-    
+
     const credDoc = await credRef.get();
     if (credDoc.exists) {
       console.log("   ⚠️  Credentials already exist, skipping creation");
@@ -200,13 +200,15 @@ async function seedTestFixture() {
         revokedAt: null,
         rotatedAt: Timestamp.now(),
       });
-      console.log(`   ✓ Created child credentials at /childCredentials/${TEST_FIXTURE.child.tatiId}`);
+      console.log(
+        `   ✓ Created child credentials at /childCredentials/${TEST_FIXTURE.child.tatiId}`,
+      );
     }
 
     // Step 5: Create child journey summary (empty progress)
     console.log("\n5️⃣  Creating journey summary...");
     const journeyRef = childRef.collection("journey").doc("summary");
-    
+
     const journeyDoc = await journeyRef.get();
     if (journeyDoc.exists) {
       console.log("   ⚠️  Journey summary already exists, skipping");

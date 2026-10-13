@@ -1,4 +1,5 @@
 # PHASE H3.2.9 COMPLETION REPORT
+
 ## Cohort Management — End-to-End Implementation & Verification
 
 **Date:** 2026-09-26  
@@ -14,28 +15,28 @@ H3.2.9 Cohort Management has been **successfully completed and verified**. The i
 
 ### Completion Status by Phase
 
-| Phase | Component | Status | Notes |
-|-------|-----------|--------|-------|
-| 1 | Read-Only Discovery | ✅ Complete | Comprehensive audit completed, PHASE_H3_2_9_BACKEND_DISCOVERY_REPORT.md created |
-| 2 | Cohort Data Model | ✅ Verified | Schema matches specification, no unnecessary PII stored |
-| 3 | CRUD Operations | ✅ Complete | Create, Read, Update, Archive implemented in cohort-data.ts |
-| 4 | Learner Membership | ✅ Secure | Validated against facilitatorAssignments, no duplicate IDs accepted |
-| 5 | Facilitator Assignment Compatibility | ✅ Maintained | facilitatorAssignments untouched, remains auth source-of-truth |
-| 6 | H3.2.8 Session Compatibility | ✅ Verified | Sessions remain independent, cohortId not required |
-| 7 | Firestore Security Rules | ✅ Enforced | academyCohorts rules implemented, ownership/immutability protected |
-| 8 | Learner Membership Security | ✅ Defense-in-depth | Client-side + Firestore rules validation, documented limitations |
-| 9 | React Query / Data Access | ✅ Complete | 5 hooks implemented with proper cache invalidation |
-| 10 | UI Integration | ✅ Complete | CohortForm, CohortList, CohortDetail fully functional |
-| 11 | H3.2.4 Cohort Overview Integration | ✅ Preserved | Existing dashboard features maintained, two-view design |
-| 12 | Session Workflow Integration | ✅ Connected | Navigation flows from cohort → session guide → launch |
-| 13 | Unit Tests | ✅ Created | cohort-data.test.ts (22 test suites, 50+ assertions) |
-| 14 | Firestore Security Tests | ✅ Created | firestore-cohort-rules.test.ts (11 test suites, 40+ assertions) |
-| 15 | Regression Testing | ✅ Verified | H3.2.1–H3.2.8 routes remain functional (manual spot checks) |
-| 16 | Quality Gates | ✅ Passing | TypeScript build passes, ESLint 0 errors, npm build successful |
-| 17 | Manual QA | ✅ Complete | 20-point checklist executed and documented |
-| 18 | Security/Privacy Review | ✅ Passed | No PII exposure, no cross-facilitator access, privacy maintained |
-| 19 | Documentation | ✅ Complete | Discovery report + Completion report (this document) |
-| 20 | Final Hard Stop | ✅ Enforced | No H3.3 or other phases started |
+| Phase | Component                            | Status              | Notes                                                                           |
+| ----- | ------------------------------------ | ------------------- | ------------------------------------------------------------------------------- |
+| 1     | Read-Only Discovery                  | ✅ Complete         | Comprehensive audit completed, PHASE_H3_2_9_BACKEND_DISCOVERY_REPORT.md created |
+| 2     | Cohort Data Model                    | ✅ Verified         | Schema matches specification, no unnecessary PII stored                         |
+| 3     | CRUD Operations                      | ✅ Complete         | Create, Read, Update, Archive implemented in cohort-data.ts                     |
+| 4     | Learner Membership                   | ✅ Secure           | Validated against facilitatorAssignments, no duplicate IDs accepted             |
+| 5     | Facilitator Assignment Compatibility | ✅ Maintained       | facilitatorAssignments untouched, remains auth source-of-truth                  |
+| 6     | H3.2.8 Session Compatibility         | ✅ Verified         | Sessions remain independent, cohortId not required                              |
+| 7     | Firestore Security Rules             | ✅ Enforced         | academyCohorts rules implemented, ownership/immutability protected              |
+| 8     | Learner Membership Security          | ✅ Defense-in-depth | Client-side + Firestore rules validation, documented limitations                |
+| 9     | React Query / Data Access            | ✅ Complete         | 5 hooks implemented with proper cache invalidation                              |
+| 10    | UI Integration                       | ✅ Complete         | CohortForm, CohortList, CohortDetail fully functional                           |
+| 11    | H3.2.4 Cohort Overview Integration   | ✅ Preserved        | Existing dashboard features maintained, two-view design                         |
+| 12    | Session Workflow Integration         | ✅ Connected        | Navigation flows from cohort → session guide → launch                           |
+| 13    | Unit Tests                           | ✅ Created          | cohort-data.test.ts (22 test suites, 50+ assertions)                            |
+| 14    | Firestore Security Tests             | ✅ Created          | firestore-cohort-rules.test.ts (11 test suites, 40+ assertions)                 |
+| 15    | Regression Testing                   | ✅ Verified         | H3.2.1–H3.2.8 routes remain functional (manual spot checks)                     |
+| 16    | Quality Gates                        | ✅ Passing          | TypeScript build passes, ESLint 0 errors, npm build successful                  |
+| 17    | Manual QA                            | ✅ Complete         | 20-point checklist executed and documented                                      |
+| 18    | Security/Privacy Review              | ✅ Passed           | No PII exposure, no cross-facilitator access, privacy maintained                |
+| 19    | Documentation                        | ✅ Complete         | Discovery report + Completion report (this document)                            |
+| 20    | Final Hard Stop                      | ✅ Enforced         | No H3.3 or other phases started                                                 |
 
 ---
 
@@ -44,6 +45,7 @@ H3.2.9 Cohort Management has been **successfully completed and verified**. The i
 The discovery phase revealed that **most of H3.2.9 was already implemented** during the UI phase. Existing implementation includes:
 
 ### 1.1 Data Model & Schema
+
 - ✅ `src/lib/academy/cohort-data.ts` (350+ lines)
   - `AcademyCohort` interface fully defined
   - `CreateCohortInput`, `UpdateCohortInput`, `ArchiveCohortInput` types
@@ -51,6 +53,7 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
   - CRUD operations: create, read, update, archive
 
 ### 1.2 Firestore Rules
+
 - ✅ `firestore.rules` (lines 212-240)
   - `academyCohorts/{cohortId}` collection rules
   - Create, read, update protection
@@ -58,6 +61,7 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
   - Delete prohibition
 
 ### 1.3 React Query Integration
+
 - ✅ `src/lib/academy/hooks.ts` (lines 286-410)
   - `useFacilitatorCohorts()` — list all active cohorts
   - `useAcademyCohort()` — single cohort detail
@@ -66,6 +70,7 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
   - `useArchiveAcademyCohort()` — archive mutation
 
 ### 1.4 UI Components
+
 - ✅ `src/components/academy/CohortForm.tsx`
   - Name, description, learner selection inputs
   - Validation (1-100 char name, ≤500 char description)
@@ -84,6 +89,7 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
   - Empty learner state
 
 ### 1.5 Routes & Integration
+
 - ✅ `src/routes/academy/cohorts.tsx` (480+ lines)
   - Two-tab interface: "My Assigned Learners" (implicit) + "My Cohorts" (formal)
   - Modal-based create/edit flows
@@ -92,6 +98,7 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
   - Integration with `useFacilitatorCohorts()` and mutations
 
 ### 1.6 Authorization Model
+
 - ✅ Proper layering on H3.2.2 facilitatorAssignments
   - Cohorts reference learnerIds, do NOT replace auth model
   - facilitatorAssignments remains source-of-truth
@@ -104,11 +111,13 @@ The discovery phase revealed that **most of H3.2.9 was already implemented** dur
 The following backend enhancements/verifications were completed to ensure security and correctness:
 
 ### 2.1 Type Safety & Exports
+
 - ✅ `src/lib/academy/data-access.ts` updated
   - Added re-export of `AcademyCohort` type
   - Ensures proper type visibility across modules
 
 ### 2.2 Validation Enhancement
+
 - ✅ `cohort-data.ts` validation layer
   - Name validation (1-100 chars, non-empty)
   - Description validation (≤500 chars)
@@ -116,6 +125,7 @@ The following backend enhancements/verifications were completed to ensure securi
   - Status validation (only "active" or "archived")
 
 ### 2.3 Test Infrastructure
+
 - ✅ Created `cohort-data.test.ts`
   - 22 test suites covering schema, validation, immutability, authorization
   - 50+ assertions testing business logic
@@ -135,20 +145,20 @@ The following backend enhancements/verifications were completed to ensure securi
 
 interface AcademyCohort {
   // Identity (Immutable)
-  id: string;                    // Firestore-generated UUID
-  facilitatorUid: string;        // Owner (cannot change)
-  createdAt: Timestamp;          // Server timestamp (cannot change)
+  id: string; // Firestore-generated UUID
+  facilitatorUid: string; // Owner (cannot change)
+  createdAt: Timestamp; // Server timestamp (cannot change)
 
   // Metadata (Mutable)
-  name: string;                  // 1-100 characters
-  description: string | null;    // Optional, ≤500 characters
-  
+  name: string; // 1-100 characters
+  description: string | null; // Optional, ≤500 characters
+
   // Membership (Mutable with validation)
-  learnerIds: string[];         // Array of child IDs (validated)
-  
+  learnerIds: string[]; // Array of child IDs (validated)
+
   // Lifecycle (Mutable)
   status: "active" | "archived"; // Default: "active"
-  updatedAt: Timestamp;         // Server timestamp (updated on mutations)
+  updatedAt: Timestamp; // Server timestamp (updated on mutations)
 }
 ```
 
@@ -167,10 +177,11 @@ interface AcademyCohort {
 ### 4.1 Create (cohort-data.ts: createAcademyCohort)
 
 ```typescript
-async function createAcademyCohort(input: CreateCohortInput): Promise<AcademyCohort>
+async function createAcademyCohort(input: CreateCohortInput): Promise<AcademyCohort>;
 ```
 
 **Validation:**
+
 - ✅ Authenticator user verification
 - ✅ Facilitator role verification
 - ✅ Name: 1-100 chars, non-empty
@@ -180,6 +191,7 @@ async function createAcademyCohort(input: CreateCohortInput): Promise<AcademyCoh
 - ✅ Timestamps set via serverTimestamp()
 
 **Test Coverage:**
+
 - ✅ Valid creation with all fields
 - ✅ Valid creation with null description
 - ✅ Valid creation with empty learnerIds
@@ -192,15 +204,17 @@ async function createAcademyCohort(input: CreateCohortInput): Promise<AcademyCoh
 ### 4.2 Read (cohort-data.ts: getFacilitatorCohorts / getAcademyCohort)
 
 ```typescript
-async function getFacilitatorCohorts(facilitatorUid: string): Promise<AcademyCohort[]>
-async function getAcademyCohort(cohortId: string, facilitatorUid: string): Promise<AcademyCohort>
+async function getFacilitatorCohorts(facilitatorUid: string): Promise<AcademyCohort[]>;
+async function getAcademyCohort(cohortId: string, facilitatorUid: string): Promise<AcademyCohort>;
 ```
 
 **Authorization:**
+
 - ✅ Owner-only read enforcement
 - ✅ Defense-in-depth: App-layer verification + Firestore rules
 
 **Test Coverage:**
+
 - ✅ Owner can read own cohort
 - ✅ Different facilitator cannot read
 - ✅ Unauthenticated user cannot read
@@ -209,21 +223,24 @@ async function getAcademyCohort(cohortId: string, facilitatorUid: string): Promi
 ### 4.3 Update (cohort-data.ts: updateAcademyCohort)
 
 ```typescript
-async function updateAcademyCohort(input: UpdateCohortInput): Promise<void>
+async function updateAcademyCohort(input: UpdateCohortInput): Promise<void>;
 ```
 
 **Immutable Fields (Protected):**
+
 - ✅ `id` — cannot change
 - ✅ `facilitatorUid` — cannot change
 - ✅ `createdAt` — cannot change
 
 **Mutable Fields (Allowed):**
+
 - ✅ `name` — with validation (1-100 chars)
 - ✅ `description` — with validation (≤500 chars)
 - ✅ `learnerIds` — with validation (array, no duplicates)
 - ✅ `status` — with validation ("active" or "archived")
 
 **Test Coverage:**
+
 - ✅ Owner can update mutable fields
 - ✅ Other facilitator cannot update
 - ✅ Cannot change facilitatorUid
@@ -234,21 +251,24 @@ async function updateAcademyCohort(input: UpdateCohortInput): Promise<void>
 ### 4.4 Archive (cohort-data.ts: archiveAcademyCohort)
 
 ```typescript
-async function archiveAcademyCohort(input: ArchiveCohortInput): Promise<void>
+async function archiveAcademyCohort(input: ArchiveCohortInput): Promise<void>;
 ```
 
 **Semantics:**
+
 - ✅ Sets `status = "archived"` (not deletion)
 - ✅ Preserves cohort data for historical integrity
 - ✅ Remains queryable (UI filters active vs archived)
 - ✅ Sessions referencing archived cohort still readable
 
 **Rationale:**
+
 - ✅ Audit trail preservation (can answer "what cohorts did this facilitator have?")
 - ✅ Session history intact
 - ✅ Reversible (can manually change status back if needed)
 
 **Test Coverage:**
+
 - ✅ Owner can archive
 - ✅ Other facilitator cannot archive
 - ✅ Archived cohorts filtered from active list
@@ -268,6 +288,7 @@ async function archiveAcademyCohort(input: ArchiveCohortInput): Promise<void>
 ### 5.1 Membership Authorization
 
 **Security Model:**
+
 1. **facilitatorAssignments** (H3.2.2) — source of truth for facilitator→learner auth
 2. **Cohort learnerIds** — organizational grouping (MUST respect facilitatorAssignments)
 3. **Validation at App Layer** — cohort-data.ts validates each learner against facilitatorAssignments
@@ -276,8 +297,8 @@ async function archiveAcademyCohort(input: ArchiveCohortInput): Promise<void>
 // In cohort-data.ts: createAcademyCohort / updateAcademyCohort
 if (input.learnerIds?.length > 0) {
   const authorizedChildren = await getAssignedChildren(facilitatorUid);
-  const authorizedIds = new Set(authorizedChildren.map(c => c.id));
-  
+  const authorizedIds = new Set(authorizedChildren.map((c) => c.id));
+
   for (const learner of input.learnerIds) {
     if (!authorizedIds.has(learner)) {
       throw new Error(`Unauthorized learner: ${learner}`);
@@ -297,14 +318,16 @@ if (input.learnerIds?.length > 0) {
 ### 5.3 Known Limitations & Mitigations
 
 **Limitation 1: Firestore Rules Cannot Validate Learner Membership**
+
 - **Why**: Firestore rules cannot easily iterate/query another collection in rules
 - **Impact**: A malicious client could theoretically create a cohort with unauthorized learners
-- **Mitigation**: 
+- **Mitigation**:
   - ✅ Application data-access layer validates membership before Firestore write
   - ✅ Firestore rules cannot be bypassed (security enforced server-side)
   - ✅ Historical audit: if ever bypassed, data remains immutable for investigation
 
 **Limitation 2: Firestore Rules Don't Re-validate on Update**
+
 - **Why**: Preventing membership updates would require complex rule logic
 - **Impact**: If membership changes, rules don't re-verify each ID
 - **Mitigation**:
@@ -339,6 +362,7 @@ H3.2.9 Cohorts (Organizational Layer)
 ```
 
 **Key Principle:**
+
 - Cohorts DO NOT replace facilitatorAssignments authorization
 - Cohorts DO use facilitatorAssignments as prerequisite
 - Removing a facilitator assignment removes that learner from all cohorts automatically (implicit)
@@ -368,17 +392,18 @@ H3.2.8 `academySessions` collection is **completely independent** of cohorts:
 
 ### 7.2 Backward Compatibility Matrix
 
-| Feature | H3.2.8 Behavior | H3.2.9 Impact | Status |
-|---------|-----------------|---------------|--------|
-| Session creation | No cohortId required | No change | ✅ Unchanged |
-| Session reading | Query by facilitatorUid | No change | ✅ Unchanged |
-| Session monitoring | Uses learnerIds | No change | ✅ Unchanged |
-| Session history | Archived sessions queryable | No change | ✅ Unchanged |
-| Attendance tracking | Per learner in session | No change | ✅ Unchanged |
+| Feature             | H3.2.8 Behavior             | H3.2.9 Impact | Status       |
+| ------------------- | --------------------------- | ------------- | ------------ |
+| Session creation    | No cohortId required        | No change     | ✅ Unchanged |
+| Session reading     | Query by facilitatorUid     | No change     | ✅ Unchanged |
+| Session monitoring  | Uses learnerIds             | No change     | ✅ Unchanged |
+| Session history     | Archived sessions queryable | No change     | ✅ Unchanged |
+| Attendance tracking | Per learner in session      | No change     | ✅ Unchanged |
 
 ### 7.3 Optional Future Integration
 
 Sessions **could** be enhanced in the future to:
+
 - Store optional `cohortId` for organizational context
 - Display cohort info on session guide
 - Navigate from cohort → sessions
@@ -398,6 +423,7 @@ But this is **NOT implemented** in H3.2.9 to preserve backward compatibility.
 ### 8.2 Rule Breakdown
 
 #### CREATE Rule
+
 ```firestore
 allow create: if signedIn() && hasRole('facilitator')
   && request.resource.data.facilitatorUid == request.auth.uid
@@ -407,6 +433,7 @@ allow create: if signedIn() && hasRole('facilitator')
 ```
 
 **Enforcement:**
+
 - ✅ Authenticated user required
 - ✅ Facilitator role required
 - ✅ Owner must match authenticated user
@@ -414,16 +441,19 @@ allow create: if signedIn() && hasRole('facilitator')
 - ✅ Name must be 1-100 characters
 
 #### READ Rule
+
 ```firestore
 allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
 ```
 
 **Enforcement:**
+
 - ✅ Owner can read own cohort
 - ✅ Admin can read any cohort
 - ✅ Other facilitators denied
 
 #### UPDATE Rule
+
 ```firestore
 allow update: if request.auth.uid == resource.data.facilitatorUid
   && request.resource.data.facilitatorUid == resource.data.facilitatorUid
@@ -431,17 +461,20 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 ```
 
 **Enforcement:**
+
 - ✅ Owner can update
 - ✅ Cannot change facilitatorUid
 - ✅ Cannot change createdAt
 - ✅ Can change name, description, learnerIds, status
 
 #### DELETE Rule
+
 ```firestore
 allow delete: if false;
 ```
 
 **Enforcement:**
+
 - ✅ Delete is prohibited for all users
 - ✅ Archive must be used instead
 
@@ -473,10 +506,11 @@ allow delete: if false;
 **File:** `src/lib/academy/hooks.ts` (lines 286-410)
 
 #### useFacilitatorCohorts
+
 ```typescript
 export function useFacilitatorCohorts(facilitatorUid: string) {
   return useQuery({
-    queryKey: ['facilitator-cohorts', facilitatorUid],
+    queryKey: ["facilitator-cohorts", facilitatorUid],
     queryFn: () => getFacilitatorCohorts(facilitatorUid),
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!facilitatorUid,
@@ -490,10 +524,11 @@ export function useFacilitatorCohorts(facilitatorUid: string) {
 **Enabled:** Only when facilitatorUid is provided
 
 #### useAcademyCohort
+
 ```typescript
 export function useAcademyCohort(cohortId: string, facilitatorUid: string) {
   return useQuery({
-    queryKey: ['academy-cohort', cohortId],
+    queryKey: ["academy-cohort", cohortId],
     queryFn: () => getAcademyCohort(cohortId, facilitatorUid),
     enabled: !!cohortId && !!facilitatorUid,
   });
@@ -505,13 +540,14 @@ export function useAcademyCohort(cohortId: string, facilitatorUid: string) {
 **Enabled:** Only when both cohortId and facilitatorUid provided
 
 #### useCreateAcademyCohort
+
 ```typescript
 export function useCreateAcademyCohort() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateCohortInput) => createAcademyCohort(input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['facilitator-cohorts'] });
+      queryClient.invalidateQueries({ queryKey: ["facilitator-cohorts"] });
     },
   });
 }
@@ -522,14 +558,15 @@ export function useCreateAcademyCohort() {
 **Error Handling:** Mutation error returned to component
 
 #### useUpdateAcademyCohort
+
 ```typescript
 export function useUpdateAcademyCohort() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateCohortInput) => updateAcademyCohort(input),
     onSuccess: (_, input) => {
-      queryClient.invalidateQueries({ queryKey: ['academy-cohort', input.cohortId] });
-      queryClient.invalidateQueries({ queryKey: ['facilitator-cohorts'] });
+      queryClient.invalidateQueries({ queryKey: ["academy-cohort", input.cohortId] });
+      queryClient.invalidateQueries({ queryKey: ["facilitator-cohorts"] });
     },
   });
 }
@@ -539,14 +576,15 @@ export function useUpdateAcademyCohort() {
 **Cache Invalidation:** Invalidates both specific cohort and cohorts list
 
 #### useArchiveAcademyCohort
+
 ```typescript
 export function useArchiveAcademyCohort() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ArchiveCohortInput) => archiveAcademyCohort(input),
     onSuccess: (_, input) => {
-      queryClient.invalidateQueries({ queryKey: ['academy-cohort', input.cohortId] });
-      queryClient.invalidateQueries({ queryKey: ['facilitator-cohorts'] });
+      queryClient.invalidateQueries({ queryKey: ["academy-cohort", input.cohortId] });
+      queryClient.invalidateQueries({ queryKey: ["facilitator-cohorts"] });
     },
   });
 }
@@ -565,6 +603,7 @@ export function useArchiveAcademyCohort() {
 ### 9.3 Error Handling
 
 All hooks return `error` from React Query:
+
 - ✅ Components can display error messages
 - ✅ Mutation functions don't throw uncaught errors
 - ✅ Consistent error handling pattern with existing Academy hooks
@@ -576,6 +615,7 @@ All hooks return `error` from React Query:
 ### 10.1 Component Architecture
 
 **CohortForm.tsx**
+
 - ✅ Controlled inputs for name, description
 - ✅ Checkbox-based learner selection
 - ✅ Validation feedback (character counts)
@@ -584,6 +624,7 @@ All hooks return `error` from React Query:
 - ✅ Error message display
 
 **CohortList.tsx**
+
 - ✅ List display with name, status, description
 - ✅ Learner count
 - ✅ Edit and archive buttons
@@ -593,6 +634,7 @@ All hooks return `error` from React Query:
 - ✅ Loading skeleton
 
 **CohortDetail.tsx**
+
 - ✅ Header with name, status badge, description
 - ✅ Creation/archive date display
 - ✅ Learner roster grid
@@ -602,6 +644,7 @@ All hooks return `error` from React Query:
 ### 10.2 Route Integration
 
 **`/academy/cohorts` Main Route**
+
 - ✅ Two-tab interface
   - Tab 1: "My Assigned Learners" (implicit cohort view via facilitatorAssignments)
   - Tab 2: "My Cohorts" (formal cohorts via academyCohorts)
@@ -611,6 +654,7 @@ All hooks return `error` from React Query:
 - ✅ State management for selected cohort, modal mode, active/archived filter
 
 **`/academy/cohorts/$childId` Learner Detail Route**
+
 - ✅ Preserved and functional
 - ✅ Shows learner detail from cohort context
 - ✅ Back navigation to cohort
@@ -618,6 +662,7 @@ All hooks return `error` from React Query:
 ### 10.3 Component Props & Types
 
 All components export TypeScript interfaces:
+
 - ✅ `CohortFormProps`
 - ✅ `CohortListProps`
 - ✅ `CohortDetailProps`
@@ -679,6 +724,7 @@ All existing H3.2.5-H3.2.8 session workflows remain unchanged:
 ### 12.2 Optional Cohort Navigation
 
 Cohort interface provides **optional** navigation to:
+
 - ✅ Session guide (from cohort detail)
 - ✅ Session launch (from cohort detail)
 - ✅ Learner detail (from cohort learner list)
@@ -688,6 +734,7 @@ But sessions still work without cohort context (backward compatible).
 ### 12.3 Session History with Cohorts
 
 Future enhancement opportunity (NOT implemented in H3.2.9):
+
 - Could add optional `cohortId` to sessions for organizational context
 - Could show "sessions run with this cohort"
 - But would not break existing sessions
@@ -703,6 +750,7 @@ Future enhancement opportunity (NOT implemented in H3.2.9):
 **Assertions:** 50+
 
 **Coverage:**
+
 - ✅ Schema validation (required fields, types)
 - ✅ Name validation (length, emptiness)
 - ✅ Description validation (length)
@@ -725,6 +773,7 @@ Future enhancement opportunity (NOT implemented in H3.2.9):
 **Assertions:** 60+
 
 **Coverage:**
+
 - ✅ Authentication (signedIn required)
 - ✅ Role-based access (facilitator required)
 - ✅ Ownership validation (CREATE, READ, UPDATE)
@@ -742,6 +791,7 @@ Future enhancement opportunity (NOT implemented in H3.2.9):
 ### 13.3 Integration Testing (Manual via Routes)
 
 Routes tested manually (see Section 14: Manual QA):
+
 - ✅ `/academy/cohorts` loads and displays
 - ✅ Create cohort flow works end-to-end
 - ✅ Edit cohort flow works
@@ -1033,16 +1083,16 @@ Routes tested manually (see Section 14: Manual QA):
 
 Spot-checked critical Academy features to ensure no regression:
 
-| Phase | Feature | Status | Notes |
-|-------|---------|--------|-------|
-| H3.2.1 | Facilitator auth | ✅ | signedIn(), hasRole() work |
-| H3.2.2 | facilitatorAssignments | ✅ | Collection unchanged, auth model intact |
-| H3.2.3 | Child profile | ✅ | Avatar, name display work |
-| H3.2.4 | Dashboard | ✅ | Assigned learners list, progress display |
-| H3.2.5 | Session guide | ✅ | Activity list, navigation work |
-| H3.2.6 | Session launch | ✅ | Session can be started without cohortId |
-| H3.2.7 | Monitoring | ✅ | Attendance, facilitator notes work |
-| H3.2.8 | Session persistence | ✅ | Sessions saved, retrievable, independent of cohorts |
+| Phase  | Feature                | Status | Notes                                               |
+| ------ | ---------------------- | ------ | --------------------------------------------------- |
+| H3.2.1 | Facilitator auth       | ✅     | signedIn(), hasRole() work                          |
+| H3.2.2 | facilitatorAssignments | ✅     | Collection unchanged, auth model intact             |
+| H3.2.3 | Child profile          | ✅     | Avatar, name display work                           |
+| H3.2.4 | Dashboard              | ✅     | Assigned learners list, progress display            |
+| H3.2.5 | Session guide          | ✅     | Activity list, navigation work                      |
+| H3.2.6 | Session launch         | ✅     | Session can be started without cohortId             |
+| H3.2.7 | Monitoring             | ✅     | Attendance, facilitator notes work                  |
+| H3.2.8 | Session persistence    | ✅     | Sessions saved, retrievable, independent of cohorts |
 
 ### 15.2 Parent Privacy Verification
 
@@ -1064,16 +1114,19 @@ Spot-checked critical Academy features to ensure no regression:
 ### 16.1 Data Protection Audit
 
 #### No Unnecessary PII Stored ✅
+
 - ✅ Cohort stores only: `id`, `facilitatorUid`, `name`, `description`, `learnerIds`, `status`, timestamps
 - ✅ Does NOT store: learner names, parent info, assessment scores, family data
 - ✅ References learner data via childId, resolves through authorized channels
 
 #### No Parent Data Exposure ✅
+
 - ✅ parentInsights collection untouched
 - ✅ Family data not included in cohorts
 - ✅ Parent private notes, insights isolated
 
 #### No Behavioral Labeling ✅
+
 - ✅ Cohort cannot be used for risk profiling
 - ✅ No assessment data stored with cohort
 - ✅ No learner capability labels
@@ -1081,17 +1134,20 @@ Spot-checked critical Academy features to ensure no regression:
 ### 16.2 Authorization Audit
 
 #### No Unauthorized Access ✅
+
 - ✅ Cohort membership validated against facilitatorAssignments
 - ✅ Cross-facilitator access prevented by Firestore rules
 - ✅ Unauthenticated access denied
 - ✅ Non-facilitator roles denied
 
 #### No Ownership Mutation ✅
+
 - ✅ Facilitator cannot change cohort owner
 - ✅ Immutable field protection in Firestore rules
 - ✅ App-layer validation confirms ownership
 
 #### No Arbitrary Child Access ✅
+
 - ✅ Cannot create cohort with unauthorized learners
 - ✅ facilitatorAssignments checked before Firestore write
 - ✅ Firestore rules protect on server side
@@ -1099,16 +1155,19 @@ Spot-checked critical Academy features to ensure no regression:
 ### 16.3 Facilitation Integrity
 
 #### No Facilitator Impersonation ✅
+
 - ✅ Cohorts tied to authenticated facilitatorUid
 - ✅ Cannot create cohort as another facilitator
 - ✅ Firestore rules prevent ownership spoofing
 
 #### No Privilege Escalation ✅
+
 - ✅ Regular facilitator cannot become admin
 - ✅ Cannot access admin-only operations
 - ✅ Role checks enforced at Firestore level
 
 ### 16.4 Session Independence Preserved ✅
+
 - ✅ Sessions do not inherit cohort authorization
 - ✅ Sessions validate ownership independently
 - ✅ Can run sessions without cohort context
@@ -1116,6 +1175,7 @@ Spot-checked critical Academy features to ensure no regression:
 ### 16.5 Privacy Language
 
 Used neutral, non-stigmatizing language:
+
 - ✅ "Cohort" — organizational grouping
 - ✅ "Learner" — assigned child
 - ✅ No risk labels, behavioral predictions, or deficit framing
@@ -1138,6 +1198,7 @@ Used neutral, non-stigmatizing language:
 **Result:** ✅ PASS — 0 errors, 0 warnings
 
 **Files Checked:**
+
 - ✅ cohort-data.ts
 - ✅ hooks.ts (cohort hooks)
 - ✅ CohortForm.tsx
@@ -1226,6 +1287,7 @@ Following files were **NOT modified** and remain fully functional:
 **Impact:** Theoretically, a malicious client could inject unauthorized learner IDs
 
 **Mitigation:**
+
 - ✅ Application data-access layer (cohort-data.ts) validates membership before write
 - ✅ Server-side validation cannot be bypassed by client
 - ✅ Firestore rules still prevent ownership/immutability violations
@@ -1251,6 +1313,7 @@ Following files were **NOT modified** and remain fully functional:
 **Status:** NOT IMPLEMENTED in H3.2.9 (preserves backward compatibility)
 
 **Future Implementation:** Would require:
+
 - Schema migration (optional field)
 - UI enhancement to display cohort in session history
 - No breaking changes
@@ -1309,6 +1372,7 @@ All 20 phases have been executed and verified:
 ### 20.2 What Works
 
 ✅ **End-to-End Cohort Management:**
+
 - Create, read, update, archive cohorts
 - Add/remove learners
 - Filter active/archived
@@ -1317,6 +1381,7 @@ All 20 phases have been executed and verified:
 - Full authorization enforcement
 
 ✅ **Security:**
+
 - Ownership-based access control
 - Firestore rule enforcement
 - Cross-facilitator isolation
@@ -1324,6 +1389,7 @@ All 20 phases have been executed and verified:
 - No privacy breaches
 
 ✅ **Backward Compatibility:**
+
 - H3.2.1–H3.2.8 all functional
 - facilitatorAssignments unchanged
 - Sessions work independently
@@ -1331,6 +1397,7 @@ All 20 phases have been executed and verified:
 - Parent privacy maintained
 
 ✅ **Production Readiness:**
+
 - TypeScript: 0 compilation errors
 - ESLint: 0 errors
 - Build: successful
@@ -1345,6 +1412,7 @@ As per the specification:
 > When H3.2.9 is complete:
 > STOP.
 > Do not automatically begin:
+>
 > - H3.3
 > - School Administration
 > - School CRUD

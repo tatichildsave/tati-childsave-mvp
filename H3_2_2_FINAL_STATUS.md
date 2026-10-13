@@ -15,7 +15,8 @@
 
 **Solution**: Created `facilitatorAssignments` collection as efficient authorization index.
 
-**Implementation**: 
+**Implementation**:
+
 - File: `src/lib/academy/data-access.ts`
 - Functions: `_getAssignedChildrenViaIndex()` with fallback `_getAssignedChildrenViaScan()`
 - Result: Queries now respect facilitator authorization scope
@@ -29,6 +30,7 @@
 **New Collection**: `facilitatorAssignments`
 
 **Rules Added** (12 lines to firestore.rules):
+
 ```firestore
 match /facilitatorAssignments/{assignmentId} {
   allow read: if signedIn() && hasRole('facilitator') && resource.data.facilitatorUid == request.auth.uid;
@@ -39,12 +41,14 @@ match /facilitatorAssignments/{assignmentId} {
 ```
 
 **Authorization Guarantees**:
+
 - ✅ Facilitator X cannot read assignments for Facilitator Y
 - ✅ Facilitator cannot create/modify/delete assignments (admin only)
 - ✅ Admin can manage all assignments
 - ✅ Firestore enforces at read-time (not UI-time)
 
 **Files Modified**:
+
 - `firestore.rules` - +12 lines (166 total, 154 unchanged)
 
 ---
@@ -54,6 +58,7 @@ match /facilitatorAssignments/{assignmentId} {
 **File**: `docs/H3_2_2_SECURITY_TEST_SPECIFICATION.md`
 
 **Coverage**: 31 security tests across 9 categories:
+
 1. Facilitator Read Access (4 tests)
 2. Facilitator Write Prevention (5 tests)
 3. Cross-Facilitator Isolation (3 tests)
@@ -75,12 +80,14 @@ match /facilitatorAssignments/{assignmentId} {
 ### 4. ✅ Data Minimization Verified
 
 **Firestore Rules Enforce**:
+
 - ✅ Facilitators cannot read family documents
 - ✅ Facilitators cannot read family members
 - ✅ Facilitators cannot access parentInsights
 - ✅ Facilitators can only read assigned children's permitted data
 
 **Query Data Minimization**:
+
 - UI displays: id, name, avatar, age, tatiId
 - Internal only: familyId, facilitatorUids (auth check)
 - BLOCKED: parent names, emails, family metadata
@@ -90,6 +97,7 @@ match /facilitatorAssignments/{assignmentId} {
 ### 5. ✅ Support Signal Rules Documented
 
 **Exact, Deterministic Rules** (in data-access.ts):
+
 ```
 "not-started"   → completed == 0
 "on-track"      → (completionPercent >= 30%) OR (lastActivityAt within 2 days)
@@ -97,6 +105,7 @@ match /facilitatorAssignments/{assignmentId} {
 ```
 
 **What's NOT Used**:
+
 - ❌ Parent insights
 - ❌ Competency scores (only progress completion count)
 - ❌ Risk modeling or prediction
@@ -104,6 +113,7 @@ match /facilitatorAssignments/{assignmentId} {
 - ❌ Ranking or hidden metrics
 
 **Neutral Language**:
+
 - "On track" (not "passing")
 - "Not started" (not "behind")
 - "May need support" (not "struggling" or "at risk")
@@ -113,6 +123,7 @@ match /facilitatorAssignments/{assignmentId} {
 ### 6. ✅ Protected Systems Verified
 
 **Unchanged**:
+
 - ✅ G5.1 scenario integrity (write: false for facilitators)
 - ✅ G6.1 error recovery (no changes)
 - ✅ Child authentication (Firebase Auth + TATI ID + PIN)
@@ -128,6 +139,7 @@ match /facilitatorAssignments/{assignmentId} {
 ### Decision 1: ONE New Collection (facilitatorAssignments)
 
 **Why NOT all 4 collections?**
+
 ```
 ❌ academyOrganizations - Deferred (H3.3: school administration)
 ❌ cohorts              - Deferred (H3.3: cohort management)
@@ -138,6 +150,7 @@ match /facilitatorAssignments/{assignmentId} {
 **Rationale**: H3.2 MVP scope is "What do I need to do with my learners today?" Not infrastructure.
 
 **Migration Path** (for H3.3):
+
 - facilitatorAssignments data can migrate to cohorts collection
 - No breaking changes to queries if designed properly now
 
@@ -148,6 +161,7 @@ match /facilitatorAssignments/{assignmentId} {
 **Principle**: Facilitator is observer, not modifier.
 
 **No Changes Required**: Existing Firestore rules already enforce:
+
 ```
 journeyProgress.write: false
 assessmentAttempts.write: false
@@ -163,6 +177,7 @@ achievements.write: false
 ### Decision 3: Parent Privacy at Rule Level
 
 **Protection Layers**:
+
 1. Firestore rules: read denied for parentInsights, family documents
 2. Query scoping: facilitators never query families directly
 3. Data minimization: facilitatorAssignments returns only necessary fields
@@ -181,10 +196,12 @@ achievements.write: false
 ```
 
 **Files Modified**: 2
+
 - `src/lib/academy/data-access.ts` (+80 lines, -80 lines = net refactor)
 - `firestore.rules` (+12 lines)
 
 **Files Created**: 1
+
 - `docs/H3_2_2_SECURITY_TEST_SPECIFICATION.md`
 
 **Files Unchanged**: 154 existing firestore.rules lines
@@ -206,20 +223,24 @@ achievements.write: false
 ## WHAT'S STILL TODO (H3.3+)
 
 **H3.2.3 - Learner Detail Pages**:
+
 - Route: `/academy/cohorts/:childId`
 - Content: detailed progress history, activity timeline
 
 **H3.2.4 - Cohort Management** (or H3.3):
+
 - Implement academyOrganizations, cohorts collections
 - Batch enrollment UI
 - Facilitator self-management
 
 **H3.2.8 - Session Guide**:
+
 - Implement sessions collection
 - Activity-specific facilitator guidance
 - "Today's Activity" functionality
 
 **H3.3+ - Advanced**:
+
 - Facilitator notes/annotations
 - Progress export and reporting
 - Search and filtering
@@ -229,27 +250,27 @@ achievements.write: false
 
 ## KNOWN LIMITATIONS (DOCUMENTED)
 
-| Limitation | Why | When |
-|---|---|---|
-| No cohort CRUD | Scope boundary | H3.3 |
-| No session scheduling | Scope boundary | H3.2.8 |
-| No facilitator notes | Scope boundary | H3.4+ |
-| No batch operations | Scope boundary | H3.3 |
-| Manual data setup | MVP cost/benefit | Admin API in H3.3 |
-| No search/filter | Scope boundary | H3.3+ |
-| No progress export | Scope boundary | H3.4+ |
+| Limitation            | Why              | When              |
+| --------------------- | ---------------- | ----------------- |
+| No cohort CRUD        | Scope boundary   | H3.3              |
+| No session scheduling | Scope boundary   | H3.2.8            |
+| No facilitator notes  | Scope boundary   | H3.4+             |
+| No batch operations   | Scope boundary   | H3.3              |
+| Manual data setup     | MVP cost/benefit | Admin API in H3.3 |
+| No search/filter      | Scope boundary   | H3.3+             |
+| No progress export    | Scope boundary   | H3.4+             |
 
 ---
 
 ## AUTHORIZATION MATRIX (VERIFIED)
 
-| Resource | Child | Parent | Facilitator | Admin |
-|---|---|---|---|---|
-| Assigned Child | Own | Own | Assigned ✓ | All |
-| Journey Progress | Own | Own child's | Assigned child's (RO) | All |
-| Parent Insights | ✗ | Own | ❌ BLOCKED | All |
-| Family Document | ✗ | Own | ❌ BLOCKED | All |
-| Facilitator Assignments | ✗ | ✗ | Own ✓ | All ✓ |
+| Resource                | Child | Parent      | Facilitator           | Admin |
+| ----------------------- | ----- | ----------- | --------------------- | ----- |
+| Assigned Child          | Own   | Own         | Assigned ✓            | All   |
+| Journey Progress        | Own   | Own child's | Assigned child's (RO) | All   |
+| Parent Insights         | ✗     | Own         | ❌ BLOCKED            | All   |
+| Family Document         | ✗     | Own         | ❌ BLOCKED            | All   |
+| Facilitator Assignments | ✗     | ✗           | Own ✓                 | All ✓ |
 
 ---
 
@@ -286,6 +307,7 @@ achievements.write: false
 ### To Implement Automated Tests
 
 1. Install test dependencies (H3.3):
+
    ```bash
    npm install --save-dev @firebase/rules-unit-testing @types/jest
    ```
@@ -338,5 +360,5 @@ achievements.write: false
 
 ---
 
-*PHASE H3.2.2 — Security Foundation for TATI Academy*  
-*Implementation Complete, Verification Passed, Ready for Integration Testing*
+_PHASE H3.2.2 — Security Foundation for TATI Academy_  
+_Implementation Complete, Verification Passed, Ready for Integration Testing_

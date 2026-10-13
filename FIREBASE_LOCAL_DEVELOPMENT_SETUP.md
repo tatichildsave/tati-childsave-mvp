@@ -104,10 +104,11 @@ The **Firebase Emulator Suite** provides local implementations of Firestore and 
    ```
 
    Expected output:
+
    ```
    ✔ All emulators ready! It is now safe to connect your app.
    │ View Emulator UI at http://127.0.0.1:4000/
-   
+
    ┌────────────────┬────────────────┬─────────────────────────────────┐
    │ Emulator       │ Host:Port      │ View in Emulator UI             │
    ├────────────────┼────────────────┼─────────────────────────────────┤
@@ -167,6 +168,7 @@ If you prefer to test against the cloud Firebase project without the emulator:
 3. The app will connect directly to the `tatichildsavemvp` Firebase project in the cloud.
 
 **⚠️ Warning**: Cloud Firebase connection:
+
 - Requires internet connectivity
 - Modifies real project data (use separate dev/staging project for safety)
 - Subject to Firebase quotas and billing
@@ -253,6 +255,7 @@ When using the emulator, data is stored locally and is cleared when the emulator
 **Cause**: `.env.local` file is missing or incomplete.
 
 **Solution**:
+
 1. Create `.env.local` in the project root (see "Environment Variables" section above)
 2. Include all required `VITE_FIREBASE_*` variables
 3. Restart the dev server: `npm run dev`
@@ -262,6 +265,7 @@ When using the emulator, data is stored locally and is cleared when the emulator
 **Cause**: Firebase Emulator is not running, or it crashed.
 
 **Solution**:
+
 1. Start the emulator:
    ```bash
    firebase emulators:start --only firestore,auth --project demo-tati
@@ -275,7 +279,7 @@ When using the emulator, data is stored locally and is cleared when the emulator
    ```bash
    # macOS/Linux
    kill -9 <PID>
-   
+
    # Windows PowerShell
    Stop-Process -Id <PID> -Force
    ```
@@ -285,6 +289,7 @@ When using the emulator, data is stored locally and is cleared when the emulator
 **Cause**: Emulator is slow to initialize or connection pool is exhausted.
 
 **Solution**:
+
 1. Ensure the emulator has fully started (look for "All emulators ready!")
 2. Check that `FIRESTORE_EMULATOR_HOST` and `FIREBASE_AUTH_EMULATOR_HOST` are set in `.env.local`
 3. Increase test timeout or reduce parallel test execution
@@ -292,6 +297,7 @@ When using the emulator, data is stored locally and is cleared when the emulator
 ### Issue: Firestore Rules validation warnings in emulator logs
 
 **Example warning**:
+
 ```
 firestore.rules:27:28 - WARNING Invalid function name: exists.
 ```
@@ -299,6 +305,7 @@ firestore.rules:27:28 - WARNING Invalid function name: exists.
 **Cause**: Firestore Emulator may not support all v2 rule language features.
 
 **Solution**:
+
 - These are warnings, not errors. Rules still function correctly.
 - Ensure `firebase.rules` syntax is correct by running `firebase deploy --dry-run`
 - For production deployments, resolve all warnings before deploying

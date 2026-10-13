@@ -1,4 +1,5 @@
 # PHASE H3.3 DISCOVERY REPORT
+
 ## School Administration — READ-ONLY ARCHITECTURE AUDIT
 
 **Date:** 2026-09-26  
@@ -33,7 +34,7 @@ Introduce a **school/organization administrative layer** above the existing faci
 ```
 CURRENT (H3.2):
   Facilitator ↔ Learner(s) via facilitatorAssignments
-  
+
 PROPOSED (H3.3):
   SCHOOL ↔ Facilitators ↔ Cohorts ↔ Learners via facilitatorAssignments
 ```
@@ -71,6 +72,7 @@ A school administrator must ONLY access data belonging to their school. Cross-sc
 ```
 
 **Key Points:**
+
 - ✅ Roles stored as array in Firestore user document
 - ✅ Checked at app-layer before sensitive operations
 - ✅ Firestore rules validate via `hasRole(role)` function
@@ -165,11 +167,13 @@ function canAccessChild(familyId, childId) {
 ### 1.4 Implications for H3.3
 
 **What Works:**
+
 - ✅ Basic role-based authorization is functional
 - ✅ Firestore rules can validate role membership
 - ✅ User document structure is extensible
 
 **What Needs to Change:**
+
 - ⚠️ Current model does NOT support scoped roles (e.g., "admin-for-school-X")
 - ⚠️ Current model assumes global scope for admins
 - ⚠️ No way to represent "school admin" distinct from "platform admin"
@@ -212,11 +216,13 @@ function canAccessChild(familyId, childId) {
 ### 2.2 Database Dependencies
 
 **Firestore** — Primary persistent store
+
 - ✅ Collections structured for efficient queries
 - ✅ Rules provide fine-grained access control
 - ✅ Timestamps are server-generated (integrity)
 
 **Supabase** — User roles table (legacy, being phased out?)
+
 - ⚠️ Roles table: user_id, role (flat structure)
 - ⚠️ Separate from Firestore user document
 - ⚠️ Not suitable for scoped roles
@@ -272,11 +278,13 @@ schoolId field in academySessions
 ```
 
 **Authorization:**
+
 - ✅ Facilitator can read their own assignments
 - ✅ Admin can read/create/update/delete any assignment
 - ✅ Other facilitators denied
 
 **Queries:**
+
 ```
 WHERE facilitatorUid == "facilitator-123"
 ```
@@ -298,6 +306,7 @@ academyCohorts
 **Key Fact:** Cohort `learnerIds` array is validated against `facilitatorAssignments` at data-access layer.
 
 **Implication for H3.3:**
+
 - Facilitator assignment is the **source of truth** for authorization
 - Cohorts cannot grant access to learners outside facilitatorAssignments
 - Adding `schoolId` to assignments would chain through to cohorts
@@ -334,12 +343,14 @@ academyCohorts
 ```
 
 **Authorization:**
+
 - ✅ Facilitator can create, read, update cohorts they own
 - ✅ Facilitator cannot read others' cohorts
 - ✅ Admin can read any cohort
 - ✅ Delete is prohibited (archive instead)
 
 **Key Properties:**
+
 - ✅ Ownership is immutable (facilitatorUid cannot change)
 - ✅ Learners are validated against facilitatorAssignments
 - ✅ Archive-over-delete semantics preserve history
@@ -362,9 +373,11 @@ academyCohorts
 **Proposed:** Cohorts belong to facilitators → facilitators belong to schools → schools have admins
 
 **Can facilitator own cohorts in multiple schools?**
+
 - Not currently, but model should support it for future flexibility
 
 **Can a school admin create cohorts on behalf of facilitators?**
+
 - Current model: No (cohortId==facilitatorUid immutable)
 - H3.3 model: Possibly, if we add "created on behalf of" tracking
 - Recommendation: No — preserve facilitator authorship
@@ -397,11 +410,13 @@ academyCohorts
 ```
 
 **Authorization:**
+
 - ✅ Facilitator can read/update own sessions
 - ✅ Admin can read any session
 - ✅ Delete is prohibited
 
 **Key Properties:**
+
 - ✅ Sessions are observational only (do NOT modify learner progress)
 - ✅ Learner IDs frozen at creation
 - ✅ No PII stored beyond learnerIds
@@ -419,6 +434,7 @@ academyCohorts
 **Current:** Sessions owned by facilitators → facilitators have no school
 
 **Proposed Options:**
+
 1. Leave sessions independent (backward compatible)
 2. Add optional cohortId field (tracking only, not required)
 3. Add optional schoolId field (organizational tracking)
@@ -470,6 +486,7 @@ Facilitator can run sessions with cohorts
 **Facilitators can access:** Only assigned learners (via facilitatorAssignments)
 
 **Questions for H3.3:**
+
 - Should facilitators always belong to exactly one school?
 - Should facilitators be able to belong to multiple schools?
 - Should a facilitator's cohorts be visible only within their school?
@@ -499,6 +516,7 @@ Facilitator can run sessions with cohorts
 ```
 
 **Pros:**
+
 - ✅ Minimal changes to existing collections
 - ✅ Simple to query "all facilitators in school X"
 - ✅ School isolation enforced via Firestore rules
@@ -506,6 +524,7 @@ Facilitator can run sessions with cohorts
 - ✅ Efficient indexes
 
 **Cons:**
+
 - ⚠️ Requires adding schoolId to facilitatorAssignments and academyCohorts
 - ⚠️ Requires migration script for existing data
 - ⚠️ Queries become more complex (need to filter by schoolId)
@@ -521,11 +540,13 @@ Facilitator can run sessions with cohorts
 ```
 
 **Pros:**
+
 - ✅ School is the natural top-level grouping
 - ✅ Clear ownership hierarchy
 - ✅ Natural Firestore rule pattern (inherit school ownership)
 
 **Cons:**
+
 - ❌ Would require breaking restructuring of all Academy collections
 - ❌ Complex migration (move all existing data)
 - ❌ Sessions currently independent (would need restructuring)
@@ -543,11 +564,13 @@ Facilitator can run sessions with cohorts
 ```
 
 **Pros:**
+
 - ✅ Separates school membership from global roles
 - ✅ Supports facilitators in multiple schools
 - ✅ Flexible role mapping
 
 **Cons:**
+
 - ⚠️ Adds complexity (another collection)
 - ⚠️ Queries less efficient (need to join schoolMemberships)
 - ⚠️ Doesn't prevent cross-school access without careful rules
@@ -578,6 +601,7 @@ Facilitator can run sessions with cohorts
    - Query pattern: "Is this user admin for school X?"
 
 **Why this approach:**
+
 - ✅ Minimal disruption to existing H3.2 architecture
 - ✅ Backward compatible
 - ✅ Efficient Firestore queries
@@ -593,6 +617,7 @@ Facilitator can run sessions with cohorts
 **Question:** How should school administrators be identified and authorized?
 
 **Current State:**
+
 - Global "admin" role exists
 - No way to distinguish "platform admin" from "school admin"
 - No way to restrict admin access to specific school
@@ -621,11 +646,13 @@ type SchoolRole = "admin" | "facilitator";
 ```
 
 **Pros:**
+
 - ✅ Clear distinction: platform admin vs school admin
 - ✅ One user can admin multiple schools
 - ✅ Firestore rules can check schoolAdminFor array
 
 **Cons:**
+
 - ⚠️ Adds complexity to role model
 - ⚠️ Requires Firestore rule changes
 - ⚠️ Need to store schoolAdminFor array in user doc
@@ -647,11 +674,13 @@ OR:
 ```
 
 **Pros:**
+
 - ✅ Keeps global roles clean
 - ✅ School admin info lives with school
 - ✅ Can assign multiple admins per school
 
 **Cons:**
+
 - ⚠️ Requires extra query to check school admin status
 - ⚠️ Firestore rules need to reference another collection
 - ⚠️ Slightly less efficient queries
@@ -676,11 +705,13 @@ function isSchoolAdmin(schoolId) {
 ```
 
 **Pros:**
+
 - ✅ Firebase-native approach
 - ✅ Can be cached in Firebase token
 - ✅ Fast to check
 
 **Cons:**
+
 - ❌ Requires Firebase Admin SDK to set claims
 - ❌ Claims cached in JWT (takes ~1 hour to refresh)
 - ❌ Not currently implemented in codebase
@@ -699,6 +730,7 @@ function isSchoolAdmin(schoolId) {
 ```
 
 **Why:**
+
 - ✅ Keeps global role system clean
 - ✅ Clear separation of concerns
 - ✅ Extensible for future school roles (e.g., "coordinator", "accountant")
@@ -706,10 +738,12 @@ function isSchoolAdmin(schoolId) {
 - ✅ Can enforce "only one platform admin can assign school admins" via rules
 
 **Authentication:**
+
 - ✅ User has global "admin" role (for platform operations)
 - ✅ User listed in /schools/{schoolId}/admins/ (for school operations)
 
 **Authorization Check:**
+
 ```
 IF (request.auth.token.admin == true) {
   // Platform admin - can access anything
@@ -896,6 +930,7 @@ match /academyCohorts/{cohortId} {
 ### 10.1 Current Privacy Model
 
 **What school admins SHOULD NOT access:**
+
 - ✅ Parent names, contact info (parentInsights)
 - ✅ Family financial data
 - ✅ Family relationship details
@@ -903,6 +938,7 @@ match /academyCohorts/{cohortId} {
 - ✅ Learner psychological assessments
 
 **What school admins MAY need to access:**
+
 - ⚠️ Learner names, ages (for roster)
 - ⚠️ Attendance (sessions attended)
 - ⚠️ High-level progress (% activities completed)
@@ -939,6 +975,7 @@ School Dashboard
 ```
 
 **School admin should NOT see:**
+
 - ❌ Parent names or contact info
 - ❌ Family relationship data
 - ❌ Assessment scores or detailed competency data
@@ -950,16 +987,19 @@ School Dashboard
 **Question:** What learner data should be in school admin view?
 
 **Option 1: Aggregate only**
+
 - High-level counts: "5 learners in cohort"
 - Progress summaries: "In progress, completed 30% of activities"
 - NO individual learner records
 
 **Option 2: Basic roster**
+
 - Learner ID, name, age, assigned facilitator
 - Cohort membership
 - Progress summary
 
 **Option 3: Full learner record** (NOT RECOMMENDED)
+
 - Everything in Option 2 + all competencies, assessments, notes
 - Risk: Exposes too much educational data
 
@@ -974,6 +1014,7 @@ Provides school admin visibility without privacy concerns.
 ### 11.1 Current Facilitator Assignment
 
 **Schema (H3.2.2):**
+
 ```typescript
 {
   assignmentId: string;
@@ -988,6 +1029,7 @@ Provides school admin visibility without privacy concerns.
 **Question:** Should assignments include `schoolId`?
 
 **Option A: Required `schoolId` (RECOMMENDED)**
+
 ```typescript
 {
   assignmentId: string;
@@ -1001,15 +1043,18 @@ Provides school admin visibility without privacy concerns.
 ```
 
 **Pros:**
+
 - ✅ School admin can query "all assignments in my school"
 - ✅ Links facilitator to school (even if facilitator isn't "in" schools collection)
 - ✅ Clear school context for each assignment
 
 **Cons:**
+
 - ⚠️ Requires migration for existing assignments
 - ⚠️ Existing assignments would lack schoolId
 
 **Option B: Optional `schoolId` (Backward Compatible)**
+
 ```typescript
 {
   assignmentId: string;
@@ -1023,11 +1068,13 @@ Provides school admin visibility without privacy concerns.
 ```
 
 **Pros:**
+
 - ✅ No migration required
 - ✅ Backward compatible
 - ✅ Existing data doesn't need to change
 
 **Cons:**
+
 - ⚠️ Some assignments lack school context
 - ⚠️ Queries become complex ("WHERE schoolId == X OR schoolId == null")
 - ⚠️ Can't enforce school admin isolation retroactively
@@ -1070,6 +1117,7 @@ Allows facilitators to work across school boundaries without creating multiple a
 ### 12.1 Current Cohort Model (H3.2.9)
 
 **Schema:**
+
 ```typescript
 {
   id: string;
@@ -1086,6 +1134,7 @@ Allows facilitators to work across school boundaries without creating multiple a
 **Question:** Should cohorts include `schoolId`?
 
 **Option A: Add `schoolId` to cohorts (RECOMMENDED)**
+
 ```typescript
 {
   id: string;
@@ -1097,12 +1146,14 @@ Allows facilitators to work across school boundaries without creating multiple a
 ```
 
 **Implications:**
+
 - ✅ School admin can query "cohorts in my school"
 - ✅ Cohort visibility limited to school context
 - ⚠️ Cohort is scoped to school (cannot move between schools)
 - ⚠️ Requires migration for existing cohorts
 
 **Option B: Leave cohorts independent**
+
 ```typescript
 // No schoolId field
 // Cohorts remain facilitator-owned
@@ -1110,11 +1161,13 @@ Allows facilitators to work across school boundaries without creating multiple a
 ```
 
 **Pros:**
+
 - ✅ Backward compatible
 - ✅ No schema migration
 - ✅ Facilitators can use cohorts across schools
 
 **Cons:**
+
 - ⚠️ School admin must query indirectly
 - ⚠️ Cohorts not explicitly scoped to school
 
@@ -1139,6 +1192,7 @@ WHERE schoolId == "school-1" OR (schoolId == null AND facilitatorUid IN facilita
 ### 13.1 Current Session Model (H3.2.8)
 
 **Schema:**
+
 ```typescript
 {
   id: string;
@@ -1153,12 +1207,14 @@ WHERE schoolId == "school-1" OR (schoolId == null AND facilitatorUid IN facilita
 **Question:** Should sessions reference schools?
 
 **Option A: Leave independent (RECOMMENDED)**
+
 - Sessions remain facilitator-owned
 - No schoolId field
 - Backward compatible
 - School admin can query indirectly via facilitator
 
 **Option B: Add optional schoolId (FUTURE)**
+
 - Optional field for organizational context
 - Not required for H3.3
 - Can be added later if needed
@@ -1174,6 +1230,7 @@ Sessions work fine without school context. If school-level session reporting is 
 ### 14.1 Existing Academy Routes
 
 **Current routes:**
+
 - `/academy` — Main dashboard
 - `/academy/cohorts` — Cohort management
 - `/academy/cohorts/$childId` — Learner detail
@@ -1182,6 +1239,7 @@ Sessions work fine without school context. If school-level session reporting is 
 - `/academy/profile` — Facilitator profile
 
 **Expected in H3.3:**
+
 - `/admin` or `/academy/admin` — School admin dashboard
 - `/academy/admin/schools` — School list/management
 - `/academy/admin/schools/$schoolId` — School detail
@@ -1192,15 +1250,17 @@ Sessions work fine without school context. If school-level session reporting is 
 ### 14.2 Route Access Control
 
 **Current Pattern:**
+
 ```typescript
 const AcademyRoute = createFileRoute("/academy")({
   beforeLoad: async (opts) => {
     await requireFacilitator(opts.context);
-  }
+  },
 });
 ```
 
 **Proposed Pattern for Admin:**
+
 ```typescript
 const AdminRoute = createFileRoute("/academy/admin")({
   beforeLoad: async (opts) => {
@@ -1246,10 +1306,12 @@ const AdminRoute = createFileRoute("/academy/admin")({
 **Question:** What states should a school have?
 
 **Option A: Simple States**
+
 - `active` — School is operational
 - `archived` — School is closed
 
 **Option B: Complex States**
+
 - `pending` — Awaiting admin verification
 - `active` — Operational
 - `suspended` — Temporarily closed
@@ -1262,12 +1324,14 @@ Start simple. Can add states later if needed.
 ### 15.2 School Lifecycle Operations
 
 **Create School**
+
 - Admin action
 - Input: school name, address (optional), contact (optional)
 - Output: school ID
 - Validation: name is non-empty, max 200 chars
 
 **Archive School**
+
 - Admin action
 - Sets status to "archived"
 - Preserves cohorts, sessions, assignments (immutable)
@@ -1275,6 +1339,7 @@ Start simple. Can add states later if needed.
 - Data remains queryable for historical reports
 
 **Delete School**
+
 - SHOULD NOT be supported
 - Archive is preferred (preserves audit trail)
 
@@ -1417,18 +1482,21 @@ match /academyCohorts/{cohortId} {
 **By school admin:**
 
 1. "Get all facilitators in school X"
+
    ```
    WHERE schoolId == "school-1"
    INDEX: facilitatorAssignments (schoolId)
    ```
 
 2. "Get all cohorts in school X"
+
    ```
    WHERE schoolId == "school-1"
    INDEX: academyCohorts (schoolId)
    ```
 
 3. "Get all learners in school X" (via assignments)
+
    ```
    WHERE schoolId == "school-1"
    INDEX: facilitatorAssignments (schoolId)
@@ -1436,6 +1504,7 @@ match /academyCohorts/{cohortId} {
    ```
 
 4. "Get cohorts for facilitator X in school Y"
+
    ```
    WHERE schoolId == "school-1" AND facilitatorUid == "fac-1"
    INDEX: academyCohorts (schoolId, facilitatorUid)
@@ -1488,12 +1557,15 @@ Total small-scale load: ~1,500 documents
 ### 19.2 Query Performance
 
 **Current (H3.2):**
+
 - Facilitator queries: WHERE facilitatorUid == "fac-1" — Efficient (indexed)
 
 **Proposed (H3.3):**
+
 - School admin queries: WHERE schoolId == "school-1" AND facilitatorUid == "fac-1" — Still efficient (composite index)
 
 **Cost Implications:**
+
 - ✅ Minimal additional reads (queries are still indexed)
 - ✅ Adding schoolId field to documents is cheap
 - ✅ No massive data duplication
@@ -1501,12 +1573,15 @@ Total small-scale load: ~1,500 documents
 ### 19.3 Real-time Listeners
 
 **Current:**
+
 - Facilitators listen to facilitatorAssignments (realtime updates)
 
 **Proposed:**
+
 - School admins listen to facilitatorAssignments for their school (scoped listener)
 
 **Cost:**
+
 - ✅ Similar cost per listener
 - ⚠️ More listeners if many school admins active simultaneously
 - ✅ Still manageable (Firestore scales to thousands of concurrent listeners)
@@ -1534,7 +1609,8 @@ Facilitators continue to authenticate with Firebase Auth. User role remains in /
 
 **Change Required:** ADD optional `schoolId` field
 
-**Migration:** 
+**Migration:**
+
 - New assignments include schoolId
 - Existing assignments can be backfilled via admin script
 - Queries support both (WHERE schoolId == X OR schoolId == null)
@@ -1592,6 +1668,7 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 **Change Required:** ADD optional `schoolId` field
 
 **Migration:**
+
 - New cohorts include schoolId
 - Existing cohorts can be backfilled
 - Queries support both
@@ -1600,17 +1677,17 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 
 ### 20.10 Compatibility Summary Table
 
-| Phase | Compatibility | Migration | Risk | Notes |
-|-------|---|---|---|---|
-| H3.2.1 | ✅ Full | None | Low | Auth unchanged |
-| H3.2.2 | ⚠️ Partial | Add schoolId | Low | Optional field |
-| H3.2.3 | ✅ Full | None | Low | No changes |
-| H3.2.4 | ✅ Full | None | Low | Enhancement only |
-| H3.2.5 | ✅ Full | None | Low | No changes |
-| H3.2.6 | ✅ Full | None | Low | No changes |
-| H3.2.7 | ✅ Full | None | Low | Enhancement only |
-| H3.2.8 | ✅ Full | Optional | Low | Independent |
-| H3.2.9 | ⚠️ Partial | Add schoolId | Low | Optional field |
+| Phase  | Compatibility | Migration    | Risk | Notes            |
+| ------ | ------------- | ------------ | ---- | ---------------- |
+| H3.2.1 | ✅ Full       | None         | Low  | Auth unchanged   |
+| H3.2.2 | ⚠️ Partial    | Add schoolId | Low  | Optional field   |
+| H3.2.3 | ✅ Full       | None         | Low  | No changes       |
+| H3.2.4 | ✅ Full       | None         | Low  | Enhancement only |
+| H3.2.5 | ✅ Full       | None         | Low  | No changes       |
+| H3.2.6 | ✅ Full       | None         | Low  | No changes       |
+| H3.2.7 | ✅ Full       | None         | Low  | Enhancement only |
+| H3.2.8 | ✅ Full       | Optional     | Low  | Independent      |
+| H3.2.9 | ⚠️ Partial    | Add schoolId | Low  | Optional field   |
 
 ---
 
@@ -1619,6 +1696,7 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 ### 21.1 Existing Data That Needs Consideration
 
 **facilitatorAssignments (existing):**
+
 - ~500+ documents without schoolId
 - Options:
   1. Backfill with admin script (assign to "default" school or detect from facilitator)
@@ -1628,6 +1706,7 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 **Recommendation:** Option 2 — Support null schoolId, introduce schoolId gradually
 
 **academyCohorts (existing ~50 documents):**
+
 - ~50 cohorts without schoolId
 - Same options as facilitatorAssignments
 
@@ -1636,12 +1715,14 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 ### 21.2 Migration Strategy
 
 **Phase 1 (H3.3 Launch):**
+
 - ✅ Create /schools collection
 - ✅ Add schoolId field to schema (optional)
 - ✅ Firestore rules support both schoolId and null
 - ✅ Admin script can backfill (but not required for MVP)
 
 **Phase 2 (Later):**
+
 - ✅ Admin script backfills all existing assignments
 - ✅ Make schoolId required for new assignments
 - ✅ Migrate null records to "unorganized" school or detect from facilitator
@@ -1656,20 +1737,20 @@ Sessions remain independent. SchoolId can be inferred from facilitator.
 
 ```typescript
 describe("H3.3 School Model", () => {
-  it("should validate school name (1-200 chars)", () => { });
-  it("should validate school status", () => { });
-  it("should prevent duplicate school names", () => { });
+  it("should validate school name (1-200 chars)", () => {});
+  it("should validate school status", () => {});
+  it("should prevent duplicate school names", () => {});
 });
 
 describe("School Admin Model", () => {
-  it("should allow admin to be assigned to school", () => { });
-  it("should prevent non-admin from being assigned", () => { });
-  it("should allow unassigning admin", () => { });
+  it("should allow admin to be assigned to school", () => {});
+  it("should prevent non-admin from being assigned", () => {});
+  it("should allow unassigning admin", () => {});
 });
 
 describe("School Isolation", () => {
-  it("school admin can only see own school", () => { });
-  it("school admin cannot modify other school", () => { });
+  it("school admin can only see own school", () => {});
+  it("school admin cannot modify other school", () => {});
 });
 ```
 
@@ -1678,34 +1759,34 @@ describe("School Isolation", () => {
 ```typescript
 describe("School Admin Authorization", () => {
   // 1. Unauthenticated user denied
-  it("should DENY: unauthenticated read schools", () => { });
+  it("should DENY: unauthenticated read schools", () => {});
 
   // 2. School admin reads own school
-  it("should ALLOW: school admin reads own school", () => { });
+  it("should ALLOW: school admin reads own school", () => {});
 
   // 3. School admin denied other school
-  it("should DENY: school admin reads other school", () => { });
+  it("should DENY: school admin reads other school", () => {});
 
   // 4. Facilitator cannot create schools
-  it("should DENY: facilitator cannot create school", () => { });
+  it("should DENY: facilitator cannot create school", () => {});
 
   // 5. School admin manages facilitators in own school
-  it("should ALLOW: school admin adds facilitator to own school", () => { });
+  it("should ALLOW: school admin adds facilitator to own school", () => {});
 
   // 6. School admin cannot assign facilitator to other school
-  it("should DENY: school admin assigns facilitator to other school", () => { });
+  it("should DENY: school admin assigns facilitator to other school", () => {});
 
   // 7. School admin views cohorts
-  it("should ALLOW: school admin reads cohorts in own school", () => { });
+  it("should ALLOW: school admin reads cohorts in own school", () => {});
 
   // 8. Parent cannot access school admin features
-  it("should DENY: parent views school admin UI", () => { });
+  it("should DENY: parent views school admin UI", () => {});
 
   // 9. Immutable ownership
-  it("should DENY: admin changes school ownership", () => { });
+  it("should DENY: admin changes school ownership", () => {});
 
   // 10. Archive semantics
-  it("should preserve archived school data", () => { });
+  it("should preserve archived school data", () => {});
 
   // 11–20: Additional cross-school, privilege escalation, data leak tests
 });
@@ -1715,15 +1796,16 @@ describe("School Admin Authorization", () => {
 
 ```typescript
 describe("H3.3 School Workflows", () => {
-  it("should create school → assign facilitators → view cohorts", () => { });
-  it("should handle school archive (data persists)", () => { });
-  it("should enforce school admin access control end-to-end", () => { });
+  it("should create school → assign facilitators → view cohorts", () => {});
+  it("should handle school archive (data persists)", () => {});
+  it("should enforce school admin access control end-to-end", () => {});
 });
 ```
 
 ### 22.4 Manual QA Checklist (Proposed)
 
 **School Admin Operations:**
+
 - ✅ Create school
 - ✅ View school detail
 - ✅ Archive school
@@ -1734,16 +1816,19 @@ describe("H3.3 School Workflows", () => {
 - ✅ View sessions overview
 
 **Authorization:**
+
 - ✅ School admin accesses only own school
 - ✅ Cannot access other school
 - ✅ Cannot perform platform admin functions
 
 **Facilitator Experience:**
+
 - ✅ Facilitator can view own cohorts (unchanged)
 - ✅ Facilitator sees school context (if in school)
 - ✅ Existing facilitator workflows unaffected
 
 **Data Integrity:**
+
 - ✅ Archive preserves data
 - ✅ Immutable fields protected
 - ✅ Cross-school isolation enforced
@@ -1754,38 +1839,38 @@ describe("H3.3 School Workflows", () => {
 
 ### 23.1 Security Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|-----------|
-| School admin reads parent data | HIGH | Firestore rules restrict parentInsights access |
-| School admin modifies learner progress | HIGH | Rules prevent writes to progress collections |
-| Cross-school data leak | HIGH | Rules check schoolId before granting access |
-| Admin impersonation | MEDIUM | Firebase Auth enforces identity |
-| Unauthorized school creation | MEDIUM | Rules limit school creation to admins |
-| Facilitator assigned to multiple schools (uncontrolled) | LOW | Allow by design; not a risk if rules are correct |
+| Risk                                                    | Severity | Mitigation                                       |
+| ------------------------------------------------------- | -------- | ------------------------------------------------ |
+| School admin reads parent data                          | HIGH     | Firestore rules restrict parentInsights access   |
+| School admin modifies learner progress                  | HIGH     | Rules prevent writes to progress collections     |
+| Cross-school data leak                                  | HIGH     | Rules check schoolId before granting access      |
+| Admin impersonation                                     | MEDIUM   | Firebase Auth enforces identity                  |
+| Unauthorized school creation                            | MEDIUM   | Rules limit school creation to admins            |
+| Facilitator assigned to multiple schools (uncontrolled) | LOW      | Allow by design; not a risk if rules are correct |
 
 ### 23.2 Privacy Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|-----------|
-| Excessive learner data exposed | MEDIUM | Limit school admin view to roster only (name, age) |
-| Family data leak | HIGH | Never expose to school admins |
-| Facilitator notes exposed | LOW | Cohort-level notes only, never family-private |
+| Risk                           | Severity | Mitigation                                         |
+| ------------------------------ | -------- | -------------------------------------------------- |
+| Excessive learner data exposed | MEDIUM   | Limit school admin view to roster only (name, age) |
+| Family data leak               | HIGH     | Never expose to school admins                      |
+| Facilitator notes exposed      | LOW      | Cohort-level notes only, never family-private      |
 
 ### 23.3 Operational Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|-----------|
-| Migration breaks existing data | MEDIUM | Use optional schoolId with fallback queries |
-| Performance degradation | LOW | Proper indexes; Firestore scales well |
-| Admin lock-out | MEDIUM | Keep platform admin account separate from school admins |
+| Risk                           | Severity | Mitigation                                              |
+| ------------------------------ | -------- | ------------------------------------------------------- |
+| Migration breaks existing data | MEDIUM   | Use optional schoolId with fallback queries             |
+| Performance degradation        | LOW      | Proper indexes; Firestore scales well                   |
+| Admin lock-out                 | MEDIUM   | Keep platform admin account separate from school admins |
 
 ### 23.4 Backward Compatibility Risks
 
-| Risk | Severity | Mitigation |
-|------|----------|-----------|
-| Facilitators without school cannot log in | MEDIUM | Support null schoolId; don't require it on day 1 |
-| Existing cohorts become inaccessible | MEDIUM | Rules support both schoolId and null |
-| Sessions break | LOW | Sessions remain independent |
+| Risk                                      | Severity | Mitigation                                       |
+| ----------------------------------------- | -------- | ------------------------------------------------ |
+| Facilitators without school cannot log in | MEDIUM   | Support null schoolId; don't require it on day 1 |
+| Existing cohorts become inaccessible      | MEDIUM   | Rules support both schoolId and null             |
+| Sessions break                            | LOW      | Sessions remain independent                      |
 
 ---
 
@@ -1830,6 +1915,7 @@ describe("H3.3 School Workflows", () => {
 **IF H3.3 is approved, recommend this sequence:**
 
 ### Phase A: Foundation (Weeks 1–2)
+
 1. Create /schools collection with minimal schema
 2. Add schoolId (optional) to facilitatorAssignments
 3. Add schoolId (optional) to academyCohorts
@@ -1837,11 +1923,13 @@ describe("H3.3 School Workflows", () => {
 5. Create school-related tests (unit + security)
 
 ### Phase B: School Admin Backend (Week 3)
+
 1. Implement school CRUD functions (create, read, update, archive)
 2. Implement school admin assignment functions
 3. Create school-level data-access layer
 
 ### Phase C: School Admin UI (Week 4)
+
 1. Create /academy/admin route structure
 2. Build school list/detail views
 3. Build facilitator management UI
@@ -1849,12 +1937,14 @@ describe("H3.3 School Workflows", () => {
 5. Build learner roster UI
 
 ### Phase D: Integration & QA (Week 5)
+
 1. End-to-end testing
 2. Security testing
 3. Performance validation
 4. Manual QA checklist
 
 ### Phase E: Deployment & Docs (Week 6)
+
 1. Deploy to production
 2. Monitor for issues
 3. Document H3.3 architecture
@@ -1961,7 +2051,7 @@ All 27 phases of discovery have been executed:
 ✅ Phase 24: Non-goals clarified  
 ✅ Phase 25: Final recommendations provided  
 ✅ Phase 26: Discovery report compiled  
-✅ Phase 27: Status assessed  
+✅ Phase 27: Status assessed
 
 ### NO IMPLEMENTATION HAS OCCURRED
 

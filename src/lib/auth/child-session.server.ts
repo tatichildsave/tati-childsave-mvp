@@ -72,7 +72,7 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     const credDoc = credSnapshots.docs[0];
     if (!credDoc) return null;
     const credData = credDoc.data();
-    const familyId = credData['familyId'] as string;
+    const familyId = credData["familyId"] as string;
 
     if (!familyId) {
       console.error(`[loadChildProfile] Credential missing familyId for childId=${childId}`);
@@ -97,12 +97,12 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     // Transform Firebase child document to expected format
     return {
       id: childDocSnapshot.id,
-      tati_id: childData['tatiId'],
-      name: childData['name'],
-      age: childData['age'],
-      avatar: childData['avatar'],
-      tier: childData['tier'],
-      curriculum_level: childData['curriculumLevel'] ?? null,
+      tati_id: childData["tatiId"],
+      name: childData["name"],
+      age: childData["age"],
+      avatar: childData["avatar"],
+      tier: childData["tier"],
+      curriculum_level: childData["curriculumLevel"] ?? null,
       family_id: familyId,
     };
   } catch (error) {
@@ -227,10 +227,10 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
    */
   const isFirestoreTimestamp = (value: unknown): value is { toDate(): Date } => {
     return (
-      typeof value === 'object' &&
+      typeof value === "object" &&
       value !== null &&
-      'toDate' in value &&
-      typeof (value as any).toDate === 'function'
+      "toDate" in value &&
+      typeof (value as any).toDate === "function"
     );
   };
 
@@ -240,7 +240,7 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
    * Rejects invalid or missing values by throwing AuthorizationError.
    */
   const normalizeTimestamp = (fieldName: string, value: unknown): string => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       // Validate it's a valid ISO string
       try {
         new Date(value).toISOString();
@@ -263,15 +263,17 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
     }
 
     // Reject invalid or missing values
-    throw new AuthorizationError(`Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`);
+    throw new AuthorizationError(
+      `Invalid timestamp for ${fieldName}: expected string, Date, or Firestore Timestamp, got ${typeof value}`,
+    );
   };
 
   const session: ChildSession = {
     kind: "child" as const,
     childId: childSession.childProfileId,
     sessionId: childSession.id,
-    createdAt: normalizeTimestamp('createdAt', childSession.createdAt),
-    expiresAt: normalizeTimestamp('expiresAt', childSession.expiresAt),
+    createdAt: normalizeTimestamp("createdAt", childSession.createdAt),
+    expiresAt: normalizeTimestamp("expiresAt", childSession.expiresAt),
     revokedAt: childSession.revokedAt,
   };
 

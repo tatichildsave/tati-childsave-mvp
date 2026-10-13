@@ -3,13 +3,13 @@
 /**
  * Seed Test Child Data into Supabase
  * ==================================
- * 
+ *
  * Creates test child profiles and credentials for H4.B testing.
  * Uses Supabase service role key for admin access.
- * 
+ *
  * Test child: Kwesi (TATI-824415B6, PIN: 8451)
  * Family: gVhZIbAB9wSx5jsUxkJg
- * 
+ *
  * Run: node seed-test-child.mjs
  */
 
@@ -102,9 +102,7 @@ async function seedTestChildren() {
 
     if (familyError || !familyData) {
       console.error("❌ Family not found:", testFamily.familyId);
-      console.log(
-        "   Please ensure the family exists in your Supabase database"
-      );
+      console.log("   Please ensure the family exists in your Supabase database");
       process.exit(1);
     }
     console.log("✓ Family verified\n");
@@ -119,9 +117,7 @@ async function seedTestChildren() {
 
     if (parentError || !parentData) {
       console.error("❌ Parent profile not found:", testParent.uid);
-      console.log(
-        "   Please create the parent profile first, or update the test parent UID"
-      );
+      console.log("   Please create the parent profile first, or update the test parent UID");
       process.exit(1);
     }
     console.log("✓ Parent verified\n");
@@ -171,14 +167,12 @@ async function seedTestChildren() {
 
       // Hash and store PIN
       const pinHash = await hashPin(child.pin);
-      const { error: credError } = await supabase
-        .from("child_credentials")
-        .insert({
-          child_profile_id: createdChild.id,
-          pin_hash: pinHash,
-          credential_version: 1,
-          active: true,
-        });
+      const { error: credError } = await supabase.from("child_credentials").insert({
+        child_profile_id: createdChild.id,
+        pin_hash: pinHash,
+        credential_version: 1,
+        active: true,
+      });
 
       if (credError) {
         console.error("❌ Failed to create credentials:", credError.message);

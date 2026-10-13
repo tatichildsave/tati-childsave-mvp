@@ -13,7 +13,9 @@
 ## Implementation Overview
 
 ### Phase Goal
+
 Integrate G3 AuthenticatedChildContext (session + optional Firebase identity) into assessment functions to:
+
 1. Replace session-only child identity resolution with unified G3 context
 2. Enforce child ownership of assessment attempts via G3 childId
 3. Implement server-side score calculation to prevent client manipulation
@@ -21,6 +23,7 @@ Integrate G3 AuthenticatedChildContext (session + optional Firebase identity) in
 5. Keep Supabase as active backend, Firebase as optional supplementary identity
 
 ### Key Constraint
+
 "Proceed strictly according to PHASE_G4_ASSESSMENT_AUDIT.md" — do not redesign assessment system, do not migrate to Firebase, keep Supabase active, keep TATI ID + PIN auth unchanged.
 
 ---
@@ -30,6 +33,7 @@ Integrate G3 AuthenticatedChildContext (session + optional Firebase identity) in
 ### 1. Core Function Changes (src/lib/auth/child-learning.functions.ts)
 
 #### New Function: `getCurrentChildContext()`
+
 ```typescript
 async function getCurrentChildContext(): Promise<AuthenticatedChildContext> {
   const context = await getAuthenticatedChild();
@@ -37,39 +41,47 @@ async function getCurrentChildContext(): Promise<AuthenticatedChildContext> {
   return context;
 }
 ```
+
 **Purpose:** Centralized wrapper for G3 context retrieval. Throws AuthorizationError if session invalid/expired/revoked/inconsistent.
 
 #### Updated: `assertChildActivity()`
+
 **Before:**
+
 ```typescript
 await currentChildId(); // Session-only validation
 ```
+
 **After:**
+
 ```typescript
 await getCurrentChildContext(); // G3 context validation
 ```
+
 **Change:** Validates full G3 context (session + profile + optional Firebase) instead of session alone.
 
 #### Updated: `saveChildAssessment()`
+
 **Authentication:**
+
 ```typescript
 const context = await getCurrentChildContext(); // G3 context retrieval
 const childId = context.childId; // Server-derived identity
 ```
 
 **Score Calculation (Server-Side):**
+
 ```typescript
 // Ignore client-supplied score; recalculate server-side
 const calculatedResult = scoreAssessment(definition, data.responses);
 
-const { data: attempt } = await supabase
-  .from("assessment_attempts")
-  .upsert({
+const { data: attempt } = await supabase.from("assessment_attempts").upsert(
+  {
     child_profile_id: childId,
     assessment_id: definition.id,
     assessment_type: definition.assessmentType,
-    points: calculatedResult.points,           // Server-calculated
-    max_points: calculatedResult.maxPoints,    // Server-calculated
+    points: calculatedResult.points, // Server-calculated
+    max_points: calculatedResult.maxPoints, // Server-calculated
     competency_scores: Object.fromEntries(
       calculatedResult.competencies.map((c) => [
         c.competency,
@@ -79,7 +91,9 @@ const { data: attempt } = await supabase
     status: "completed",
     completed_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }, { onConflict: "child_profile_id,assessment_id" });
+  },
+  { onConflict: "child_profile_id,assessment_id" },
+);
 
 // Store individual responses with server-calculated points
 const responses = definition.questions
@@ -96,6 +110,7 @@ const responses = definition.questions
 ```
 
 **Changes:**
+
 - Retrieves G3 context instead of session-only childId
 - Server-side score recalculation via `scoreAssessment(definition, data.responses)`
 - Stores server-calculated points (ignores client-supplied values)
@@ -103,25 +118,30 @@ const responses = definition.questions
 - Maintains upsert on UNIQUE(child_profile_id, assessment_id) for re-submissions
 
 #### Updated: `currentChildId()` (Backward Compatibility)
+
 ```typescript
 async function currentChildId(): Promise<string> {
   const context = await getCurrentChildContext();
   return context.childId;
 }
 ```
+
 **Change:** Now uses G3 context internally; any function calling currentChildId() implicitly gets G3 validation.
 
 ### 2. Route Integration
 
 #### Child Assessment Route (src/routes/child/assessment.$assessmentId.tsx)
+
 - Already calls `assertChildActivity()` in beforeLoad
 - ✅ Now uses G3 validation via updated assertChildActivity()
 
 #### Child Routes That Call Assessment Functions
+
 - All child routes using assessment functions now inherit G3 validation
 - Example: When child navigates to `/child/assessment/save-pre`, the route calls `assertChildActivity()` which validates G3 context
 
 #### Parent Assessment Route (src/routes/_authenticated/learn.$childId.assessment.$assessmentId.tsx)
+
 - Calls `assertChildInCurrentFamily()` in beforeLoad (family-level validation)
 - Calls `saveAssessmentAttempt()` (parent-side assessment saving)
 - ✅ Parent operations secured via family validation + Supabase RLS
@@ -129,6 +149,7 @@ async function currentChildId(): Promise<string> {
 ### 3. Database Schema (Unchanged)
 
 **assessment_attempts table:**
+
 - `child_profile_id` (FK to child_profiles) - enforced by G3 childId
 - `assessment_id`, `assessment_type` - verified in definition
 - `points`, `max_points`, `competency_scores` - server-calculated
@@ -136,6 +157,7 @@ async function currentChildId(): Promise<string> {
 - **RLS Policy:** `owns_child_profile()` - family isolation enforced
 
 **assessment_responses table:**
+
 - `attempt_id`, `question_id` - verified in definition
 - `child_profile_id` - from G3 context
 - `points`, `max_points` - server-calculated
@@ -146,6 +168,7 @@ async function currentChildId(): Promise<string> {
 ### 4. Type System (Unchanged)
 
 **AuthenticatedChildContext** (from authorization.server.ts):
+
 ```typescript
 {
   session: ChildSession;           // {kind, childId, sessionId, createdAt, expiresAt, revokedAt}
@@ -158,6 +181,7 @@ async function currentChildId(): Promise<string> {
 ```
 
 All properties validated by `requireAuthenticatedChild()` in child-session.server.ts:
+
 - Session exists and not null
 - Session not expired
 - Session not revoked
@@ -196,16 +220,16 @@ All properties validated by `requireAuthenticatedChild()` in child-session.serve
 
 ### Security Layers
 
-| Layer | Mechanism | Implementation |
-|-------|-----------|-----------------|
-| **1. Session Validation** | Validates session cookie exists, not expired, not revoked | `requireAuthenticatedChild()` in child-session.server.ts |
-| **2. Identity Resolution** | Derives childId from session (not from client params) | `getAuthenticatedChild()` + `getCurrentChildContext()` |
-| **3. Consistency Check** | Verifies profile.familyId matches context.familyId | `requireAuthenticatedChild()` validation |
-| **4. Firebase Mismatch** | If Firebase identity present, familyId must match | Throws AuthorizationError if mismatch |
-| **5. Definition Validation** | Verifies assessment belongs to child's track | `definition.trackId === "save"` check |
-| **6. Score Integrity** | Server-side recalculation (client score ignored) | `scoreAssessment()` always called server-side |
-| **7. Database Constraints** | UNIQUE & FK constraints prevent duplicates/cross-access | Schema-enforced in Supabase |
-| **8. RLS Enforcement** | `owns_child_profile()` definer restricts family isolation | Supabase RLS on attempt/response tables |
+| Layer                        | Mechanism                                                 | Implementation                                           |
+| ---------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| **1. Session Validation**    | Validates session cookie exists, not expired, not revoked | `requireAuthenticatedChild()` in child-session.server.ts |
+| **2. Identity Resolution**   | Derives childId from session (not from client params)     | `getAuthenticatedChild()` + `getCurrentChildContext()`   |
+| **3. Consistency Check**     | Verifies profile.familyId matches context.familyId        | `requireAuthenticatedChild()` validation                 |
+| **4. Firebase Mismatch**     | If Firebase identity present, familyId must match         | Throws AuthorizationError if mismatch                    |
+| **5. Definition Validation** | Verifies assessment belongs to child's track              | `definition.trackId === "save"` check                    |
+| **6. Score Integrity**       | Server-side recalculation (client score ignored)          | `scoreAssessment()` always called server-side            |
+| **7. Database Constraints**  | UNIQUE & FK constraints prevent duplicates/cross-access   | Schema-enforced in Supabase                              |
+| **8. RLS Enforcement**       | `owns_child_profile()` definer restricts family isolation | Supabase RLS on attempt/response tables                  |
 
 ---
 
@@ -244,19 +268,20 @@ Data Flow: Client Submission → Server Calculation → Database Storage
 
 ### Server-Side vs Client-Side Responsibilities
 
-| Aspect | Client | Server | Database |
-|--------|--------|--------|----------|
-| **Question Display** | ✓ UI rendering | - | - |
-| **Response Selection** | ✓ Track responses | - | - |
-| **Score Calculation** | ✗ Cannot calculate | ✓ scoreAssessment() | - |
-| **Score Storage** | ✗ Cannot manipulate | ✓ upsert calculated values | ✓ RLS-enforced storage |
-| **Score Retrieval** | - | - | ✓ RLS-restricted query |
+| Aspect                 | Client              | Server                     | Database               |
+| ---------------------- | ------------------- | -------------------------- | ---------------------- |
+| **Question Display**   | ✓ UI rendering      | -                          | -                      |
+| **Response Selection** | ✓ Track responses   | -                          | -                      |
+| **Score Calculation**  | ✗ Cannot calculate  | ✓ scoreAssessment()        | -                      |
+| **Score Storage**      | ✗ Cannot manipulate | ✓ upsert calculated values | ✓ RLS-enforced storage |
+| **Score Retrieval**    | -                   | -                          | ✓ RLS-restricted query |
 
 ---
 
 ## Pre-Test / Post-Test Functionality
 
 ### Pre-Test (save-pre)
+
 - **Route:** `/child/assessment/save-pre`
 - **Authentication:** G3 child session required
 - **Authorization:** G4 assertChildActivity() validates child context
@@ -265,6 +290,7 @@ Data Flow: Client Submission → Server Calculation → Database Storage
 - **Status:** ✅ Working, no changes to assessment content
 
 ### Post-Test (save-post)
+
 - **Route:** `/child/assessment/save-post` (same architecture)
 - **Authentication:** G3 child session required
 - **Authorization:** G4 assertChildActivity() validates child context
@@ -273,6 +299,7 @@ Data Flow: Client Submission → Server Calculation → Database Storage
 - **Status:** ✅ Working, no changes to assessment content
 
 ### Parent Dashboard Access
+
 - **Route:** `/_authenticated/learn/$childId/assessment/$assessmentId`
 - **Authentication:** Parent session (different from child)
 - **Authorization:** `assertChildInCurrentFamily()` validates parent owns child
@@ -284,12 +311,15 @@ Data Flow: Client Submission → Server Calculation → Database Storage
 ## Firebase Identity (Optional Supplementary)
 
 ### Role in G4
+
 Firebase identity is **optional** and **gracefully degradable**:
+
 - If available: Provides secondary identity verification
 - If unavailable: Assessment continues using session + Supabase profile
 - If mismatched: Throws AuthorizationError (fail-closed)
 
 ### Validation in G3 Context
+
 ```typescript
 // In requireAuthenticatedChild()
 if (ctx["firebase"]) {
@@ -301,11 +331,13 @@ if (ctx["firebase"]) {
 ```
 
 ### Not Used for Score Calculation
+
 - Score calculation (scoreAssessment) uses only definition + responses
 - Firebase identity does not influence scoring logic
 - Firebase identity used only for identity verification, not authorization
 
 ### Collection
+
 - **Path:** `childAuthIdentities/{childProfileId}`
 - **Fields:** `firebaseUid`, `familyId`, `status`
 - **Status:** Supplementary, not required for assessment operations
@@ -315,6 +347,7 @@ if (ctx["firebase"]) {
 ## Supabase Backend (Active & Unchanged)
 
 ### Continued Role
+
 - **Primary authentication:** TATI ID + PIN (unchanged)
 - **Session storage:** HTTP-only cookies (unchanged)
 - **Child data:** child_profiles, child_credentials, child_sessions (unchanged)
@@ -322,22 +355,25 @@ if (ctx["firebase"]) {
 - **Authorization:** RLS policies via `owns_child_profile()` (unchanged)
 
 ### Assessment Tables
+
 Both tables have RLS enforced by `owns_child_profile()`:
+
 ```sql
 -- assessment_attempts: Only child's family can read/write
 policy "family manages assessment attempts"
-  using (auth.uid() IN (SELECT user_id FROM family_members 
-    WHERE family_id = (SELECT family_id FROM child_profiles 
+  using (auth.uid() IN (SELECT user_id FROM family_members
+    WHERE family_id = (SELECT family_id FROM child_profiles
       WHERE id = child_profile_id)))
 
 -- assessment_responses: Depends on attempt ownership
 policy "family manages assessment responses"
-  using (auth.uid() IN (SELECT user_id FROM family_members 
-    WHERE family_id = (SELECT family_id FROM child_profiles 
+  using (auth.uid() IN (SELECT user_id FROM family_members
+    WHERE family_id = (SELECT family_id FROM child_profiles
       WHERE id = child_profile_id)))
 ```
 
 ### No Migration Performed
+
 - ✅ Assessment data remains in assessment_attempts/assessment_responses
 - ✅ No duplication in Firebase collections
 - ✅ No schema changes to Supabase tables
@@ -348,33 +384,35 @@ policy "family manages assessment responses"
 ## Migration from Session-Only to G3
 
 ### Before G4
+
 ```typescript
 // Old: Session-only identity
-export const saveChildAssessment = createServerFn({ method: "POST" })
-  .handler(async ({ data }) => {
-    const childId = await currentChildId(); // Validates session only
-    // ... rest of function
-  });
+export const saveChildAssessment = createServerFn({ method: "POST" }).handler(async ({ data }) => {
+  const childId = await currentChildId(); // Validates session only
+  // ... rest of function
+});
 ```
 
 **Issues:**
+
 - Only validates session cookie exists
 - Doesn't verify session consistency with profile
 - Doesn't resolve optional Firebase identity
 - No mismatch detection between session and profile
 
 ### After G4
+
 ```typescript
 // New: G3 context identity
-export const saveChildAssessment = createServerFn({ method: "POST" })
-  .handler(async ({ data }) => {
-    const context = await getCurrentChildContext(); // Validates G3 context
-    const childId = context.childId; // Session + Profile + [Firebase]
-    // ... rest of function
-  });
+export const saveChildAssessment = createServerFn({ method: "POST" }).handler(async ({ data }) => {
+  const context = await getCurrentChildContext(); // Validates G3 context
+  const childId = context.childId; // Session + Profile + [Firebase]
+  // ... rest of function
+});
 ```
 
 **Improvements:**
+
 - Validates session + profile + optional Firebase
 - Detects consistency mismatches
 - Gracefully handles Firebase unavailability
@@ -385,6 +423,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 ## Test Results
 
 ### G4 Specific Tests (New)
+
 - **File:** `tests/auth/assessment-authorization.test.ts`
 - **Total Tests:** 32
 - **Passed:** 32 ✅
@@ -400,6 +439,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
   - RLS policy enforcement
 
 ### Full Test Suite
+
 - **Total Existing Tests:** 70
 - **Total New G4 Tests:** 32
 - **Total Tests:** 102
@@ -408,6 +448,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 - **Regressions:** 0 (No new failures introduced by G4)
 
 ### Build Verification
+
 - **TypeScript:** ✅ PASS
 - **ESLint:** ✅ PASS (0 errors in modified files)
 - **Build:** ✅ SUCCESS (built in 2.48s)
@@ -417,36 +458,43 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 ## Security Verification
 
 ### Threat: Client Score Manipulation
+
 **Attack:** Submit responses with modified points/competencyScores
 **Defense:** Server-side `scoreAssessment()` recalculation
 **Result:** ✅ Client score ignored, server calculates authoritative score
 
 ### Threat: Cross-Child Access
+
 **Attack:** Child A manipulates URL/params to access Child B's assessment
 **Defense:** G3 context childId validation + Supabase RLS
 **Result:** ✅ Server-derived childId used, RLS blocks unauthorized access
 
 ### Threat: Child-to-Parent Role Escalation
+
 **Attack:** Child calls parent assessment function
 **Defense:** Route authentication (child routes only accept child sessions)
 **Result:** ✅ Different route handlers for child/parent, session type validated
 
 ### Threat: Cross-Family Access
+
 **Attack:** Parent A views/modifies Child B's assessment (different family)
 **Defense:** `owns_child_profile()` RLS, family isolation in G3 context
 **Result:** ✅ RLS policy blocks cross-family queries, context validates family
 
 ### Threat: Session Forgery
+
 **Attack:** Attacker creates fake session cookie
 **Defense:** HTTP-only cookies, TATI ID + PIN required for session creation
 **Result:** ✅ Session creation requires child identity, HTTP-only prevents JS access
 
 ### Threat: Firebase Identity Mismatch
+
 **Attack:** Firebase UID doesn't match session identity
 **Defense:** `requireAuthenticatedChild()` validates firebase.familyId match
 **Result:** ✅ Mismatch throws AuthorizationError, assessment fails closed
 
 ### Threat: Definition-Response Mismatch
+
 **Attack:** Submit responses for questions not in assessment definition
 **Defense:** Definition validation + RLS on stored responses
 **Result:** ✅ Invalid questions filtered out, not scored or stored
@@ -456,36 +504,42 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 ## Known Limitations & Design Decisions
 
 ### Limitation 1: Pre-Test Ideal Answers Visible
+
 - **Issue:** Child can see what answers yield highest score before submission
 - **Impact:** Pre-test measures commitment/reasoning, not just knowledge
 - **Resolution:** Acceptable per assessment design philosophy
 - **G5 Future:** Prerequisite gating / ideal answer hiding
 
 ### Limitation 2: Parent Offline Assessment Saving
+
 - **Issue:** `saveAssessmentAttempt()` uses client-side Supabase, not server function
 - **Rationale:** Parent route is web-authenticated, Supabase RLS sufficient
 - **Improvement:** Could migrate to server function for consistency (non-critical)
 - **G5 Future:** Optional server-side parent assessment handler
 
 ### Limitation 3: Firebase Identity Not Synchronized
+
 - **Issue:** Firebase identity optional, not synced from Supabase
 - **Rationale:** Firebase supplementary (optional), Supabase primary
 - **Design:** Fail-closed on mismatch, continue on unavailable
 - **Scope:** Out of scope for G4 (Firebase introduced in G3)
 
 ### Decision 1: Kept `currentChildId()` for Backward Compatibility
+
 - **Rationale:** Some functions still call currentChildId()
 - **Implementation:** Now internally uses getCurrentChildContext()
 - **Impact:** All functions implicitly get G3 validation
 - **Benefit:** No need to update all call sites simultaneously
 
 ### Decision 2: Server-Side Score Calculation Always
+
 - **Rationale:** Cannot trust client calculations
 - **Implementation:** scoreAssessment() called server-side, client values ignored
 - **Impact:** Single authoritative score source
 - **Benefit:** Prevents score manipulation, inconsistency
 
 ### Decision 3: Optional Firebase with Graceful Degradation
+
 - **Rationale:** Supabase sufficient for auth, Firebase supplementary
 - **Implementation:** Context has optional firebase field, mismatch throws error
 - **Impact:** Can continue if Firebase unavailable
@@ -496,27 +550,32 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 ## Constraints Satisfied
 
 ✅ Do NOT redesign assessment system
+
 - Assessment UI unchanged
 - Assessment definitions unchanged
 - Track structure unchanged
 
 ✅ Do NOT migrate assessment data to Firebase
+
 - assessment_attempts remains in Supabase
 - assessment_responses remains in Supabase
 - No collections created in Firebase
 
 ✅ Keep Supabase as active backend
+
 - getActiveBackendProviderName() returns "supabase"
 - Child credentials in child_credentials table
 - Assessment data in assessment_* tables
 - RLS policies enforce family isolation
 
 ✅ Keep TATI ID + PIN authentication unchanged
+
 - child-identity.server.ts unchanged
 - Session creation via PIN validation unchanged
 - No migration to Firebase Auth
 
 ✅ Maintain backward compatibility
+
 - currentChildId() still works
 - Existing routes continue to work
 - Pre/Post-test flows unchanged
@@ -570,6 +629,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 Phase G4 successfully integrates G3 AuthenticatedChildContext into assessment functions, replacing session-only child identity with unified context-based authorization. Server-side score calculation prevents client manipulation while maintaining backward compatibility with existing assessment flows. Security is enforced through session validation, G3 context consistency checks, and Supabase RLS policies.
 
 The implementation achieves all G4 objectives:
+
 - ✅ Assessment functions use G3 authenticated child context
 - ✅ Child identity server-derived (not from client params)
 - ✅ Assessment ownership enforced via G3 childId + RLS
@@ -583,6 +643,7 @@ The implementation achieves all G4 objectives:
 - ✅ All G4-specific tests pass, 0 new regressions
 
 **Test Summary:**
+
 - G4 implementation is complete and G4-specific tests pass (32/32 ✓)
 - The repository-wide suite contains 102 passing tests (70 pre-G4 + 32 new G4)
 - 40 pre-existing failures in tests/firebase/firestore.rules.test.ts (Firebase emulator auth configuration, pre-G4)

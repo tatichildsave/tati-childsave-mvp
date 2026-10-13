@@ -3,6 +3,7 @@ import type { AdultRole } from "@/lib/backend/identity";
 import type { ChildProfile } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { AwardedAchievement } from "@/lib/gamification/achievements";
+import type { ScenarioState } from "@/lib/scenario/types";
 
 export type FirestoreTimestamp = Timestamp;
 
@@ -162,7 +163,7 @@ export interface FirestoreScenarioSessionDocument {
   familyId: string; // Denormalized for isolation
 
   // Full scenario state (ScenarioState JSON blob)
-  state: Record<string, unknown>; // Complete ScenarioState
+  state: ScenarioState; // Complete ScenarioState
 
   // Status and phase
   status: "in_progress" | "completed";

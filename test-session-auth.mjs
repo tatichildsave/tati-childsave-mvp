@@ -38,7 +38,7 @@ async function test() {
           password: "Test123!",
           returnSecureToken: true,
         }),
-      }
+      },
     );
 
     if (!signupResp.ok) {
@@ -60,9 +60,7 @@ async function test() {
       sessionCookie = await auth.createSessionCookie(idTokenA, {
         expiresIn: 5 * 24 * 60 * 60 * 1000, // 5 days
       });
-      console.log(
-        `   ✓ Session cookie created. Length: ${sessionCookie.length}\n`
-      );
+      console.log(`   ✓ Session cookie created. Length: ${sessionCookie.length}\n`);
     } catch (error) {
       console.error("   ✗ FAILED to create session cookie:");
       console.error(`   Error: ${error.message}\n`);
@@ -76,7 +74,7 @@ async function test() {
       decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
       console.log(`   ✓ Session cookie verified`);
       console.log(
-        `   ✓ Claims UID: ${decodedClaims.uid} (matches: ${decodedClaims.uid === uidA})\n`
+        `   ✓ Claims UID: ${decodedClaims.uid} (matches: ${decodedClaims.uid === uidA})\n`,
       );
     } catch (error) {
       console.error("   ✗ FAILED to verify session cookie:");
@@ -96,7 +94,7 @@ async function test() {
           password: "Test123!",
           returnSecureToken: true,
         }),
-      }
+      },
     );
 
     const userB = await signupRespB.json();
@@ -130,7 +128,6 @@ async function test() {
     console.log(`- User A UID: ${uidA}`);
     console.log(`- User B UID: ${uidB}`);
     console.log(`- Session Cookie: ${sessionCookie.substring(0, 50)}...`);
-
   } catch (error) {
     console.error("Test failed:", error);
     process.exit(1);

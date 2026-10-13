@@ -15,7 +15,7 @@ export default defineConfig({
     TanStackRouterVite({
       plugin: {
         hmr: {
-          style: 'webpack',
+          style: "webpack",
         },
       },
     }),

@@ -9,6 +9,7 @@
 ## What Was Completed
 
 ### ✅ Test Framework Created
+
 - **File**: `PHASE_H3_4_JUNIOR_PILOT_E2E_TEST_REPORT.md` (16 sections, 15 test matrices)
 - Comprehensive structure for testing all 4 core journeys (A-D)
 - Matrices for all 12 lessons, all 5 scenarios, all 9+ state machine states
@@ -19,6 +20,7 @@
 - Issue register with P0/P1/P2/P3 classification system
 
 ### ✅ Manual Testing Guide Created
+
 - **File**: `PHASE_H3_4_MANUAL_TESTING_GUIDE.md`
 - Step-by-step instructions for testing without automated scripts
 - Parent account creation flow
@@ -32,6 +34,7 @@
 - Time estimate: ~105 minutes total
 
 ### ✅ Infrastructure Verified
+
 - Firebase Emulators running (auth, firestore, functions)
 - Dev server running on http://localhost:8080/
 - App loads without errors
@@ -44,19 +47,21 @@
 
 **P0 Components Status**: ✅ ALL INTEGRATED
 
-| Component | Location | Status | Verified |
-|-----------|----------|--------|----------|
-| ChapterBanner | LessonPlayer, ScenarioPlayer | Integrated | App loads |
-| GoalWidget | LessonPlayer, ScenarioPlayer, Home | Integrated | App loads |
-| LearningObjectiveBadge | LessonPlayer | Integrated | App loads |
-| NextStepCard | Home page | Integrated | App loads |
+| Component              | Location                           | Status     | Verified  |
+| ---------------------- | ---------------------------------- | ---------- | --------- |
+| ChapterBanner          | LessonPlayer, ScenarioPlayer       | Integrated | App loads |
+| GoalWidget             | LessonPlayer, ScenarioPlayer, Home | Integrated | App loads |
+| LearningObjectiveBadge | LessonPlayer                       | Integrated | App loads |
+| NextStepCard           | Home page                          | Integrated | App loads |
 
 **Build Status**: ✅ PASS
+
 - TypeScript: 0 errors
-- ESLint: 0 violations  
+- ESLint: 0 violations
 - Bundle size: Minimal increase (~5KB gzip)
 
 **Type Safety**: ✅ PASS
+
 - Fixed NextStepCard property error (item.title → itemTitle(track, item))
 - All props properly typed
 
@@ -65,6 +70,7 @@
 ## What Happens Next
 
 ### Immediate (User's Next Action)
+
 1. **Verify servers are running** in 2 terminals
    - Terminal 1: Firebase emulator (ports 9099, 8080, 5001)
    - Terminal 2: Dev server (port 8080)
@@ -92,9 +98,11 @@
 ## Key Testing Points
 
 ### Journey A — The Critical Test
+
 This is the most important journey because it represents a completely new child experience.
 
 **Verify these 5 things**:
+
 1. **Where am I?** → Can child identify they're on "Day 1 of 14"?
 2. **What am I learning?** → Is the objective clear from the badge?
 3. **What do I do?** → Is the next step obvious (NextStepCard)?
@@ -109,13 +117,13 @@ If the answer to any of these is "No" or "Unclear" → That's a finding to recor
 
 These would block the pilot if they fail:
 
-| Test | What Blocks | Impact |
-|------|------------|--------|
-| **Journey A completes** | Child cannot start the app | P0 Blocker |
-| **Pre-assessment → Lesson 1 transition** | Child stuck after assessment | P0 Blocker |
-| **Scenario consequences display** | Child doesn't see decision impact | P0 Blocker |
-| **Persistence across sessions** | Child loses progress on re-entry | P0 Blocker |
-| **Security: state fabrication** | Child can cheat by manipulating wallet | P0 Blocker |
+| Test                                     | What Blocks                            | Impact     |
+| ---------------------------------------- | -------------------------------------- | ---------- |
+| **Journey A completes**                  | Child cannot start the app             | P0 Blocker |
+| **Pre-assessment → Lesson 1 transition** | Child stuck after assessment           | P0 Blocker |
+| **Scenario consequences display**        | Child doesn't see decision impact      | P0 Blocker |
+| **Persistence across sessions**          | Child loses progress on re-entry       | P0 Blocker |
+| **Security: state fabrication**          | Child can cheat by manipulating wallet | P0 Blocker |
 
 All other issues are P1/P2/P3 and can be addressed after pilot observation.
 
@@ -128,6 +136,7 @@ All other issues are P1/P2/P3 and can be addressed after pilot observation.
 ✋ **STOP. Do not proceed to P1.**
 
 Do NOT:
+
 - ❌ Add new features
 - ❌ Redesign screens
 - ❌ Implement P1 improvements
@@ -135,6 +144,7 @@ Do NOT:
 - ❌ Change architecture
 
 **Why?** The next product decision must be based on:
+
 - ✅ This testing evidence (what actually works)
 - ✅ Real pilot observation with children (does it feel coherent?)
 - ✅ Parent/facilitator feedback (is progress clear?)
@@ -143,34 +153,35 @@ Do NOT:
 
 ## Files Created
 
-| File | Purpose |
-|------|---------|
+| File                                         | Purpose                                    |
+| -------------------------------------------- | ------------------------------------------ |
 | `PHASE_H3_4_JUNIOR_PILOT_E2E_TEST_REPORT.md` | Comprehensive test framework (16 sections) |
-| `PHASE_H3_4_MANUAL_TESTING_GUIDE.md` | Step-by-step manual testing instructions |
-| `PHASE_H3_3A_P0_UX_IMPLEMENTATION_REPORT.md` | P0 implementation details (reference) |
-| `test-setup.mjs` | Test data creation script (reference) |
-| `test-setup.ps1` | PowerShell test setup (reference) |
+| `PHASE_H3_4_MANUAL_TESTING_GUIDE.md`         | Step-by-step manual testing instructions   |
+| `PHASE_H3_3A_P0_UX_IMPLEMENTATION_REPORT.md` | P0 implementation details (reference)      |
+| `test-setup.mjs`                             | Test data creation script (reference)      |
+| `test-setup.ps1`                             | PowerShell test setup (reference)          |
 
 ---
 
 ## Recommended Testing Timeline
 
-| Phase | Time | Activity |
-|-------|------|----------|
-| **Setup** | 10 min | Verify servers, create parent/child accounts |
-| **Journey A** | 20 min | Test brand-new child experience |
-| **Lessons** | 30 min | Walk through all 12 lessons, fill matrix |
-| **Scenarios** | 15 min | Test all 5 scenarios, record money changes |
-| **Mobile** | 10 min | Test at 375px viewport |
-| **Security** | 5 min | Attempt state fabrication |
-| **Report** | 15 min | Fill in final report sections A-N |
-| **TOTAL** | ~105 min | ~1.75 hours |
+| Phase         | Time     | Activity                                     |
+| ------------- | -------- | -------------------------------------------- |
+| **Setup**     | 10 min   | Verify servers, create parent/child accounts |
+| **Journey A** | 20 min   | Test brand-new child experience              |
+| **Lessons**   | 30 min   | Walk through all 12 lessons, fill matrix     |
+| **Scenarios** | 15 min   | Test all 5 scenarios, record money changes   |
+| **Mobile**    | 10 min   | Test at 375px viewport                       |
+| **Security**  | 5 min    | Attempt state fabrication                    |
+| **Report**    | 15 min   | Fill in final report sections A-N            |
+| **TOTAL**     | ~105 min | ~1.75 hours                                  |
 
 ---
 
 ## Success Definition
 
 ✅ **Test is successful when:**
+
 - All 12 lessons are verified completable
 - All 5 scenarios tested
 - Journey A can be completed without confusion
@@ -179,6 +190,7 @@ Do NOT:
 - Final report is complete
 
 ✅ **Ready to recommend pilot when:**
+
 - Test evidence shows coherent journey
 - Child can understand without adult explanation
 - All P0 blockers resolved

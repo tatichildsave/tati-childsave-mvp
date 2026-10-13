@@ -12,6 +12,7 @@
 H3.3 School Administration implements a robust multi-tenancy security model enforced at the Firestore rules level (server-side). The security architecture prevents cross-school data access, unauthorized role escalation, and protects sensitive user information.
 
 **Key Security Achievements:**
+
 - ✅ Multi-tenancy isolation enforced server-side (not client-side)
 - ✅ Role-based access control (RBAC) with 2 distinct roles
 - ✅ School admin cannot access other schools' data
@@ -27,11 +28,13 @@ H3.3 School Administration implements a robust multi-tenancy security model enfo
 ### Authentication Layer (Firebase Auth)
 
 **User Authentication:**
+
 - Email/password via Firebase Authentication
 - Session managed by Firebase Auth SDK
 - Request authentication: `request.auth != null`
 
 **User Identity:**
+
 - User UID from `request.auth.uid`
 - Roles stored in `/users/{uid}.roles` array (Firestore)
 
@@ -74,15 +77,18 @@ function canAccessSchool(schoolId) {
 ### Role Hierarchy
 
 **Global Roles (in `/users/{uid}.roles`):**
+
 1. `admin` - Platform administrator (superuser)
 2. `parent` - Family member
 3. `child` - Learner
 4. `facilitator` - Academy facilitator
 
 **School-Scoped Roles (in `/schools/{schoolId}/admins/{uid}`):**
+
 - `school_admin` - School administrator (indicated by document presence)
 
 **Role Relationship:**
+
 - Global admin (`admin` role) ⊃ All school admins
 - School admin (document exists) ⊂ Specific school only
 - No role overlap: school admin cannot become platform admin
@@ -130,30 +136,35 @@ Outcome: School B NOT modified
 ### Isolation Verification (5 Tests)
 
 ✅ **Test 1: School A admin cannot read School B**
+
 - Precondition: Alice is school admin for School A
 - Action: Attempt to read School B document
 - Expected: PERMISSION_DENIED
 - Actual: ✅ PERMISSION_DENIED
 
 ✅ **Test 2: School A admin cannot write School B**
+
 - Precondition: Alice is school admin for School A
 - Action: Attempt to update School B document
 - Expected: PERMISSION_DENIED
 - Actual: ✅ PERMISSION_DENIED
 
 ✅ **Test 3: School A admin cannot assign admins to School B**
+
 - Precondition: Alice is school admin for School A
 - Action: Attempt to create `/schools/B/admins/bob`
 - Expected: PERMISSION_DENIED
 - Actual: ✅ PERMISSION_DENIED
 
 ✅ **Test 4: Platform admin can read all schools**
+
 - Precondition: Bob is platform admin (has `admin` role)
 - Action: Read `/schools/A`, `/schools/B`, `/schools/C`
 - Expected: All schools returned
 - Actual: ✅ All schools readable
 
 ✅ **Test 5: Platform admin can manage all schools**
+
 - Precondition: Bob is platform admin
 - Action: Create, update schools across all tenants
 - Expected: All operations succeed
@@ -187,6 +198,7 @@ Result: Carol can access A and B, but not C
 ### Role Separation
 
 **Platform Admin (`admin` role):**
+
 - Can create schools
 - Can read all schools
 - Can update all schools
@@ -194,6 +206,7 @@ Result: Carol can access A and B, but not C
 - Cannot be restricted by school isolation (superuser)
 
 **School Admin (document in `/schools/{schoolId}/admins/{uid}`):**
+
 - Cannot create schools
 - Can read own school only
 - Cannot update schools
@@ -201,6 +214,7 @@ Result: Carol can access A and B, but not C
 - Restricted to single school
 
 **Non-Admin User (no roles):**
+
 - Cannot access school collection
 - Cannot create schools
 - Cannot read schools
@@ -213,12 +227,14 @@ Result: Carol can access A and B, but not C
 **`isSchoolAdmin(schoolId)` Design:**
 
 **Why use `exists()`:**
+
 - Checks for document presence without reading content
 - Efficient: single document check
 - Sufficient: presence = membership
 - Safe: no data exposure
 
 **Correctness:**
+
 ```
 Returns true IFF:
 1. User is signed in (request.auth != null)
@@ -232,6 +248,7 @@ No side effects. No data mutation. Pure function.
 **`canAccessSchool(schoolId)` Design:**
 
 **Why use OR logic:**
+
 ```
 canAccessSchool = isAdmin() || isSchoolAdmin(schoolId)
 ```
@@ -242,6 +259,7 @@ canAccessSchool = isAdmin() || isSchoolAdmin(schoolId)
 - Matches authorization intent
 
 **Correctness:**
+
 ```
 Returns true IF:
 1. User is platform admin (global superuser), OR
@@ -261,6 +279,7 @@ Returns false IF:
 ### School Collection Security
 
 **Firestore Rules:**
+
 ```
 match /schools/{schoolId} {
   allow read: if canAccessSchool(schoolId);
@@ -279,17 +298,20 @@ match /schools/{schoolId} {
 **Privacy Guarantees:**
 
 ✅ **Data Confidentiality:**
+
 - School A admin cannot read School B documents
 - Read access requires specific authorization check
 - Data not exposed across tenants
 
 ✅ **Data Integrity:**
+
 - Only platform admin can create/update schools
 - Immutable fields (id, createdAt) cannot change
 - Timestamps enforced to prevent tampering
 - Status validation prevents invalid states
 
 ✅ **Data Availability:**
+
 - Deletion prevented (archive-over-delete)
 - Historical records preserved
 - Audit trail maintained
@@ -297,6 +319,7 @@ match /schools/{schoolId} {
 ### Family Data Protection (H3.2 Preserved)
 
 **Family Collection Rules (UNCHANGED):**
+
 ```
 match /families/{familyId} {
   allow read/update: if isFamilyAdult(familyId) || isAdmin();
@@ -313,10 +336,10 @@ match /families/{familyId}/children/{childId}/parentInsights/{docId} {
 School admin tries to read parentInsights:
   isSchoolAdmin("school-A") = true (authorized for school)
   isFamilyAdult("family-1") = false (not a family member)
-  
+
   Firestore rule check:
     allow read: if isFamilyAdult(familyId) = false
-  
+
   Result: PERMISSION_DENIED
 ```
 
@@ -327,13 +350,14 @@ School admin tries to read parentInsights:
 ### Learner Progress Protection
 
 **Progress Collection Rules (UNCHANGED):**
+
 ```
 match /families/{familyId}/children/{childId}/progress/{docId} {
-  allow read: if isFamilyAdult(familyId) 
-            || isAssignedFacilitator(...) 
+  allow read: if isFamilyAdult(familyId)
+            || isAssignedFacilitator(...)
             || isAdmin();
-  allow create/update/delete: if isFamilyAdult(familyId) 
-                              || isAssignedFacilitator(...) 
+  allow create/update/delete: if isFamilyAdult(familyId)
+                              || isAssignedFacilitator(...)
                               || isAdmin();
 }
 ```
@@ -345,10 +369,10 @@ School admin tries to read progress:
   isFamilyAdult(familyId) = false (not family)
   isAssignedFacilitator(...) = false (not assigned facilitator)
   isAdmin() = false (not platform admin)
-  
+
   Firestore rule check:
     allow read: if (false || false || false) = false
-  
+
   Result: PERMISSION_DENIED
 ```
 
@@ -363,12 +387,14 @@ School admin tries to read progress:
 ### Threat 1: Cross-School Data Access
 
 **Attack Scenario:**
+
 ```
 Alice is school admin for School A.
 Alice tries to read documents at /schools/B/...
 ```
 
 **Defense:**
+
 - Firestore rules check: `canAccessSchool("school-B")`
 - Alice's membership document at `/schools/school-B/admins/alice` does not exist
 - `exists()` check returns false
@@ -380,12 +406,14 @@ Alice tries to read documents at /schools/B/...
 ### Threat 2: Role Escalation
 
 **Attack Scenario:**
+
 ```
 Alice is school admin.
 Alice tries to add 'admin' role to her `/users/{uid}` document.
 ```
 
 **Defense:**
+
 - User document rules (from H3.2):
   ```
   match /users/{uid} {
@@ -402,12 +430,14 @@ Alice tries to add 'admin' role to her `/users/{uid}` document.
 ### Threat 3: Unauthorized School Admin Assignment
 
 **Attack Scenario:**
+
 ```
 Alice is school admin.
 Alice tries to create /schools/school-B/admins/eve to make Eve an admin.
 ```
 
 **Defense:**
+
 - Admin subcollection rule:
   ```
   match /admins/{adminUid} {
@@ -424,6 +454,7 @@ Alice tries to create /schools/school-B/admins/eve to make Eve an admin.
 ### Threat 4: Data Tampering
 
 **Attack Scenario:**
+
 ```
 Alice is platform admin.
 Alice creates school with id='school-A'.
@@ -431,6 +462,7 @@ Alice then updates the same school, changing id to 'school-A-hijacked'.
 ```
 
 **Defense:**
+
 - Update rule requires:
   ```
   request.resource.data.id == resource.data.id
@@ -445,12 +477,14 @@ Alice then updates the same school, changing id to 'school-A-hijacked'.
 ### Threat 5: Unauthorized Deletion
 
 **Attack Scenario:**
+
 ```
 Alice is platform admin.
 Alice tries to delete /schools/school-A (destroys school data).
 ```
 
 **Defense:**
+
 - Delete rule:
   ```
   allow delete: if false;
@@ -466,6 +500,7 @@ Alice tries to delete /schools/school-A (destroys school data).
 ### Threat 6: Race Condition - Admin Removal
 
 **Attack Scenario:**
+
 ```
 At time T1: Alice is school admin for School A, attempts read
 At time T1+ε: Platform admin removes Alice's admin assignment
@@ -473,6 +508,7 @@ At time T1+2ε: Alice's read request is evaluated
 ```
 
 **Defense:**
+
 - Firestore transactional semantics ensure authorization at request evaluation time
 - If admin document was deleted by T1+2ε, authorization fails
 - Consistent behavior regardless of timing
@@ -568,11 +604,13 @@ At time T1+2ε: Alice's read request is evaluated
 ### Rule Performance
 
 **Authorization Checks:**
+
 - `exists()` call: ~5-10ms per check (single document check)
 - `get()` call: ~20-50ms per check (document retrieval + evaluation)
 - H3.3 uses `exists()` for isSchoolAdmin → optimal performance
 
 **Query Performance:**
+
 - School list query: ~100-500ms (depends on school count)
 - School detail query: ~20-50ms
 - No N+1 query problems
@@ -585,57 +623,68 @@ At time T1+2ε: Alice's read request is evaluated
 ### 23-Point Framework Implementation
 
 ✅ **Point 1: Minimal school data model**
+
 - Schools collection contains only: id, name, status, createdAt, updatedAt
 - No duplicate learner/facilitator data
 - No sensitive fields
 
 ✅ **Point 2: School admin role distinct from global admin**
+
 - Global admin: `admin` in /users/{uid}.roles
 - School admin: Document at /schools/{schoolId}/admins/{uid}
 - Independent authorization contexts
 - No role overlap
 
 ✅ **Point 3: Firestore rules enforce multi-tenancy**
+
 - `isSchoolAdmin(schoolId)` checks school-specific membership
 - `canAccessSchool(schoolId)` enforces school isolation
 - Server-side enforcement (not client-side)
 
 ✅ **Point 4: Core capabilities**
+
 - School profile (read/update)
 - Facilitator management (UI stubs, backend ready)
 - Cohort overview (UI stubs, backend ready)
 - Learner roster (UI stubs, backend ready)
 
 ✅ **Point 5: Privacy constraints**
+
 - No parentInsights access (family-scoped)
 - Progress read-only (no direct write access)
 - No learner assignment modification
 
 ✅ **Point 6: Backward compatibility**
+
 - No changes to H3.2 rules
 - No destructive migrations
 - Existing data structures preserved
 
 ✅ **Point 7: Quality gates**
+
 - TypeScript: 0 errors
 - ESLint: 0 errors
 - Tests: 56/56 passing
 - Build: successful
 
 ✅ **Point 8: Security tests required**
+
 - 31 security tests created
 - 31/31 passing
 - All threat scenarios covered
 
 ✅ **Point 9: Manual QA checklist**
+
 - 20-item checklist provided
 - Covers auth, operations, regression, security, performance
 
 ✅ **Point 10: No H3.4+**
+
 - H3.4 and later phases not started
 - Hard stop enforced
 
 ✅ **Point 11: Hard stop documented**
+
 - Continuation requirements documented
 - Explicit authorization required for next phase
 
@@ -646,6 +695,7 @@ At time T1+2ε: Alice's read request is evaluated
 ### Current Limitations (Phase A)
 
 **Limitation 1: School-level data queries not yet available**
+
 - FacilitatorsBySchool not implemented (Phase B)
 - CohortsBySchool not implemented (Phase B)
 - LearnersBySchool not implemented (Phase B)
@@ -653,6 +703,7 @@ At time T1+2ε: Alice's read request is evaluated
 **Workaround:** None currently; use platform admin dashboard or wait for Phase B
 
 **Limitation 2: Optional schoolId field not yet added**
+
 - facilitatorAssignments doesn't have optional schoolId
 - academyCohorts doesn't have optional schoolId
 - These will be added in Phase B for backward-compatible school scoping
@@ -660,6 +711,7 @@ At time T1+2ε: Alice's read request is evaluated
 **Workaround:** Create facilitators/cohorts without schoolId and group by UI logic
 
 **Limitation 3: School admin UI not fully implemented**
+
 - Admin assignment UI is stub (add/remove not functional)
 - Facilitator manager UI is stub
 - Cohort overview UI is stub
@@ -703,6 +755,7 @@ At time T1+2ε: Alice's read request is evaluated
 **H3.3 Security Model: VERIFIED SECURE** ✅
 
 The implementation:
+
 - ✅ Enforces multi-tenancy at server-side (Firestore rules)
 - ✅ Prevents cross-school data access
 - ✅ Prevents unauthorized role escalation
@@ -713,6 +766,7 @@ The implementation:
 - ✅ Ready for production deployment
 
 **Threat Analysis: All Threats Mitigated** ✅
+
 - Cross-school access: Blocked
 - Role escalation: Prevented
 - Unauthorized admin assignment: Prevented
@@ -721,4 +775,3 @@ The implementation:
 - Race conditions: Handled
 
 **Recommendation: APPROVED FOR DEPLOYMENT** ✅
-

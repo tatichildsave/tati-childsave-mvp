@@ -52,7 +52,7 @@ export interface ScheduledEvent {
   dueDay: number;
   nodeId: string;
   /** Only fire when this flag is truthy. */
-  requiresFlag?: string;
+  requiresFlag?: string | undefined;
 }
 
 /** What one choice does to the learner's money and hidden scores. */
@@ -74,20 +74,20 @@ export interface ScenarioEffect {
 /** Shown right after a decision. Never framed as right or wrong. */
 export interface ScenarioConsequence {
   /** Chip above the headline, e.g. "Decision: You lent Kwame GH₵10". */
-  decisionChip?: string;
+  decisionChip?: string | undefined;
   headline: string;
   /** Warm narration of what happened. */
   title: string;
   body: string;
-  image?: string;
-  imageCaption?: string;
+  image?: string | undefined;
+  imageCaption?: string | undefined;
   /** Short note beside the ledger, e.g. "−GH₵10 for Kwame". */
-  ledgerNote?: string;
+  ledgerNote?: string | undefined;
   /** Outstanding debt note, e.g. "Kwame still owes GH₵5". */
   debtNote?: string | undefined;
   /** Hint that something will happen on a later day. */
-  laterHint?: string;
-  reflection?: string;
+  laterHint?: string | undefined;
+  reflection?: string | undefined;
 }
 
 export interface ScenarioChoice {

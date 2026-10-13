@@ -64,9 +64,7 @@ describe("Assessment Input Sanitization Tests", () => {
     });
 
     // Authenticated child (the one from ChildSession context)
-    const authenticatedChildRef = familyRef
-      .collection("children")
-      .doc(authenticatedChildId);
+    const authenticatedChildRef = familyRef.collection("children").doc(authenticatedChildId);
     await authenticatedChildRef.set({
       id: authenticatedChildId,
       familyId,
@@ -75,9 +73,7 @@ describe("Assessment Input Sanitization Tests", () => {
     });
 
     // Different child (attempted spoofing)
-    const differentChildRef = familyRef
-      .collection("children")
-      .doc(differentChildId);
+    const differentChildRef = familyRef.collection("children").doc(differentChildId);
     await differentChildRef.set({
       id: differentChildId,
       familyId,

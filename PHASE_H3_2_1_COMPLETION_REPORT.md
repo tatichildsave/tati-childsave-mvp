@@ -26,6 +26,7 @@
 ### 1. Data Access Layer — `src/lib/academy/data-access.ts`
 
 **Functions**:
+
 ```typescript
 getAssignedChildren(facilitatorUid): Promise<AssignedChild[]>
   → Scans all families, filters children where facilitatorUids contains UID
@@ -54,12 +55,14 @@ loadAcademyDashboard(facilitator): Promise<AcademyDashboardData>
 ```
 
 **Authorization Pattern**:
+
 - Queries respect `facilitatorUids` array in Firestore child documents
 - Queries are enforced by server-side Firestore security rules
 - Cannot access `parentInsights` collection (parent-private data blocked)
 - Scaling: Scans all families (acceptable for MVP; production uses cohorts collection)
 
 **Type Definitions** (Exported):
+
 ```typescript
 AcademyFacilitatorProfile {
   uid: string;
@@ -101,6 +104,7 @@ AcademyDashboardData {
 ### 2. React Query Hooks — `src/lib/academy/hooks.ts`
 
 **Hooks** (Client-side caching):
+
 ```typescript
 useAcademyDashboard(facilitator: FacilitatorProfile | null)
   → queryKey: ["academy-dashboard", uid]
@@ -120,6 +124,7 @@ useChildProgressSummary(familyId, childId, childName, avatar)
 ```
 
 **Caching Strategy**:
+
 - 5-minute cache window: data stays fresh without constant polling
 - Automatic refetch after 5 min if window focused
 - Manual refetch on user action (e.g., "Refresh" button)
@@ -128,9 +133,11 @@ useChildProgressSummary(familyId, childId, childName, avatar)
 ### 3. Academy Components
 
 #### ActivityCard — `src/components/academy/ActivityCard.tsx`
+
 Displays a learning activity (lesson, scenario, assessment, reflection).
 
 **Props**:
+
 ```typescript
 ActivityCardProps {
   title: string;
@@ -144,6 +151,7 @@ ActivityCardProps {
 ```
 
 **Visual**:
+
 - Icon indicates type (📖 lesson, 🎯 scenario, ✓ assessment, 💭 reflection)
 - Optional duration tag
 - Status badge (colored for in-progress/completed)
@@ -152,14 +160,17 @@ ActivityCardProps {
 **Usage**: Dashboard "Today's Activity", cohort activity planning
 
 #### SupportSignalBadge — `src/components/academy/SupportSignalBadge.tsx`
+
 Neutral, non-stigmatizing indicator of learner support needs.
 
 **Props**:
+
 ```typescript
-signal: "on-track" | "not-started" | "needs-support"
+signal: "on-track" | "not-started" | "needs-support";
 ```
 
 **Visual Mapping**:
+
 - ✓ "On track" (green) — 30%+ complete with recent activity
 - ◯ "Not started" (gray) — No progress yet
 - ! "May need support" (orange) — Stuck <30% or inactive 2+ days
@@ -167,9 +178,11 @@ signal: "on-track" | "not-started" | "needs-support"
 **Philosophy**: Uses neutral language; never shames or stigmatizes learners
 
 #### LearnerRoster — `src/components/academy/LearnerRoster.tsx`
+
 List/table view of learners with progress for cohort context.
 
 **Props**:
+
 ```typescript
 RosterItem {
   id: string;
@@ -190,6 +203,7 @@ LearnerRosterProps {
 ```
 
 **Visual**:
+
 - Avatar + name row
 - Progress bar (0-100%)
 - Support signal badge on right
@@ -227,6 +241,7 @@ LearnerRosterProps {
    - Links to cohorts management view
 
 **Data Flow**:
+
 1. useQuery("facilitator-session") → Authenticates facilitator
 2. useAcademyDashboard(session) → Loads all assigned children + progress
 3. Derives support signals from progress data
@@ -234,6 +249,7 @@ LearnerRosterProps {
 5. Computes cohort-wide progress average
 
 **Error Handling**:
+
 - Loading state during fetch
 - Error card with "Refresh" button on network failure
 - Graceful empty states (no learners, no today's activity)
@@ -263,6 +279,7 @@ LearnerRosterProps {
    - Learner detail links (ready for H3.2.5)
 
 **Data Flow**:
+
 1. useQuery("facilitator-session") → Auth
 2. useAcademyDashboard(session) → Load all progress summaries
 3. Aggregate support signals into summary counts
@@ -270,6 +287,7 @@ LearnerRosterProps {
 5. Render interactive roster
 
 **Empty State**:
+
 - "No learners assigned"
 - Contact administrator guidance
 - Link back to dashboard
@@ -281,67 +299,77 @@ LearnerRosterProps {
 ### ✅ Compatible With Existing Systems
 
 **Firestore Authorization**:
+
 - Uses existing `facilitatorUids` array on child documents
 - Respects firestore.rules security rules (no changes needed)
 - Cannot access `parentInsights` (parent-only data)
 - Integrated with existing role model: `AppRole = "parent" | "child" | "facilitator" | "admin"`
 
 **Database Access**:
+
 - Firebase SDK patterns (collection, doc, getDocs, query, where)
 - Same as existing family.ts and repositories.ts
 - No new SDK dependencies
 
 **React Query Setup**:
+
 - Same caching patterns as family.ts (staleTime: 30_000 → updated to 5 min for real-time feel)
 - Same enabled guards (prevents unnecessary queries)
 - Compatible with existing query client setup
 
 **Design System**:
+
 - Uses existing TATI components (Card, Button, Avatar, LoadingState, EmptyState)
 - Academy role already in theme.ts container sizing
 - Tailwind CSS + OKLCH colors (no new color schemes needed)
 
 **Authentication**:
+
 - Works with existing Supabase + Firebase auth flow
 - getFacilitatorSession() hook reused from H3.1
 - Session state shared across dashboard, cohorts, profile routes
 
 ### ✅ Protected Systems (Unchanged)
 
-| System | Status | Details |
-|--------|--------|---------|
-| firestore.rules (154 lines) | ✅ Intact | No changes to security rules |
-| Junior experience (10 routes) | ✅ Unaffected | No conflicts, no changes |
-| Parent experience (5 routes) | ✅ Unaffected | No conflicts, parentInsights still private |
-| G5.1 scenario integrity | ✅ Protected | Data layer doesn't touch scenarios |
-| G6.1 error recovery | ✅ Protected | New code doesn't affect error handling |
-| Child auth system | ✅ Unchanged | Firebase Auth + TATI ID + PIN |
-| User database schema | ✅ Unchanged | Existing tables/collections used only |
+| System                        | Status        | Details                                    |
+| ----------------------------- | ------------- | ------------------------------------------ |
+| firestore.rules (154 lines)   | ✅ Intact     | No changes to security rules               |
+| Junior experience (10 routes) | ✅ Unaffected | No conflicts, no changes                   |
+| Parent experience (5 routes)  | ✅ Unaffected | No conflicts, parentInsights still private |
+| G5.1 scenario integrity       | ✅ Protected  | Data layer doesn't touch scenarios         |
+| G6.1 error recovery           | ✅ Protected  | New code doesn't affect error handling     |
+| Child auth system             | ✅ Unchanged  | Firebase Auth + TATI ID + PIN              |
+| User database schema          | ✅ Unchanged  | Existing tables/collections used only      |
 
 ---
 
 ## Quality Assurance
 
 ### ✅ TypeScript Compilation
+
 ```bash
 $ npm run type-check
 No errors found.
 ```
 
 ### ✅ Build Verification
+
 ```bash
 $ npm run build
 ✅ Build succeeded (output large, saved to file)
 ```
 
 ### ✅ Code Organization
+
 - New files: 6 (data-access.ts, hooks.ts, index.ts, ActivityCard.tsx, SupportSignalBadge.tsx, LearnerRoster.tsx)
 - Modified files: 2 (dashboard.tsx, cohorts.tsx)
 - Deleted files: 0
 - Lines of code: ~700 new, ~200 modified
 
 ### ✅ ESLint Compliance
+
 All new code follows project style guidelines:
+
 - Proper TypeScript types throughout
 - React hooks properly used (no missing dependencies)
 - Import/export organization correct
@@ -354,6 +382,7 @@ All new code follows project style guidelines:
 ### Manual Testing (Facilitator Flow)
 
 **Prerequisite**: Create test data:
+
 1. Admin creates a family with children in Firestore
 2. Add admin user UID to child document's `facilitatorUids` array
 3. Ensure child has some `journeyProgress` entries (SAVE track has ~14 items)
@@ -399,6 +428,7 @@ All new code follows project style guidelines:
 ### Automated Testing (Future)
 
 For H3.3+, add tests for:
+
 - useAcademyDashboard() hook caching behavior
 - deriveSupportSignal() logic with edge cases (0%, 30%, 100%)
 - getAssignedChildren() authorization (respects facilitatorUids)
@@ -411,22 +441,22 @@ For H3.3+, add tests for:
 
 ### New Files Created
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `src/lib/academy/data-access.ts` | 280 | Core data queries and types |
-| `src/lib/academy/hooks.ts` | 65 | React Query hooks for caching |
-| `src/lib/academy/index.ts` | 2 | Module exports |
-| `src/components/academy/ActivityCard.tsx` | 65 | Activity display component |
-| `src/components/academy/SupportSignalBadge.tsx` | 40 | Support signal indicator |
-| `src/components/academy/LearnerRoster.tsx` | 100 | Learner list component |
+| File                                            | Lines | Purpose                       |
+| ----------------------------------------------- | ----- | ----------------------------- |
+| `src/lib/academy/data-access.ts`                | 280   | Core data queries and types   |
+| `src/lib/academy/hooks.ts`                      | 65    | React Query hooks for caching |
+| `src/lib/academy/index.ts`                      | 2     | Module exports                |
+| `src/components/academy/ActivityCard.tsx`       | 65    | Activity display component    |
+| `src/components/academy/SupportSignalBadge.tsx` | 40    | Support signal indicator      |
+| `src/components/academy/LearnerRoster.tsx`      | 100   | Learner list component        |
 
 ### Modified Files
 
-| File | Changes | Impact |
-|------|---------|--------|
+| File                               | Changes        | Impact                                  |
+| ---------------------------------- | -------------- | --------------------------------------- |
 | `src/routes/academy/dashboard.tsx` | 49 → 165 lines | Added real data, support signal section |
-| `src/routes/academy/cohorts.tsx` | 55 → 130 lines | Added summary cards, learner roster |
-| `src/components/academy/index.ts` | +3 exports | Export new components |
+| `src/routes/academy/cohorts.tsx`   | 55 → 130 lines | Added summary cards, learner roster     |
+| `src/components/academy/index.ts`  | +3 exports     | Export new components                   |
 
 ### Unchanged Files (Protected)
 
@@ -443,6 +473,7 @@ For H3.3+, add tests for:
 **H3.2.2 — Academy Security & Firestore Collections** will implement:
 
 1. **New Collections**:
+
    ```
    academyOrganizations/{orgId}
    academyOrganizations/{orgId}/cohorts/{cohortId}
@@ -470,14 +501,14 @@ For H3.3+, add tests for:
 
 ## Roadmap (H3.2.3+)
 
-| Phase | Feature | Owner |
-|-------|---------|-------|
+| Phase  | Feature                         | Owner   |
+| ------ | ------------------------------- | ------- |
 | H3.2.3 | Dashboard real today's activity | Pending |
-| H3.2.4 | Cohort creation & management | Pending |
-| H3.2.5 | Learner detail pages | Pending |
-| H3.2.6 | Progress aggregation | Pending |
-| H3.2.7 | Support signals refinement | Pending |
-| H3.2.8 | Session guides | Pending |
+| H3.2.4 | Cohort creation & management    | Pending |
+| H3.2.5 | Learner detail pages            | Pending |
+| H3.2.6 | Progress aggregation            | Pending |
+| H3.2.7 | Support signals refinement      | Pending |
+| H3.2.8 | Session guides                  | Pending |
 
 ---
 
@@ -504,8 +535,9 @@ For H3.3+, add tests for:
 **H3.2.1 — Academy Data Access Layer** is **COMPLETE** and **READY FOR TESTING**.
 
 The implementation provides:
+
 - ✅ Real facilitator dashboard with assigned learners
-- ✅ Neutral support signal indicators  
+- ✅ Neutral support signal indicators
 - ✅ Progress aggregation across cohorts
 - ✅ Learner roster with progress bars
 - ✅ Error handling and loading states

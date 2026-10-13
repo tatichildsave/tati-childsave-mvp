@@ -11,6 +11,7 @@
 ## Executive Summary
 
 The Firebase Authentication consolidation for adult users is **complete, tested, and verified**. All 462 tests pass, including:
+
 - ✅ 45 Firestore security rules tests (100% passing)
 - ✅ 34 family isolation and authorization tests
 - ✅ Firebase Auth flow tests (email/password, Google OAuth, session restoration)
@@ -18,6 +19,7 @@ The Firebase Authentication consolidation for adult users is **complete, tested,
 **No production user migration required** — the MVP has never been deployed to production users.
 
 ### Architecture: Intentional Hybrid Design
+
 - **Adults** (parents, facilitators, admins): Firebase Auth + Firebase UID → Firestore rules enforcement
 - **Children**: TATI ID + PIN via Supabase (unchanged, separate security boundary)
 
@@ -26,6 +28,7 @@ The Firebase Authentication consolidation for adult users is **complete, tested,
 ## Test Infrastructure Fix - Root Cause & Solution
 
 ### Problem Identified
+
 Initial test failures (11 of 45 Firestore security rules tests) were caused by **UID mismatch** between Firebase Auth and Firestore test fixtures:
 
 1. Firebase Auth users created in emulator get random 28-character UIDs (e.g., `Ks5xN7DqKdSvKpLmQr9Uv1WxYz`)
@@ -35,6 +38,7 @@ Initial test failures (11 of 45 Firestore security rules tests) were caused by *
 5. Rule lookup failed: `get(memberPath(familyId))` returned null → Firestore denied access
 
 ### Root Cause Analysis
+
 - **Test setup issue**, NOT a security rule issue
 - Admin SDK fixture creation was using hardcoded user keys instead of actual Firebase UIDs
 - "Email already in use" errors silently blocked fixture UID capture in previous runs
@@ -43,6 +47,7 @@ Initial test failures (11 of 45 Firestore security rules tests) were caused by *
 ### Solution Implemented
 
 #### 1. **UID Capture via Login** (Key Fix)
+
 Modified test setup to use `signInWithEmailAndPassword()` to capture actual Firebase UIDs after creation:
 
 ```typescript
@@ -50,26 +55,28 @@ Modified test setup to use `signInWithEmailAndPassword()` to capture actual Fire
 // we now login and capture the real UID from the authenticated user
 for (const [key, user] of Object.entries(USERS)) {
   const credential = await signInWithEmailAndPassword(auth, user.email, user.password);
-  userUidMap[key] = credential.user.uid;  // Capture actual Firebase UID
+  userUidMap[key] = credential.user.uid; // Capture actual Firebase UID
 }
 ```
 
 #### 2. **Pass Real UIDs to Fixture Creation**
+
 Pass the `userUidMap` to `createTestFixtures()` to create documents with correct UIDs:
 
 ```typescript
 // Create family member at /families/family-a/members/{actual-firebase-uid}
 // instead of /families/family-a/members/parent-a
-const uid = keyToUid("parent-a");  // Maps to actual Firebase UID
+const uid = keyToUid("parent-a"); // Maps to actual Firebase UID
 await db
   .collection("families")
   .doc("family-a")
   .collection("members")
-  .doc(uid)  // Use actual UID, not "parent-a"
+  .doc(uid) // Use actual UID, not "parent-a"
   .set(memberData);
 ```
 
 #### 3. **Update Test Paths to Use Actual UIDs**
+
 Modified tests to read/write using actual UIDs:
 
 ```typescript
@@ -82,6 +89,7 @@ expectAllowed(await tryRead(db, `${familyA}/members/${currentUserUid}`));
 ```
 
 #### 4. **Admin SDK Logging** (Debugging)
+
 Added comprehensive logging to fixture creation to verify documents are created:
 
 ```typescript
@@ -100,6 +108,7 @@ console.log("[FIXTURES] All fixtures created successfully!");
 **After Fix**: ✅ **45/45 passing (100%)**
 
 #### Tests Now Passing
+
 - ✅ Parent reads own family
 - ✅ Parent reads own child
 - ✅ Parent reads own child progress
@@ -118,6 +127,7 @@ console.log("[FIXTURES] All fixtures created successfully!");
 - ✅ All anonymous access denial tests (5)
 
 ### Complete Test Suite (462 tests)
+
 ```
 Total Tests:    462
 Passed:         462 (100%) ✅
@@ -126,6 +136,7 @@ Exit Code:      0 ✅
 ```
 
 ### Build & Compilation
+
 ```
 npm run build:    ✅ Success
 npm run lint:     ✅ Success (0 violations)
@@ -135,57 +146,60 @@ npm run lint:     ✅ Success (0 violations)
 
 ## Authorization Matrix - Verified Passing
 
-| User Type | Resource | Operation | Expected | Result |
-|-----------|----------|-----------|----------|--------|
-| Parent | Own family | Read | ALLOW | ✅ PASS |
-| Parent | Own child | Read | ALLOW | ✅ PASS |
-| Parent | Own child progress | Create | ALLOW | ✅ PASS |
-| Parent | Other family | Read | DENY | ✅ PASS |
-| Parent | User role field | Update | DENY | ✅ PASS |
-| Facilitator | Assigned child | Read | ALLOW | ✅ PASS |
-| Facilitator | Unassigned child | Read | DENY | ✅ PASS |
-| Admin | Any family | Read | ALLOW | ✅ PASS |
-| Admin | Any child | Read | ALLOW | ✅ PASS |
-| Admin | User list | Read | ALLOW | ✅ PASS |
-| Unauthenticated | Protected data | Read | DENY | ✅ PASS |
-| Unauthenticated | Protected data | Write | DENY | ✅ PASS |
-| Child | Authorized data | Read | ALLOW | ✅ PASS |
-| Child | Other child's data | Read | DENY | ✅ PASS |
+| User Type       | Resource           | Operation | Expected | Result  |
+| --------------- | ------------------ | --------- | -------- | ------- |
+| Parent          | Own family         | Read      | ALLOW    | ✅ PASS |
+| Parent          | Own child          | Read      | ALLOW    | ✅ PASS |
+| Parent          | Own child progress | Create    | ALLOW    | ✅ PASS |
+| Parent          | Other family       | Read      | DENY     | ✅ PASS |
+| Parent          | User role field    | Update    | DENY     | ✅ PASS |
+| Facilitator     | Assigned child     | Read      | ALLOW    | ✅ PASS |
+| Facilitator     | Unassigned child   | Read      | DENY     | ✅ PASS |
+| Admin           | Any family         | Read      | ALLOW    | ✅ PASS |
+| Admin           | Any child          | Read      | ALLOW    | ✅ PASS |
+| Admin           | User list          | Read      | ALLOW    | ✅ PASS |
+| Unauthenticated | Protected data     | Read      | DENY     | ✅ PASS |
+| Unauthenticated | Protected data     | Write     | DENY     | ✅ PASS |
+| Child           | Authorized data    | Read      | ALLOW    | ✅ PASS |
+| Child           | Other child's data | Read      | DENY     | ✅ PASS |
 
 ---
 
 ## All 11 Previously Failing Tests - Now Passing
 
-| # | Test Name | Category | Root Cause | Fix |
-|---|-----------|----------|-----------|-----|
-| 1 | parent reads own family | Authenticated access | UID mismatch | Use actual Firebase UID |
-| 2 | parent reads own child | Authenticated access | UID mismatch | Use actual Firebase UID |
-| 3 | parent reads own child progress | Authenticated access | UID mismatch | Use actual Firebase UID |
-| 4 | parent reads own family members | Authenticated access | UID mismatch | Use actual Firebase UID |
-| 5 | parent can read user profile | User access | UID mismatch | Use actual Firebase UID |
-| 6 | authenticat adult can read journey content | Authenticated access | UID mismatch | Use actual Firebase UID |
-| 7 | admin can read any child | Admin access | UID mismatch | Use actual Firebase UID |
-| 8 | allows a parent to create journey progress | Write operations | UID mismatch | Use actual Firebase UID |
-| 9 | admin can read any family | Admin access | UID mismatch | Use actual Firebase UID |
-| 10 | admin can read protected child data | Admin access | UID mismatch | Use actual Firebase UID |
-| 11 | admin can read users | Admin access | UID mismatch | Use actual Firebase UID |
+| #   | Test Name                                  | Category             | Root Cause   | Fix                     |
+| --- | ------------------------------------------ | -------------------- | ------------ | ----------------------- |
+| 1   | parent reads own family                    | Authenticated access | UID mismatch | Use actual Firebase UID |
+| 2   | parent reads own child                     | Authenticated access | UID mismatch | Use actual Firebase UID |
+| 3   | parent reads own child progress            | Authenticated access | UID mismatch | Use actual Firebase UID |
+| 4   | parent reads own family members            | Authenticated access | UID mismatch | Use actual Firebase UID |
+| 5   | parent can read user profile               | User access          | UID mismatch | Use actual Firebase UID |
+| 6   | authenticat adult can read journey content | Authenticated access | UID mismatch | Use actual Firebase UID |
+| 7   | admin can read any child                   | Admin access         | UID mismatch | Use actual Firebase UID |
+| 8   | allows a parent to create journey progress | Write operations     | UID mismatch | Use actual Firebase UID |
+| 9   | admin can read any family                  | Admin access         | UID mismatch | Use actual Firebase UID |
+| 10  | admin can read protected child data        | Admin access         | UID mismatch | Use actual Firebase UID |
+| 11  | admin can read users                       | Admin access         | UID mismatch | Use actual Firebase UID |
 
 ---
 
 ## Files Modified
 
 ### Test Files (2)
-| File | Change |
-|------|--------|
-| `tests/firebase/firestore.rules.test.ts` | ✅ Fixed UID capture via login, updated test paths to use actual UIDs, added currentUserUid tracking |
-| `tests/firebase/emulator-setup.ts` | ✅ Updated createTestFixtures() to accept userUidMap, create docs with actual UIDs, added fixture logging |
+
+| File                                     | Change                                                                                                    |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `tests/firebase/firestore.rules.test.ts` | ✅ Fixed UID capture via login, updated test paths to use actual UIDs, added currentUserUid tracking      |
+| `tests/firebase/emulator-setup.ts`       | ✅ Updated createTestFixtures() to accept userUidMap, create docs with actual UIDs, added fixture logging |
 
 ### Configuration Files (Previously Modified)
+
 - `vite.config.ts` - Firebase config
-- `src/main.tsx` - Firebase initialization  
+- `src/main.tsx` - Firebase initialization
 - `.env.example` - Firebase variables
 
 ### Source Files (Previously Implemented - No Changes Needed)
+
 - 6 authentication flow files (login, signup, OAuth, auth, facilitator)
 - 4 backend integration files (server.ts, auth functions, user functions, family access)
 
@@ -194,11 +208,13 @@ npm run lint:     ✅ Success (0 violations)
 ## Child Authentication - Verified Unchanged
 
 The TATI ID + PIN child authentication system via Supabase remains:
+
 - ✅ Fully functional and unchanged
 - ✅ Separate from adult Firebase Auth
 - ✅ No migrations required
 
 **Remaining Supabase Usage** (All Intentional):
+
 - `src/integrations/supabase/client.ts` - Child data queries ✅
 - `src/lib/backend/child-auth.functions.ts` - TATI ID + PIN validation ✅
 
@@ -207,6 +223,7 @@ The TATI ID + PIN child authentication system via Supabase remains:
 ## Security Rules Validation
 
 Firestore security rules (195 lines, `firestore.rules`):
+
 - ✅ **No changes required** — provider-agnostic (uses generic `request.auth.uid`)
 - ✅ **Compatible with Firebase UID format** (28-char alphanumeric)
 - ✅ **All 34 security rule tests passing**
@@ -234,6 +251,7 @@ Firestore security rules (195 lines, `firestore.rules`):
 ## Why Tests Were Failing - Technical Deep Dive
 
 ### The UID Mismatch Cascade
+
 ```
 1. Firebase Auth emulator creates user: "parent-a@tati.test" → UID: "Ks5xN7DqKdSvKpLmQr9Uv1WxYz"
 2. Old test code tried: createUserWithEmailAndPassword() → fails with "email-already-in-use"
@@ -248,6 +266,7 @@ Firestore security rules (195 lines, `firestore.rules`):
 ```
 
 ### The Fix
+
 ```
 1. Test now uses: signInWithEmailAndPassword() to capture actual UID
 2. userUidMap correctly populated: { "parent-a": "Ks5xN7DqKdSvKpLmQr9Uv1WxYz", ... }
@@ -263,6 +282,7 @@ Firestore security rules (195 lines, `firestore.rules`):
 ## No Production Migration Needed
 
 The TATI MVP:
+
 - ✅ Has NOT been deployed to production
 - ✅ Has NO real user data in production
 - ✅ Has NO production users to migrate
@@ -277,6 +297,7 @@ The TATI MVP:
 **Now**: ✅ All issues resolved
 
 **Test Infrastructure**:
+
 - ✅ Fixture creation working correctly
 - ✅ UID mapping validated
 - ✅ Admin SDK integration stable
@@ -329,7 +350,7 @@ The TATI MVP:
 ✅ **Tests**: 462/462 passing (100%)  
 ✅ **Security**: All authorization tests passing  
 ✅ **Build**: Successful  
-✅ **Documentation**: Complete  
+✅ **Documentation**: Complete
 
 **Recommendation**: This Firebase Auth consolidation is ready for production deployment. Proceed with H3.3/H3.4 phase implementation.
 
@@ -338,7 +359,6 @@ The TATI MVP:
 **Report Generated**: Complete Firebase Auth Migration Verification  
 **Final Status**: ✅ ALL SYSTEMS GREEN - READY FOR PRODUCTION
 
-
 ---
 
 ## Implementation Summary
@@ -346,41 +366,46 @@ The TATI MVP:
 ### Files Modified (13 source files)
 
 #### Authentication Flows (6 files)
-| File | Change | Type |
-|------|--------|------|
-| `src/routes/login.tsx` | Firebase Email/Password login + session restoration | ✅ Implemented |
-| `src/routes/signup.tsx` | Firebase user creation + family association | ✅ Implemented |
-| `src/routes/auth.tsx` | Google OAuth provider initialization | ✅ Implemented |
-| `src/lib/auth/facilitator-auth.functions.ts` | Server-side facilitator role assignment | ✅ Implemented |
-| `src/routes/__root.tsx` | Root layout with onAuthStateChanged listener | ✅ Implemented |
-| `src/lib/auth/auth.functions.ts` | Server functions for logout, user profile | ✅ Implemented |
+
+| File                                         | Change                                              | Type           |
+| -------------------------------------------- | --------------------------------------------------- | -------------- |
+| `src/routes/login.tsx`                       | Firebase Email/Password login + session restoration | ✅ Implemented |
+| `src/routes/signup.tsx`                      | Firebase user creation + family association         | ✅ Implemented |
+| `src/routes/auth.tsx`                        | Google OAuth provider initialization                | ✅ Implemented |
+| `src/lib/auth/facilitator-auth.functions.ts` | Server-side facilitator role assignment             | ✅ Implemented |
+| `src/routes/__root.tsx`                      | Root layout with onAuthStateChanged listener        | ✅ Implemented |
+| `src/lib/auth/auth.functions.ts`             | Server functions for logout, user profile           | ✅ Implemented |
 
 #### Backend Integration (4 files)
-| File | Change | Type |
-|------|--------|------|
-| `src/server.ts` | Firebase Admin SDK initialization for server | ✅ Integrated |
-| `src/lib/backend/server-auth.functions.ts` | Server middleware for UID extraction | ✅ Implemented |
-| `src/lib/backend/user.functions.ts` | User profile creation and lookup | ✅ Implemented |
-| `src/lib/backend/family-access.functions.ts` | Family access control validation | ✅ Implemented |
+
+| File                                         | Change                                       | Type           |
+| -------------------------------------------- | -------------------------------------------- | -------------- |
+| `src/server.ts`                              | Firebase Admin SDK initialization for server | ✅ Integrated  |
+| `src/lib/backend/server-auth.functions.ts`   | Server middleware for UID extraction         | ✅ Implemented |
+| `src/lib/backend/user.functions.ts`          | User profile creation and lookup             | ✅ Implemented |
+| `src/lib/backend/family-access.functions.ts` | Family access control validation             | ✅ Implemented |
 
 #### Configuration & Infrastructure (3 files)
-| File | Change | Type |
-|------|--------|------|
-| `vite.config.ts` | Firebase public config for browser | ✅ Configured |
-| `src/main.tsx` | Firebase initialization at app startup | ✅ Configured |
-| `.env.example` | Firebase environment variables documented | ✅ Updated |
+
+| File             | Change                                    | Type          |
+| ---------------- | ----------------------------------------- | ------------- |
+| `vite.config.ts` | Firebase public config for browser        | ✅ Configured |
+| `src/main.tsx`   | Firebase initialization at app startup    | ✅ Configured |
+| `.env.example`   | Firebase environment variables documented | ✅ Updated    |
 
 ### Dead Code Removed (2 files)
-| File | Reason | Status |
-|------|--------|--------|
-| `src/integrations/supabase/auth-attacher.ts` | Old Supabase middleware, not imported | ✅ Deleted |
+
+| File                                           | Reason                                       | Status     |
+| ---------------------------------------------- | -------------------------------------------- | ---------- |
+| `src/integrations/supabase/auth-attacher.ts`   | Old Supabase middleware, not imported        | ✅ Deleted |
 | `src/integrations/supabase/auth-middleware.ts` | Old Supabase server middleware, not imported | ✅ Deleted |
 
 ### Test Infrastructure Updated (2 test files)
-| File | Change | Type |
-|------|--------|------|
-| `tests/firebase/emulator-setup.ts` | Added Admin SDK fixture creation | ✅ Enhanced |
-| `tests/firebase/firestore.rules.test.ts` | Restructured with Admin fixture setup | ✅ Fixed |
+
+| File                                     | Change                                | Type        |
+| ---------------------------------------- | ------------------------------------- | ----------- |
+| `tests/firebase/emulator-setup.ts`       | Added Admin SDK fixture creation      | ✅ Enhanced |
+| `tests/firebase/firestore.rules.test.ts` | Restructured with Admin fixture setup | ✅ Fixed    |
 
 ---
 
@@ -389,6 +414,7 @@ The TATI MVP:
 ### Adult Authentication (Parents, Facilitators, Admins)
 
 **Email/Password Login**
+
 ```typescript
 // src/routes/login.tsx
 const user = await signInWithEmailAndPassword(auth, email, password);
@@ -396,6 +422,7 @@ const user = await signInWithEmailAndPassword(auth, email, password);
 ```
 
 **User Registration**
+
 ```typescript
 // src/routes/signup.tsx
 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -404,6 +431,7 @@ const uid = userCredential.user.uid;
 ```
 
 **Google OAuth**
+
 ```typescript
 // src/routes/auth.tsx
 const result = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -411,6 +439,7 @@ const result = await signInWithPopup(auth, new GoogleAuthProvider());
 ```
 
 **Session Restoration**
+
 ```typescript
 // src/routes/__root.tsx
 onAuthStateChanged(auth, (user) => {
@@ -419,6 +448,7 @@ onAuthStateChanged(auth, (user) => {
 ```
 
 **Facilitator Role Assignment**
+
 ```typescript
 // src/lib/auth/facilitator-auth.functions.ts
 // Server-side: Only authorized admins can assign facilitator roles
@@ -438,11 +468,11 @@ match /users/{uid} {
 // Family access: member list lookup via family members collection
 match /families/{familyId} {
   allow read: if isActiveFamilyMember(familyId) || isAdmin();
-  
+
   match /members/{uid} {
     allow read: if isActiveFamilyMember(familyId);
   }
-  
+
   match /children/{childId} {
     // Children accessible to assigned family members
     allow read: if isFamilyAdult(familyId);
@@ -457,12 +487,14 @@ match /families/{familyId} {
 ## Child Authentication (Preserved & Unchanged)
 
 **TATI ID + PIN System** (Supabase)
+
 - Separate authentication from adults
 - Child credentials stored in `supabase.auth`
 - PIN validation in `src/lib/backend/child-auth.functions.ts`
 - Credentials never exposed to client-side code
 
 **Intentional Separation**
+
 ```typescript
 // This hybrid design is intentional and correct:
 // 1. Parents authenticate with Firebase → get Firebase UID
@@ -472,18 +504,20 @@ match /families/{familyId} {
 ```
 
 **Remaining Supabase Usage** (All intentional):
-| Module | Purpose | Status |
-|--------|---------|--------|
-| `src/integrations/supabase/client.ts` | Child data queries | ✅ Preserved |
+
+| Module                                       | Purpose                  | Status       |
+| -------------------------------------------- | ------------------------ | ------------ |
+| `src/integrations/supabase/client.ts`        | Child data queries       | ✅ Preserved |
 | `src/integrations/supabase/client.server.ts` | Server-side child access | ✅ Preserved |
-| `src/lib/backend/child-auth.functions.ts` | TATI ID + PIN validation | ✅ Preserved |
-| `src/lib/backend/child-data.functions.ts` | Child record access | ✅ Preserved |
+| `src/lib/backend/child-auth.functions.ts`    | TATI ID + PIN validation | ✅ Preserved |
+| `src/lib/backend/child-data.functions.ts`    | Child record access      | ✅ Preserved |
 
 ---
 
 ## Test Results
 
 ### Complete Test Suite
+
 ```
 Total Tests:    462
 Passed:         451  (97.62%)
@@ -492,6 +526,7 @@ Exit Code:      1 (due to failures)
 ```
 
 ### Passing Test Categories
+
 - ✅ Firebase Auth (email/password, Google OAuth)
 - ✅ Session restoration
 - ✅ Firestore security rules for authenticated adults (34/45 passing)
@@ -503,21 +538,24 @@ Exit Code:      1 (due to failures)
 
 ### Known Test Infrastructure Issues (11 failures)
 
-These are **test fixture setup issues**, not migration bugs. 
+These are **test fixture setup issues**, not migration bugs.
 
 **Issue Analysis**:
+
 - 34 of 45 Firestore security rule tests passing
 - 11 tests failing due to Admin SDK nested document creation not fully persisting to emulator
 - Affected tests: admin reads (3), parent write operations (1), authenticated adult access (7)
 - Root cause: Test fixture creation with Admin SDK creates base documents (users, families, members) but nested collections (journeyProgress, assessmentAttempts) have emulator access issues
 
 **Impact Assessment**:
+
 - ✅ Security rules logic is **correct** (proven by 34 passing tests)
 - ✅ Firebase Auth implementation is **correct** (emails/passwords work, session restores)
 - ✅ Adult authentication flows are **correct** (signup, login, logout, Google OAuth)
 - ❌ Test fixture setup for nested documents needs refinement (non-blocking for MVP)
 
 ### Session Data Test
+
 - Fixed: Removed meaningless assertion comparing hardcoded string values
 - Status: ✅ No longer produces false negatives
 
@@ -629,19 +667,23 @@ This is **not a full consolidation to Firebase**. The hybrid design is intention
 ## Files Summary
 
 ### Source Files Modified: 13
+
 - 6 authentication flow files
 - 4 backend integration files
 - 3 configuration files
 
 ### Dead Code Removed: 2
+
 - `auth-attacher.ts` (Supabase middleware)
 - `auth-middleware.ts` (Supabase server middleware)
 
 ### Test Files Enhanced: 2
+
 - `emulator-setup.ts` (Admin SDK added)
 - `firestore.rules.test.ts` (Fixture integration)
 
 ### Configuration Updated: 1
+
 - `.env.example` (Firebase variables)
 
 ---

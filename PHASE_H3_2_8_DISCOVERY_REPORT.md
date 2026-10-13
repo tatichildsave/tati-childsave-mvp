@@ -1,4 +1,5 @@
 # PHASE H3.2.8 — SESSION PERSISTENCE & SESSION MANAGEMENT
+
 ## Discovery & Architecture Review Report
 
 **Status:** ✅ DISCOVERY COMPLETE — Ready for implementation  
@@ -9,9 +10,11 @@
 ## A. EXISTING SESSION ARCHITECTURE
 
 ### Current State
+
 ✅ **NO existing facilitator session collection**
 
 Search results:
+
 - `childSessions` collection exists (learner entry sessions, blocked in Firestore rules)
 - `scenarioSessions` collection exists (learner scenario state, read-only for facilitators)
 - NO `academySessions` collection
@@ -20,6 +23,7 @@ Search results:
 - NO `facilitatorNotes` collection
 
 ### Learner-Side Session Architecture (Must Protect)
+
 ```
 families/{familyId}/children/{childId}
 ├─ journeyProgress/{itemKey}
@@ -48,6 +52,7 @@ families/{familyId}/children/{childId}
 ## B. EXISTING AUTHORIZATION MODEL
 
 ### H3.2.2 Facilitator Authorization
+
 **Pattern:** Index-based assignment lookup + double-check
 
 ```firestore
@@ -66,11 +71,13 @@ function isAssignedFacilitator(familyId, childId) {
 ```
 
 **Data Access Functions** (existing):
+
 - `getAssignedChildren(facilitatorUid)` — Query facilitatorAssignments, verify facilitatorUids
 - `getChildJourneyProgress(familyId, childId)` — Read-only Firestore query
 - `computeChildProgressSummary()` — Aggregate progress
 
 **Facilitator Profile** (existing):
+
 ```typescript
 interface FacilitatorSession {
   uid: string;
@@ -81,12 +88,15 @@ interface FacilitatorSession {
 ```
 
 **Facilitator Identification:**
+
 - Retrieved via `getFacilitatorSession()` (Supabase auth + Firestore role check)
 - UID is the authoritative facilitator identity
 - Firestore rules use `request.auth.uid` for enforcement
 
 ### Immutable Ownership Pattern (Existing)
+
 Used for children:
+
 ```firestore
 function immutableOwnership(existing, proposed) {
   return proposed.familyId == existing.familyId
@@ -94,6 +104,7 @@ function immutableOwnership(existing, proposed) {
     && proposed.createdBy == existing.createdBy;
 }
 ```
+
 **Recommendation:** Use similar pattern for facilitator sessions to prevent ownership changes.
 
 ---
@@ -101,6 +112,7 @@ function immutableOwnership(existing, proposed) {
 ## C. EXISTING LEARNER PROGRESS MODEL
 
 ### Progress Tracking (Learner-Owned)
+
 ```
 journeyProgress/{itemKey}
 ├─ id: string (unique event ID)
@@ -113,6 +125,7 @@ journeyProgress/{itemKey}
 ```
 
 ### Current Activity Determination (Existing)
+
 ```typescript
 // From ChildProgressSummary
 currentActivityType: (current_item?.kind as string) || undefined;
@@ -124,11 +137,13 @@ lastActivityAt: last_event?.completedAt
 **Source of Truth:** Learner owns their progress. Facilitation session records are observational only.
 
 ### Assessment Integrity (Firestore Rule Protected)
+
 ```firestore
 match /assessmentAttempts/{attemptId} {
   allow write: if false;  // Immutable once recorded
 }
 ```
+
 **Implication for H3.2.8:** Facilitator sessions cannot modify assessments or scores.
 
 ---
@@ -136,9 +151,11 @@ match /assessmentAttempts/{attemptId} {
 ## D. PROPOSED H3.2.8 DATA MODEL
 
 ### Minimum Session Collection Schema
+
 **Collection:** `academySessions` (top-level, not nested in family)
 
 **Reasoning:**
+
 - Facilitator sessions are operational, not family-scoped
 - One facilitator may facilitate for multiple families/cohorts
 - Nesting in family would require complex queries
@@ -165,6 +182,7 @@ academySessions/{sessionId}
 ```
 
 ### What NOT to Store
+
 ❌ Learner names/avatars (can be resolved via child ID)
 ❌ Learner progress snapshots (query live data)
 ❌ Assessment scores (immutable, stored elsewhere)
@@ -175,6 +193,7 @@ academySessions/{sessionId}
 ❌ Facilitator's own details (except UID)
 
 ### Why This Minimal Schema
+
 - **sessionId:** Unique identifier for this facilitation event
 - **facilitatorUid:** Authorization boundary (can only access own sessions)
 - **activityId/Kind/Title:** Operational context (what was being facilitated)
@@ -219,9 +238,11 @@ COMPLETED (facilitator can:)
 ## F. DUPLICATE ACTIVE SESSION HANDLING
 
 ### Current Approach
+
 **Prevent simultaneous active sessions for same facilitator + activity**
 
 **Check Before Creating Session:**
+
 ```
 Query academySessions
   where facilitatorUid == currentFacilitator.uid
@@ -235,6 +256,7 @@ If not found:
 ```
 
 **Implementation Note:**
+
 - Client-side check for UX (show resume offer immediately)
 - Firestore rules can add server-side validation if needed
 - Simple approach: Last-write-wins (facilitator can close old session and start new if needed)
@@ -244,23 +266,29 @@ If not found:
 ## G. AUTHORIZATION MODEL FOR H3.2.8
 
 ### Session Creation
+
 **Who can create:**
+
 - Authenticated facilitator only
 - Must have facilitator role (Firestore rule: `hasRole('facilitator')`)
 - Must have assigned learners (checked by client before showing Start button)
 
 **Validation:**
+
 - Activity ID must exist in curriculum
 - Learner IDs must all be assigned to this facilitator
 - No duplicate active session for same activity
 
 ### Session Read
+
 **Who can read:**
+
 - Session owner (facilitator who created it)
 - Admin (if admin model exists)
 - NOT: different facilitators, parents, learners
 
 **Implementation:**
+
 ```firestore
 match /academySessions/{sessionId} {
   allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
@@ -268,12 +296,15 @@ match /academySessions/{sessionId} {
 ```
 
 ### Session Update
+
 **Who can update:**
+
 - Session owner only
 - Only allowed fields: attendance, facilitatorNote, status (if transitioning to completed)
 - Cannot change: facilitatorUid, activityId, learnerIds, startedAt
 
 **Implementation:**
+
 ```firestore
 allow update: if request.auth.uid == resource.data.facilitatorUid
   && immutableFields(resource, request)
@@ -281,12 +312,15 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 ```
 
 ### Session Completion
+
 **Who can end:**
+
 - Session owner only
 - Can only end own active sessions
 - Once completed, cannot be reopened (append-only history)
 
 **Rule:**
+
 ```firestore
 allow update: if request.auth.uid == resource.data.facilitatorUid
   && resource.data.status == 'active'
@@ -295,7 +329,9 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 ```
 
 ### Learner Privacy (Critical)
+
 ❌ **Facilitators CANNOT:**
+
 - Access parent information
 - Modify learner progress
 - See another facilitator's sessions
@@ -306,14 +342,18 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 ## H. PRIVACY & DATA MINIMIZATION
 
 ### What Facilitator Notes Can Contain
+
 ✅ Learning/facilitation observations only:
+
 - "Learners engaged well with the activity"
 - "Several learners wanted more examples"
 - "Plan to revisit budgeting concept next session"
 - "Good discussion about mobile money safety"
 
 ### What Facilitator Notes CANNOT Contain
+
 ❌ Personal information:
+
 - Family circumstances
 - Medical information
 - Financial circumstances of family
@@ -323,14 +363,17 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 - Sensitive family data
 
 ### UI Hint for Note Field
+
 Display clear guidance:
+
 > **Session observation** (learning and facilitation notes only, max 1000 characters)
-> 
+>
 > Good examples: Learner questions, discussion points, follow-up topics
-> 
+>
 > Do not record: Private family info, parent details, behavioral labels
 
 ### Access Control
+
 - Only facilitator who created the session can read/edit notes
 - Notes are facilitator-private (unlike curriculum content)
 - If future parent dashboard exists, notes should NOT be exposed
@@ -341,6 +384,7 @@ Display clear guidance:
 ## I. ATTENDANCE PRIVACY & AUTHORIZATION
 
 ### Attendance Data
+
 ```
 attendance: {
   "child-id-1": "present",
@@ -350,7 +394,9 @@ attendance: {
 ```
 
 ### Validation Required (Firestore Rules)
+
 Before accepting attendance update:
+
 ```
 1. For each childId in attendance:
    - Must be in session.learnerIds
@@ -359,6 +405,7 @@ Before accepting attendance update:
 ```
 
 **Cannot Trust Client:** Prevent malicious submission like:
+
 ```
 attendance: {
    unrelated-child-id: "present"
@@ -366,21 +413,25 @@ attendance: {
 ```
 
 ### Implementation
+
 **Option A (Recommended): Full validation in Firestore rules**
+
 ```firestore
 allow update: if request.auth.uid == resource.data.facilitatorUid
-  && request.resource.data.attendance.keys().all(childId => 
+  && request.resource.data.attendance.keys().all(childId =>
       childId in resource.data.learnerIds
   );
 ```
 
 **Option B (If complex validation needed): Simpler schema**
 Instead of record, use array of attendance records:
+
 ```
 attendance: [
   { childId: "...", marked: "present", markedAt: timestamp }
 ]
 ```
+
 This makes each record independently validateable.
 
 ---
@@ -430,17 +481,19 @@ match /academySessions/{sessionId} {
 ## K. SERVER TIMESTAMPS (CRITICAL)
 
 ### Use Firestore Server Timestamps
+
 **Do NOT trust client for authoritative timing:**
 
 ```typescript
 // Client sends this in request
-startedAt: serverTimestamp()  // ← Firestore handles this
-endedAt: serverTimestamp()
-createdAt: serverTimestamp()
-updatedAt: serverTimestamp()
+startedAt: serverTimestamp(); // ← Firestore handles this
+endedAt: serverTimestamp();
+createdAt: serverTimestamp();
+updatedAt: serverTimestamp();
 ```
 
 **Why:**
+
 - Client clock can be inaccurate
 - Prevents backdating sessions
 - Prevents timing attacks
@@ -453,31 +506,37 @@ updatedAt: serverTimestamp()
 ### Firestore Operations per Session Lifecycle
 
 **Session Creation:**
+
 - 1 write (create academySessions document)
 - Cost: ~0.06 per 100 ops
 
 **Session Update (attendance/notes):**
+
 - 1 write per update
 - Typical session might have 2-5 updates (mark attendance, add note, end)
 - Cost: ~0.06 per 100 ops per update
 
 **Session Read (during monitoring):**
+
 - Already handled by existing useAcademyDashboard hook
 - No new queries added for H3.2.8 core features
 
 **Session History View (if implemented):**
+
 - Query academySessions by facilitatorUid
 - Index: `facilitatorUid + status + createdAt` (for filtering/sorting)
 - Typical: 10-50 sessions per facilitator per month
 - Cost: ~0.06 per 100 queries
 
 ### No Realtime Requirement
+
 - Use manual refresh (React Query existing pattern)
 - No Firestore listeners
 - No polling
 - MVP doesn't require live collaboration
 
 ### Summary
+
 **Minimal cost addition:** ~1-2 writes per session, ~1 read per history view
 **Storage:** ~500 bytes per session (small documents)
 **Indexing:** One index on (facilitatorUid, status) likely needed
@@ -487,6 +546,7 @@ updatedAt: serverTimestamp()
 ## M. SECURITY TESTING REQUIREMENTS
 
 ### Functional Tests
+
 1. ✅ Session creation by authenticated facilitator
 2. ✅ Session read by session owner
 3. ✅ Session update by session owner (attendance/notes)
@@ -494,6 +554,7 @@ updatedAt: serverTimestamp()
 5. ✅ Duplicate active session prevention
 
 ### Security Tests
+
 1. ✅ Unauthenticated user cannot create session
 2. ✅ Parent cannot create facilitator session
 3. ✅ Child cannot create facilitator session
@@ -504,6 +565,7 @@ updatedAt: serverTimestamp()
 8. ✅ Parent data not exposed in session document
 
 ### Recommended Test Location
+
 If Firestore emulator infrastructure exists: Add to existing security test suite
 Otherwise: Document test procedures for manual verification
 
@@ -512,6 +574,7 @@ Otherwise: Document test procedures for manual verification
 ## N. LEARNER PROGRESS INTEGRITY (NON-NEGOTIABLE)
 
 ### What Session Operations DO NOT Do
+
 ❌ Create journeyProgress entries
 ❌ Modify journeyProgress status
 ❌ Complete activities
@@ -522,6 +585,7 @@ Otherwise: Document test procedures for manual verification
 ❌ Mark learners complete
 
 ### Enforcement
+
 - Learner progress owned by learner learning system
 - Session operations only read learning data
 - Session operations never write to:
@@ -536,6 +600,7 @@ Otherwise: Document test procedures for manual verification
 ## SUMMARY: H3.2.8 READY FOR IMPLEMENTATION
 
 **Discovery Findings:**
+
 - ✅ No existing facilitator session collection (clean slate)
 - ✅ H3.2.2 authorization model fully supports facilitator isolation
 - ✅ Learner progress model is immutable (safe from facilitator writes)
@@ -545,6 +610,7 @@ Otherwise: Document test procedures for manual verification
 - ✅ Cost is minimal (small documents, few operations per session)
 
 **Recommended Architecture:**
+
 1. Create `academySessions` collection (top-level)
 2. Add Firestore rules for authorization and immutability
 3. Create session CRUD functions in data-access layer
@@ -554,6 +620,7 @@ Otherwise: Document test procedures for manual verification
 7. Create session summary screen after completion
 
 **No Architectural Changes Required:**
+
 - Existing authorization model sufficient
 - No changes to learner progress
 - No changes to parent/child routes

@@ -1,4 +1,5 @@
 # Phase G5.1 Implementation Report
+
 ## Server-Side Engine Output Integrity Verification
 
 **Status**: ✅ VERIFIED — ENGINE OUTPUT INTEGRITY CLOSED  
@@ -6,7 +7,7 @@
 **Phase**: G5.1 (G5 Extension)  
 **Tests**: 61/61 passing (53 G5 + 8 G5.1)  
 **Build**: ✅ Success  
-**TypeScript**: ✅ No errors  
+**TypeScript**: ✅ No errors
 
 ---
 
@@ -15,17 +16,19 @@
 ### Root Cause: G5 Security Gap
 
 Phase G5 implemented comprehensive scenario authorization checks covering:
+
 - ✅ Authentication (session validation)
 - ✅ Authorization (child/family isolation via RLS)
 - ✅ Scenario/choice/node/day validation
 - ✅ Money and competency bounds checking
 - ✅ State structure validation
 
-**Critical Gap Identified**: G5 validated that state *structure* was valid, but never verified that computed values (money, competencies, node, day) actually *matched what the engine produces*.
+**Critical Gap Identified**: G5 validated that state _structure_ was valid, but never verified that computed values (money, competencies, node, day) actually _matched what the engine produces_.
 
 ### Attack Vector (Pre-G5.1)
 
 A malicious client could:
+
 1. Send legitimate choice history (valid node IDs, valid choice IDs)
 2. Keep all choice validation passing (history is structurally valid)
 3. **Fabricate endpoint money/competencies/node/day values**
@@ -33,6 +36,7 @@ A malicious client could:
 5. Server accepts and persists the fabricated state
 
 **Example**:
+
 ```
 Legitimate: choices=[save-40], money becomes available=10, saved=40
 Attack: choices=[save-40], but submit available=1000, saved=5000
@@ -53,6 +57,7 @@ Result: G5 checks pass, attacker cheats
 ### Approach: Server-Side Engine Replay (Option B)
 
 **Why This Approach**:
+
 - ✅ Minimal code change (one function, ~80 lines)
 - ✅ No client changes required
 - ✅ No database schema changes
@@ -64,7 +69,7 @@ Result: G5 checks pass, attacker cheats
 
 1. **Receive**: Client submits scenario state + decision history
 2. **Validate**: All G5 checks (structure, bounds, reachability, choices)
-3. **Replay**: 
+3. **Replay**:
    - Create initial engine state
    - Loop through each decision
    - Apply via `applyChoice()` then `advance()`
@@ -75,13 +80,13 @@ Result: G5 checks pass, attacker cheats
 
 ### Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| Server is authoritative | Engine produces truth, client cannot override |
-| Use engine-derived state | Even if client got some values right, ensure consistency |
-| Compare all critical fields | money, competencies, node, day, phase |
-| Fail-close on mismatch | Reject fabricated state rather than guess |
-| No silent correction | Errors are explicit and loggable |
+| Decision                    | Rationale                                                |
+| --------------------------- | -------------------------------------------------------- |
+| Server is authoritative     | Engine produces truth, client cannot override            |
+| Use engine-derived state    | Even if client got some values right, ensure consistency |
+| Compare all critical fields | money, competencies, node, day, phase                    |
+| Fail-close on mismatch      | Reject fabricated state rather than guess                |
+| No silent correction        | Errors are explicit and loggable                         |
 
 ---
 
@@ -92,11 +97,13 @@ Result: G5 checks pass, attacker cheats
 #### 1. `src/lib/auth/child-learning.functions.ts` (2 changes)
 
 **Change 1: Added Engine Imports**
+
 ```typescript
 import { createInitialState, applyChoice, advance } from "@/lib/scenario/engine";
 ```
 
 **Change 2: Added Verification Function** (~90 lines)
+
 ```typescript
 function verifyScenarioStateConsistency(
   definition: ReturnType<typeof getScenarioDefinition>,
@@ -104,42 +111,43 @@ function verifyScenarioStateConsistency(
 ): { valid: boolean; error?: string; derivedState?: ScenarioState } {
   // 1. Start with initial state
   let verifiedState = createInitialState(definition);
-  
+
   // 2. Replay decisions with error handling
   for (let i = 0; i < submittedState.decisions.length; i++) {
     // ... extract and validate choiceId ...
     verifiedState = applyChoice(definition, verifiedState, choiceId);
     verifiedState = advance(definition, verifiedState);
   }
-  
+
   // 3. Compare critical values
   // - money (available, saved)
   // - competencies
   // - current node
   // - day
   // - phase
-  
+
   // 4. Return verification result
   return { valid: true, derivedState: verifiedState } or error
 }
 ```
 
 **Change 3: Integrated Verification into saveChildScenario()**
+
 ```typescript
 export const saveChildScenario = createServerFn({ method: "POST" })
   .validator(scenarioStateInput)
   .handler(async ({ data }) => {
     // ... existing G5 validations ...
-    
+
     // G5.1 NEW: Verify engine integrity
     const integrityCheck = verifyScenarioStateConsistency(definition, data);
     if (!integrityCheck.valid) {
       throw new Error(`Story state integrity violation: ${integrityCheck.error}`);
     }
-    
+
     // Use engine-derived state (authoritative)
     const authoritative = integrityCheck.derivedState || data;
-    
+
     // ... persist authoritative state ...
   });
 ```
@@ -160,6 +168,7 @@ Added comprehensive G5.1 security tests:
 8. **Multi-Step Attack**: Valid choices + fabricated progression gets caught
 
 Each test:
+
 - Creates valid decision history
 - Computes engine result
 - Demonstrates attack attempt
@@ -167,11 +176,11 @@ Each test:
 
 ### Total Code Changes
 
-| File | Lines Added | Lines Modified |
-|------|------------|-----------------|
-| child-learning.functions.ts | ~90 (verification function + integration) | ~5 (import) |
-| scenario-authorization.test.ts | ~300 (8 tests + infrastructure) | 0 |
-| **Total** | **~395** | **~5** |
+| File                           | Lines Added                               | Lines Modified |
+| ------------------------------ | ----------------------------------------- | -------------- |
+| child-learning.functions.ts    | ~90 (verification function + integration) | ~5 (import)    |
+| scenario-authorization.test.ts | ~300 (8 tests + infrastructure)           | 0              |
+| **Total**                      | **~395**                                  | **~5**         |
 
 ---
 
@@ -235,7 +244,7 @@ Output: { valid: boolean, error?: string, derivedState?: ScenarioState }
 ✅ Multi-step decision chains  
 ✅ Scheduled events (via `advance()`)  
 ✅ Floating-point money precision (~0.01 tolerance)  
-✅ Missing competencies map  
+✅ Missing competencies map
 
 ---
 
@@ -243,16 +252,16 @@ Output: { valid: boolean, error?: string, derivedState?: ScenarioState }
 
 ### G5.1 Test Matrix
 
-| Attack Type | Test Name | Attack | Expected Outcome |
-|------------|-----------|--------|------------------|
-| Money Fabrication | Fabricated available | submit available=1000 | ❌ Rejected |
-| Money Fabrication | Fabricated saved | submit saved=5000 | ❌ Rejected |
-| Competency Cheat | Fabricated competency | submit comp=999 | ❌ Rejected |
-| Progress Skipping | Fabricated node | submit nodeId=final | ❌ Rejected |
-| Speedrun Attack | Fabricated day | submit day=14 | ❌ Rejected |
-| Valid Submission | Legitimate state | engine-calculated values | ✅ Accepted |
-| Fresh Start | Empty history | initial state | ✅ Accepted |
-| Complex Attack | Multi-step + fabrication | valid choices + fake end state | ❌ Rejected |
+| Attack Type       | Test Name                | Attack                         | Expected Outcome |
+| ----------------- | ------------------------ | ------------------------------ | ---------------- |
+| Money Fabrication | Fabricated available     | submit available=1000          | ❌ Rejected      |
+| Money Fabrication | Fabricated saved         | submit saved=5000              | ❌ Rejected      |
+| Competency Cheat  | Fabricated competency    | submit comp=999                | ❌ Rejected      |
+| Progress Skipping | Fabricated node          | submit nodeId=final            | ❌ Rejected      |
+| Speedrun Attack   | Fabricated day           | submit day=14                  | ❌ Rejected      |
+| Valid Submission  | Legitimate state         | engine-calculated values       | ✅ Accepted      |
+| Fresh Start       | Empty history            | initial state                  | ✅ Accepted      |
+| Complex Attack    | Multi-step + fabrication | valid choices + fake end state | ❌ Rejected      |
 
 ### Test Execution
 
@@ -274,7 +283,7 @@ npm test -- --run
 
 ✅ `npm run build` — SUCCESS (exit code 0)  
 ✅ `npm exec tsc --noEmit` — NO ERRORS  
-✅ `npm run lint` — Pre-existing issues only (not in G5.1 code)  
+✅ `npm run lint` — Pre-existing issues only (not in G5.1 code)
 
 ### Test Execution
 
@@ -339,6 +348,7 @@ npm test -- --run
 **Zero (0) schema changes needed**
 
 The implementation works entirely with existing:
+
 - ✅ `scenario_sessions.state` (stores full state + decisions)
 - ✅ `scenario_sessions.current_node_id` (indexed for queries)
 - ✅ `scenario_decisions` (audit trail, replaying decisions)
@@ -348,6 +358,7 @@ The implementation works entirely with existing:
 ### Data Integrity
 
 Pre-existing protections remain:
+
 - ✅ RLS on child_profile_id (family isolation)
 - ✅ Compound FK (session, child) uniqueness
 - ✅ CHECK constraints on day bounds
@@ -365,11 +376,13 @@ Pre-existing protections remain:
 **Zero (0) scenario definition changes**
 
 Existing scenarios work unchanged:
+
 - ✅ "kwame-request" (14 days)
 - ✅ "school-reopening" (default scenario)
 - ✅ All future scenarios
 
 No definition format changes needed because:
+
 - Engine already handles all scenarios correctly
 - G5.1 only adds server-side verification layer
 - No changes to choice effects or scheduling
@@ -383,12 +396,14 @@ No definition format changes needed because:
 **Zero (0) client-side changes needed**
 
 Legitimate clients (using the UI) are unaffected:
+
 - ✅ UI engine calculates state correctly
 - ✅ Submitted state matches engine output
 - ✅ Verification passes, no change to submitted state
 - ✅ Normal gameplay continues unchanged
 
 Direct API users benefit from:
+
 - ✅ Requests with fabricated state get rejected
 - ✅ Clear error messages explaining why
 - ✅ Honest requests continue to work
@@ -401,6 +416,7 @@ Direct API users benefit from:
 ### Out of Scope for G5.1
 
 ❌ **Not Addressed**:
+
 - Client-side state tampering (DOM manipulation) — UI controls this
 - Network interception (HTTPS/TLS) — Infrastructure controls this
 - Session hijacking — Auth layer (G3) controls this
@@ -408,6 +424,7 @@ Direct API users benefit from:
 - Replay attack prevention — Handled by idempotency checks in G5
 
 ✅ **Does Address**:
+
 - Fabricated progress values (money, competencies, node, day)
 - Invalid state machine transitions
 - Impossible game states
@@ -415,14 +432,14 @@ Direct API users benefit from:
 
 ### Security Layers Summary
 
-| Layer | G3 | G5 | G5.1 |
-|-------|----|----|------|
-| Session authentication | ✅ | — | — |
-| Child/family isolation | — | ✅ | — |
-| State structure validity | — | ✅ | — |
-| State bounds checking | — | ✅ | — |
-| Choice history audit | — | ✅ | — |
-| **Engine output integrity** | — | — | ✅ |
+| Layer                       | G3  | G5  | G5.1 |
+| --------------------------- | --- | --- | ---- |
+| Session authentication      | ✅  | —   | —    |
+| Child/family isolation      | —   | ✅  | —    |
+| State structure validity    | —   | ✅  | —    |
+| State bounds checking       | —   | ✅  | —    |
+| Choice history audit        | —   | ✅  | —    |
+| **Engine output integrity** | —   | —   | ✅   |
 
 ---
 
@@ -437,6 +454,7 @@ Direct API users benefit from:
 5. **Existing Data**: No migration needed
 
 **Compatibility Notes**:
+
 - Old sessions stored in DB will pass verification (state is correct)
 - Transitioning to G5.1 is transparent (no data changes)
 - Can roll back if needed (verification is a middleware check)
@@ -448,12 +466,14 @@ Direct API users benefit from:
 ### Comprehensive Checklist
 
 **Implementation** ✅
+
 - [x] Engine verification function added
 - [x] Integration into saveChildScenario()
 - [x] Error handling with clear messages
 - [x] Type safety (TypeScript passes)
 
 **Testing** ✅
+
 - [x] 8 new security tests pass
 - [x] 53 original G5 tests still pass
 - [x] Full suite: 163/203 (40 pre-existing failures unchanged)
@@ -461,6 +481,7 @@ Direct API users benefit from:
 - [x] No regressions
 
 **Code Quality** ✅
+
 - [x] Build succeeds (npm run build)
 - [x] TypeScript compiles (tsc --noEmit)
 - [x] No new lint errors in modified files
@@ -468,6 +489,7 @@ Direct API users benefit from:
 - [x] Error messages are clear and actionable
 
 **Security** ✅
+
 - [x] Fabricated money gets rejected ✅
 - [x] Fabricated competencies get rejected ✅
 - [x] Fabricated node gets rejected ✅
@@ -477,6 +499,7 @@ Direct API users benefit from:
 - [x] Multi-step decisions work ✅
 
 **Operations** ✅
+
 - [x] Zero database migrations
 - [x] Zero scenario definition changes
 - [x] Zero client changes
@@ -491,33 +514,33 @@ Direct API users benefit from:
 
 **Gap**: G5 validated state structure but not values  
 **Fix**: Server-side engine replay verifies submitted state = engine output  
-**Result**: Impossible to cheat progress by fabricating money/competencies  
+**Result**: Impossible to cheat progress by fabricating money/competencies
 
 ### Implementation Stats
 
-| Metric | Value |
-|--------|-------|
-| Lines of Code Added | ~395 |
-| New Functions | 1 |
-| Modified Functions | 1 |
-| New Tests | 8 |
-| Test Coverage | 61/61 passing |
-| Build Status | ✅ Success |
-| Regressions | 0 |
-| Database Changes | 0 |
-| Client Changes | 0 |
-| Scenario Changes | 0 |
+| Metric              | Value         |
+| ------------------- | ------------- |
+| Lines of Code Added | ~395          |
+| New Functions       | 1             |
+| Modified Functions  | 1             |
+| New Tests           | 8             |
+| Test Coverage       | 61/61 passing |
+| Build Status        | ✅ Success    |
+| Regressions         | 0             |
+| Database Changes    | 0             |
+| Client Changes      | 0             |
+| Scenario Changes    | 0             |
 
 ### Risk Assessment
 
-| Risk | Pre-G5.1 | Post-G5.1 | Mitigation |
-|------|----------|-----------|-----------|
-| Progress fabrication | HIGH | ✅ RESOLVED | Engine replay |
-| Money cheating | HIGH | ✅ RESOLVED | Engine replay |
-| Competency inflation | HIGH | ✅ RESOLVED | Engine replay |
-| Node skipping | MEDIUM | ✅ RESOLVED | Engine replay |
-| Session hijacking | MEDIUM | UNCHANGED | G3 layer |
-| Code injection | LOW | UNCHANGED | Input validation |
+| Risk                 | Pre-G5.1 | Post-G5.1   | Mitigation       |
+| -------------------- | -------- | ----------- | ---------------- |
+| Progress fabrication | HIGH     | ✅ RESOLVED | Engine replay    |
+| Money cheating       | HIGH     | ✅ RESOLVED | Engine replay    |
+| Competency inflation | HIGH     | ✅ RESOLVED | Engine replay    |
+| Node skipping        | MEDIUM   | ✅ RESOLVED | Engine replay    |
+| Session hijacking    | MEDIUM   | UNCHANGED   | G3 layer         |
+| Code injection       | LOW      | UNCHANGED   | Input validation |
 
 ---
 
@@ -535,7 +558,7 @@ Direct API users benefit from:
 ✅ Server is authoritative over scenario state  
 ✅ Clients cannot fabricate progress  
 ✅ Invalid states are rejected at save time  
-✅ Audit trail is complete and trustworthy  
+✅ Audit trail is complete and trustworthy
 
 ---
 

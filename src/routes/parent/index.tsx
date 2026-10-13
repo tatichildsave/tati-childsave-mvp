@@ -45,7 +45,7 @@ function ParentHome() {
   async function handleSignOut() {
     await qc.cancelQueries();
     qc.clear();
-    
+
     // Clear server-side session cookie
     try {
       await clearParentSessionFn({ data: undefined });
@@ -53,13 +53,13 @@ function ParentHome() {
       console.error("[handleSignOut] Error clearing session:", error);
       // Continue with client logout even if server-side clear fails
     }
-    
+
     // Sign out from Firebase client
     const auth = getFirebaseAuth();
     if (auth) {
       await signOut(auth);
     }
-    
+
     navigate({ to: "/login", replace: true });
   }
 

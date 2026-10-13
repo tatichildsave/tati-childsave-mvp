@@ -27,6 +27,7 @@ npm test -- src/lib/academy/__tests__/security.test.ts
 ### Test Group 1: Facilitator Read Access
 
 **Test 1.1 - Facilitator can read assigned child**
+
 ```
 Given: Facilitator A with facilitatorUid = "facilitator-001"
   And: Child exists with facilitatorUids = ["facilitator-001"]
@@ -35,6 +36,7 @@ Then: ✅ Read succeeds (HTTP 200)
 ```
 
 **Test 1.2 - Facilitator can read journey progress of assigned child**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: Child 1 has journeyProgress records
@@ -43,6 +45,7 @@ Then: ✅ Read succeeds, returns all progress events
 ```
 
 **Test 1.3 - Facilitator can read competencies of assigned child**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: Child 1 has competency records
@@ -51,6 +54,7 @@ Then: ✅ Read succeeds, returns competencies
 ```
 
 **Test 1.4 - Facilitator can read own assignments**
+
 ```
 Given: Facilitator A with uid = "facilitator-001"
   And: facilitatorAssignments collection has assignments for this facilitator
@@ -64,6 +68,7 @@ Then: ✅ Query succeeds, returns assignments for facilitator-001 only
 ### Test Group 2: Facilitator Write Prevention
 
 **Test 2.1 - Facilitator cannot modify journey progress**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: journeyProgress record exists
@@ -72,6 +77,7 @@ Then: ❌ Write fails (Firestore rule: write: false)
 ```
 
 **Test 2.2 - Facilitator cannot modify assessment results**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator A attempts setDoc(...assessmentAttempts/{attemptId})
@@ -79,6 +85,7 @@ Then: ❌ Write fails (Firestore rule: write: false)
 ```
 
 **Test 2.3 - Facilitator cannot modify scenario decisions**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator A attempts setDoc(...scenarioSessions/{sessionId}/decisions/...)
@@ -86,6 +93,7 @@ Then: ❌ Write fails (Firestore rule: write: false)
 ```
 
 **Test 2.4 - Facilitator cannot modify competencies**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator A attempts setDoc(...competencies/{competencyId})
@@ -93,6 +101,7 @@ Then: ❌ Write fails (Firestore rule: write: false)
 ```
 
 **Test 2.5 - Facilitator cannot modify achievements**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator A attempts setDoc(...achievements/{achievementId})
@@ -104,6 +113,7 @@ Then: ❌ Write fails (Firestore rule: write: false)
 ### Test Group 3: Cross-Facilitator Isolation
 
 **Test 3.1 - Facilitator cannot read another facilitator's assignments**
+
 ```
 Given: Facilitator A with uid = "facilitator-001"
   And: Facilitator B with uid = "facilitator-002"
@@ -115,6 +125,7 @@ Then: ❌ Query returns empty results (Firestore rule filters)
 ```
 
 **Test 3.2 - Facilitator cannot read unrelated child**
+
 ```
 Given: Facilitator A assigned to Child 1 only
   And: Child 2 exists with facilitatorUids = ["facilitator-002"]
@@ -124,6 +135,7 @@ Then: ❌ Read fails (Firestore rule: canAccessChild() returns false)
 ```
 
 **Test 3.3 - Facilitator cannot read child of different family**
+
 ```
 Given: Facilitator A assigned to Child in Family 1
   And: Family 2 exists (unrelated)
@@ -137,6 +149,7 @@ Then: ❌ Read fails (Firestore rule: canAccessChild() returns false)
 ### Test Group 4: Parent Privacy Enforcement
 
 **Test 4.1 - Facilitator cannot read parentInsights**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: Child 1 has parentInsights records
@@ -145,6 +158,7 @@ Then: ❌ Read fails (Firestore rule: read: if isFamilyAdult || isAdmin → fals
 ```
 
 **Test 4.2 - Facilitator cannot read family document**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: Family document exists
@@ -153,6 +167,7 @@ Then: ❌ Read fails (Firestore rule: read: if isActiveFamilyMember || isAdmin �
 ```
 
 **Test 4.3 - Facilitator cannot read family members**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator A attempts getDoc(/families/{familyId}/members/{parentUid})
@@ -166,6 +181,7 @@ Then: ❌ Read fails (Firestore rule: read: if isActiveFamilyMember || isAdmin �
 ### Test Group 5: Role-Specific Access
 
 **Test 5.1 - Parent can read own family**
+
 ```
 Given: Parent P with uid = "parent-001"
   And: Parent is active family member (members/{parentUid}.status == "active")
@@ -174,6 +190,7 @@ Then: ✅ Read succeeds
 ```
 
 **Test 5.2 - Parent can read parentInsights**
+
 ```
 Given: Parent P with uid = "parent-001"
   And: Parent is active family member
@@ -183,6 +200,7 @@ Then: ✅ Read succeeds, returns insights
 ```
 
 **Test 5.3 - Parent cannot access facilitator assignments**
+
 ```
 Given: Parent P with uid = "parent-001"
 When: Parent queries collection("facilitatorAssignments")
@@ -190,6 +208,7 @@ Then: ❌ Query returns empty (Firestore rule: read requires facilitator role)
 ```
 
 **Test 5.4 - Child cannot access Academy records**
+
 ```
 Given: Child C with uid = "child-001"
   And: Child has role = ["child"]
@@ -198,6 +217,7 @@ Then: ❌ Query fails (Firestore rule: read requires facilitator role)
 ```
 
 **Test 5.5 - Unauthenticated user cannot access Academy records**
+
 ```
 Given: Unauthenticated context (no auth)
 When: User attempts collection("facilitatorAssignments").get()
@@ -211,6 +231,7 @@ Then: ❌ Query fails (Firestore rule: signedIn() required)
 ### Test Group 6: Admin Authority
 
 **Test 6.1 - Admin can read any facilitator assignment**
+
 ```
 Given: Admin A with uid = "admin-001"
   And: facilitatorAssignments has records for any facilitator
@@ -219,6 +240,7 @@ Then: ✅ Read succeeds (Firestore rule: allow read if isAdmin)
 ```
 
 **Test 6.2 - Admin can create facilitator assignment**
+
 ```
 Given: Admin A with uid = "admin-001"
 When: Admin creates document in facilitatorAssignments with:
@@ -227,6 +249,7 @@ Then: ✅ Write succeeds (Firestore rule: allow create if isAdmin)
 ```
 
 **Test 6.3 - Admin can update facilitator assignment**
+
 ```
 Given: Admin A
   And: facilitatorAssignments document exists
@@ -235,6 +258,7 @@ Then: ✅ Write succeeds (Firestore rule: allow update if isAdmin)
 ```
 
 **Test 6.4 - Admin can delete facilitator assignment**
+
 ```
 Given: Admin A
   And: facilitatorAssignments document exists
@@ -249,6 +273,7 @@ Then: ✅ Write succeeds (Firestore rule: allow delete if isAdmin)
 ### Test Group 7: Authorization Scoping
 
 **Test 7.1 - Facilitator query returns only own assignments**
+
 ```
 Given: Facilitator A with uid = "fac-001"
   And: Facilitator B with uid = "fac-002"
@@ -263,6 +288,7 @@ Then: ✅ Query returns only 1 document (fam-001)
 ```
 
 **Test 7.2 - Firestore prevents unauthorized document access by ID**
+
 ```
 Given: Document in facilitatorAssignments for Facilitator B
   And: Facilitator A knows exact document ID
@@ -277,6 +303,7 @@ Then: ❌ Read fails if documentId is for another facilitator
 ### Test Group 8: Field-Level Access
 
 **Test 8.1 - No parent name exposed through facilitator queries**
+
 ```
 Given: Facilitator A assigned to Child 1
 When: Facilitator reads child and progress data
@@ -285,6 +312,7 @@ Then: ✅ Data contains: childName, avatar, progress
 ```
 
 **Test 8.2 - No parent insights in facilitator view**
+
 ```
 Given: Facilitator A assigned to Child 1
   And: parentInsights collection has data
@@ -299,6 +327,7 @@ Then: ❌ No parentInsights documents returned
 ### Test Group 9: Signal Derivation Rules
 
 **Test 9.1 - Support signal "not-started" = 0 completed**
+
 ```
 Given: Child with 0 completed journeyProgress items
 When: Support signal is derived
@@ -306,6 +335,7 @@ Then: ✅ Signal = "not-started"
 ```
 
 **Test 9.2 - Support signal "on-track" = 30%+ completion**
+
 ```
 Given: Child with 5/14 (35.7%) completed items
 When: Support signal is derived
@@ -313,6 +343,7 @@ Then: ✅ Signal = "on-track"
 ```
 
 **Test 9.3 - Support signal "on-track" = recent activity within 2 days**
+
 ```
 Given: Child with 2/14 (14.3%) completed items
   And: Last activity timestamp = 1 day ago
@@ -321,6 +352,7 @@ Then: ✅ Signal = "on-track" (despite low completion)
 ```
 
 **Test 9.4 - Support signal "needs-support" = <30% + inactive >2 days**
+
 ```
 Given: Child with 3/14 (21.4%) completed items
   And: Last activity timestamp = 3 days ago
@@ -520,4 +552,4 @@ When setting up automated testing infrastructure in H3.3:
 ---
 
 **Test Specification Complete**  
-*Ready for H3.3 Testing Infrastructure Implementation*
+_Ready for H3.3 Testing Infrastructure Implementation_

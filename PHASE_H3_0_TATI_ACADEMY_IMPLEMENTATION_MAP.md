@@ -1,40 +1,47 @@
 # PHASE H3.0 — TATI ACADEMY IMPLEMENTATION MAP
+
 **Status:** READ-ONLY DISCOVERY COMPLETE  
 **Date:** 2026-09-26  
-**Scope:** Academy Foundation (Facilitator Experience)  
+**Scope:** Academy Foundation (Facilitator Experience)
 
 ---
 
 ## EXECUTIVE SUMMARY
 
 **Academy Backend Readiness: 75%** ✅
+
 - Facilitator role already defined
 - Firestore security rules support facilitator access
 - Child data model supports facilitator assignment
 - User role assignment system in place
 
 **Academy Frontend Readiness: 0%**
+
 - No Academy routes exist
 - No Academy components exist
 - No Academy navigation or shell implemented
 
 **MVP Blockers: NONE CRITICAL**
+
 - Can launch with provisional data provisioning (manual cohort setup)
 - No schema gaps for MVP scope
 
 **Security Blockers: NONE**
+
 - Firestore rules already support facilitator access patterns
 - No rule weakening required
 
 **Data Gaps: ONLY cohort/school relationship model missing**
+
 - Can implement via Firestore document structure (no schema migration required)
 - Does NOT require schema changes to Supabase
 
 **Frontend Screens Required: 9-11 screens** (see Section 8)
 
 **Estimated Implementation Phases:**
+
 - H3.1 (Facilitator Auth): 2-3 days
-- H3.2 (Academy Shell): 2-3 days  
+- H3.2 (Academy Shell): 2-3 days
 - H3.3 (Dashboard + Cohorts): 3-4 days
 - H3.4 (Learner + Sessions): 3-4 days
 - H3.5 (Results/Debrief): 2-3 days
@@ -54,12 +61,12 @@ export type AppRole = "parent" | "child" | "facilitator" | "admin";
 
 **Status:** All four roles already exist in code.
 
-| Role | Location | Status | Details |
-|------|----------|--------|---------|
-| **parent** | Supabase Auth + Firestore | ✅ Implemented | Email/password, Google OAuth, family membership |
-| **child** | Child session cookie | ✅ Implemented | TATI ID + 4-digit PIN, session-based |
-| **facilitator** | User roles table + Firestore | ✅ Defined | Not yet activated in UI; infrastructure ready |
-| **admin** | User roles table + Firestore | ✅ Defined | Infrastructure ready |
+| Role            | Location                     | Status         | Details                                         |
+| --------------- | ---------------------------- | -------------- | ----------------------------------------------- |
+| **parent**      | Supabase Auth + Firestore    | ✅ Implemented | Email/password, Google OAuth, family membership |
+| **child**       | Child session cookie         | ✅ Implemented | TATI ID + 4-digit PIN, session-based            |
+| **facilitator** | User roles table + Firestore | ✅ Defined     | Not yet activated in UI; infrastructure ready   |
+| **admin**       | User roles table + Firestore | ✅ Defined     | Infrastructure ready                            |
 
 ### 1.2 Firestore Data Model (VERIFIED)
 
@@ -86,15 +93,15 @@ firestore
 
 **Academy-Relevant Collections:**
 
-| Collection | Contents | Facilitator Access | Notes |
-|---|---|---|---|
-| `families` | Family metadata | NO (via assignment) | Accessed through child → family relationship |
-| `families/{familyId}/children/{childId}` | Child profile, tier, curriculum_level | YES (if assigned) | Child must have facilitatorUids array |
-| `families/{familyId}/children/{childId}/journeyProgress` | Lesson/scenario/reflection progress | YES (if assigned) | Read-only to facilitators |
-| `families/{familyId}/children/{childId}/assessmentAttempts` | Assessment results, competency scores | YES (if assigned) | Read-only to facilitators |
-| `families/{familyId}/children/{childId}/scenarioSessions` | Scenario state, decisions, outcomes | YES (if assigned) | Read-only to facilitators |
-| `families/{familyId}/children/{childId}/competencies` | Skill/competency levels | YES (if assigned) | Read-only to facilitators |
-| `families/{familyId}/children/{childId}/achievements` | Badges earned | YES (if assigned) | Read-only to facilitators |
+| Collection                                                  | Contents                              | Facilitator Access  | Notes                                        |
+| ----------------------------------------------------------- | ------------------------------------- | ------------------- | -------------------------------------------- |
+| `families`                                                  | Family metadata                       | NO (via assignment) | Accessed through child → family relationship |
+| `families/{familyId}/children/{childId}`                    | Child profile, tier, curriculum_level | YES (if assigned)   | Child must have facilitatorUids array        |
+| `families/{familyId}/children/{childId}/journeyProgress`    | Lesson/scenario/reflection progress   | YES (if assigned)   | Read-only to facilitators                    |
+| `families/{familyId}/children/{childId}/assessmentAttempts` | Assessment results, competency scores | YES (if assigned)   | Read-only to facilitators                    |
+| `families/{familyId}/children/{childId}/scenarioSessions`   | Scenario state, decisions, outcomes   | YES (if assigned)   | Read-only to facilitators                    |
+| `families/{familyId}/children/{childId}/competencies`       | Skill/competency levels               | YES (if assigned)   | Read-only to facilitators                    |
+| `families/{familyId}/children/{childId}/achievements`       | Badges earned                         | YES (if assigned)   | Read-only to facilitators                    |
 
 ### 1.3 Firestore Security Rules (VERIFIED)
 
@@ -121,21 +128,23 @@ function canAccessChild(familyId, childId) {
 ✅ `families/{familyId}/children/{childId}/assessmentAttempts/*` — can read assessments  
 ✅ `families/{familyId}/children/{childId}/scenarioSessions/*` — can read scenarios  
 ✅ `families/{familyId}/children/{childId}/competencies/*` — can read competencies  
-✅ `families/{familyId}/children/{childId}/achievements/*` — can read achievements  
+✅ `families/{familyId}/children/{childId}/achievements/*` — can read achievements
 
 **Facilitator Write Access (Restricted - by design):**
 
 ❌ Cannot write child profile data (read-only)  
 ❌ Cannot write journey progress (read-only)  
 ❌ Cannot write scenario sessions (read-only)  
-❌ Cannot write competencies (read-only)  
+❌ Cannot write competencies (read-only)
 
 **Why This Is Correct:**
+
 - Data integrity: Scenario sessions are verified by G5.1 engine server-side
 - Child autonomy: Progress must come from child actions, not facilitator manipulation
 - Audit trail: All data writes come from authenticated child, not facilitator
 
 **Facilitator Can:**
+
 - READ all assigned child data (complete visibility)
 - READ cohort aggregates (if aggregated server-side)
 - SUBMIT feedback/observations (new collection if needed)
@@ -152,7 +161,7 @@ function canAccessChild(familyId, childId) {
 ✅ `requireFacilitator()` function in `authorization.server.ts`  
 ✅ Role-checking infrastructure  
 ✅ User roles table in Supabase (migrations/0008)  
-✅ Firebase rules support for facilitator role  
+✅ Firebase rules support for facilitator role
 
 **What's Missing:**
 
@@ -160,7 +169,7 @@ function canAccessChild(familyId, childId) {
 ❌ Facilitator login route  
 ❌ Account provisioning workflow (how do facilitators get accounts?)  
 ❌ Email/password or SSO configuration  
-❌ Role assignment UI or admin provisioning  
+❌ Role assignment UI or admin provisioning
 
 **Implementation Required:**
 
@@ -171,6 +180,7 @@ Frontend: /academy/login route (similar to /login but for facilitators)
 ```
 
 **Recommendation for MVP:**
+
 - Reuse Supabase Auth (email/password)
 - Create facilitator through admin panel (manual provisioning)
 - Email confirmation workflow
@@ -182,7 +192,7 @@ Frontend: /academy/login route (similar to /login but for facilitators)
 
 ✅ `facilitatorUids` array on child document  
 ✅ Firestore rule checks `facilitatorUids.hasAny([request.auth.uid])`  
-✅ Authorization function: `isAssignedFacilitator()`  
+✅ Authorization function: `isAssignedFacilitator()`
 
 **How It Works:**
 
@@ -198,11 +208,13 @@ families/{familyId}/children/{childId}
 ```
 
 **Current Implementation:**
+
 - Child document can contain multiple facilitator UIDs
 - Firestore rule: facilitator can read if their UID is in the array
 - Parent/guardian can still read (not affected)
 
 **Provisioning Gap:**
+
 - How does a facilitator UID get added to a child's facilitatorUids array?
 - **Answer:** Must be done by parent OR admin OR trusted server function
 - **MVP Approach:** Admin manually adds facilitator UID to child (requires Admin UI or server CLI)
@@ -214,7 +226,7 @@ families/{familyId}/children/{childId}
 ❌ No cohort/school collection in Firestore  
 ❌ No Supabase table for cohorts/schools  
 ❌ No facilitator-to-cohort relationship  
-❌ No learner-to-cohort relationship  
+❌ No learner-to-cohort relationship
 
 **What Needs to Be Modeled:**
 
@@ -262,12 +274,14 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId}
 ```
 
 **Pros:**
+
 - No Supabase migration needed
 - Completely flexible
 - Can be managed entirely in Firestore UI during MVP
 - Easy to modify structure before pilot
 
 **Cons:**
+
 - Requires Firestore security rules for org/cohort access
 - No referential integrity at database level
 
@@ -283,10 +297,12 @@ CREATE TABLE cohort_enrollments (...)
 ```
 
 **Pros:**
+
 - Referential integrity via foreign keys
 - Can query from PostgreSQL
 
 **Cons:**
+
 - Adds migration burden
 - Synchronization needed between Supabase + Firestore
 - NOT RECOMMENDED for MVP
@@ -348,7 +364,7 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ✅ Read competencies  
 ✅ Read achievements  
 ✅ Update journey progress (with score constraints)  
-✅ Submit feedback (if added)  
+✅ Submit feedback (if added)
 
 **Currently Blocked:**
 
@@ -356,7 +372,7 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ❌ Write assessment attempts directly (must go through child)  
 ❌ Delete any child data  
 ❌ Modify child profile  
-❌ Add/remove facilitator assignments (requires parent or admin)  
+❌ Add/remove facilitator assignments (requires parent or admin)
 
 ### 3.3 What Rules Need to Be Added for Academy
 
@@ -385,21 +401,21 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 
 **Source:** `src/lib/auth/child-learning.functions.ts`, Firestore structure
 
-| Junior Activity | Authoritative Data | Collection/Table | Facilitator Can Read? | Notes |
-|---|---|---|---|---|
-| **Login** | child_sessions + child_credentials | Supabase | ❌ NO | Facilitator not involved in child login |
-| **Profile view** | families/{familyId}/children/{childId} | Firestore | ✅ YES (if assigned) | Name, age, avatar, tier, curriculum_level |
-| **Lesson start** | families/{familyId}/children/{childId}/journeyProgress | Firestore | ✅ YES (read-only) | Records item_type="lesson", status="started" |
-| **Lesson complete** | families/{familyId}/children/{childId}/journeyProgress | Firestore | ✅ YES (read-only) | Updates status="completed", score=points |
-| **Scenario start** | families/{familyId}/children/{childId}/scenarioSessions | Firestore | ✅ YES (read-only) | Creates session with state, decisions array |
-| **Scenario decision** | families/{familyId}/children/{childId}/scenarioSessions/{key}/decisions | Firestore | ✅ YES (read-only) | Records each choiceId + consequence |
-| **Scenario complete** | families/{familyId}/children/{childId}/scenarioSessions | Firestore | ✅ YES (read-only) | Saves final state (money saved/spent, competencies) |
-| **Assessment start** | families/{familyId}/children/{childId}/assessmentAttempts | Firestore | ✅ YES (read-only) | Creates attempt document |
-| **Assessment response** | families/{familyId}/children/{childId}/assessmentAttempts/{attemptId} | Firestore | ✅ YES (read-only) | Stores responses (questions + answers) |
-| **Assessment complete** | families/{familyId}/children/{childId}/assessmentAttempts | Firestore | ✅ YES (read-only) | Scores and stores points, competency_scores |
-| **Reflection** | families/{familyId}/children/{childId}/journeyProgress | Firestore | ✅ YES (read-only) | Records reflection item with response |
-| **Competency award** | families/{familyId}/children/{childId}/competencies | Firestore | ✅ YES (read-only) | Created by assessment engine |
-| **Achievement award** | families/{familyId}/children/{childId}/achievements | Firestore | ✅ YES (read-only) | Created by achievement system |
+| Junior Activity         | Authoritative Data                                                      | Collection/Table | Facilitator Can Read? | Notes                                               |
+| ----------------------- | ----------------------------------------------------------------------- | ---------------- | --------------------- | --------------------------------------------------- |
+| **Login**               | child_sessions + child_credentials                                      | Supabase         | ❌ NO                 | Facilitator not involved in child login             |
+| **Profile view**        | families/{familyId}/children/{childId}                                  | Firestore        | ✅ YES (if assigned)  | Name, age, avatar, tier, curriculum_level           |
+| **Lesson start**        | families/{familyId}/children/{childId}/journeyProgress                  | Firestore        | ✅ YES (read-only)    | Records item_type="lesson", status="started"        |
+| **Lesson complete**     | families/{familyId}/children/{childId}/journeyProgress                  | Firestore        | ✅ YES (read-only)    | Updates status="completed", score=points            |
+| **Scenario start**      | families/{familyId}/children/{childId}/scenarioSessions                 | Firestore        | ✅ YES (read-only)    | Creates session with state, decisions array         |
+| **Scenario decision**   | families/{familyId}/children/{childId}/scenarioSessions/{key}/decisions | Firestore        | ✅ YES (read-only)    | Records each choiceId + consequence                 |
+| **Scenario complete**   | families/{familyId}/children/{childId}/scenarioSessions                 | Firestore        | ✅ YES (read-only)    | Saves final state (money saved/spent, competencies) |
+| **Assessment start**    | families/{familyId}/children/{childId}/assessmentAttempts               | Firestore        | ✅ YES (read-only)    | Creates attempt document                            |
+| **Assessment response** | families/{familyId}/children/{childId}/assessmentAttempts/{attemptId}   | Firestore        | ✅ YES (read-only)    | Stores responses (questions + answers)              |
+| **Assessment complete** | families/{familyId}/children/{childId}/assessmentAttempts               | Firestore        | ✅ YES (read-only)    | Scores and stores points, competency_scores         |
+| **Reflection**          | families/{familyId}/children/{childId}/journeyProgress                  | Firestore        | ✅ YES (read-only)    | Records reflection item with response               |
+| **Competency award**    | families/{familyId}/children/{childId}/competencies                     | Firestore        | ✅ YES (read-only)    | Created by assessment engine                        |
+| **Achievement award**   | families/{familyId}/children/{childId}/achievements                     | Firestore        | ✅ YES (read-only)    | Created by achievement system                       |
 
 ### 4.2 Data Aggregation for Academy
 
@@ -414,6 +430,7 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 7. **Skill development**: Competency growth over time
 
 **Current Data Supports All of These:**
+
 - ✅ journeyProgress: item_type, item_id, status, score, created_at, updated_at
 - ✅ assessmentAttempts: points, max_points, competency_scores, completed_at
 - ✅ scenarioSessions: decisions array (can count decisions to infer engagement)
@@ -421,6 +438,7 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 - ✅ achievements: awarded_at
 
 **No Backend Code Changes Needed:**
+
 - Facilitator can read all data via Firestore
 - No N+1 queries (data is denormalized)
 - Can aggregate client-side or via server function
@@ -462,6 +480,7 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 ### 5.3 MVP Scope (Priority 1-3)
 
 **Priority 1 (Core):**
+
 - Facilitator login
 - See assigned cohorts
 - View cohort roster (learner list with status)
@@ -469,11 +488,13 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 - See overall completion %
 
 **Priority 2 (Operational):**
+
 - Session overview (select which activity)
 - Session monitor (watch participation)
 - Results debrief (what did learners learn)
 
 **Priority 3 (Foundation for Future):**
+
 - Facilitator notes (not in MVP, but schema-ready)
 - Parent handoff visibility (do parents have account?)
 
@@ -498,6 +519,7 @@ match /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId} {
 ```
 
 **MVP Constraints:**
+
 - Facilitator signup is NOT self-service (requires admin)
 - No school code verification (pilot is small, manual)
 - Authentication = Supabase Auth (reuse existing)
@@ -515,11 +537,11 @@ export const Route = createFileRoute("/academy")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/academy/login" });
-    
+
     // Check user has facilitator role
     const user = requireFacilitator(context);
     return { user };
-  }
+  },
 });
 ```
 
@@ -533,6 +555,7 @@ export const Route = createFileRoute("/academy")({
 - Cache: Optional Redis/memory cache of user roles
 
 **No New Implementation Needed:**
+
 - Reuse existing parent auth flow
 - Reuse role-checking functions
 - Add only route protection
@@ -541,23 +564,24 @@ export const Route = createFileRoute("/academy")({
 
 ## SECTION 7: AUTHORIZATION SECURITY MATRIX
 
-| Resource | Facilitator Can | Constraint | Example |
-|---|---|---|---|
-| Own profile | Read/Update | Only own uid | facilitator-uid-1 reads own email |
-| Assigned cohort(s) | Read | Must be in facilitatorUids array | See cohort roster |
-| Assigned learners | Read | Must be in child's facilitatorUids array | See Kwame's progress |
-| Learner profile | Read (name, age, avatar only) | Via assignment | Cannot change learner profile |
-| Learner journeyProgress | Read | Via assignment + Firestore rules | See which lessons learner did |
-| Learner assessments | Read (results only) | Via assignment | See competency scores |
-| Learner scenarios | Read (outcomes only) | Via assignment | See money earned/saved |
-| Learner competencies | Read | Via assignment | See skill levels |
-| Learner achievements | Read | Via assignment | See badges earned |
-| Parent insights | Read (summary only) | Via assignment + rules | See debrief notes (not parent-private content) |
-| Cohort data | Read | Facilitator in facilitatorUids | See roster, aggregate stats |
-| Other facilitator's data | None | Isolation | Cannot see other facilitators' learners |
-| Admin operations | None | Role denied | Cannot create users, assign roles |
+| Resource                 | Facilitator Can               | Constraint                               | Example                                        |
+| ------------------------ | ----------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| Own profile              | Read/Update                   | Only own uid                             | facilitator-uid-1 reads own email              |
+| Assigned cohort(s)       | Read                          | Must be in facilitatorUids array         | See cohort roster                              |
+| Assigned learners        | Read                          | Must be in child's facilitatorUids array | See Kwame's progress                           |
+| Learner profile          | Read (name, age, avatar only) | Via assignment                           | Cannot change learner profile                  |
+| Learner journeyProgress  | Read                          | Via assignment + Firestore rules         | See which lessons learner did                  |
+| Learner assessments      | Read (results only)           | Via assignment                           | See competency scores                          |
+| Learner scenarios        | Read (outcomes only)          | Via assignment                           | See money earned/saved                         |
+| Learner competencies     | Read                          | Via assignment                           | See skill levels                               |
+| Learner achievements     | Read                          | Via assignment                           | See badges earned                              |
+| Parent insights          | Read (summary only)           | Via assignment + rules                   | See debrief notes (not parent-private content) |
+| Cohort data              | Read                          | Facilitator in facilitatorUids           | See roster, aggregate stats                    |
+| Other facilitator's data | None                          | Isolation                                | Cannot see other facilitators' learners        |
+| Admin operations         | None                          | Role denied                              | Cannot create users, assign roles              |
 
 **Firestore Rules Enforce:**
+
 - ✅ Child assignment via facilitatorUids array
 - ✅ Cohort assignment via facilitatorUids array (same mechanism)
 - ✅ Parent-private data (parentInsights) NOT accessible to facilitators
@@ -569,18 +593,18 @@ export const Route = createFileRoute("/academy")({
 
 ### 8.1 Core Screens Required
 
-| Screen | Purpose | Data Source | Complexity | Priority |
-|---|---|---|---|---|
-| **H3.1 Academy Login** | Facilitator authentication | Supabase Auth | Low | P1 |
-| **H3.2 Academy Dashboard** | Cohort overview, quick stats | Firestore aggregation | Medium | P1 |
-| **H3.3 Cohorts List** | See assigned cohorts | Firestore cohorts collection | Low | P1 |
-| **H3.4 Cohort Overview** | Cohort stats, learner count, progress % | Firestore enrollment + journey progress | Medium | P2 |
-| **H3.5 Learner Roster** | List of learners in cohort, status | Firestore enrollments + child profiles | Low | P2 |
-| **H3.6 Learner Detail** | Individual learner progress, assessments | Firestore child data | Medium | P2 |
-| **H3.7 Session Overview** | Select activity to run (lesson/scenario/assessment) | Firestore track definition | Low | P2 |
-| **H3.8 Session Monitor** | Watch learners' participation (live) | Firestore journeyProgress (polled/subscribed) | High | P3 |
-| **H3.9 Results Debrief** | Review what learners learned, competencies gained | Firestore assessmentAttempts + competencies | Medium | P3 |
-| **H3.10 Facilitator Profile** | Account settings (email, password change) | Supabase Auth user | Low | P3 |
+| Screen                        | Purpose                                             | Data Source                                   | Complexity | Priority |
+| ----------------------------- | --------------------------------------------------- | --------------------------------------------- | ---------- | -------- |
+| **H3.1 Academy Login**        | Facilitator authentication                          | Supabase Auth                                 | Low        | P1       |
+| **H3.2 Academy Dashboard**    | Cohort overview, quick stats                        | Firestore aggregation                         | Medium     | P1       |
+| **H3.3 Cohorts List**         | See assigned cohorts                                | Firestore cohorts collection                  | Low        | P1       |
+| **H3.4 Cohort Overview**      | Cohort stats, learner count, progress %             | Firestore enrollment + journey progress       | Medium     | P2       |
+| **H3.5 Learner Roster**       | List of learners in cohort, status                  | Firestore enrollments + child profiles        | Low        | P2       |
+| **H3.6 Learner Detail**       | Individual learner progress, assessments            | Firestore child data                          | Medium     | P2       |
+| **H3.7 Session Overview**     | Select activity to run (lesson/scenario/assessment) | Firestore track definition                    | Low        | P2       |
+| **H3.8 Session Monitor**      | Watch learners' participation (live)                | Firestore journeyProgress (polled/subscribed) | High       | P3       |
+| **H3.9 Results Debrief**      | Review what learners learned, competencies gained   | Firestore assessmentAttempts + competencies   | Medium     | P3       |
+| **H3.10 Facilitator Profile** | Account settings (email, password change)           | Supabase Auth user                            | Low        | P3       |
 
 ### 8.2 Design Patterns (Apply H1.0 Design System)
 
@@ -602,7 +626,7 @@ export const Route = createFileRoute("/academy")({
 ✅ Focus rings, motion tokens  
 ❌ Avatar (learner profile should not show photo)  
 ❌ BottomNavigation (use side nav instead)  
-❌ Emoji-based headers (use professional text)  
+❌ Emoji-based headers (use professional text)
 
 ---
 
@@ -611,6 +635,7 @@ export const Route = createFileRoute("/academy")({
 ### 9.1 Academy Dashboard
 
 **Data Needed:**
+
 - Facilitator name
 - List of assigned cohorts (count)
 - Active session info (if any)
@@ -621,6 +646,7 @@ export const Route = createFileRoute("/academy")({
   - Alerts (anyone stuck?)
 
 **Query:**
+
 ```firestore
 GET academyOrganizations/{orgId}/cohorts?faciliatatorUids.contains(userId)
 GET academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments
@@ -633,6 +659,7 @@ GET families/{familyId}/children/{childId}/assessmentAttempts
 ### 9.2 Learner Roster
 
 **Data Needed:**
+
 - Learner name
 - TATI ID (safe identifier, not personal)
 - Progress % (lessons completed / total lessons)
@@ -640,6 +667,7 @@ GET families/{familyId}/children/{childId}/assessmentAttempts
 - Last activity timestamp
 
 **Query:**
+
 ```firestore
 GET academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments
 GET families/{familyId}/children/{childId}
@@ -651,6 +679,7 @@ GET families/{familyId}/children/{childId}/journeyProgress
 ### 9.3 Learner Detail
 
 **Data Needed:**
+
 - Learner profile (name, avatar if allowed, age, curriculum level)
 - Journey progress:
   - Lessons: completed/total, dates
@@ -663,6 +692,7 @@ GET families/{familyId}/children/{childId}/journeyProgress
   - Evidence (which activities built this skill)
 
 **Query:**
+
 ```firestore
 GET families/{familyId}/children/{childId}
 GET families/{familyId}/children/{childId}/journeyProgress
@@ -676,6 +706,7 @@ GET families/{familyId}/children/{childId}/achievements
 ### 9.4 Session Monitor
 
 **Data Needed (Polled/Subscribed):**
+
 - Learners in cohort (list)
 - For each learner:
   - Current status (idle, in-lesson, in-scenario, in-assessment)
@@ -684,6 +715,7 @@ GET families/{familyId}/children/{childId}/achievements
   - Engagement indicator (made choices, answered questions?)
 
 **Query:**
+
 ```firestore
 SUBSCRIBE families/{familyId}/children/{childId}/journeyProgress
   (filter by updatedAt > sessionStartTime)
@@ -697,32 +729,32 @@ SUBSCRIBE families/{familyId}/children/{childId}/journeyProgress
 
 ### 10.1 Reusable Components (From H1.0)
 
-| Component | Use in Academy | Modifications |
-|---|---|---|
-| Button | CTAs, session start, row actions | Sizes: md, lg only (no sm) |
-| Card | Status cards, data containers | Tone: surface (muted background for data) |
-| Page | Shell layout | role="facilitator", no bottom nav |
-| PageHeader | Section headers | No "eyebrow", professional styling |
-| Input | Search, filters | Standard sizing |
-| Select | Cohort picker, filters | Standard sizing |
-| Dialog | Confirm actions (start session, etc) | Standard styling |
-| Table | Learner roster, results table | Sortable headers, pagination |
-| ProgressRing | Cohort completion %, learner progress | Large size (100px+) |
-| Badge | Status indicators (Completed, In Progress, Stuck) | Tone-based: success/warning/neutral |
-| Icon | Navigation, status indicators | 24px size |
-| Tabs | Session phases (overview, monitor, debrief) | Standard styling |
+| Component    | Use in Academy                                    | Modifications                             |
+| ------------ | ------------------------------------------------- | ----------------------------------------- |
+| Button       | CTAs, session start, row actions                  | Sizes: md, lg only (no sm)                |
+| Card         | Status cards, data containers                     | Tone: surface (muted background for data) |
+| Page         | Shell layout                                      | role="facilitator", no bottom nav         |
+| PageHeader   | Section headers                                   | No "eyebrow", professional styling        |
+| Input        | Search, filters                                   | Standard sizing                           |
+| Select       | Cohort picker, filters                            | Standard sizing                           |
+| Dialog       | Confirm actions (start session, etc)              | Standard styling                          |
+| Table        | Learner roster, results table                     | Sortable headers, pagination              |
+| ProgressRing | Cohort completion %, learner progress             | Large size (100px+)                       |
+| Badge        | Status indicators (Completed, In Progress, Stuck) | Tone-based: success/warning/neutral       |
+| Icon         | Navigation, status indicators                     | 24px size                                 |
+| Tabs         | Session phases (overview, monitor, debrief)       | Standard styling                          |
 
 ### 10.2 New Components Required (Academy-Specific)
 
-| Component | Purpose | Props |
-|---|---|---|
-| **LearnerRosterTable** | Display cohort learners | cohortId, learners[], onSelectLearner |
-| **LearnerCard** | Summary of learner status | childId, name, progress%, status |
-| **SessionMonitor** | Live session participation view | sessionId, learners[], realTimeUpdates |
-| **DebriefReport** | Session results summary | sessionId, competencyGains, engagementStats |
-| **CohortStats** | Aggregated cohort metrics | cohortId, totalLearners, completedCount, avgScore |
-| **CompetencyChart** | Visual skill development | competencies[], levels[] |
-| **TimelineChart** | Completion timeline | events[], timestamps[] |
+| Component              | Purpose                         | Props                                             |
+| ---------------------- | ------------------------------- | ------------------------------------------------- |
+| **LearnerRosterTable** | Display cohort learners         | cohortId, learners[], onSelectLearner             |
+| **LearnerCard**        | Summary of learner status       | childId, name, progress%, status                  |
+| **SessionMonitor**     | Live session participation view | sessionId, learners[], realTimeUpdates            |
+| **DebriefReport**      | Session results summary         | sessionId, competencyGains, engagementStats       |
+| **CohortStats**        | Aggregated cohort metrics       | cohortId, totalLearners, completedCount, avgScore |
+| **CompetencyChart**    | Visual skill development        | competencies[], levels[]                          |
+| **TimelineChart**      | Completion timeline             | events[], timestamps[]                            |
 
 ---
 
@@ -730,47 +762,47 @@ SUBSCRIBE families/{familyId}/children/{childId}/journeyProgress
 
 ### 11.1 Authentication Tests
 
-| Test | Scenario | Expected Outcome |
-|---|---|---|
-| Facilitator login | Valid email + password | Redirect to /academy/dashboard |
-| Facilitator login | Invalid password | Error message, stay on login |
-| Facilitator login | Non-facilitator user | Error or redirect to /parent |
-| Non-authenticated access | Visit /academy/dashboard | Redirect to /academy/login |
-| Session expiry | Token expires during session | Error dialog, redirect to login |
+| Test                     | Scenario                     | Expected Outcome                |
+| ------------------------ | ---------------------------- | ------------------------------- |
+| Facilitator login        | Valid email + password       | Redirect to /academy/dashboard  |
+| Facilitator login        | Invalid password             | Error message, stay on login    |
+| Facilitator login        | Non-facilitator user         | Error or redirect to /parent    |
+| Non-authenticated access | Visit /academy/dashboard     | Redirect to /academy/login      |
+| Session expiry           | Token expires during session | Error dialog, redirect to login |
 
 ### 11.2 Authorization Tests (Firestore Rules)
 
-| Test | Scenario | Expected Outcome |
-|---|---|---|
-| Facilitator reads assigned child | facilitator-uid in facilitatorUids | ✅ Success |
-| Facilitator reads unassigned child | facilitator-uid NOT in facilitatorUids | ❌ Permission denied |
-| Facilitator writes to assessment | Try to update assessmentAttempts | ❌ Permission denied (read-only) |
-| Facilitator writes to scenario | Try to update scenarioSessions | ❌ Permission denied (read-only) |
-| Facilitator reads parent insights | Try to access parentInsights | ❌ Permission denied (parent-only) |
-| Admin reads any child | Admin role + any familyId/childId | ✅ Success |
+| Test                               | Scenario                               | Expected Outcome                   |
+| ---------------------------------- | -------------------------------------- | ---------------------------------- |
+| Facilitator reads assigned child   | facilitator-uid in facilitatorUids     | ✅ Success                         |
+| Facilitator reads unassigned child | facilitator-uid NOT in facilitatorUids | ❌ Permission denied               |
+| Facilitator writes to assessment   | Try to update assessmentAttempts       | ❌ Permission denied (read-only)   |
+| Facilitator writes to scenario     | Try to update scenarioSessions         | ❌ Permission denied (read-only)   |
+| Facilitator reads parent insights  | Try to access parentInsights           | ❌ Permission denied (parent-only) |
+| Admin reads any child              | Admin role + any familyId/childId      | ✅ Success                         |
 
 ### 11.3 Data Access Tests
 
-| Test | Scenario | Expected Outcome |
-|---|---|---|
-| Cohort roster loads | GET cohort enrollments | 10+ learners load in <2s |
-| Learner detail loads | GET all learner sub-collections | All data loaded in <3s |
-| Session monitor real-time | Subscribe to journeyProgress | Updates appear in <1s |
-| Empty cohort handled | Cohort with 0 enrollments | Empty state message displays |
-| Learner with no progress | Child never started | "Not started" status displays |
-| Missing assessment | Child started but never assessed | Graceful fallback (shows as incomplete) |
+| Test                      | Scenario                         | Expected Outcome                        |
+| ------------------------- | -------------------------------- | --------------------------------------- |
+| Cohort roster loads       | GET cohort enrollments           | 10+ learners load in <2s                |
+| Learner detail loads      | GET all learner sub-collections  | All data loaded in <3s                  |
+| Session monitor real-time | Subscribe to journeyProgress     | Updates appear in <1s                   |
+| Empty cohort handled      | Cohort with 0 enrollments        | Empty state message displays            |
+| Learner with no progress  | Child never started              | "Not started" status displays           |
+| Missing assessment        | Child started but never assessed | Graceful fallback (shows as incomplete) |
 
 ### 11.4 UI Tests
 
-| Test | Scenario | Expected Outcome |
-|---|---|---|
-| Keyboard navigation | Tab through dashboard | All focusable elements reachable |
-| Screen reader | NVDA/JAWS on roster | Learner names, statuses announced |
-| Mobile tablet | iPad 7.9" view | Content readable, no horizontal scroll |
-| Responsive table | Shrink to 600px | Table converts to card layout |
-| Loading state | Fetch cohort data | Skeleton/spinner displays |
-| Error state | Network error | Retry button visible |
-| Empty state | No cohorts assigned | "You have no cohorts yet" message |
+| Test                | Scenario              | Expected Outcome                       |
+| ------------------- | --------------------- | -------------------------------------- |
+| Keyboard navigation | Tab through dashboard | All focusable elements reachable       |
+| Screen reader       | NVDA/JAWS on roster   | Learner names, statuses announced      |
+| Mobile tablet       | iPad 7.9" view        | Content readable, no horizontal scroll |
+| Responsive table    | Shrink to 600px       | Table converts to card layout          |
+| Loading state       | Fetch cohort data     | Skeleton/spinner displays              |
+| Error state         | Network error         | Retry button visible                   |
+| Empty state         | No cohorts assigned   | "You have no cohorts yet" message      |
 
 ---
 
@@ -788,6 +820,7 @@ FOR EACH learner:
 ```
 
 **Solution:**
+
 - Batch queries or create aggregation function
 - Cache learner profiles in memory during session
 - Use Firestore collection group queries if possible
@@ -800,6 +833,7 @@ EACH subscription creates socket connection
 ```
 
 **Solution:**
+
 - Use Firestore `.limit(50)` per learner
 - Aggregate updates server-side with Cloud Function
 - Poll instead of subscribe for pilot (acceptable latency: 3-5s)
@@ -807,11 +841,13 @@ EACH subscription creates socket connection
 ### 12.2 Caching Strategy
 
 **What to Cache (Client-Side):**
+
 - Cohort list (1 hour)
 - Learner profiles (1 hour)
 - Competency definitions (never change)
 
 **What NOT to Cache:**
+
 - journeyProgress (must be real-time or frequently updated)
 - assessmentAttempts (must be fresh)
 - Achievement awards (must be fresh)
@@ -819,11 +855,13 @@ EACH subscription creates socket connection
 ### 12.3 Pagination Recommendations
 
 **Learner Roster:**
+
 - Show 20 learners per page
 - Total learners usually < 50 (pilot scope)
 - No pagination needed for MVP
 
 **Journey Progress:**
+
 - Show last 5 activities per learner
 - Full timeline available in "See all" modal
 - Loads faster, still useful
@@ -835,26 +873,31 @@ EACH subscription creates socket connection
 ### 13.1 What Facilitators CANNOT See
 
 ❌ **Parent Personal Information**
+
 - Parent email
 - Parent phone
 - Parent name (only if facilitator needs to contact them)
 
 ❌ **Parent-Only Content**
+
 - parentInsights collection (Firestore rule blocks access)
 - Parent feedback submitted to parents
 - Parent account settings
 
 ❌ **Family Data Outside of Assigned Children**
+
 - Siblings of assigned children
 - Other children in family
 - Family address or contact info
 
 ❌ **Behavioral/Psychological Data**
+
 - Not applicable to MVP (data not collected)
 
 ### 13.2 What Facilitators CAN See
 
 ✅ **Assigned Child Profile**
+
 - Name
 - Age
 - Avatar (if parent provided)
@@ -862,12 +905,14 @@ EACH subscription creates socket connection
 - TATI ID (if needed for identification)
 
 ✅ **Assigned Child Learning Data**
+
 - All journey progress
 - All assessment results
 - Competency levels
 - Achievements
 
 ✅ **Assigned Child Engagement**
+
 - Session participation (who was present)
 - Time spent in activities
 - Decisions made (in scenarios)
@@ -1034,7 +1079,7 @@ Academy MVP is complete when:
 ✅ Mobile tablet is usable (not optimized, but functional)  
 ✅ Performance: no view takes > 3 seconds to load  
 ✅ Error states handled (no cohorts, network error, etc)  
-✅ G5.1, G6.1, auth, schema remain unchanged  
+✅ G5.1, G6.1, auth, schema remain unchanged
 
 ---
 
@@ -1066,7 +1111,7 @@ Academy MVP is complete when:
 **Week 1-2:** Develop H3.1-3.3 (Auth + Dashboard + Roster)  
 **Week 3:** Develop H3.4-3.5 (Learner Details + Session)  
 **Week 4:** QA, security testing, manual provisioning setup  
-**Week 5:** Pilot launch with manual facilitator provisioning (no Admin UI yet)  
+**Week 5:** Pilot launch with manual facilitator provisioning (no Admin UI yet)
 
 **Admin UI (Phase 4) can be built parallel or after pilot launch.**
 
@@ -1116,7 +1161,7 @@ This document contains:
 ✅ **Section 16:** Gaps & decisions needed  
 ✅ **Section 17:** Implementation sequence (12-17 days)  
 ✅ **Section 18:** Success criteria  
-✅ **Section 19:** Recommendations  
+✅ **Section 19:** Recommendations
 
 ---
 
@@ -1131,8 +1176,8 @@ This document contains:
 
 **AUTHOR:** AI Assistant (Read-Only Discovery Phase)  
 **STATUS:** READY FOR REVIEW  
-**COMPLETION DATE:** 2026-09-26  
+**COMPLETION DATE:** 2026-09-26
 
 ---
 
-*This document is evidence-based, file-referenced, and ready for implementation planning. No code has been modified. No systems have been changed.*
+_This document is evidence-based, file-referenced, and ready for implementation planning. No code has been modified. No systems have been changed._

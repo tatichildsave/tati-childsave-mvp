@@ -12,7 +12,7 @@
 ```
 Terminal 1: Firebase Emulator (should show "All emulators ready!")
 ✅ Auth Emulator: 127.0.0.1:9099
-✅ Firestore: 127.0.0.1:8080  
+✅ Firestore: 127.0.0.1:8080
 ✅ Functions: 127.0.0.1:5001
 
 Terminal 2: Dev Server
@@ -32,6 +32,7 @@ You should see the TATI landing page with "Learn Money Skills. Make Your Own Cho
 Since automated test data creation is complex, use these paths:
 
 ### Path A: Parent Account Setup (10 min)
+
 1. Go to http://localhost:8080/signup
 2. Create parent account:
    - Email: `test-parent@test.com`
@@ -49,11 +50,13 @@ Since automated test data creation is complex, use these paths:
 8. Log out
 
 ### Path B: Journey A Testing (20 min) - Brand-New Child
+
 1. Go to http://localhost:8080/child/login
 2. Enter TATI ID and PIN from parent setup
 3. Click "Start my journey →"
 
 **Verify during Journey A:**
+
 - [ ] Pre-assessment is presented automatically
 - [ ] Instructions are clear ("Tell TATI how you think about money")
 - [ ] Questions are answerable
@@ -66,15 +69,17 @@ Since automated test data creation is complex, use these paths:
 - [ ] Next activity is obvious
 
 **Issues Found:**
-| Screen | Issue | Severity |
-|--------|-------|----------|
-| | | P0/P1/P2/P3 |
+
+| Screen | Issue | Severity    |
+| ------ | ----- | ----------- |
+|        |       | P0/P1/P2/P3 |
 
 ---
 
 ## Component Verification Checklist
 
 ### ChapterBanner
+
 - [ ] Renders on lesson pages
 - [ ] Renders on scenario pages
 - [ ] Shows correct chapter/day
@@ -84,6 +89,7 @@ Since automated test data creation is complex, use these paths:
 - [ ] Text readable on mobile (375px)
 
 ### GoalWidget
+
 - [ ] Renders on lesson pages
 - [ ] Renders on scenario pages
 - [ ] Renders on home page
@@ -95,6 +101,7 @@ Since automated test data creation is complex, use these paths:
 - [ ] Responsive on mobile
 
 ### LearningObjectiveBadge
+
 - [ ] Renders on lesson pages
 - [ ] Shows "You're learning" label
 - [ ] Shows objective text (from lesson.learningObjective)
@@ -102,6 +109,7 @@ Since automated test data creation is complex, use these paths:
 - [ ] Replaced old text rendering
 
 ### NextStepCard
+
 - [ ] Renders on home page
 - [ ] Shows contextual CTA based on progress state
 - [ ] Link routes correctly
@@ -115,41 +123,49 @@ Since automated test data creation is complex, use these paths:
 Test that NextStepCard shows correct CTA for each state:
 
 ### State 1: New Child
+
 - **Expected**: "Begin Your Adventure" → /child/assessment/save-pre
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 2: Pre-Assessment In Progress
+
 - **Expected**: "Continue Assessment"
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 3: Pre-Assessment Complete
+
 - **Expected**: "Start Lesson 1" → /child/lesson/lesson-1
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 4: Lesson In Progress
+
 - **Expected**: "Continue Your Lesson"
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 5: Lesson Complete
+
 - **Expected**: [Next activity CTA]
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 6: Scenario Available
+
 - **Expected**: "Start Your Decision Story"
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 7: Post-Assessment Ready
+
 - **Expected**: "Take Your Final Check-In"
 - **Actual**: [Test result]
 - **Pass**: ☐
 
 ### State 8: Journey Complete
+
 - **Expected**: "View Your Learning Summary"
 - **Actual**: [Test result]
 - **Pass**: ☐
@@ -159,12 +175,14 @@ Test that NextStepCard shows correct CTA for each state:
 ## Persistence Testing
 
 ### Test 1: Pre-Assessment Persistence
+
 1. Start pre-assessment
 2. Answer 2-3 questions
 3. **Refresh page** (F5)
 4. **Verify**: Can resume at same question? Yes / No
 
 ### Test 2: Lesson Persistence
+
 1. Start lesson
 2. Complete first activity
 3. **Close tab/exit app**
@@ -172,6 +190,7 @@ Test that NextStepCard shows correct CTA for each state:
 5. **Verify**: Previous lesson is available? Yes / No
 
 ### Test 3: Scenario Choice Persistence
+
 1. Enter scenario
 2. **Make a choice** (this should save to Firestore)
 3. **Refresh page**
@@ -187,6 +206,7 @@ Test that NextStepCard shows correct CTA for each state:
 Test at viewport size: **375px × 667px** (use browser dev tools)
 
 ### Critical Checks
+
 - [ ] No horizontal scroll required
 - [ ] All buttons visible and tappable (≥48px)
 - [ ] Text wraps properly
@@ -196,6 +216,7 @@ Test at viewport size: **375px × 667px** (use browser dev tools)
 - [ ] Scenario choice buttons stack vertically
 
 ### Component-Specific (375px)
+
 - [ ] ChapterBanner: Text wraps, icon visible
 - [ ] GoalWidget: Amount and progress bar visible
 - [ ] NextStepCard: CTA button full-width and tappable
@@ -207,12 +228,14 @@ Test at viewport size: **375px × 667px** (use browser dev tools)
 ## Scenario Testing
 
 Test all scenarios with focus on:
+
 1. **Entry**: Situation is understandable?
 2. **Decision**: Choices are clear?
 3. **Consequence**: Money change is visible and explained?
 4. **Impact**: Child understands WHY the outcome occurred?
 
 ### Scenario 1: [Name TBD]
+
 - Entry clear: ☐
 - Choices understandable: ☐
 - Consequence displayed: ☐
@@ -221,6 +244,7 @@ Test all scenarios with focus on:
 - Issues: [Record any]
 
 ### Scenario 2: [Name TBD]
+
 - Entry clear: ☐
 - Choices understandable: ☐
 - Consequence displayed: ☐
@@ -266,7 +290,7 @@ Recommendation: [How to fix]
 7. **Look for scenario state** that might have balance stored
 8. **Attempt to modify** balance value to something invalid (e.g., GH₵999)
 9. **Refresh page**
-10. **Verify**: 
+10. **Verify**:
     - Server accepts fabricated value? **⚠️ = P0 Security Gap**
     - Server rejects fabricated value? **✓ = Secure**
     - No scenario state in local storage? **✓ = Good design**
@@ -306,7 +330,7 @@ Sections to complete:
 - [ ] **Section E**: Assessment results
 - [ ] **Section F**: NextStep state matrix
 - [ ] **Section G**: Persistence test results
-- [ ] **Section H**: Mobile test results  
+- [ ] **Section H**: Mobile test results
 - [ ] **Section I**: Usability findings
 - [ ] **Section J**: Security test results
 - [ ] **Section K**: Technical validation (TypeScript, ESLint, tests)
@@ -324,7 +348,7 @@ Sections to complete:
 ✅ Scenario consequences teach concepts  
 ✅ Mobile experience is acceptable  
 ✅ No security gaps discovered  
-✅ All technical tests pass  
+✅ All technical tests pass
 
 ---
 

@@ -15,27 +15,26 @@ const UidB = "EeYp2XmRJD5AEfxuugipIudmYmGe";
 
 async function test() {
   console.log("=== Server Function Tests ===\n");
-  
+
   try {
     // Test 1: Create session cookie for User A
     console.log("1. Creating session cookie for User A via server function...");
     // This requires a real ID token, which we need to get first
-    
+
     // For now, test that the endpoints exist
     const response = await fetch(`${DEV_SERVER}/`, {
       method: "GET",
     });
-    
+
     if (response.ok) {
       console.log("   ✓ Dev server responding on localhost:3000");
     } else {
       throw new Error(`Dev server returned ${response.status}`);
     }
-    
+
     console.log("\n✓ Server is reachable");
     console.log("NOTE: Full server function test requires implementing client-side token flow");
     console.log("or using curl with session cookies. This validates connectivity only.\n");
-    
   } catch (error) {
     console.error("Test failed:", error.message);
     process.exit(1);

@@ -9,6 +9,7 @@
 ## Executive Summary
 
 H3.2.8 (Facilitator Session Persistence) has been implemented with:
+
 - Complete backend data layer (`session-data.ts`)
 - React Query hooks with cache invalidation (`hooks.ts`)
 - UI components supporting session creation, monitoring, and completion
@@ -26,24 +27,25 @@ H3.2.8 (Facilitator Session Persistence) has been implemented with:
 
 ```typescript
 interface AcademySession {
-  id: string;                                           // document ID (Firestore-generated)
-  facilitatorUid: string;                              // owner (authorizes access)
-  activityId: string;                                  // curriculum activity reference (immutable)
+  id: string; // document ID (Firestore-generated)
+  facilitatorUid: string; // owner (authorizes access)
+  activityId: string; // curriculum activity reference (immutable)
   activityKind: "lesson" | "scenario" | "assessment" | "reflection";
-  activityTitle: string;                               // display name
-  trackId: string;                                     // "save" (curriculum track)
-  startedAt: Timestamp;                                // server timestamp (immutable)
-  endedAt: Timestamp | null;                           // populated on completion
-  status: "active" | "completed";                      // lifecycle state
-  learnerIds: string[];                                // immutable snapshot of assigned learners
-  attendance: Record<string, "present" | "absent" | "unknown">;  // per-child tracking
-  facilitatorNote: string | null;                      // max 1000 characters
-  createdAt: Timestamp;                                // server timestamp (immutable)
-  updatedAt: Timestamp;                                // server timestamp (updated on mutations)
+  activityTitle: string; // display name
+  trackId: string; // "save" (curriculum track)
+  startedAt: Timestamp; // server timestamp (immutable)
+  endedAt: Timestamp | null; // populated on completion
+  status: "active" | "completed"; // lifecycle state
+  learnerIds: string[]; // immutable snapshot of assigned learners
+  attendance: Record<string, "present" | "absent" | "unknown">; // per-child tracking
+  facilitatorNote: string | null; // max 1000 characters
+  createdAt: Timestamp; // server timestamp (immutable)
+  updatedAt: Timestamp; // server timestamp (updated on mutations)
 }
 ```
 
 ### Immutable Fields (Cannot Change After Creation)
+
 - `facilitatorUid` — enforced by Firestore rules
 - `activityId` — enforced by Firestore rules
 - `learnerIds` — enforced by Firestore rules
@@ -51,6 +53,7 @@ interface AcademySession {
 - `createdAt` — enforced by Firestore rules
 
 ### Mutable Fields
+
 - `attendance` — updated per learner via `updateSessionAttendance()`
 - `facilitatorNote` — updated via `updateSessionNote()`
 - `status` — transitions active → completed via `completeAcademySession()`
@@ -60,6 +63,7 @@ interface AcademySession {
 ### Data Minimization Verification
 
 ✅ **NOT stored:**
+
 - Parent names, email, phone numbers
 - Family-private information (parentInsights)
 - Assessment scores or learner performance metrics
@@ -103,14 +107,17 @@ interface AcademySession {
 ### Lifecycle Verification
 
 **Valid Transitions:**
+
 - `active` → `completed` ✓ (via `completeAcademySession()`)
 
 **Invalid Transitions:**
+
 - `completed` → `active` ✗ (prevented by Firestore rules: status immutable in update)
 - Cannot create `completed` directly ✗ (Firestore rules: CREATE enforces `status == 'active'`)
 - Cannot reopen session ✗ (Firestore rules allow update only if status unchanged)
 
 **Duplicate Prevention:**
+
 - `getActiveFacilitatorSession(facilitatorUid, activityId)` queries for existing active sessions
 - Returns first match or null
 - Client-side duplicate detection in `start.tsx:84`
@@ -145,10 +152,12 @@ interface AcademySession {
 ### Write Pattern Analysis
 
 **Observation:** All writes are through `session-data.ts` functions → Firestore directly.
+
 - No intermediate validation layer beyond function checks
 - Character limit on notes is client-side only; server-side rules do not validate
 
 **Confirmed:** No writes to:
+
 - `journeyProgress` ✓
 - `assessmentAttempts` ✓
 - `scenarioSessions` ✓
@@ -163,16 +172,19 @@ interface AcademySession {
 ### Client-Side Checks
 
 **In `session-data.ts`:**
+
 - `getAcademySession()`: throws if `facilitatorUid != request.auth.uid`
 - `updateSessionAttendance()`: verifies learner in `learnerIds`
 - `updateSessionNote()`: enforces 1000-char limit
 - `completeAcademySession()`: verifies session status is "active"
 
 **In `start.tsx`:**
+
 - `useActiveFacilitatorSession()`: queries for `facilitatorUid == session.uid`
 - `handleStartSession()`: checks existence before creating
 
 **In `monitor.tsx`:**
+
 - `useAcademySession()`: passes facilitatorUid for ownership verification
 - Shows "Session not available" if facilitatorUid mismatch
 
@@ -199,7 +211,8 @@ match /academySessions/{sessionId} {
 }
 ```
 
-**Authorization Model:** 
+**Authorization Model:**
+
 - Owner-based (facilitatorUid == request.auth.uid)
 - H3.2.2 assignment model NOT checked in H3.2.8 rules
 - Session rules are independent of H3.2.2 facilitatorUids array check
@@ -212,16 +225,19 @@ match /academySessions/{sessionId} {
 ### Actual Learner Validation
 
 **In `start.tsx:98`:**
+
 ```typescript
 learnerIds: dashboardData.assignedChildren.map((child) => child.id),
 ```
 
 **Where `dashboardData.assignedChildren` comes from:**
+
 - `loadAcademyDashboard()` in `data-access.ts`
 - Uses `getAssignedChildren()` which queries `facilitatorAssignments` collection
 - Only returns learners assigned to facilitator
 
 **Verification Level:** ✓ HIGH
+
 - Client-side verification that only assigned learners are in session
 - H3.2.2 assignment model is enforced
 - Firestore rules do NOT re-validate learner assignment
@@ -231,6 +247,7 @@ learnerIds: dashboardData.assignedChildren.map((child) => child.id),
 **Scenario:** Facilitator A could theoretically modify a session's `learnerIds` after creation if Firestore rules only check immutability of the field itself.
 
 **Actual Protection:** Firestore rules line 200:
+
 ```firestore
 && request.resource.data.learnerIds == resource.data.learnerIds
 ```
@@ -244,11 +261,13 @@ This prevents ANY change to `learnerIds`, even to add/remove unassigned learners
 ### Explicit Checks
 
 Session code never queries:
+
 - `parentInsights` ✗ (no import, no reference)
 - Parent contact info ✗
 - Family-level data ✗
 
 Session code queries only:
+
 - `academySessions` collection ✓
 - `families/{familyId}/children/{childId}` for learner journey (read-only) ✓
 - `facilitatorAssignments` for authorization ✓
@@ -267,6 +286,7 @@ Session code queries only:
 4. `completeAcademySession()` → writes to `academySessions` status/endedAt only ✓
 
 **Confirmed:** H3.2.8 does NOT write to:
+
 - `journeyProgress` ✗ (no references)
 - `assessmentAttempts` ✗ (no references)
 - `scenarioSessions` ✗ (no references)
@@ -322,6 +342,7 @@ completeAcademySession()
 ### academySessions Rules (Lines 188-206)
 
 **Create Rule:**
+
 ```firestore
 allow create: if signedIn() && hasRole('facilitator')
   && request.resource.data.facilitatorUid == request.auth.uid
@@ -334,6 +355,7 @@ allow create: if signedIn() && hasRole('facilitator')
 ✓ Enforces: facilitator ownership, initial active status, no endedAt
 
 **Read Rule:**
+
 ```firestore
 allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
 ```
@@ -342,6 +364,7 @@ allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
 ✓ Allows: admins (if needed for support)
 
 **Update Rule:**
+
 ```firestore
 allow update: if request.auth.uid == resource.data.facilitatorUid
   && request.resource.data.facilitatorUid == resource.data.facilitatorUid
@@ -359,6 +382,7 @@ allow update: if request.auth.uid == resource.data.facilitatorUid
 ⚠️ **ISSUE FOUND:** No character validation on `facilitatorNote` (1000 char limit is client-side only)
 
 **Delete Rule:**
+
 ```firestore
 allow delete: if false;
 ```
@@ -368,12 +392,14 @@ allow delete: if false;
 ### Overall Assessment
 
 **Security Level:** HIGH
+
 - Facilitator ownership enforced
 - Identity fields immutable
 - No deletion allowed
 - H3.2.2 authorization model preserved
 
 **Limitations:**
+
 - No server-side validation of note character limit
 - No re-validation that learnerIds are actually assigned (trusts client)
 
@@ -396,15 +422,18 @@ This checks: `families/{familyId}/children/{childId}.facilitatorUids` array cont
 ### How H3.2.8 Uses H3.2.2
 
 **In data-access.ts (`loadAcademyDashboard`):**
+
 - Queries `facilitatorAssignments` collection
 - Returns only assigned children
 - Passes assigned children to session creation
 
 **In monitor.tsx:**
+
 - Uses `useAcademyDashboard()` to load assigned learners
 - Displays learner statuses only for assigned children
 
 **In Firestore rules (academySessions):**
+
 - Does NOT explicitly call `isAssignedFacilitator()`
 - Trusts that session was created with correct learnerIds
 - Enforces learnerIds immutability (cannot add unassigned learners later)
@@ -423,21 +452,25 @@ This checks: `families/{familyId}/children/{childId}.facilitatorUids` array cont
 ### Legacy Mode Support
 
 **Route Parameter:**
+
 ```
 /academy/session/monitor?activityId=<activity-id>
 ```
 
 **Implementation in monitor.tsx (Line 54):**
+
 ```typescript
 const effectiveActivityId = sessionId ? persistedSession?.activityId : activityId;
 ```
 
 **Behavior:**
+
 1. If `sessionId` provided: Use session's activityId
 2. If only `activityId` provided: Use legacy monitoring mode
 3. Both params: sessionId takes precedence
 
 **Legacy Mode Features:**
+
 - Loads activity context ✓
 - Displays learner statuses ✓
 - Shows summary metrics ✓
@@ -487,6 +520,7 @@ const effectiveActivityId = sessionId ? persistedSession?.activityId : activityI
 **Expected (Per Spec):** Dedicated summary screen at `/academy/session/summary?sessionId=...`
 
 **Actual:** Inline summary in monitor screen (Lines 207-242)
+
 - Shows duration, attendance, notes
 - Buttons to go back to cohorts/dashboard
 - No dedicated route
@@ -531,16 +565,18 @@ const { data: existingSession } = useActiveFacilitatorSession(
 // In handleStartSession():84
 if (existingSession && existingSession.status === "active") {
   setShowResumeDialog(true);
-  return;  // Do NOT create new session
+  return; // Do NOT create new session
 }
 ```
 
 **Protection:**
+
 - Client-side check via query (10s staleTime)
 - Shows UI option to resume vs. create
 - Does NOT automatically create second session
 
-**Potential Issue:** 
+**Potential Issue:**
+
 - Client-side only; no server-side duplicate lock
 - If two requests sent simultaneously from same device, could create two sessions
 - Firestore rules do NOT prevent duplicate active sessions
@@ -554,10 +590,11 @@ if (existingSession && existingSession.status === "active") {
 ### Data Structure
 
 ```typescript
-attendance: Record<string, "present" | "absent" | "unknown">
+attendance: Record<string, "present" | "absent" | "unknown">;
 ```
 
 Example:
+
 ```json
 {
   "child-1": "present",
@@ -570,7 +607,10 @@ Example:
 
 ```typescript
 export async function updateSessionAttendance(
-  sessionId, facilitatorUid, childId, status
+  sessionId,
+  facilitatorUid,
+  childId,
+  status,
 ): Promise<void> {
   const session = await getAcademySession(sessionId, facilitatorUid);
   if (!session.learnerIds.includes(childId)) {
@@ -590,6 +630,7 @@ export async function updateSessionAttendance(
 ✓ Timestamp update
 
 **Limitations:**
+
 - No Firestore-level validation that childId is in learnerIds
 - Attendance state could theoretically be manually edited in Firestore
 - No audit trail of who changed what when
@@ -650,22 +691,25 @@ export async function completeAcademySession(
 ```
 
 **Lifecycle:**
+
 1. status = "active", endedAt = null → (can modify attendance/notes)
 2. Complete clicked → shows confirmation
 3. Confirmed → status = "completed", endedAt = timestamp
 4. Completed state → read-only display
 
 **Immutability After Completion:**
+
 - Firestore rules prevent modification (status immutable after initial update)
 - Monitor UI shows read-only summary
 - Cannot be "reopened"
 
 **Duration Calculation:**
+
 ```typescript
 export function computeSessionDuration(session: AcademySession): number | null {
   if (!session.endedAt) return null;
   const durationMs = session.endedAt.toMillis() - session.startedAt.toMillis();
-  return Math.floor(durationMs / 60000);  // minutes
+  return Math.floor(durationMs / 60000); // minutes
 }
 ```
 
@@ -674,11 +718,13 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 18. TESTING INFRASTRUCTURE (ACTUAL)
 
 ### Test Files Found
+
 - ✗ No `.test.ts`, `.spec.ts`, or `__tests__/` directories
 - ✗ No Jest configuration for Academy
 - ✗ No Firestore emulator security rule tests
 
 ### Emulator Configuration (firebase.json)
+
 ```json
 {
   "auth": { "port": 9099 },
@@ -693,7 +739,9 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ⚠️ No test infrastructure set up yet
 
 ### Assessment
+
 **Testing readiness:** LOW
+
 - Emulator infrastructure ready but not used
 - No executable tests yet
 - Manual testing will be required
@@ -703,15 +751,18 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 19. BUILD & LINT STATUS
 
 ### TypeScript
+
 ✓ Compiles without errors (`npx tsc --noEmit`)
 ✓ All types properly defined
 ✓ No `any` types in H3.2.8 files
 
 ### ESLint
+
 ✓ Passes on modified files (`npx eslint ... --max-warnings 0`)
 ✓ Code style consistent
 
 ### Build
+
 ✓ `npm run build` succeeds
 
 ---
@@ -719,6 +770,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 20. ISSUES DISCOVERED
 
 ### Issue 1: Character Limit Not Enforced Server-Side
+
 **Severity:** LOW  
 **Location:** `firestore.rules:195` (academySessions update rule)  
 **Description:** Facilitator note character limit (1000) is enforced only client-side in `updateSessionNote()`. Firestore rules do not validate.
@@ -728,6 +780,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Recommendation:** Add server-side validation to rules.
 
 ### Issue 2: Learner Assignment Not Re-Validated in Firestore Rules
+
 **Severity:** MEDIUM  
 **Location:** `firestore.rules:188-206`  
 **Description:** `academySessions` rules check that `learnerIds` are immutable but do NOT validate that they were assigned learners at creation time. Rules trust the client.
@@ -739,6 +792,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Recommendation:** Add validation rule that checks learnerIds against `facilitatorAssignments` at creation time (complex but possible with getAfter()).
 
 ### Issue 3: No Dedicated Summary Route
+
 **Severity:** NONE (Design choice)  
 **Location:** Expected `src/routes/academy/session/summary.tsx`  
 **Description:** Specification implied a dedicated summary screen. Actual implementation shows summary inline within monitor component when `status == 'completed'`.
@@ -748,6 +802,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Status:** Acceptable - summary is present and functional.
 
 ### Issue 4: Duplicate Active Session Prevention Not Server-Hardened
+
 **Severity:** LOW  
 **Location:** `src/routes/academy/session/start.tsx:84`  
 **Description:** Duplicate prevention is client-side only via `useActiveFacilitatorSession()` query.
@@ -757,6 +812,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Recommendation:** Could add transaction-based creation in data layer or Firestore rules, but complexity increases.
 
 ### Issue 5: No Audit Trail
+
 **Severity:** LOW  
 **Location:** Session design  
 **Description:** Attendance changes and note edits are not logged/audited. Firestore `updatedAt` timestamp only shows when, not who/what.
@@ -770,6 +826,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 21. IMPLEMENTATION VS. SPECIFICATION
 
 ### What Was Specified
+
 1. ✓ Session CRUD layer
 2. ✓ Firestore rules with immutability
 3. ✓ React Query integration
@@ -781,6 +838,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 9. ✓ Authorization checks
 
 ### What Was Actually Delivered
+
 1. ✓ Complete
 2. ✓ Complete (with noted validation gaps)
 3. ✓ Complete
@@ -798,6 +856,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 22. REGRESSION RISK ASSESSMENT
 
 ### H3.2.1-7 Impact
+
 - ✓ No modifications to data-access.ts (Academy core)
 - ✓ No modifications to facilitator-auth.functions
 - ✓ No modifications to existing routes
@@ -806,6 +865,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Risk Level:** LOW
 
 ### Junior/Parent Routes
+
 - ✓ H3.2.8 only adds academySessions collection
 - ✓ No modifications to child/* or parent/* routes
 - ✓ No modifications to shared components
@@ -813,6 +873,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Risk Level:** NEGLIGIBLE
 
 ### Learner Progress Engine
+
 - ✓ No writes to journeyProgress
 - ✓ No writes to assessmentAttempts
 - ✓ No writes to scenarioSessions
@@ -821,6 +882,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Risk Level:** NONE
 
 ### Firestore Rules
+
 - ✓ academySessions rules are additive (new block)
 - ✓ No modifications to existing rules for other collections
 - ✓ H3.2.2 facilitatorAssignments rules unchanged
@@ -832,6 +894,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ## 23. SECURITY SUMMARY
 
 ### Authorization
+
 ✓ Facilitator ownership enforced (client + server)
 ✓ Read access restricted to owner
 ✓ Modification restricted to owner
@@ -839,18 +902,21 @@ export function computeSessionDuration(session: AcademySession): number | null {
 ✓ Status transitions validated
 
 ### Data Privacy
+
 ✓ No parent data exposure
 ✓ No learner progress exposure
 ✓ No parent insights exposure
 ✓ Notes private to facilitator
 
 ### Immutability
+
 ✓ Identity fields protected
 ✓ Learner group protected
 ✓ Activity reference protected
 ✓ Timestamps protected
 
 ### Known Gaps
+
 ⚠️ No server-side character validation on notes
 ⚠️ No re-validation of learner assignment at Firestore level
 ⚠️ No server-side duplicate session prevention
@@ -870,6 +936,7 @@ export function computeSessionDuration(session: AcademySession): number | null {
 **Ready for Testing Phase:** YES
 
 **Recommended Pre-Testing Fixes:**
+
 1. Add character validation to Firestore rules for facilitatorNote
 2. Consider server-side duplicate prevention if high concurrency expected
 

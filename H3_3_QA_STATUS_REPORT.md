@@ -9,6 +9,7 @@
 ## ✅ Completed Tasks
 
 ### Phase 1: QA Account Creation (100%)
+
 - ✅ Created 5 Supabase auth accounts with unique test identities:
   - admin-h33-qa-a@childsave.test (UID: 32cde835-c1af-4439-a797-00fb165c56d1)
   - admin-h33-qa-b@childsave.test (UID: fc1d52d5-7200-4e38-bc97-058145fb4f9e)
@@ -18,6 +19,7 @@
 - ✅ Verified Supabase authentication works (JWT tokens generated successfully)
 
 ### Phase 2: QA Infrastructure Setup (50%)
+
 - ✅ Created 2 QA schools in Firestore (qa-school-h33-a, qa-school-h33-b)
 - ✅ Created 5 QA user documents with appropriate roles
 - ✅ Created 2 school admin assignments
@@ -25,6 +27,7 @@
 - ⚠️ Data creation claims success but **verification pending** due to credential constraints
 
 ### Phase 3: Environment Configuration (100%)
+
 - ✅ Updated .env.local to disable Firebase Emulator
 - ✅ Configured application to use production Firestore
 - ✅ Restarted dev server on localhost:8081
@@ -37,6 +40,7 @@
 ### Issue: Supabase → Firestore Authentication Bridge Failure
 
 **Symptoms:**
+
 - Academy login fails: "Invalid email or password, or you don't have a facilitator account"
 - Browser console shows: `FirebaseError: Missing or insufficient permissions`
 - Firestore denies reads to /users/{uid} even for authenticated Supabase users
@@ -44,9 +48,10 @@
 **Root Cause Analysis:**
 
 The application's authentication flow requires:
+
 1. User logs in via Supabase (WORKS ✓)
 2. Application queries Firestore with Supabase JWT (FAILS ✗)
-3. Firestore rules evaluate `hasRole('facilitator')` which calls `userDoc()` 
+3. Firestore rules evaluate `hasRole('facilitator')` which calls `userDoc()`
 4. `userDoc()` tries to `get(/databases/.../users/$(request.auth.uid))`
 5. Firestore denies the read with permission error
 
@@ -73,17 +78,20 @@ The application's authentication flow requires:
 ## 📋 What We Know
 
 ### Architecture (Verified via Code Review)
+
 - ✅ Supabase is active authentication provider (all login routes use it)
 - ✅ Firestore handles authorization (not authentication)
 - ✅ Identity bridge uses Supabase UUID as Firestore document key
 - ✅ Firestore rules implement school isolation and role-based access control
 
 ### Working Components
+
 - ✅ Supabase authentication (can create accounts, generate JWTs)
 - ✅ Application routing to login/admin pages
 - ✅ Dev server with hot reload
 
 ### Broken Components
+
 - ❌ Firestore read access for authenticated Supabase users
 - ❌ Facilitator status verification
 - ❌ H3.3 admin dashboard loading
@@ -105,7 +113,9 @@ The application's authentication flow requires:
 ## 🛠️ Solutions & Recommendations
 
 ### Immediate Fix (Recommended)
+
 **Re-enable Firebase Emulator for testing**, then:
+
 1. Restore emulator env vars in .env.local
 2. Restart dev server
 3. QA data already exists in emulator
@@ -114,7 +124,9 @@ The application's authentication flow requires:
 **Trade-off**: Won't test the actual Supabase ↔ Firestore bridge that production uses, but will validate H3.3 features work.
 
 ### Long-term Fix (Required for Production)
+
 **Debug the Supabase ↔ Firestore bridge**:
+
 1. Set up Application Default Credentials (ADC) or service account
 2. Verify QA data exists in production Firestore
 3. Test Firestore rule evaluation with Supabase JWT
@@ -122,7 +134,9 @@ The application's authentication flow requires:
 5. Complete H3.3 QA with Supabase authentication
 
 ### Alternative: Direct Testing via API
+
 **Bypass browser UI and test via server functions directly**:
+
 1. Call application's server functions from Node.js
 2. Provide Supabase JWT in request headers
 3. Test core H3.3 functionality (create schools, assign admins, etc.)
@@ -137,6 +151,7 @@ The application's authentication flow requires:
 **% Complete**: 0%
 
 **Tests Not Yet Executed:**
+
 1. [ ] School creation via admin dashboard
 2. [ ] School listing and filtering
 3. [ ] Admin assignment UI
@@ -161,6 +176,7 @@ The application's authentication flow requires:
 ## 🎯 Next Steps for User
 
 **Option A - Quick Path (Emulator Testing)**:
+
 ```
 1. Restore emulator env vars
 2. npm run dev
@@ -169,6 +185,7 @@ The application's authentication flow requires:
 ```
 
 **Option B - Production Path (Requires Credentials)**:
+
 ```
 1. Set up Firebase credentials (ADC or service account)
 2. Run verification script to confirm/recreate QA data in production
@@ -177,6 +194,7 @@ The application's authentication flow requires:
 ```
 
 **Option C - Direct API Testing**:
+
 ```
 1. Create Node.js test script
 2. Call server functions with Supabase JWT

@@ -2,21 +2,24 @@
 
 **Date**: 2026-09-27  
 **Status**: VERIFICATION IN PROGRESS  
-**Requirement**: Comprehensive failure inventory + architecture clarification before go-live  
+**Requirement**: Comprehensive failure inventory + architecture clarification before go-live
 
 ---
 
 ## PART 1: ARCHITECTURE CLARIFICATION & CORRECTION
 
 ### Original Incorrect Statement
+
 > "Supabase Auth fully removed" | "Single authentication provider (Firebase)"
 
 ### Corrected Architecture Statement
+
 **TATI ChildSave uses an INTENTIONALLY HYBRID authentication architecture:**
 
 #### Adult Authentication (Parents, Facilitators, Admins)
+
 - **Authentication Provider**: Firebase Auth
-- **Methods**: 
+- **Methods**:
   - Email/password signup and login
   - Google OAuth sign-in
   - Email-based identity management
@@ -26,8 +29,9 @@
 - **Status**: ✅ ACTIVE after migration
 
 #### Child Authentication (Learners via TATI ID + PIN)
+
 - **Authentication Provider**: Supabase Auth (indirect via credential validation)
-- **Mechanism**: 
+- **Mechanism**:
   1. Child enters TATI ID (stored in Supabase `child_profiles.tati_id`)
   2. Child enters PIN (hash stored in Supabase `child_credentials.pin_hash`)
   3. Server validates: `SELECT * FROM child_profiles WHERE tati_id = ? AND family_id = ?`
@@ -39,26 +43,29 @@
 - **Status**: ✅ UNCHANGED (intentionally preserved)
 
 #### Data Storage Architecture
-| Data Type | Provider | Reason |
-|-----------|----------|--------|
-| User identity (parents/facilitators) | Firebase Auth | Authentication consolidation |
-| User profiles (parents/facilitators) | Firestore | Part of Firebase ecosystem |
-| Child profiles | Supabase | Legacy system, separate from adult auth |
-| Child credentials (TATI ID, PIN) | Supabase | Part of child authentication system |
-| Family structure | Firestore | Adult-managed, tied to Firebase users |
-| Learning progress | Supabase | Tied to child profiles |
-| Analytics events | Supabase | Historical recording |
-| Feedback | Supabase | Historical recording |
+
+| Data Type                            | Provider      | Reason                                  |
+| ------------------------------------ | ------------- | --------------------------------------- |
+| User identity (parents/facilitators) | Firebase Auth | Authentication consolidation            |
+| User profiles (parents/facilitators) | Firestore     | Part of Firebase ecosystem              |
+| Child profiles                       | Supabase      | Legacy system, separate from adult auth |
+| Child credentials (TATI ID, PIN)     | Supabase      | Part of child authentication system     |
+| Family structure                     | Firestore     | Adult-managed, tied to Firebase users   |
+| Learning progress                    | Supabase      | Tied to child profiles                  |
+| Analytics events                     | Supabase      | Historical recording                    |
+| Feedback                             | Supabase      | Historical recording                    |
 
 #### Authorization Architecture
-| User Type | Auth Provider | Role Storage | Rule Enforcement |
-|-----------|---------------|--------------|------------------|
-| Parent | Firebase Auth | Firestore `/users/{uid}.roles` | Firestore security rules |
-| Facilitator | Firebase Auth | Firestore `/users/{uid}.roles` contains "facilitator" | Firestore rules + server-side check |
-| Admin | Firebase Auth | Firestore `/users/{uid}.roles` contains "admin" | Firestore rules only |
-| Child (Learner) | Supabase (via PIN) | Firestore `child_profiles` doc | HTTP-only ChildSession validation |
+
+| User Type       | Auth Provider      | Role Storage                                          | Rule Enforcement                    |
+| --------------- | ------------------ | ----------------------------------------------------- | ----------------------------------- |
+| Parent          | Firebase Auth      | Firestore `/users/{uid}.roles`                        | Firestore security rules            |
+| Facilitator     | Firebase Auth      | Firestore `/users/{uid}.roles` contains "facilitator" | Firestore rules + server-side check |
+| Admin           | Firebase Auth      | Firestore `/users/{uid}.roles` contains "admin"       | Firestore rules only                |
+| Child (Learner) | Supabase (via PIN) | Firestore `child_profiles` doc                        | HTTP-only ChildSession validation   |
 
 ### Classification: HYBRID ARCHITECTURE (Intentional Design)
+
 - **NOT** a bug or incomplete migration
 - **NOT** "single provider" (Firebase)
 - **IS** a deliberate separation of adult authentication (Firebase) from child authentication (Supabase + PIN)
@@ -69,20 +76,23 @@
 ## PART 2: EXACT FAILURE INVENTORY
 
 ### Summary
+
 - **Total Tests**: 462
 - **Passed**: 450 (97.4%)
 - **Failed**: 12 (2.6%)
 - **Test Execution Time**: 12.99 seconds
 
-### Failure 1: src/lib/academy/__tests__/session-data.test.ts
+### Failure 1: src/lib/academy/**tests**/session-data.test.ts
 
 #### Test Details
+
 - **File**: `src/lib/academy/__tests__/session-data.test.ts`
 - **Test Name**: "should allow status transition active->completed only"
 - **Line Number**: 148
 - **Error**: Expected `true` to be `false`
 
 #### Root Cause Analysis
+
 ```typescript
 const invalidTransition = {
   oldStatus: "completed" as const,
@@ -91,22 +101,24 @@ const invalidTransition = {
 
 const isCompletedToActiveAllowed =
   invalidTransition.oldStatus === "completed" && invalidTransition.newStatus === "active";
-  // This evaluates to: ("completed" === "completed") && ("active" === "active")
-  // Result: true && true = true
+// This evaluates to: ("completed" === "completed") && ("active" === "active")
+// Result: true && true = true
 
 expect(isCompletedToActiveAllowed).toBe(false); // FAILS: expects false but got true
 ```
 
 #### Classification
+
 - **Type**: Application Logic Defect (Test Assertion Bug)
 - **Introduced In**: Pre-migration (not caused by Firebase Auth changes)
 - **Relation to Firebase Migration**: NONE
-- **Evidence**: 
+- **Evidence**:
   - This test doesn't import or use any Firebase Auth code
   - The test logic has a backwards expectation or wrong test implementation
   - The test exists in `academy/` which is unrelated to auth migration
 
 #### Recommendation
+
 This is a pre-existing test bug. Should be fixed separately (outside auth migration scope).
 
 ---
@@ -114,6 +126,7 @@ This is a pre-existing test bug. Should be fixed separately (outside auth migrat
 ### Failures 2-12: tests/firebase/firestore.rules.test.ts (11 failures)
 
 #### Test Suite Overview
+
 - **File**: `tests/firebase/firestore.rules.test.ts`
 - **Test Suite Name**: "Firestore security rules"
 - **Failing Tests**: All 11 failures in "Authenticated adult access (10)" describe block
@@ -122,39 +135,46 @@ This is a pre-existing test bug. Should be fixed separately (outside auth migrat
 #### Individual Failing Tests
 
 **Test 1: "parent reads own family"** (line 103)
+
 - **Exact Check**: `tryRead(db, "families/family-a")`
 - **Expected**: ALLOW
 - **Actual**: PERMISSION_DENIED or document not found
 - **Root Cause**: `/families/family-a` document doesn't exist in Firestore emulator
 
 **Test 2: "parent reads own child"** (line 107)
+
 - **Exact Check**: `tryRead(db, "families/family-a/children/child-a1")`
 - **Expected**: ALLOW
 - **Actual**: PERMISSION_DENIED
 - **Root Cause**: Test document path doesn't exist in Firestore
 
 **Test 3: "parent reads own child progress"** (line 111)
+
 - **Exact Check**: `tryRead(db, "families/family-a/children/child-a1/journeyProgress/progress-1")`
 - **Expected**: ALLOW
 - **Actual**: PERMISSION_DENIED
 - **Root Cause**: Test document missing
 
 **Test 4: "parent reads own family members"** (line 115)
+
 - **Exact Check**: `tryRead(db, "families/family-a/members/parent-a")`
 - **Expected**: ALLOW
 - **Actual**: PERMISSION_DENIED
 - **Root Cause**: Test document missing
 
 **Test 5: "parent can read user profile"** (line 119)
+
 - **Exact Check**: `tryRead(db, "users/parent-a")`
 - **Expected**: ALLOW
 - **Actual**: PERMISSION_DENIED
 - **Root Cause**: Test document missing
 
 **Tests 6-7: "parent can update own family" & "parent can create child"** (lines 135, 139)
+
 - **Root Cause**: Depends on parent-a doc and family-a doc existing
 
 **Tests 8-11: Admin and Facilitator tests** (lines 220, 287, 292, 296)
+
 - **Root Cause**: Required admin/facilitator user docs don't exist
 
 #### Root Cause Analysis (All 11 Tests)
@@ -165,7 +185,7 @@ The `beforeAll()` setup creates Firebase Auth users but does NOT create Firestor
 beforeAll(async () => {
   // ✅ WORKING: Creates Firebase Auth users
   const setupPromises = Object.entries(USERS).map(([_key, [email, password]]) =>
-    createUserWithEmailAndPassword(auth, email, password)
+    createUserWithEmailAndPassword(auth, email, password),
   );
   await Promise.all(setupPromises);
 
@@ -196,24 +216,28 @@ beforeAll(async () => {
 7. **Test fails** ❌
 
 #### Classification
+
 - **Type**: Test Infrastructure Defect
 - **Scope**: Test setup, not application code
 - **Root Cause**: Incomplete test fixture setup (missing Firestore documents)
 - **Introduced In**: When firestore.rules.test.ts was created (test suite infrastructure)
 - **Relation to Firebase Migration**: NONE (unrelated to auth provider change)
-- **What This Proves**: 
+- **What This Proves**:
   - ✅ Firebase Auth emulator works (users created successfully)
   - ✅ Firebase UID format is compatible with Firestore rules
   - ❌ Test infrastructure was never completed (missing admin SDK for test setup)
 
 #### Why NOT a Migration Failure
+
 1. These tests would have failed EXACTLY THE SAME with Supabase Auth
 2. The root cause is missing Firestore documents, not wrong authentication
 3. The Firebase auth portion works (users login successfully)
 4. The Firestore rules would reject reads to nonexistent documents regardless of auth provider
 
 #### Solution Path
+
 To fix these tests, the beforeAll() must be updated to:
+
 1. Get Firebase Admin SDK initialized for test environment
 2. Create `/users/{uid}` documents for each test user using admin SDK
 3. Create `/families/family-a` document with createdBy field
@@ -230,9 +254,11 @@ This is a separate fix (outside migration scope) but necessary for test verifica
 ### Code Review Verification (Non-Destructive)
 
 #### Parent Signup Flow ✅
+
 **File**: `src/routes/signup.tsx` (lines 1-120)
 
 **Code Verification**:
+
 ```typescript
 const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
 await updateProfile(userCredential.user, { displayName: fullName.trim() });
@@ -241,6 +267,7 @@ navigate({ to: "/parent", replace: true });
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `createUserWithEmailAndPassword()`
 - ✅ Updates user profile with `updateProfile()`
 - ✅ Tracks event using Firebase UID
@@ -250,9 +277,11 @@ navigate({ to: "/parent", replace: true });
 **Status**: VERIFIED CORRECT
 
 #### Parent Login Flow ✅
+
 **File**: `src/routes/login.tsx` (lines 1-100)
 
 **Code Verification**:
+
 ```typescript
 const unsubscribe = onAuthStateChanged(auth, (user) => {
   if (user) {
@@ -267,6 +296,7 @@ if (userCredential.user) {
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `onAuthStateChanged()` listener (standard Firebase pattern)
 - ✅ Uses Firebase `signInWithEmailAndPassword()`
 - ✅ Session restoration: checks if user already logged in on page load
@@ -276,9 +306,11 @@ if (userCredential.user) {
 **Status**: VERIFIED CORRECT
 
 #### Parent Google OAuth Flow ✅
+
 **File**: `src/routes/login.tsx` + `src/routes/signup.tsx`
 
 **Code Verification**:
+
 ```typescript
 const provider = new GoogleAuthProvider();
 await signInWithPopup(auth, provider);
@@ -286,6 +318,7 @@ navigate({ to: "/parent", replace: true });
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `GoogleAuthProvider`
 - ✅ Uses Firebase `signInWithPopup()`
 - ✅ Error handling for cancelled popups
@@ -294,9 +327,11 @@ navigate({ to: "/parent", replace: true });
 **Status**: VERIFIED CORRECT
 
 #### Parent Logout Flow ✅
+
 **Files**: `src/routes/parent/index.tsx`, `src/routes/_authenticated/dashboard.tsx`
 
 **Code Verification**:
+
 ```typescript
 import { signOut } from "firebase/auth";
 
@@ -312,6 +347,7 @@ async function handleSignOut() {
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `signOut()`
 - ✅ Clears query cache (React Query)
 - ✅ Redirects to `/login`
@@ -320,11 +356,16 @@ async function handleSignOut() {
 **Status**: VERIFIED CORRECT
 
 #### Facilitator Login + Role Check ✅
+
 **File**: `src/lib/auth/facilitator-auth.functions.ts` (lines 1-110)
 
 **Code Verification**:
+
 ```typescript
-export async function loginFacilitator(email: string, password: string): Promise<FacilitatorSession | null> {
+export async function loginFacilitator(
+  email: string,
+  password: string,
+): Promise<FacilitatorSession | null> {
   const auth = getFirebaseAuth();
   const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
 
@@ -356,6 +397,7 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `signInWithEmailAndPassword()`
 - ✅ Queries `/users/{uid}` in Firestore
 - ✅ Checks `roles` array includes "facilitator"
@@ -365,13 +407,15 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
 **Status**: VERIFIED CORRECT
 
 #### Session Restoration (Protected Routes) ✅
+
 **File**: `src/routes/_authenticated/route.tsx`
 
 **Code Verification**:
+
 ```typescript
 const beforeLoad = async ({ context }: { context: RootRouteContext }) => {
   const auth = getFirebaseAuth();
-  
+
   if (!auth?.currentUser) {
     throw redirect({ to: "/login" });
   }
@@ -379,6 +423,7 @@ const beforeLoad = async ({ context }: { context: RootRouteContext }) => {
 ```
 
 **Findings**:
+
 - ✅ Uses Firebase `auth.currentUser` to check if logged in
 - ✅ Redirects to `/login` if not authenticated
 - ✅ Fires on every route before load
@@ -386,9 +431,11 @@ const beforeLoad = async ({ context }: { context: RootRouteContext }) => {
 **Status**: VERIFIED CORRECT
 
 #### Firestore Authorization Isolation ✅
+
 **File**: `firestore.rules` (lines 1-195)
 
 **Code Verification**:
+
 ```
 function signedIn() {
   return request.auth != null;
@@ -419,6 +466,7 @@ match /families/{familyId} {
 ```
 
 **Findings**:
+
 - ✅ Rules use generic `request.auth.uid` (works with Firebase, Supabase, or any provider)
 - ✅ Rules don't hardcode any provider-specific claims
 - ✅ Role-based authorization via Firestore document
@@ -428,7 +476,9 @@ match /families/{familyId} {
 **Status**: VERIFIED COMPATIBLE with Firebase UID format
 
 ### Summary of Code Review
+
 All Firebase Auth flows implemented in active production code are:
+
 - ✅ Correctly using Firebase Auth SDK
 - ✅ Correctly handling Firebase errors
 - ✅ Correctly managing session state
@@ -448,6 +498,7 @@ All Firebase Auth flows implemented in active production code are:
 ### Categorized Results
 
 #### Category A: Dead Code (Unreachable Supabase Auth)
+
 1. **File**: `src/integrations/supabase/auth-attacher.ts` (line 9)
    - **Code**: `const { data } = await supabase.auth.getSession();`
    - **Status**: Not imported anywhere in src/
@@ -467,6 +518,7 @@ All Firebase Auth flows implemented in active production code are:
    - **Caution**: Auto-generated file; avoid editing if possible
 
 #### Category B: Child Authentication (Intentionally Supabase-Based)
+
 1. **Files**: `src/lib/auth/child-auth.functions.ts`, `src/lib/auth/child-identity.server.ts`, `src/lib/auth/child-session.server.ts`
    - **Imports**: `SupabaseClient` type + `supabaseAdmin`
    - **Purpose**: Validate TATI ID + PIN credentials
@@ -475,7 +527,8 @@ All Firebase Auth flows implemented in active production code are:
    - **Action**: DO NOT MODIFY (part of planned child auth system)
 
 #### Category C: Data Access (Supabase for Child Data)
-1. **Files**: 
+
+1. **Files**:
    - `src/lib/analytics.ts` - imports supabase
    - `src/lib/assessment/attempts.ts` - imports supabase
    - `src/lib/feedback.ts` - imports supabase
@@ -496,23 +549,27 @@ All Firebase Auth flows implemented in active production code are:
    - **Action**: DO NOT DELETE
 
 #### Category D: Configuration/Environment
+
 1. **Files**: `.env`, `.env.example`, `.env.local`
-   - **SUPABASE_* Variables**: Present and required for data access
+   - _*SUPABASE_* Variables_*: Present and required for data access
    - **Status**: Still needed for child data operations
    - **Note**: Parent auth no longer needs SUPABASE_* auth variables
 
 #### Category E: Dependencies
+
 1. **File**: `package.json`
    - **Dependency**: `@supabase/supabase-js: ^2.116.0`
    - **Status**: Still required for data access
    - **Action**: Keep installed
 
 #### Category F: Generated/Build Output (Ignore)
+
 1. **Files**: `.output/`, `.tanstack/tmp/`, `build-output.log`, etc.
    - **Status**: Generated during build (not source)
    - **Action**: Ignore
 
 #### Category G: Documentation/Previous Phases
+
 1. **Files**: Multiple `PHASE_*.md` files, `H3_*.md` files
    - **Status**: Historical documentation
    - **Action**: Ignore (not active code)
@@ -522,6 +579,7 @@ All Firebase Auth flows implemented in active production code are:
 ## PART 5: SECURITY VERIFICATION
 
 ### Firebase Client Credentials
+
 **File**: `.env.local` and `.env.example`
 
 ```
@@ -534,15 +592,18 @@ VITE_FIREBASE_APP_ID=...
 ```
 
 **Security Status**:
+
 - ✅ These are client credentials (Firebase Web API key)
 - ✅ NOT secret credentials
 - ✅ Safe to commit to version control (Firebase restricts API key to domain)
 - ✅ No Admin SDK keys in client
 
 ### ChildSession Security
+
 **Files**: `src/lib/auth/child-session.server.ts`, `src/routes/child/home.tsx`
 
 **Verification**:
+
 - ✅ Session stored in HTTP-only cookie (cannot be accessed by JavaScript)
 - ✅ Session validation done server-side
 - ✅ Client cannot forge or modify ChildSession
@@ -551,7 +612,8 @@ VITE_FIREBASE_APP_ID=...
 ### Authorization Verification
 
 #### Cannot Be Bypassed By Client
-1. **Parent accessing another family**: 
+
+1. **Parent accessing another family**:
    - Client cannot claim to be member of family-b
    - Rules check: `exists(memberPath(familyId))` which queries Firestore
    - Must have actual `/families/family-b/members/{uid}` document ✅
@@ -572,6 +634,7 @@ VITE_FIREBASE_APP_ID=...
    - Invalid/missing token → `request.auth = null` → access denied ✅
 
 ### UID Format Compatibility
+
 - **Firebase UID**: Alphanumeric, 28 chars (e.g., `Ks5xN7DqKdSvKpLmQr9Uv1WxYz`)
 - **Supabase UID**: UUID, 36 chars (e.g., `550e8400-e29b-41d4-a716-446655440000`)
 - **Firestore Rules**: Use `request.auth.uid` as string
@@ -579,6 +642,7 @@ VITE_FIREBASE_APP_ID=...
 - **Compatibility**: ✅ VERIFIED (either format works)
 
 ### Supabase Service Role Key
+
 - **Status**: Not visible in client code
 - **File**: Should be in server-only environment (`.env` not committed to git)
 - **Verification**: Grep search shows no SUPABASE_SERVICE_ROLE_KEY in source
@@ -589,6 +653,7 @@ VITE_FIREBASE_APP_ID=...
 ## PART 6: MIGRATION IMPACT ASSESSMENT
 
 ### What CHANGED ✅
+
 1. **Parent authentication provider**: Supabase Auth → Firebase Auth
 2. **Session management**: Supabase session → Firebase Auth SDK
 3. **OAuth provider**: Lovable integration → Firebase GoogleAuthProvider
@@ -596,6 +661,7 @@ VITE_FIREBASE_APP_ID=...
 5. **Backend provider flag**: `"supabase"` → `"firebase"` in provider.ts
 
 ### What STAYED THE SAME ✅
+
 1. **Firestore security rules**: Zero changes
 2. **Authorization model**: Still role-based via Firestore documents
 3. **Child authentication**: Unchanged (TATI ID + PIN)
@@ -607,6 +673,7 @@ VITE_FIREBASE_APP_ID=...
 9. **Feedback**: Unchanged (still records, uses Firebase UID now)
 
 ### No Regressions Detected
+
 - ✅ 450/462 tests passing (97.4%)
 - ✅ 2 failures pre-existing (not caused by migration)
 - ✅ 10 failures in test infrastructure (not caused by migration)
@@ -618,6 +685,7 @@ VITE_FIREBASE_APP_ID=...
 ## PART 7: PRODUCTION READINESS ASSESSMENT
 
 ### Ready for Production ✅
+
 - Parent signup/login flows implemented correctly
 - Facilitator authentication working
 - Admin role verification working
@@ -627,6 +695,7 @@ VITE_FIREBASE_APP_ID=...
 - 97.4% test pass rate
 
 ### NOT Ready Until ⏳
+
 1. **Firestore rules tests fixed**
    - Must create test data via Admin SDK
    - Must verify all security rules work with Firebase UIDs
@@ -648,13 +717,16 @@ VITE_FIREBASE_APP_ID=...
    - Firestore documents must be created for existing Supabase users
 
 ### Decision Gate Question
+
 **Can we deploy to production with 12 test failures?**
 
 Answer depends on failure type:
+
 - 1 failure: Pre-existing test bug (safe to ignore during migration, must fix separately)
 - 11 failures: Test infrastructure incomplete (not a production issue, just incomplete test setup)
 
-**Recommendation**: 
+**Recommendation**:
+
 - ✅ Safe to deploy if Supabase user data is migrated first
 - ⏳ Must complete manual E2E testing
 - ⏳ Test infrastructure (11 failures) should be fixed as part of test suite maintenance
@@ -664,6 +736,7 @@ Answer depends on failure type:
 ## PART 8: REMAINING WORK BEFORE COMPLETION
 
 ### MUST DO (Go-Live Blockers)
+
 1. [ ] **Migrate Supabase Auth user data to Firebase Auth**
    - Export existing Supabase Auth users
    - Import into Firebase Auth emulator/production
@@ -685,6 +758,7 @@ Answer depends on failure type:
    - Test access to unauthorized school (should deny)
 
 ### SHOULD DO (Quality)
+
 1. [ ] **Fix test infrastructure (11 Firestore rules test failures)**
    - Create Admin SDK setup for tests
    - Generate test data in beforeAll()
@@ -701,6 +775,7 @@ Answer depends on failure type:
    - Confirm parent cannot access child session directly
 
 ### NICE TO DO (Polish)
+
 1. [ ] Delete dead code files
    - `src/integrations/supabase/auth-attacher.ts`
    - `src/integrations/supabase/auth-middleware.ts`
@@ -732,6 +807,7 @@ Answer depends on failure type:
 **Current Status**: VERIFICATION IN PROGRESS (Gate Not Yet Complete)
 
 **Key Findings**:
+
 1. Firebase Auth consolidation is correctly implemented in code
 2. No migration-caused regressions detected
 3. 12 test failures are NOT migration-related
@@ -739,10 +815,10 @@ Answer depends on failure type:
 5. Production readiness depends on data migration strategy
 
 **Before Declaring "Complete"**:
+
 1. Must complete manual E2E testing of auth flows
 2. Must define and execute Supabase user migration plan
 3. Should fix test infrastructure (11 test data failures)
 4. Should fix pre-existing test bug (1 assertion error)
 
 **Next Step**: Complete manual end-to-end testing of all authentication flows.
-

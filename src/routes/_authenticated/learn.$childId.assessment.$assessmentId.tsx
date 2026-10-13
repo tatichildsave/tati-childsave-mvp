@@ -10,7 +10,10 @@ export const Route = createFileRoute("/_authenticated/learn/$childId/assessment/
         content: "Assessments are completed by children on their own device.",
       },
       { property: "og:title", content: "Assessment — TATI ChildSave" },
-      { property: "og:description", content: "Assessments are completed by children on their own device." },
+      {
+        property: "og:description",
+        content: "Assessments are completed by children on their own device.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -29,9 +32,12 @@ function AssessmentPage() {
       <TopBar title="Assessments" backTo={`/learn/${childId}`} />
       <div className="flex flex-col items-center justify-center gap-6 p-6">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Assessments are completed by the child on their own device</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            Assessments are completed by the child on their own device
+          </h2>
           <p className="text-gray-600">
-            Your child will take assessments independently. Check back in the Learning section to see their progress.
+            Your child will take assessments independently. Check back in the Learning section to
+            see their progress.
           </p>
         </div>
         <button

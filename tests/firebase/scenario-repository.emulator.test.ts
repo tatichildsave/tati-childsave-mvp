@@ -16,10 +16,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import { Firestore } from "firebase/firestore";
 import * as admin from "firebase-admin";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import {
-  createEmulatorApp,
-  connectEmulatorFirestore,
-} from "./emulator-setup";
+import { createEmulatorApp, connectEmulatorFirestore } from "./emulator-setup";
 import { FirebaseScenarioRepository } from "@/lib/backend/firebase/repositories";
 import type { ScenarioState } from "@/lib/scenario/types";
 
@@ -32,7 +29,10 @@ const childId = "test-child-scenario";
 const scenarioId = "kwame-request";
 
 // Minimal valid scenario state for testing
-function createTestState(day: number = 1, phase: "intro" | "decision" | "consequence" | "complete" = "intro"): ScenarioState {
+function createTestState(
+  day: number = 1,
+  phase: "intro" | "decision" | "consequence" | "complete" = "intro",
+): ScenarioState {
   return {
     scenarioId,
     day,
@@ -181,9 +181,7 @@ describe("FirebaseScenarioRepository - Emulator Tests", () => {
       (state as any).available = 15;
       (state as any).saved = 25;
       (state as any).competencies = { financial_responsibility: 10 };
-      (state as any).decisions = [
-        { day: 1, nodeId: "day-1", choiceId: "save-5" },
-      ];
+      (state as any).decisions = [{ day: 1, nodeId: "day-1", choiceId: "save-5" }];
 
       await repo.saveSession(childId, scenarioId, state as any, 0);
 

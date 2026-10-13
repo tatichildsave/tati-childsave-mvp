@@ -1,4 +1,5 @@
 # PHASE H3.2.7 — SESSION MONITORING & LEARNER STATUS
+
 ## Discovery & Architecture Review Report
 
 **Status:** ✅ DISCOVERY COMPLETE — Safe to proceed with implementation  
@@ -10,7 +11,8 @@
 
 H3.2.7 introduces **facilitator session monitoring**: a read-only interface showing which learners have started, are in progress, or have completed a specific activity.
 
-**Discovery Findings:** 
+**Discovery Findings:**
+
 - ✅ All required data already exists in Firestore
 - ✅ Existing authorization model (H3.2.2) fully supports facilitator queries
 - ✅ Firestore rules prevent unauthorized writes to learner progress
@@ -69,11 +71,11 @@ families/{familyId}
 
 ```typescript
 interface FirestoreProgressEvent {
-  id: string                    // Unique event ID
-  kind: string                  // "lesson" | "scenario" | "assessment" | "reflection"
-  itemId: string                // Activity identifier
-  status: string                // "not-started" | "in-progress" | "completed"
-  completedAt: Date | null      // Timestamp of event
+  id: string; // Unique event ID
+  kind: string; // "lesson" | "scenario" | "assessment" | "reflection"
+  itemId: string; // Activity identifier
+  status: string; // "not-started" | "in-progress" | "completed"
+  completedAt: Date | null; // Timestamp of event
 }
 ```
 
@@ -81,17 +83,17 @@ interface FirestoreProgressEvent {
 
 ```typescript
 interface ChildProgressSummary {
-  childId: string
-  childName: string
-  avatar: string
-  currentActivityType?: "lesson" | "scenario" | "assessment" | "reflection"
-  currentActivityName?: string           // itemId of current activity
+  childId: string;
+  childName: string;
+  avatar: string;
+  currentActivityType?: "lesson" | "scenario" | "assessment" | "reflection";
+  currentActivityName?: string; // itemId of current activity
   journeyProgress: {
-    completed: number                     // Total activities completed
-    total: number                         // Total activities in track (14 for SAVE)
-  }
-  lastActivityAt?: Date                   // Most recent activity timestamp
-  supportSignal: "not-started" | "on-track" | "needs-support"
+    completed: number; // Total activities completed
+    total: number; // Total activities in track (14 for SAVE)
+  };
+  lastActivityAt?: Date; // Most recent activity timestamp
+  supportSignal: "not-started" | "on-track" | "needs-support";
 }
 ```
 
@@ -175,14 +177,16 @@ export function computeChildProgressSummary(
 **Three-Layer Security:**
 
 #### Layer 1: Facilitator Assignment Index
+
 ```typescript
 // Query: Get all children assigned to this facilitator
-query(collection(db, "facilitatorAssignments"), 
-  where("facilitatorUid", "==", facilitatorUid))
+query(collection(db, "facilitatorAssignments"), where("facilitatorUid", "==", facilitatorUid));
 ```
+
 Result: [{familyId, childId}, {familyId, childId}, ...]
 
 #### Layer 2: Double-Check Authorization
+
 ```typescript
 const childSnap = await getDoc(ref);
 const facilitatorUids = childSnap.data().facilitatorUids;
@@ -192,6 +196,7 @@ if (!facilitatorUids.includes(facilitatorUid)) {
 ```
 
 #### Layer 3: Firestore Rules Enforcement
+
 ```firestore
 function isAssignedFacilitator(familyId, childId) {
   return signedIn() && hasRole('facilitator')
@@ -245,6 +250,7 @@ match /journeyProgress/{itemKey} {
 ```
 
 **Implication for H3.2.7:**
+
 - Monitoring is read-only → No risk
 - If facilitator tries to mark activity complete, Firestore rules would need adjustment
 - **Recommendation: H3.2.7 should NOT create progress events** (learner owns that action)
@@ -260,17 +266,17 @@ match /journeyProgress/{itemKey} {
 
 1. Load Facilitator Session
    └─ getFacilitatorSession() [existing]
-   
+
 2. Load Academy Dashboard
    └─ useAcademyDashboard(facilitator) [existing]
       └─ loadAcademyDashboard(facilitator)
          ├─ getAssignedChildren(facilitator.uid)
          └─ getChildJourneyProgress() for each child
-         
+
 3. Compute Per-Learner Activity Status
    └─ NEW UTILITY: computeActivityStatus(progressSummary, activityId, journeyProgress)
       └─ Returns: "not-started" | "in-progress" | "completed" | "on-another-activity"
-      
+
 4. Render Status Board
    ├─ Summary metrics (total, by status)
    ├─ Status cards for each learner
@@ -282,6 +288,7 @@ match /journeyProgress/{itemKey} {
 **File:** `src/routes/academy/session/monitor.tsx` (~400-500 lines)
 
 **Dependencies:**
+
 - Existing: `getFacilitatorSession()`, `useAcademyDashboard()`, `useQuery`, `useNavigate`
 - Existing components: `AcademyShell`, `Card`, `Button`, `Avatar`, `Badge`, `LoadingState`, `EmptyState`
 - New utility: Small function to compute per-activity status
@@ -291,7 +298,7 @@ match /journeyProgress/{itemKey} {
 ```typescript
 interface ActivityStatus {
   status: "not-started" | "in-progress" | "completed" | "on-another-activity";
-  statusReason?: string;  // For deterministic support signals
+  statusReason?: string; // For deterministic support signals
 }
 
 export function getActivityStatus(
@@ -319,6 +326,7 @@ export function getActivityStatus(
 ### No New Collections
 
 **Why:** All required data already exists:
+
 - ✅ Learner list: From `facilitatorAssignments` + `families/{familyId}/children/{childId}`
 - ✅ Journey progress: From `families/{familyId}/children/{childId}/journeyProgress/*`
 - ✅ Activity metadata: From `Track` object (curriculum data, already in code)
@@ -333,6 +341,7 @@ export function getActivityStatus(
 **Risk Scenario:** Facilitator A views learners assigned to Facilitator B
 
 **Mitigation (Already in Place):**
+
 - ✅ `facilitatorAssignments` collection indexed by `facilitatorUid`
 - ✅ Firestore rules: `allow read: if ... where("facilitatorUid", "==", request.auth.uid)`
 - ✅ Double-check in code: Verify facilitatorUids array before returning data
@@ -346,6 +355,7 @@ export function getActivityStatus(
 **Risk Scenario:** Facilitator queries unrelated family's child
 
 **Mitigation (Already in Place):**
+
 - ✅ Facilitator assignment only within family context
 - ✅ Cannot query across families without knowing familyId
 - ✅ Firestore rules enforce: `allow read: if canAccessChild(familyId, childId)` where canAccessChild checks facilitatorUids
@@ -359,6 +369,7 @@ export function getActivityStatus(
 **Risk Scenario:** Monitoring displays parent names, contact info, financial data, or `parentInsights`
 
 **Mitigation (Proposed):**
+
 - ✅ Monitoring displays ONLY: learner name, avatar, activity status, progress counts
 - ✅ DO NOT display: parent info, household data, competency internals, assessment scores
 - ✅ DO NOT query parentInsights collection (Firestore rules block it anyway)
@@ -373,12 +384,14 @@ export function getActivityStatus(
 **Risk Scenario:** Facilitator marks activity complete on behalf of learner, or modifies assessment scores
 
 **Mitigation (Already in Place):**
+
 - ✅ Firestore rule: `assessmentAttempts: allow write: if false` (no writes allowed)
 - ✅ Firestore rule: `scenarioSessions: allow write: if false` (no writes allowed)
 - ✅ Firestore rule: `competencies: allow write: if false` (no writes allowed)
 - ✅ Firestore rule: `journeyProgress: allow ... create, update: if ... score == null && maxScore == null` (can only mark as null-score, not assessment)
 
 **Mitigation (Proposed for H3.2.7):**
+
 - ✅ Monitoring is **READ-ONLY** — no progress events created
 - ✅ No facilitator actions to mark complete, change status, or edit data
 - ✅ Do NOT implement facilitator progress logging in H3.2.7
@@ -392,6 +405,7 @@ export function getActivityStatus(
 **Risk Scenario:** Monitoring displays competency scores, assessment results, or behavioral predictions
 
 **Mitigation (Proposed):**
+
 - ✅ Display only activity status (not-started | in-progress | completed)
 - ✅ Display only progress count (X of Y activities)
 - ✅ Display support signal as neutral language: "May need check-in" (not "struggling" or "at risk")
@@ -406,6 +420,7 @@ export function getActivityStatus(
 **Risk Scenario:** Monitoring route causes expensive queries, high Firebase billing
 
 **Mitigation (Proposed):**
+
 - ✅ Reuse `useAcademyDashboard()` hook (already caches with 5-min staleTime)
 - ✅ Don't create additional queries per learner
 - ✅ Filter cached data in memory (no new Firestore reads)

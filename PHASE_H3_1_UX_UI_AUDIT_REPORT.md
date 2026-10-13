@@ -1,4 +1,5 @@
 # PHASE H3.1 – TATI Junior Pilot UX/UI Audit Report
+
 **Read-Only Discovery Phase** | Status: AUDIT COMPLETE – NO CODE CHANGES  
 Date: Current Session | Scope: Child journey + Parent experience | Framework: Current → Intended comparison
 
@@ -7,6 +8,7 @@ Date: Current Session | Scope: Child journey + Parent experience | Framework: Cu
 ## Executive Summary
 
 The TATI Junior pilot has a **solid technical foundation** with a well-structured learning journey:
+
 - ✅ Clear sequential flow: pre-assessment → 12 lessons → 5 scenarios → post-assessment → results
 - ✅ Responsive component library with loading/empty/error states
 - ✅ State persistence (localStorage resume, Firebase journey tracking)
@@ -14,6 +16,7 @@ The TATI Junior pilot has a **solid technical foundation** with a well-structure
 - ✅ Mobile-first design approach (rounded-3xl cards, 48px touch targets, Tailwind responsive)
 
 However, the experience **feels like disconnected screens rather than ONE coherent journey**. Children and parents lack:
+
 - Persistent progress context (children don't see "where am I in the 14-day story?")
 - Clear narrative connection between lessons and scenarios
 - Explicit "next steps" guidance at journey milestones
@@ -75,9 +78,11 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ```
 
 ### Track Sequence (SAVE track - 14-day "Term Ready Challenge")
+
 **Goal:** Save GH₵80 for school bag by navigating 14-day story
 
 **Sequence breakdown:**
+
 - **Pre-journey:** Pre-assessment → 2 lessons (meet money, set goal) = Days 0-1
 - **Chapter 1 (Days 1-2):** Scenario 1 + pause-before lesson on needs-vs-wants
 - **Chapter 2 (Days 4):** 2 lessons (needs-vs-wants, stop-think-choose) + scenario 2 + reflection
@@ -130,6 +135,7 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ### ✅ WHAT WORKS WELL
 
 #### 1. **Clear Loading/Error/Empty States**
+
 - **LoadingState:** "Getting things ready…" with animated placeholder cards
 - **ErrorState:** Fire emoji 🧯 + retry button
 - **EmptyState:** Plant emoji 🌱 + "No learner yet" with action
@@ -137,6 +143,7 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 - **Pattern:** Consistent across child pages, parent pages, admin
 
 #### 2. **Responsive Component Library**
+
 - **Touch targets:** All interactive elements ≥48px (meet WCAG)
 - **Spacing:** Consistent 5px card padding, 3px gaps between elements
 - **Typography:** Extrabold headings (text-2xl), bold body (text-base), muted secondary
@@ -145,12 +152,14 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 - **Tone system:** surface | muted | primary tones for visual hierarchy
 
 #### 3. **Resume/Persistence Capability**
+
 - **Lesson resumption:** localStorage saves lesson draft (taps, quick-check, reflection)
 - **Onboarding resumption:** localStorage saves wizard step + inputs
 - **Scenario persistence:** Server-side session storage for multi-step decisions
 - **Pattern:** Graceful recovery when returning to incomplete activities
 
 #### 4. **Visible Progress Indicators**
+
 - **XP display:** Level indicator with star emoji, visual bar toward next level
 - **Journey progress:** "X of Y activities complete" with percentage badge
 - **Badge display:** Shows earned badges (up to 3) with name + blurb
@@ -158,11 +167,13 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 - **Step labels:** Lesson player shows "Lesson X of Y"
 
 #### 5. **Contextual Navigation**
+
 - **Back buttons:** All sub-pages have "back to" navigation (consistent from design)
 - **Breadcrumb-like:** Parent page shows "Parent Portal" eyebrow to maintain context
 - **Bottom nav:** Child pages include role="junior" which likely triggers bottom nav (not seen in explored routes)
 
 #### 6. **Child-Appropriate Language & Imagery**
+
 - **Lessons:** Scenario-based naming (not "Test" but "Check-in"), Ghanaian context (cedis, trotro, stall)
 - **Motivational tone:** "Nice work!", "Keep going on your adventure trail", emojis for personality
 - **Character names:** Kwabena, Ama, Esi, Yaw from real Ghana, not generic
@@ -173,14 +184,17 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ### ⚠️ CRITICAL UX GAPS (Hierarchy by Child Impact)
 
 #### **GAP #1: No Persistent 14-Day Story Context** [CRITICAL - Child frustration]
+
 **Current:** Child sees lesson 1, then lesson 2, then scenario 1. No visual link to "you're on Day 2 of 14 to save GH₵80"
 **Issue:** Child sees disconnected activities, not ONE story
-**Evidence:** 
+**Evidence:**
+
 - Track defines `chapterTitle: "Days 1–2 · Plan and earn"` but this info is **never displayed to child**
 - Child sees "Meet Your Money" lesson title but doesn't see it's part of "Getting ready" stage
 - Scenario labeled "STORY · DAYS 1–2" but no visual showing passage of time or progress toward goal
 
 **What's missing:**
+
 - [ ] Stage/chapter banner at top of each lesson ("Chapter 1 — The plan begins")
 - [ ] Day counter visible on scenario pages ("Day 3 of 14")
 - [ ] Visual timeline showing where child is in 14-day arc
@@ -191,14 +205,17 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #2: Scenario → Reflection → Lesson Connection Unclear** [HIGH - Breaks narrative flow]
+
 **Current:** After scenario, child completes optional reflection, then what? Does the next lesson build on scenario choices?
 **Issue:** Lessons are **separate from scenarios** in the UI, but pedagogically they should interconnect
 **Evidence:**
+
 - Scenario has `pauseBefore: ["needs-vs-wants"]` field indicating "teach this lesson before next scenario"
 - But child just sees "Scenario done!" → back to /learn → sees lesson card
 - No visual connection showing "that scenario teaches why you need the 'Needs vs Wants' lesson"
 
 **What's missing:**
+
 - [ ] Explicit journey step type showing "Concept lesson" vs "Story with decision" vs "Reflect on choice"
 - [ ] Post-scenario screen explains "Now you know why this lesson matters →" before showing next lesson
 - [ ] Reflection prompt appears **before** leaving scenario, not as separate page
@@ -208,14 +225,17 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #3: No 'What Just Happened?' Scenario Consequences Screen** [HIGH - Breaks learning]
+
 **Current:** Child makes decisions in scenario, game state updates (wallet decreases), but no explicit "consequence of your choice" screen
 **Issue:** Scenario engine tracks decisions → state changes → but child **doesn't see the causation**
 **Evidence:**
+
 - ScenarioPlayer saves `{ saved, available, decisions }` to database
 - But code doesn't show explicit "You chose X. As a result, Y happened" screen post-decision
 - Child might not understand which choice led to which outcome
 
 **What's missing:**
+
 - [ ] Decision consequence screen showing "You chose: [choice]. Result: [outcome]" with money/time/emotion impact
 - [ ] Visible wallet change animation when decision decreases money
 - [ ] Before moving to next scenario chapter, show "You have GH₵X left toward your GH₵80 goal"
@@ -225,14 +245,17 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #4: Assessment Feedback Minimal** [MEDIUM - Missed learning opportunity]
+
 **Current:** Assessment shows score/competency but minimal feedback
 **Issue:** Pre-assessment has feedback ("Keeping some money and spending some is a habit…") but child might not read it
 **Evidence:**
+
 - `savePreAssessment` includes `feedback` field on each question option
 - But no confirmation screen showing "You answered this about saving. Here's what we learned about you"
 - Post-assessment seems to be final check-in but no explicit "Here's how your thinking grew" comparison
 
 **What's missing:**
+
 - [ ] Post-assessment shows pre- vs post comparison ("You used to choose X, now you choose Y")
 - [ ] Pre-assessment feedback **confirmed** with visual highlight + pause before moving on
 - [ ] Results page explicitly states "You improved in [competency]" with evidence
@@ -242,15 +265,18 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #5: Achievement/Badge Communication Buried** [MEDIUM - Undermines gamification]
+
 **Current:** Badges earned and shown on /progress, but earning moment is unclear
 **Issue:** Child completes lesson → gets XP → badge earned, but no explicit "badge unlock!" moment except CelebrationOverlay (which seems only on /results)
 **Evidence:**
+
 - XPIndicator shows current XP but not "you just earned 20 XP!"
 - CelebrationOverlay component exists but appears only after post-assessment
 - Child home shows earned badges but no "just earned" highlight
 - Records progress with score but celebration happens only at journey end
 
 **What's missing:**
+
 - [ ] Toast or modal showing "+20 XP 🌟" immediately after lesson completion
 - [ ] "Badge unlocked!" animation when child crosses level threshold
 - [ ] Progress page highlights "new" badges earned since last session
@@ -261,15 +287,18 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #6: Parent Cannot See Child's Actual Choices** [MEDIUM - Parent visibility gap]
+
 **Current:** Parent portal shows "completed lessons" and "progress %" but **no insight into child's actual decision-making**
 **Issue:** Parent sees dashboard but not "what did my child choose?" or "where did they struggle?"
 **Evidence:**
+
 - Parent `/child/{childId}` page shows "lessons done" list and progress ring
 - But no section showing "Recent scenario decisions" or "How child answered assessment"
 - Database stores scenario decisions, competency scores, but parent UI doesn't surface this
 - Parent feedback form exists (`/parent/feedback`) but it's **parent writing notes**, not child data surfaced
 
 **What's missing:**
+
 - [ ] Parent page shows recent scenario decisions: "When offered food stall job, chose: keep all money for goal"
 - [ ] Parent page shows assessment scores: "Pre: spending-focused, Post: saving-focused" (personified, not scores)
 - [ ] Parent page shows struggle points: "Took 3 attempts to finish lesson 4" (not judgment, just visibility)
@@ -280,15 +309,18 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **GAP #7: Mobile Responsiveness – Button/Touch Target Inconsistency** [MEDIUM - Mobile UX broken]
+
 **Current:** Components have 48px minimum but button sizing varies
 **Issue:** Some buttons large (full-width with `size="lg"`), others tiny (icon-only back buttons)
 **Evidence:**
+
 - LessonCard has `h-11 w-11` icon (44px, below 48px minimum)
 - Button component sizes vary: md | lg | none specified
 - PageHeader back button is `h-12 w-12` (48px ✓) but some nav items are smaller
 - Scenario card might have `text-sm` text that's hard to read on 6" phones
 
 **What's missing:**
+
 - [ ] Audit actual rendered sizes on 375px mobile viewport
 - [ ] Ensure all touch targets ≥48px (including icon-only buttons)
 - [ ] Verify text stays ≥16px on mobile (readability for 8-12 year olds)
@@ -301,7 +333,9 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ### 🎯 MISSING USER STATES (No visible code handling these)
 
 #### **State #1: First-Time Child – First Lesson Experience**
+
 **Missing:**
+
 - [ ] "First lesson ever" prompt: "Here's how lessons work – tap cards to reveal, then answer"
 - [ ] Tutorial on interaction patterns (tap card, scroll content, answer question)
 - [ ] "Save & continue" button explanation (why doesn't it happen automatically?)
@@ -311,7 +345,9 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **State #2: Child Returns After Days Away**
+
 **Missing:**
+
 - [ ] "Welcome back! You last completed [lesson]. Let's continue." banner
 - [ ] Progress reset indicator if goal deadline passed
 - [ ] "Catch up?" suggestion if behind schedule
@@ -321,7 +357,9 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **State #3: Child Stuck on Decision (Can't Proceed)**
+
 **Missing:**
+
 - [ ] "Can't decide?" help screen with examples
 - [ ] Retry/reset scenario decision capability
 - [ ] "What does each choice mean?" explainer
@@ -331,7 +369,9 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **State #4: Parent Viewing Child's Page While Child in Lesson**
+
 **Missing:**
+
 - [ ] Real-time progress indicator (not just final results)
 - [ ] "Currently working on [lesson]" status
 - [ ] Refresh button to see latest data
@@ -341,7 +381,9 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ---
 
 #### **State #5: Network Failure During Lesson Save**
+
 **Missing:**
+
 - [ ] "Saving…" visual with cancel option
 - [ ] "Couldn't save. Your work is safe locally. Retry?" message
 - [ ] Automatic retry when connection restored
@@ -353,22 +395,26 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ### 🎨 CONSISTENCY & IDENTITY GAPS
 
 #### **Typography & Sizing Inconsistency**
+
 - **Audit:** Lessons use `text-lg font-extrabold` for titles. Scenarios use variable sizing. Parent pages use `text-xl font-extrabold`.
 - **Gap:** No unified "journey title" style guide visible
 - **Missing:** Design token for "lesson title" vs "scenario title" vs "page title"
 
 #### **Color Tone Mismatch**
+
 - **Observed:** Lessons color-code by competency (save=success/green, spend=destructive/red, share=accent, plan=primary)
 - **Gap:** But this color coding **not visible in lesson card list** on /learn page
 - **Evidence:** LessonCard shows number badge in primary color regardless of topic tone
 - **Missing:** Visual differentiation of lesson types in /learn list
 
 #### **Illustration/Asset Consistency**
+
 - **Observed:** Lessons reference PNG assets (checkin-20.png, checkin-21.png, checkin-22.png)
 - **Gap:** Same 3 assets repeated across 12+ lessons?
 - **Missing:** Variety of illustrations for different chapters
 
 #### **Language Register Shifts**
+
 - **Observed:** Onboarding very friendly ("A money adventure is about to begin! ✨")
 - **Gap:** Admin pages use "demystify money management"
 - **Gap:** Parent pages use formal "Learning journey" vs child "Adventure trail"
@@ -463,28 +509,30 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 
 ## 5. CORE UX PRINCIPLES AUDIT
 
-| Principle | Current State | Gap | Impact |
-|---|---|---|---|
-| **Context Persistence** | Home shows "current challenge" but not stage/day | Child doesn't know where they are in 14-day arc | HIGH |
-| **Clear Next Steps** | Buttons say "Continue" but not to what/why | Child feels lost after each activity | HIGH |
-| **Cause & Effect** | Scenario tracks decisions but doesn't show consequences | Child learns by accident, not by design | HIGH |
-| **Progress Visibility** | XP + badges shown but no timeline | Parent can't track learning pacing | MEDIUM |
-| **Error Recovery** | LoadingState exists but no offline/retry | Network hiccup breaks journey resume | MEDIUM |
-| **First-Time UX** | Onboarding exists but no feature tutorial | Child unsure how to tap cards/save | MEDIUM |
-| **Accessibility** | Role attributes used, 48px buttons targeted | But actual 44px icons used; color-only status indicators | MEDIUM |
-| **Mobile Priority** | Responsive classes used (rounded-3xl, gap-3) | But haven't tested actual 375px viewport behavior | LOW |
+| Principle               | Current State                                           | Gap                                                      | Impact |
+| ----------------------- | ------------------------------------------------------- | -------------------------------------------------------- | ------ |
+| **Context Persistence** | Home shows "current challenge" but not stage/day        | Child doesn't know where they are in 14-day arc          | HIGH   |
+| **Clear Next Steps**    | Buttons say "Continue" but not to what/why              | Child feels lost after each activity                     | HIGH   |
+| **Cause & Effect**      | Scenario tracks decisions but doesn't show consequences | Child learns by accident, not by design                  | HIGH   |
+| **Progress Visibility** | XP + badges shown but no timeline                       | Parent can't track learning pacing                       | MEDIUM |
+| **Error Recovery**      | LoadingState exists but no offline/retry                | Network hiccup breaks journey resume                     | MEDIUM |
+| **First-Time UX**       | Onboarding exists but no feature tutorial               | Child unsure how to tap cards/save                       | MEDIUM |
+| **Accessibility**       | Role attributes used, 48px buttons targeted             | But actual 44px icons used; color-only status indicators | MEDIUM |
+| **Mobile Priority**     | Responsive classes used (rounded-3xl, gap-3)            | But haven't tested actual 375px viewport behavior        | LOW    |
 
 ---
 
 ## 6. PARENT EXPERIENCE AUDIT
 
 ### Current Parent View
+
 1. **Parent home:** List of children with "See progress" button
 2. **Child progress:** Circle showing % complete, list of done lessons
 3. **Feedback:** Parent can write notes (not shown in code)
 4. **Metrics:** Aggregate view exists but not explored
 
 ### What Parents Need (From child feedback at home)
+
 - **"Where is my child?"** → Show current lesson + estimated time left
 - **"What are they learning?"** → Show competencies + examples of real choices
 - **"Where are they struggling?"** → Show which lessons took multiple attempts
@@ -492,6 +540,7 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 - **"Are they on track?"** → Show progress vs. 14-day timeline (days passed, days left)
 
 ### What's Missing
+
 - [ ] Real-time "currently on lesson X" status (not just completed list)
 - [ ] Competency heat map (which skills improving, which need work)
 - [ ] Scenario decision visibility ("When offered the job, chose [X]")
@@ -506,48 +555,62 @@ However, the experience **feels like disconnected screens rather than ONE cohere
 ### Seven Key Findings (for Phase 2 prioritization)
 
 #### **Finding #1: No Visible 14-Day Arc**
+
 Children see lessons and scenarios but **not the connecting story**. Track sequence defines chapters + days, but this info never reaches child UI.
+
 - **File:** `src/content/tracks/save.ts` defines `chapterTitle`, `stage`, `reward` but…
 - **File:** `src/routes/child/learn.tsx` and lesson components **don't render these fields**
 - **Cost to fix:** Add chapter banner component, persist current stage in child snapshot
 - **Impact on child experience:** CRITICAL – breaks narrative immersion
 
 #### **Finding #2: Scenario Consequences Not Explicit**
+
 Scenario engine tracks decisions (code: `saveChildScenario` stores `{ saved, available, decisions }`) but child **doesn't see the consequence playback**.
+
 - **File:** `src/components/scenario/ScenarioPlayer.tsx` – no visible consequence screen
 - **Cost to fix:** Add post-decision screen showing "You chose X. Result: Y happened. Wallet: GH₵Z"
 - **Impact:** CRITICAL – child doesn't learn cause-effect of decisions
 
 #### **Finding #3: Assessment Feedback Disconnected**
+
 Pre-assessment shows individual question feedback but **no cumulative "here's what we learned about you"** screen; post-assessment has no pre vs. post comparison.
+
 - **File:** `src/content/assessments/save-junior.ts` has feedback in question definitions
 - **File:** `src/routes/child/assessment.$assessmentId.tsx` saves but no comparison display
 - **Cost to fix:** Create assessment results screen showing growth in competencies
 - **Impact:** HIGH – assessment feels like compliance, not self-reflection
 
 #### **Finding #4: Lesson/Scenario Pedagogical Link Missing**
+
 Track defines `pauseBefore` (lesson must run before scenario resumes) but child **sees this as two separate things**, not integrated learning moment.
+
 - **File:** `src/content/tracks/save.ts` has `pauseBefore: ["needs-vs-wants"]` on scenario
 - **File:** `src/routes/child/learn.tsx` renders lessons and scenarios in separate lists
 - **Cost to fix:** Show visual breadcrumb like "This lesson explains why [scenario decision] matters"
 - **Impact:** HIGH – breaks pedagogical design; child sees disconnected content
 
 #### **Finding #5: Parent Cannot See Child's Choices**
+
 Parent portal shows "completed items" but **not child's actual decision-making data**.
+
 - **File:** `src/lib/progress/service.ts` aggregates events but child's scenario decisions not surfaced to parent UI
 - **File:** `src/routes/parent/child.$childId.tsx` doesn't show scenario decisions or assessment details
 - **Cost to fix:** Add "child's recent decisions" section to parent child page + conversation starters
 - **Impact:** HIGH – parent can't reinforce learning at home
 
 #### **Finding #6: No Badge/Achievement Celebration Moment**
+
 Badges earned and recorded but **child doesn't feel the "unlock!" moment except at journey end**.
+
 - **File:** `src/components/gamification/CelebrationOverlay.tsx` exists but only used on `/results`
 - **File:** `src/routes/child/home.tsx` shows badges but no "new" indicator
 - **Cost to fix:** Show toast/modal on badge earn, highlight new badges on home
 - **Impact:** MEDIUM – gamification exists but child doesn't feel rewarded
 
 #### **Finding #7: Mobile Touch Target Inconsistency**
+
 Component library targets 48px but **some icon buttons are 44px** (below WCAG AA); text sizes not validated on actual 375px viewport.
+
 - **File:** `src/components/tati/Cards.tsx` LessonCard icon uses `h-11 w-11` (44px)
 - **File:** `src/components/tati/Layout.tsx` PageHeader back button uses `h-12 w-12` (48px ✓)
 - **Cost to fix:** Audit all buttons on actual mobile device, ensure 48px+ or larger touch area
@@ -558,24 +621,26 @@ Component library targets 48px but **some icon buttons are 44px** (below WCAG AA
 ## 8. VISIBLE COMPONENTS AUDIT
 
 ### Reusable Components (What's available to use)
-| Component | Location | Current Use | Status |
-|---|---|---|---|
-| **LoadingState** | `src/components/tati/States.tsx` | Child/parent pages | ✅ Working |
-| **EmptyState** | `src/components/tati/States.tsx` | No learner screen | ✅ Working |
-| **ErrorState** | `src/components/tati/States.tsx` | Network error fallback | ✅ Working |
-| **Card** | `src/components/tati/Card.tsx` | All pages (tone: surface/muted/primary) | ✅ Working |
-| **Badge** | `src/components/tati/Badge.tsx` | Progress indicator, status labels | ✅ Working |
-| **XPIndicator** | `src/components/tati/Badge.tsx` | Child home, results | ✅ Working |
-| **LessonCard** | `src/components/tati/Cards.tsx` | /learn page (status: locked/ready/done) | ✅ Working |
-| **ScenarioCard** | `src/components/tati/Cards.tsx` | /learn page | ✅ Working |
-| **ProgressRing** | `src/components/tati/Progress.tsx` | Parent child progress view | ✅ Working |
-| **Avatar** | `src/components/tati/Avatar.tsx` | Profile display | ✅ Working |
-| **Button** | `src/components/tati/Button.tsx` | All CTAs (variant: primary/secondary/outline/ghost, size: md/lg) | ✅ Working |
-| **PageHeader** | `src/components/tati/Layout.tsx` | All pages (eyebrow, title, subtitle, back button) | ✅ Working |
-| **Page** | `src/components/tati/Layout.tsx` | All pages (role: junior/parent/admin, withBottomNav) | ✅ Working |
-| **CelebrationOverlay** | `src/components/gamification/CelebrationOverlay.tsx` | Results page only | ⚠️ Limited use |
+
+| Component              | Location                                             | Current Use                                                      | Status         |
+| ---------------------- | ---------------------------------------------------- | ---------------------------------------------------------------- | -------------- |
+| **LoadingState**       | `src/components/tati/States.tsx`                     | Child/parent pages                                               | ✅ Working     |
+| **EmptyState**         | `src/components/tati/States.tsx`                     | No learner screen                                                | ✅ Working     |
+| **ErrorState**         | `src/components/tati/States.tsx`                     | Network error fallback                                           | ✅ Working     |
+| **Card**               | `src/components/tati/Card.tsx`                       | All pages (tone: surface/muted/primary)                          | ✅ Working     |
+| **Badge**              | `src/components/tati/Badge.tsx`                      | Progress indicator, status labels                                | ✅ Working     |
+| **XPIndicator**        | `src/components/tati/Badge.tsx`                      | Child home, results                                              | ✅ Working     |
+| **LessonCard**         | `src/components/tati/Cards.tsx`                      | /learn page (status: locked/ready/done)                          | ✅ Working     |
+| **ScenarioCard**       | `src/components/tati/Cards.tsx`                      | /learn page                                                      | ✅ Working     |
+| **ProgressRing**       | `src/components/tati/Progress.tsx`                   | Parent child progress view                                       | ✅ Working     |
+| **Avatar**             | `src/components/tati/Avatar.tsx`                     | Profile display                                                  | ✅ Working     |
+| **Button**             | `src/components/tati/Button.tsx`                     | All CTAs (variant: primary/secondary/outline/ghost, size: md/lg) | ✅ Working     |
+| **PageHeader**         | `src/components/tati/Layout.tsx`                     | All pages (eyebrow, title, subtitle, back button)                | ✅ Working     |
+| **Page**               | `src/components/tati/Layout.tsx`                     | All pages (role: junior/parent/admin, withBottomNav)             | ✅ Working     |
+| **CelebrationOverlay** | `src/components/gamification/CelebrationOverlay.tsx` | Results page only                                                | ⚠️ Limited use |
 
 ### Component Consistency Notes
+
 - ✅ All cards use rounded-3xl, shadow-card
 - ✅ All buttons 48px+ minimum (except icon-only 44px cases)
 - ✅ Color palette: success (green), destructive (red), accent (yellow/gold), primary (teal), muted (gray)
@@ -588,6 +653,7 @@ Component library targets 48px but **some icon buttons are 44px** (below WCAG AA
 ## 9. ROUTE STRUCTURE & STATE TRANSITIONS
 
 ### Child Routes Navigation Map
+
 ```
 Public Routes (no auth):
 ├─ /login (parent sign-in)
@@ -614,6 +680,7 @@ Private Routes (requires auth):
 ```
 
 ### State Transitions to Verify
+
 - [ ] After /child/lesson → should go back to /child/learn (confirmed ✓)
 - [ ] After /child/scenario → should go back to /child/learn (confirmed ✓)
 - [ ] After /child/assessment → should go to /child/learn (confirmed ✓)
@@ -627,9 +694,11 @@ Private Routes (requires auth):
 ## 10. TECHNICAL DEBT & IMPLEMENTATION BLOCKERS
 
 ### No Current Blockers for Audit Completion
+
 (This is read-only phase; no code changes required)
 
 ### Potential Blockers for Phase 2 (UX Implementation)
+
 - **Scenario consequence screen:** Needs new ScenarioResults component (no blocker—can create new)
 - **Chapter banners:** Requires passing chapter stage to route (easy—already in track data)
 - **Parent conversation starters:** Needs new recommendation engine based on child decisions (new logic required)
@@ -640,6 +709,7 @@ Private Routes (requires auth):
 ## 11. AUDIT METHODOLOGY & SCOPE
 
 ### What Was Audited
+
 ✅ Route structure and page hierarchy  
 ✅ Component library and visual consistency  
 ✅ Journey content sequence (track definitions)  
@@ -648,9 +718,10 @@ Private Routes (requires auth):
 ✅ State machine (loading/error/empty states)  
 ✅ Navigation patterns  
 ✅ Data flow (Firebase Firestore storage)  
-✅ Accessibility annotations (role, aria-live, aria-label)  
+✅ Accessibility annotations (role, aria-live, aria-label)
 
 ### What Was NOT Audited (Out of Scope)
+
 ❌ Visual rendering (no screenshot comparison)  
 ❌ Mobile device testing (code review only, not runtime)  
 ❌ Performance metrics (bundle size, load time)  
@@ -658,9 +729,10 @@ Private Routes (requires auth):
 ❌ Actual gamification/XP calculation correctness  
 ❌ Parent metrics page details  
 ❌ Academy sign-up flow  
-❌ Admin dashboard functionality  
+❌ Admin dashboard functionality
 
 ### Limitations
+
 - Code review only; no runtime/visual verification
 - No device/viewport testing
 - No user testing with actual children
@@ -673,12 +745,14 @@ Private Routes (requires auth):
 ### Bottom Line for Stakeholders
 
 **What's Working:**
+
 - ✅ Solid technical foundation with clear data model
 - ✅ Responsive design patterns in place
 - ✅ Journey content well-structured with 24 activities
 - ✅ Component library handles common states
 
 **Why It Doesn't Feel Like "One Journey":**
+
 - ❌ Child sees lessons + scenarios separately, not as ONE 14-day story
 - ❌ Scenario consequences not explicit (decisions feel random)
 - ❌ Chapter/stage/day context never shown to child
@@ -688,6 +762,7 @@ Private Routes (requires auth):
 - ❌ Lesson/scenario pedagogical links invisible
 
 **To Move to Phase 2:**
+
 - All child route code is functional and testable
 - No critical bugs blocking improvements
 - Component library ready for new UI additions
@@ -698,4 +773,3 @@ Private Routes (requires auth):
 **Report Status:** READ-ONLY AUDIT COMPLETE  
 **Next Step:** Phase 2 – Journey Map + UX Improvements (will require code changes)  
 **Recommendation:** Proceed to implementation phase; audit findings provide clear prioritization
-

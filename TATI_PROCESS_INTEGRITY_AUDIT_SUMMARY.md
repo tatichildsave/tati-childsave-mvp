@@ -1,4 +1,5 @@
 # TATI ChildSave — Process Integrity Audit Report
+
 **Date:** 2026-10-01  
 **Status:** Complete mapping of actual implementation  
 **Purpose:** Identify broken handoffs and process gaps, NOT suggest solutions
@@ -10,6 +11,7 @@
 The TATI ChildSave system has **two parallel and partially disconnected child access models**:
 
 ### Model A: Parent-Guided Learning ✅ WORKS
+
 - Parent signs up → Firebase Auth
 - Parent portal loads → family auto-created
 - Parent adds child → child profile created in Firebase
@@ -18,12 +20,14 @@ The TATI ChildSave system has **two parallel and partially disconnected child ac
 - **Status:** Functional end-to-end
 
 ### Model B: Child-Independent Learning 🔴 BROKEN
+
 - Child uses TATI ID + PIN to login
 - Child accesses `/child/*` routes independently
 - Progress recorded while parent offline
 - **Status:** Completely non-functional (no credentials ever generated)
 
 ### Critical Finding
+
 **Child profiles are created with empty `tati_id=""` and no credentials are ever issued.** The entire child-independent authentication path is implemented in code but has no runtime activation—it silently fails at every attempt to login.
 
 ---
@@ -41,7 +45,7 @@ The TATI ChildSave system has **two parallel and partially disconnected child ac
                     v                v
             Family Document    Family Membership
          (families/{fId})   (users/{uid}/familyMemberships)
-                    |                
+                    |
                     v
             Children Collection
          (families/{fId}/children/{cId})
@@ -51,7 +55,7 @@ The TATI ChildSave system has **two parallel and partially disconnected child ac
         v           v           v          v
       profile   credentials progress  achievements
       [tati_id]  [MISSING]  [exists]   [exists]
-                          
+
                     Parent-Guided Learning
                        /learn/$childId
                       (Parent Auth Required)
@@ -60,8 +64,8 @@ The TATI ChildSave system has **two parallel and partially disconnected child ac
                     Journey Progress
                    (Server-side writes)
                     (Firestore RLS enforced)
-                    
-                    
+
+
                     Child-Independent Learning
                         /child/login
                       (Child TATI ID + PIN)
@@ -78,6 +82,7 @@ The TATI ChildSave system has **two parallel and partially disconnected child ac
 ## Critical Breaks (P0 — Blocks Pilot)
 
 ### 1. Child Credentials Never Generated
+
 **Chain:** Parent creates child → `createChildProfile()` → child doc set with `tati_id=""`
 
 ```
@@ -114,6 +119,7 @@ IMPACT:
 ---
 
 ### 2. Parent User Document Never Created
+
 **Chain:** Parent signs up → Firebase Auth created → NO Firestore `/users/{uid}` doc
 
 ```
@@ -146,7 +152,7 @@ CONSEQUENCE:
 FIRESTORE RULE FAILURE:
   Function hasRole(role) = role in userDoc().roles
   If userDoc() is {}, then hasRole() is always false
-  
+
   - Parent cannot read /users/{uid} (rule checks auth.uid == uid, but userDoc empty)
   - Parent cannot update own profile
   - Parent role assignment blocked by missing user doc
@@ -159,6 +165,7 @@ FIRESTORE RULE FAILURE:
 ---
 
 ### 3. Assessment Attempts Hybrid (Firestore + Supabase)
+
 **Chain:** Child completes assessment → `saveChildAssessment()` → stored in Supabase, NOT Firestore
 
 ```
@@ -196,6 +203,7 @@ IMPACT:
 ## Major Issues (P1 — Serious Workflow Problems)
 
 ### 4. ensureFamily() Called on Every Page Load
+
 **Location:** `src/lib/family.ts::useChildProfiles()` → `src/lib/backend/firebase/family.functions.ts::getFamilyChildren()`
 
 ```
@@ -230,6 +238,7 @@ CURRENT STATUS:
 ---
 
 ### 5. Child Context Resolution Ambiguous in Parent-Guided Routes
+
 **Location:** `src/routes/_authenticated/learn.$childId.*.tsx` + `src/lib/auth/child-learning.functions.ts`
 
 ```
@@ -273,6 +282,7 @@ UNCLEAR:
 ---
 
 ### 6. Firestore Child/Adult Membership vs. User Document Gap
+
 **Location:** Firestore rules + `src/lib/backend/firebase/repositories.ts::ensureFamily()`
 
 ```
@@ -280,15 +290,15 @@ INCONSISTENCY:
   Firestore rules check: /families/{fId}/members/{uid} for isFamilyAdult()
   But called: isActiveFamilyMember() which checks /families/{fId}/members/{uid}
   And queries: /users/{uid}/familyMemberships/{fId}
-  
+
   Two different structures!
-  
+
   A) Firestore rules expect: /families/{fId}/members/{uid}
   B) Code creates: /users/{uid}/familyMemberships/{fId}
-  
+
   memberPath(familyId) = /families/{familyId}/members/{auth.uid}
   BUT ensureFamily() creates: /users/{userId}/familyMemberships/{familyId}
-  
+
 CONSEQUENCE:
   ⚠ RLS checks path A
   ⚠ Code writes path B
@@ -309,6 +319,7 @@ CURRENT STATUS:
 ### The Two Models Existing Simultaneously
 
 **Model A: Parent-Guided (Currently Working)**
+
 ```
 Parent Firebase Auth ← Parent session in browser
     ↓
@@ -324,6 +335,7 @@ Status: ✅ WORKS
 ```
 
 **Model B: Child-Independent (Currently Broken)**
+
 ```
 Child TATI ID + PIN ← Child-provided credentials
     ↓
@@ -343,17 +355,21 @@ Status: 🔴 BROKEN (no credentials ever created)
 ```
 
 ### The Intended Pilot Model
+
 Per architecture documentation, the pilot should use:
+
 - **Parent:** Firebase Auth
 - **Child:** TATI ID + PIN (Model B)
 - **Facilitator:** Firebase Auth + role/school authorization
 
 ### What Actually Happens
+
 - **Parent:** Firebase Auth + parent-guided child (Model A) ✅
 - **Child:** No independent access possible ❌
 - **Facilitator:** Firebase Auth + school/class queries ✅ (if assignments exist)
 
 ### Result
+
 Model A and Model B code coexist but Model B never activates. Parent can use child profile only through parent account. Pilot requirement for child independence cannot be met without generating credentials (Model B activation).
 
 ---
@@ -370,18 +386,18 @@ STEP 1: Parent Signup
   Client Function: Firebase createUserWithEmailAndPassword()
   DB Operation: Firebase Auth creates user
   Result: Firebase Auth user created; NO Firestore doc
-  
+
 STEP 2: Post-Signup Redirect (useEffect)
   Auth Listener: onAuthStateChanged() detects new user
   Navigation: Redirect to /parent
   Firestore Operation: None yet
-  
+
 STEP 3: Parent Portal Loads
   Route: src/routes/parent/index.tsx
   Auth Check: _authenticated layout verifies auth.currentUser
   Query Hook: useChildProfiles()
   Server Function: getFamilyChildren(userId)
-  
+
 STEP 4: Family Initialization (Hidden in Page Load)
   Server Fn: FirebaseFamilyRepository.ensureFamily()
   Query: /users/{userId}/familyMemberships
@@ -392,17 +408,17 @@ STEP 4: Family Initialization (Hidden in Page Load)
     Fields: familyId, userId, role="parent", status="active"
   RLS Check: families allow create if createdBy == auth.uid ✓
   Result: Family + membership created
-  
+
 STEP 5: Query Children
   Server Fn: Still in getFamilyChildren()
   Query: families/{familyId}/children (ordered by createdAt)
   RLS Check: /families/{familyId} read if isActiveFamilyMember ✓
   Result: Empty array (first time)
-  
+
 STEP 6: UI Render
   Parent sees: "No learner yet" + "Add my child" button
   Navigation ready: /onboarding
-  
+
 POTENTIAL BREAKS:
   ⚠ Step 1→2: If browser closes, Firebase Auth persists but family not created yet
   ⚠ Step 4: ensureFamily() creates family on first load; idempotent but not optimal
@@ -419,12 +435,12 @@ STEP 1: Parent Initiates Onboarding
   Auth Check: _authenticated layout verifies auth.currentUser
   User Input: Name (2-30 chars), Age (8-12), Avatar (6 options)
   Validation: All client-side
-  
+
 STEP 2: Submit Child Profile
   User Action: Click "Start my journey"
   Client Fn: startJourney() calls createChild.mutateAsync()
   Server Function: createChildProfile({ userId, input })
-  
+
 STEP 3: Child Document Creation
   Server Fn: FirebaseFamilyRepository.createChild()
   Call: ensureFamily() (same as Workflow 1)
@@ -437,7 +453,7 @@ STEP 3: Child Document Creation
       - ❌ tati_id="" (EMPTY!)
       - createdAt, updatedAt (serverTimestamp)
   RLS Check: create if isFamilyAdult ✓
-  
+
 STEP 4: Credential Generation (MISSING)
   Expected: Call generateChildCredential(childId)
   Expected: Create /childCredentials/{tatiId}
@@ -447,20 +463,20 @@ STEP 4: Credential Generation (MISSING)
   Code exists: src/lib/auth/child-auth-firebase.server.ts
   Function exists: generateTatiId(), hashChildPin(), etc.
   Invocation: MISSING from createChild()
-  
+
 STEP 5: Return to Client
   Server returns: ChildProfile { id, name, age, avatar, tati_id="" }
   Client receives: Profile with empty tati_id
-  
+
 STEP 6: UI Render
   Parent sees: Child created! Success!
   Parent sees: NO TATI ID (tati_id is empty)
   Parent can share: Nothing (no credentials)
-  
+
 STEP 7: Redirect
   Navigation: /learn/{childId}/assessment/save-pre
   Child pre-assessment starts (parent-guided only)
-  
+
 POTENTIAL BREAKS:
   🔴 CRITICAL: tati_id="" prevents child independent login
   🔴 CRITICAL: No credentials generated
@@ -477,56 +493,56 @@ STEP 1: Child Navigates to Login
   Route: src/routes/child/login.tsx
   User: Child (no auth yet)
   UI: Form for TATI ID + PIN
-  
+
 STEP 2: Child Enters Credentials
   Input: TATI ID (e.g., "TATI-A7B2C9D1")
   Input: PIN (e.g., "1234")
-  
+
 STEP 3: Submit Login
   Client Fn: childLogin({ tatiId, pin })
   Server Function: src/lib/auth/child-auth.functions.ts::childLogin()
-  
+
 STEP 4: Verify Credentials
   Server Fn: verifyChildCredential(tatiId, pin)
   Query: /childCredentials collection
   Lookup: WHERE tatiId == normalized("TATI-A7B2C9D1")
   Expected: Find document with pinHash, active=true, revokedAt=null
   Actual: Document does not exist
-  
+
 STEP 5: Credential Verification
   Server Fn: Compares submitted pin with stored pinHash
   Compare: scrypt.compare(pin, pinHash)
   Result: Cannot compare because document doesn't exist
   Return: null (no credential found)
-  
+
 STEP 6: Error Response
   Server returns: "That TATI ID or PIN could not be verified"
   Client displays: Error message
   Child remains: Unauthenticated
-  
+
 STEP 7: Child Session Not Created
   Expected: Create /families/{familyId}/children/{childId}/sessions/{sessionId}
   Actual: Not reached (verification failed)
   Expected: Return session token as HTTP-only cookie
   Actual: No cookie set
-  
+
 STEP 8: Next Attempt
   Child tries again: Same error
   Child route access: /child/* routes all redirect to /child/login
   Parent Browser: Only way child can access learning
-  
+
 POTENTIAL BREAKS:
   🔴 CRITICAL: verifyChildCredential() always returns null
   🔴 CRITICAL: Login always fails
   🔴 CRITICAL: No session created
   🔴 CRITICAL: Child cannot access independent learning
-  
+
 WHY BROKEN:
   Parent creates child with tati_id=""
   No /childCredentials document ever created
   verifyChildCredential() looks for doc that doesn't exist
   Lookup fails → authentication fails
-  
+
 REQUIRED FIX:
   1. During createChild() call generateChildCredential()
   2. Generate TATI ID (unique, e.g., "TATI-" + 8 alphanumeric)
@@ -543,25 +559,25 @@ REQUIRED FIX:
 STEP 1: Parent Navigates to Child Card
   Route: /parent/child/$childId
   Auth: Parent Firebase user
-  
+
 STEP 2: Authorize Access
   beforeLoad: None shown explicitly
   RLS Check: Read /families (must be isFamilyAdult)
-  
+
 STEP 3: Load Child Profile
   Query: families/{familyId}/children/{childId}
   RLS Check: canAccessChild() = isFamilyAdult || isAssignedFacilitator || isAdmin
   Result: Parent is isFamilyAdult ✓
-  
+
 STEP 4: Load Progress
   Server Fn: getChildJourneyProgress()
   Query 1: collectionGroup("children").where("id", "==", childId)
   Query 2: families/{familyId}/children/{childId}/journeyProgress
   RLS Check: journeyProgress read if canAccessChild() ✓
-  
+
 STEP 5: Display Progress
   Render: Progress ring, completed items, badges, competencies
-  
+
 POTENTIAL BREAKS:
   ⚠ AUTHORIZATION: Relies entirely on Firestore RLS
   ⚠ NO SERVER-SIDE: Per-route authorization not explicit
@@ -574,26 +590,27 @@ POTENTIAL BREAKS:
 
 ## Broken Handoffs Summary Table
 
-| Process | Expected | Actual | Status | Root Cause |
-|---------|----------|--------|--------|-----------|
-| **Signup** | Firebase Auth created | ✓ Firebase Auth created | ✅ WORKS | N/A |
-| **User Doc** | /users/{uid} created during signup | Never created | 🔴 BROKEN | Missing initialization code |
-| **Family Init** | Created during signup | Created on first /parent load | 🟠 WORKS (suboptimal) | ensureFamily() design |
-| **Child Create** | Child doc + credentials | Child doc only | 🔴 BROKEN | generateChildCredential() not called |
-| **TATI ID** | Generated + displayed | tati_id="" (empty) | 🔴 BROKEN | Credential generation skipped |
-| **Child Credentials** | /childCredentials doc created | Never created | 🔴 BROKEN | generateChildCredential() not called |
-| **Child Login** | Verify against /childCredentials | Doc not found → fail | 🔴 BROKEN | No credentials exist |
-| **Child Session** | Create ChildSession cookie | Never reached (login fails) | 🔴 BROKEN | Login fails first |
-| **Parent-Guided Learning** | Progress recorded to Firestore | ✓ Progress recorded | ✅ WORKS | N/A |
-| **Assessment Storage** | Store to Firestore | Stored to Supabase | 🟠 HYBRID | Migration incomplete |
-| **Parent Sees Progress** | Query Firestore | ✓ Query works | ✅ WORKS | N/A |
-| **Facilitator Access** | Query assigned learners | ✓ Query works | ✅ WORKS | N/A (if assignments exist) |
+| Process                    | Expected                           | Actual                        | Status                | Root Cause                           |
+| -------------------------- | ---------------------------------- | ----------------------------- | --------------------- | ------------------------------------ |
+| **Signup**                 | Firebase Auth created              | ✓ Firebase Auth created       | ✅ WORKS              | N/A                                  |
+| **User Doc**               | /users/{uid} created during signup | Never created                 | 🔴 BROKEN             | Missing initialization code          |
+| **Family Init**            | Created during signup              | Created on first /parent load | 🟠 WORKS (suboptimal) | ensureFamily() design                |
+| **Child Create**           | Child doc + credentials            | Child doc only                | 🔴 BROKEN             | generateChildCredential() not called |
+| **TATI ID**                | Generated + displayed              | tati_id="" (empty)            | 🔴 BROKEN             | Credential generation skipped        |
+| **Child Credentials**      | /childCredentials doc created      | Never created                 | 🔴 BROKEN             | generateChildCredential() not called |
+| **Child Login**            | Verify against /childCredentials   | Doc not found → fail          | 🔴 BROKEN             | No credentials exist                 |
+| **Child Session**          | Create ChildSession cookie         | Never reached (login fails)   | 🔴 BROKEN             | Login fails first                    |
+| **Parent-Guided Learning** | Progress recorded to Firestore     | ✓ Progress recorded           | ✅ WORKS              | N/A                                  |
+| **Assessment Storage**     | Store to Firestore                 | Stored to Supabase            | 🟠 HYBRID             | Migration incomplete                 |
+| **Parent Sees Progress**   | Query Firestore                    | ✓ Query works                 | ✅ WORKS              | N/A                                  |
+| **Facilitator Access**     | Query assigned learners            | ✓ Query works                 | ✅ WORKS              | N/A (if assignments exist)           |
 
 ---
 
 ## Security & Authorization Findings
 
 ### What Works ✅
+
 - **Firestore RLS:** Correctly restricts family/child access to authorized users
 - **Scenario Integrity:** G5.1 server-side replay prevents tampering
 - **Assessment Scoring:** Server-side calculation prevents client score inflation
@@ -601,12 +618,14 @@ POTENTIAL BREAKS:
 - **Admin SDK:** Properly used for server-only writes (bypasses RLS intentionally)
 
 ### What's Incomplete ⚠️
+
 - **Parent User Doc:** Missing in Firestore; userDoc() RLS checks fail silently
 - **Child Membership:** Two different path patterns (RLS vs. code)
 - **Per-Route Authorization:** Child ownership not explicitly verified in /learn routes
 - **Credential Isolation:** /childCredentials and /childSessions server-only (correct)
 
 ### What's At Risk 🟠
+
 - **Parent Can Access Any Child?** Unclear if parent auth is verified before recording progress
 - **Collectiongroup Scan:** getChildJourneyProgress() scans all children by ID; RLS must deny
 - **Hybrid Storage:** Assessment data split between Firebase and Supabase (no transaction)
@@ -616,36 +635,40 @@ POTENTIAL BREAKS:
 ## Data Integrity Findings
 
 ### Idempotency Protection
-| Operation | Idempotent? | Notes |
-|-----------|------------|-------|
-| Family creation | ✓ YES | ensureFamily() checks membership; won't create duplicate |
-| Child creation | ✓ YES | childId = UUID; impossible to create duplicate |
-| Progress recording | ✓ YES | journeyProgress key = itemType:itemId; upsert overwrites |
-| Assessment attempt | ✓ YES | Supabase upsert on (childId, assessmentId) |
-| Scenario session | ✓ YES | scenarioSessions keyed by scenarioId; upsert overwrites |
+
+| Operation          | Idempotent? | Notes                                                    |
+| ------------------ | ----------- | -------------------------------------------------------- |
+| Family creation    | ✓ YES       | ensureFamily() checks membership; won't create duplicate |
+| Child creation     | ✓ YES       | childId = UUID; impossible to create duplicate           |
+| Progress recording | ✓ YES       | journeyProgress key = itemType:itemId; upsert overwrites |
+| Assessment attempt | ✓ YES       | Supabase upsert on (childId, assessmentId)               |
+| Scenario session   | ✓ YES       | scenarioSessions keyed by scenarioId; upsert overwrites  |
 
 ### Transaction Safety
-| Operation | Transactional? | Risk |
-|-----------|---|-------|
-| Family + Membership | ❌ NO | Two separate writes; orphan if second fails |
-| Child + Credentials | N/A | Credentials never created (broken) |
-| Assessment + Competency | ❌ UNCLEAR | Assessment in Supabase; competency update unclear |
-| Scenario + Progress | ✓ YES | Both to Firestore; Admin SDK should batch |
+
+| Operation               | Transactional? | Risk                                              |
+| ----------------------- | -------------- | ------------------------------------------------- |
+| Family + Membership     | ❌ NO          | Two separate writes; orphan if second fails       |
+| Child + Credentials     | N/A            | Credentials never created (broken)                |
+| Assessment + Competency | ❌ UNCLEAR     | Assessment in Supabase; competency update unclear |
+| Scenario + Progress     | ✓ YES          | Both to Firestore; Admin SDK should batch         |
 
 ### Retry Safety
-| Scenario | Outcome |
-|----------|---------|
-| Signup retried | Firebase Auth idempotent; no duplicate user |
-| Family creation retried | ensureFamily() idempotent; same family returned |
-| Child creation retried | UUID prevents duplicate; might create two orphans if first failed mid-write |
-| Progress submission retried | Upsert overwrites; idempotent |
-| Assessment retried | Upsert overwrites; no duplicate attempts |
+
+| Scenario                    | Outcome                                                                     |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Signup retried              | Firebase Auth idempotent; no duplicate user                                 |
+| Family creation retried     | ensureFamily() idempotent; same family returned                             |
+| Child creation retried      | UUID prevents duplicate; might create two orphans if first failed mid-write |
+| Progress submission retried | Upsert overwrites; idempotent                                               |
+| Assessment retried          | Upsert overwrites; no duplicate attempts                                    |
 
 ---
 
 ## UX Process Findings
 
 ### Parent Onboarding Flow
+
 ```
 Signup → (immediate) Firebase Auth
   ↓
@@ -655,9 +678,11 @@ Parent portal displays → "No learner yet"
   ↓
 Parent confident family initialized ✓
 ```
+
 **Status:** Seamless but family creation hidden in page load
 
 ### Child Addition Flow
+
 ```
 Parent clicks "Add my child" → Onboarding wizard
   ↓
@@ -673,9 +698,11 @@ Parent-guided learning starts (child present)
   ↓
 NO WAY for child to continue alone ❌
 ```
+
 **Status:** Broken (credentials missing)
 
 ### Child Learning Alone
+
 ```
 Parent offline → Child has no way to login ❌
   ↓
@@ -683,6 +710,7 @@ Child TATI ID + PIN flow completely non-functional
   ↓
 Pilot assumes child can learn independently ❌
 ```
+
 **Status:** Impossible (credentials were never created)
 
 ---
@@ -690,6 +718,7 @@ Pilot assumes child can learn independently ❌
 ## Stale Code & Migration Debt
 
 ### Supabase References (Should Be Removed or Documented)
+
 ```
 STILL USING SUPABASE:
 - Assessment attempts: src/lib/auth/child-learning.functions.ts
@@ -704,6 +733,7 @@ REALITY: Assessment data still in Supabase; Firebase only partial
 ```
 
 ### Code Exists But Never Called
+
 ```
 generateChildCredential() - defined but never invoked
 generateTatiId() - defined but never invoked
@@ -714,13 +744,14 @@ getAuthenticatedChild() - defined, called, but path unclear
 ```
 
 ### Potential Duplicates
+
 ```
 Family creation logic: ensureFamily() (main path)
   - Also: No alternate path shown; single implementation
-  
+
 Child repository: FirebaseFamilyRepository
   - Also: FirebaseJourneyProgressRepository (separate concern; fine)
-  
+
 Server functions: family.functions.ts + child-auth.functions.ts
   - Also: child-learning.functions.ts (overlaps? unclear)
 ```
@@ -730,17 +761,20 @@ Server functions: family.functions.ts + child-auth.functions.ts
 ## Priority Classification
 
 ### P0 — Blocks Pilot (Cannot Proceed)
+
 1. ❌ **Child credentials never generated** — No way for child to login independently
 2. ❌ **Child TATI ID + PIN path broken** — verifyChildCredential() always fails
 3. ❌ **Assessment hybrid storage** — Data split between Firebase + Supabase
 
 ### P1 — Serious Workflow Problem (Needs Fixing)
+
 4. ⚠️ **Parent user doc missing** — Firestore RLS incomplete; relies on Admin SDK bypass
 5. ⚠️ **ensureFamily() on every load** — Not optimal; creates documents during page render
 6. ⚠️ **Child context resolution ambiguous** — Per-route authorization unclear
 7. ⚠️ **Child/adult membership path inconsistency** — RLS checks path A; code writes path B
 
 ### P2 — Important But Not Blocking
+
 8. 📝 **Parent feedback/metrics incomplete** — Routes exist but unclear if connected to data
 9. 📝 **Multiple family behavior untested** — Assumes one family per parent
 10. 📝 **Facilitator assignment creation** — Assignment mechanism unclear
@@ -753,6 +787,7 @@ Server functions: family.functions.ts + child-auth.functions.ts
 **DO NOT IMPLEMENT YET.** This audit is diagnostic only.
 
 Before any fixes, understand:
+
 1. Is Model B (child-independent) actually required for pilot?
 2. Should parent-guided Model A be sufficient?
 3. What's the intended child authentication model?
@@ -761,6 +796,7 @@ Before any fixes, understand:
 6. Should parent user docs be created at signup or lazily?
 
 Once clarified, these items become actionable:
+
 - Generate child credentials during createChild()
 - Create /users/{uid} doc at signup
 - Migrate assessment storage to Firestore

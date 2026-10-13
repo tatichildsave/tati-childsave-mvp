@@ -13,6 +13,7 @@
 ## KEY RULES FOR THIS PHASE
 
 ### ❌ DO NOT
+
 - Implement P1 features
 - Add new components (unless genuine blocker discovered)
 - Add badges, XP systems, parent analytics
@@ -22,6 +23,7 @@
 - Change curriculum content
 
 ### ✅ DO
+
 - Document every finding
 - Classify all issues (P0/P1/P2/P3)
 - Test actual curriculum (all 12 lessons, all 5 scenarios)
@@ -36,132 +38,141 @@
 ## Journey A — Brand-New Child
 
 ### Starting State
+
 - Child account exists in Firebase
 - No journey progress
 - No assessment completion
 - No lesson/scenario visits
 
 ### Test Path
+
 **Child entry → Onboarding → Pre-Assessment → Lesson 1**
 
 ### Verification Checklist
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| Child sees welcome message | Yes | | | |
-| Pre-assessment is mandatory | Yes | | | |
-| Pre-assessment purpose is clear | "Tell TATI how you think about money" | | | |
-| Pre-assessment is completable | Yes | | | |
-| Pre-assessment completion is persisted | Yes | | | |
-| Transition to Lesson 1 is automatic | Yes | | | |
-| Lesson 1 displays correctly | Yes | | | |
-| Chapter context visible (if applicable) | Yes | | | |
-| Learning objective visible | Yes | | | |
-| Child knows what to do | Yes | | | |
+| Item                                    | Expected                              | Actual | Status | Evidence |
+| --------------------------------------- | ------------------------------------- | ------ | ------ | -------- |
+| Child sees welcome message              | Yes                                   |        |        |          |
+| Pre-assessment is mandatory             | Yes                                   |        |        |          |
+| Pre-assessment purpose is clear         | "Tell TATI how you think about money" |        |        |          |
+| Pre-assessment is completable           | Yes                                   |        |        |          |
+| Pre-assessment completion is persisted  | Yes                                   |        |        |          |
+| Transition to Lesson 1 is automatic     | Yes                                   |        |        |          |
+| Lesson 1 displays correctly             | Yes                                   |        |        |          |
+| Chapter context visible (if applicable) | Yes                                   |        |        |          |
+| Learning objective visible              | Yes                                   |        |        |          |
+| Child knows what to do                  | Yes                                   |        |        |          |
 
 ---
 
 ## Journey B — Returning Child
 
 ### Starting State
+
 - Child has completed pre-assessment
 - Child has completed 2-3 lessons
 - Child has started but not completed 1 scenario
 - Session has ended and restarted
 
 ### Test Path
+
 **Login → Home Page → Resume Activity**
 
 ### Verification Checklist
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| Previous progress is restored | Yes | | | |
-| Current day is correct (≥2, ≤14) | Yes | | | |
-| Current activity is highlighted | Yes | | | |
-| GoalWidget shows correct values | Yes | | | |
-| SavedCedis matches completed items | Yes | | | |
-| Days remaining is correct | Yes | | | |
-| NextStepCard shows correct CTA | Yes | | | |
-| Child does not need to search | Yes | | | |
-| Persisted choice in scenario is remembered | Yes (if incomplete) | | | |
+| Item                                       | Expected            | Actual | Status | Evidence |
+| ------------------------------------------ | ------------------- | ------ | ------ | -------- |
+| Previous progress is restored              | Yes                 |        |        |          |
+| Current day is correct (≥2, ≤14)           | Yes                 |        |        |          |
+| Current activity is highlighted            | Yes                 |        |        |          |
+| GoalWidget shows correct values            | Yes                 |        |        |          |
+| SavedCedis matches completed items         | Yes                 |        |        |          |
+| Days remaining is correct                  | Yes                 |        |        |          |
+| NextStepCard shows correct CTA             | Yes                 |        |        |          |
+| Child does not need to search              | Yes                 |        |        |          |
+| Persisted choice in scenario is remembered | Yes (if incomplete) |        |        |          |
 
 ---
 
 ## Journey C — Complete Lesson
 
 ### Starting State
+
 - Child is at the beginning of Lesson 1, 5, or 10 (varies)
 
 ### Test Path
+
 **Lesson Entry → Read Objective → Complete Activity → Knowledge Check → Completion → Next Step**
 
 ### Verification Checklist
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| ChapterBanner displays stage | Yes | | | |
-| ChapterBanner displays day/days | Yes | | | |
-| Day number is correct | 1–14 | | | |
-| GoalWidget displays at top | Yes | | | |
-| GoalWidget shows correct saved amount | Value from snapshot | | | |
-| GoalWidget shows correct target | 80 GH₵ | | | |
-| Learning objective is visible | Yes | | | |
-| Objective is understandable to 8yo | Yes | | | |
-| Activity is completable | Yes | | | |
-| Knowledge check validates | Yes | | | |
-| Completion is obvious | Yes | | | |
-| Next activity is obvious | Yes | | | |
-| Child can explain what was learned | Yes | | | |
+| Item                                  | Expected            | Actual | Status | Evidence |
+| ------------------------------------- | ------------------- | ------ | ------ | -------- |
+| ChapterBanner displays stage          | Yes                 |        |        |          |
+| ChapterBanner displays day/days       | Yes                 |        |        |          |
+| Day number is correct                 | 1–14                |        |        |          |
+| GoalWidget displays at top            | Yes                 |        |        |          |
+| GoalWidget shows correct saved amount | Value from snapshot |        |        |          |
+| GoalWidget shows correct target       | 80 GH₵              |        |        |          |
+| Learning objective is visible         | Yes                 |        |        |          |
+| Objective is understandable to 8yo    | Yes                 |        |        |          |
+| Activity is completable               | Yes                 |        |        |          |
+| Knowledge check validates             | Yes                 |        |        |          |
+| Completion is obvious                 | Yes                 |        |        |          |
+| Next activity is obvious              | Yes                 |        |        |          |
+| Child can explain what was learned    | Yes                 |        |        |          |
 
 ---
 
 ## Journey D — Scenario (Critical)
 
 ### Starting State
+
 - Child enters a scenario for first time OR resumes incomplete scenario
 
 ### Test Path
+
 **Scenario Entry → Story/Situation → Make Decision → View Consequence → Continue**
 
 ### Test Variants
+
 **D1: Positive/Beneficial Consequence**  
 **D2: Negative/Less-Beneficial Consequence**
 
 ### Verification Checklist — Entry & Setup
 
-| Item | Expected | Actual (D1) | Actual (D2) | Status | Evidence |
-|------|----------|-------------|-------------|--------|----------|
-| Scenario title is clear | Yes | | | | |
-| Situation is understandable | Yes | | | | |
-| Context matches curriculum | Yes | | | | |
-| Choices are visible | ≥2 | | | | |
-| Each choice has description | Yes | | | | |
-| Vocabulary is age-appropriate | Yes | | | | |
+| Item                          | Expected | Actual (D1) | Actual (D2) | Status | Evidence |
+| ----------------------------- | -------- | ----------- | ----------- | ------ | -------- |
+| Scenario title is clear       | Yes      |             |             |        |          |
+| Situation is understandable   | Yes      |             |             |        |          |
+| Context matches curriculum    | Yes      |             |             |        |          |
+| Choices are visible           | ≥2       |             |             |        |          |
+| Each choice has description   | Yes      |             |             |        |          |
+| Vocabulary is age-appropriate | Yes      |             |             |        |          |
 
 ### Verification Checklist — Decision & Consequence
 
-| Item | Expected | Actual (D1) | Actual (D2) | Status | Evidence |
-|------|----------|-------------|-------------|--------|----------|
-| Choice is persisted | Yes | | | | |
-| Consequence screen appears | Yes | | | | |
-| Headline is displayed | Yes | | | | |
-| Narrative explanation appears | Yes | | | | |
-| Wallet display shows money change | Yes | | | | |
-| Child understands WHY money changed | Yes | | | | |
-| Ledger note supports understanding | Yes | | | | |
-| Decision chip appears | Yes | | | | |
-| No punishment/shame in negative outcome | Yes | | | | |
-| Consequence feels educational | Yes | | | | |
+| Item                                    | Expected | Actual (D1) | Actual (D2) | Status | Evidence |
+| --------------------------------------- | -------- | ----------- | ----------- | ------ | -------- |
+| Choice is persisted                     | Yes      |             |             |        |          |
+| Consequence screen appears              | Yes      |             |             |        |          |
+| Headline is displayed                   | Yes      |             |             |        |          |
+| Narrative explanation appears           | Yes      |             |             |        |          |
+| Wallet display shows money change       | Yes      |             |             |        |          |
+| Child understands WHY money changed     | Yes      |             |             |        |          |
+| Ledger note supports understanding      | Yes      |             |             |        |          |
+| Decision chip appears                   | Yes      |             |             |        |          |
+| No punishment/shame in negative outcome | Yes      |             |             |        |          |
+| Consequence feels educational           | Yes      |             |             |        |          |
 
 ### Verification Checklist — Continuation
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| Continue/Next button is clear | Yes | | | |
-| Progress is persisted | Yes | | | |
-| Can resume scenario later | Yes | | | |
-| Next activity is clear | Yes | | | |
+| Item                          | Expected | Actual | Status | Evidence |
+| ----------------------------- | -------- | ------ | ------ | -------- |
+| Continue/Next button is clear | Yes      |        |        |          |
+| Progress is persisted         | Yes      |        |        |          |
+| Can resume scenario later     | Yes      |        |        |          |
+| Next activity is clear        | Yes      |        |        |          |
 
 ---
 
@@ -170,6 +181,7 @@
 All 12 lessons from the "save" track must be tested.
 
 **Instructions**: For each lesson, run through the entire experience. Record:
+
 - Objective visibility
 - Chapter/day context
 - Progress visibility
@@ -179,20 +191,20 @@ All 12 lessons from the "save" track must be tested.
 
 ### Lesson Test Table
 
-| # | Title | Day | Objective Visible? | Chapter Correct? | Progress Correct? | Completion Clear? | Next Step Clear? | Issue(s) |
-|---|-------|-----|:--:|:--:|:--:|:--:|:--:|---------|
-| 1 | [TBD] | 1 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 2 | [TBD] | 1 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 3 | [TBD] | 2 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 4 | [TBD] | 2 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 5 | [TBD] | 3 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 6 | [TBD] | 4 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 7 | [TBD] | 5 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 8 | [TBD] | 6 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 9 | [TBD] | 7 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 10 | [TBD] | 9 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 11 | [TBD] | 10 | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 12 | [TBD] | 11 | ☐ | ☐ | ☐ | ☐ | ☐ | |
+| #   | Title | Day | Objective Visible? | Chapter Correct? | Progress Correct? | Completion Clear? | Next Step Clear? | Issue(s) |
+| --- | ----- | --- | :----------------: | :--------------: | :---------------: | :---------------: | :--------------: | -------- |
+| 1   | [TBD] | 1   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 2   | [TBD] | 1   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 3   | [TBD] | 2   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 4   | [TBD] | 2   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 5   | [TBD] | 3   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 6   | [TBD] | 4   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 7   | [TBD] | 5   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 8   | [TBD] | 6   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 9   | [TBD] | 7   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 10  | [TBD] | 9   |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 11  | [TBD] | 10  |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
+| 12  | [TBD] | 11  |         ☐          |        ☐         |         ☐         |         ☐         |        ☐         |          |
 
 ---
 
@@ -205,24 +217,26 @@ All 5 existing scenarios must be tested.
 ### Scenario Test Table
 
 | Scenario | Title | Day | Entry Clear? | Choices Understandable? | Consequence Displayed? | Wallet Updates? | Child Understands WHY? | Continues OK? | Issue(s) |
-|----------|-------|-----|:--:|:--:|:--:|:--:|:--:|:--:|---------|
-| 1 | [TBD] | | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 2 | [TBD] | | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 3 | [TBD] | | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 4 | [TBD] | | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | |
-| 5 | [TBD] | | ☐ | ☐ | ☐ | ☐ | ☐ | ☐ | |
+| -------- | ----- | --- | :----------: | :---------------------: | :--------------------: | :-------------: | :--------------------: | :-----------: | -------- |
+| 1        | [TBD] |     |      ☐       |            ☐            |           ☐            |        ☐        |           ☐            |       ☐       |          |
+| 2        | [TBD] |     |      ☐       |            ☐            |           ☐            |        ☐        |           ☐            |       ☐       |          |
+| 3        | [TBD] |     |      ☐       |            ☐            |           ☐            |        ☐        |           ☐            |       ☐       |          |
+| 4        | [TBD] |     |      ☐       |            ☐            |           ☐            |        ☐        |           ☐            |       ☐       |          |
+| 5        | [TBD] |     |      ☐       |            ☐            |           ☐            |        ☐        |           ☐            |       ☐       |          |
 
 ### Scenario Detail: Wallet & Goal Impact
 
 For each scenario, record the exact money changes and goal impact:
 
 **Scenario 1**: [Title TBD]
+
 - Starting balance: [TBD]
 - Choice 1 → Consequence → Ending balance: [TBD] (change: ±[TBD])
 - Choice 2 → Consequence → Ending balance: [TBD] (change: ±[TBD])
 - Goal progress: [TBD]
 
 **Scenario 2**: [Title TBD]
+
 - Starting balance: [TBD]
 - Choice 1 → Consequence → Ending balance: [TBD] (change: ±[TBD])
 - Choice 2 → Consequence → Ending balance: [TBD] (change: ±[TBD])
@@ -236,24 +250,26 @@ For each scenario, record the exact money changes and goal impact:
 
 ## Pre-Assessment
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| Introduction is clear | Yes | | | |
-| Question flow is logical | Yes | | | |
-| Questions are answerable | Yes | | | |
-| Validation prevents empty submission | Yes | | | |
-| Completion is persisted | Yes | | | |
-| Transition to Lesson 1 is automatic | Yes | | | |
-| Can resume if incomplete | Yes | | | |
+| Item                                 | Expected | Actual | Status | Evidence |
+| ------------------------------------ | -------- | ------ | ------ | -------- |
+| Introduction is clear                | Yes      |        |        |          |
+| Question flow is logical             | Yes      |        |        |          |
+| Questions are answerable             | Yes      |        |        |          |
+| Validation prevents empty submission | Yes      |        |        |          |
+| Completion is persisted              | Yes      |        |        |          |
+| Transition to Lesson 1 is automatic  | Yes      |        |        |          |
+| Can resume if incomplete             | Yes      |        |        |          |
 
 ### Pre-Assessment Variants
 
 **Test: Incomplete → Refresh → Resume**
+
 - [ ] State before refresh: [TBD]
 - [ ] State after refresh: [TBD]
 - [ ] Resume works: Yes / No / [Issue]
 
 **Test: Complete → View Persistence**
+
 - [ ] Completion timestamp exists: Yes / No
 - [ ] Cannot re-enter assessment: Yes / No
 - [ ] Next activity unlocked: Yes / No
@@ -262,18 +278,19 @@ For each scenario, record the exact money changes and goal impact:
 
 ## Post-Assessment
 
-| Item | Expected | Actual | Status | Evidence |
-|------|----------|--------|--------|----------|
-| Unlock condition is correct | Visible only after all lessons done | | | |
-| Cannot access prematurely | Yes | | | |
-| Introduction is clear | Yes | | | |
-| Question flow is logical | Yes | | | |
-| Completion is persisted | Yes | | | |
-| Transition to Results is automatic | Yes | | | |
+| Item                               | Expected                            | Actual | Status | Evidence |
+| ---------------------------------- | ----------------------------------- | ------ | ------ | -------- |
+| Unlock condition is correct        | Visible only after all lessons done |        |        |          |
+| Cannot access prematurely          | Yes                                 |        |        |          |
+| Introduction is clear              | Yes                                 |        |        |          |
+| Question flow is logical           | Yes                                 |        |        |          |
+| Completion is persisted            | Yes                                 |        |        |          |
+| Transition to Results is automatic | Yes                                 |        |        |          |
 
 ### Post-Assessment Vulnerability Test
 
 **Test: Can post-assessment be accessed before completion?**
+
 - Direct URL: [TBD]
 - Premature access result: [Blocked / Allowed / Other]
 - Issue classification: [None / P2 / P1 / P0]
@@ -285,18 +302,18 @@ For each scenario, record the exact money changes and goal impact:
 
 Test the NextStepCard component across all relevant progress states.
 
-| # | State | Expected CTA | Actual CTA | Correct? | Route Correct? | Evidence |
-|---|-------|--------------|-----------|:--------:|:--------:|----------|
-| 1 | New child | "Begin Your Adventure" | | ☐ | ☐ | |
-| 2 | Pre-assessment incomplete | "Continue Assessment" | | ☐ | ☐ | |
-| 3 | Pre-assessment complete | "Start Lesson 1" | | ☐ | ☐ | |
-| 4 | Lesson in progress | "Continue Your Lesson" | | ☐ | ☐ | |
-| 5 | Lesson complete | [Next activity] | | ☐ | ☐ | |
-| 6 | Scenario available | "Start Your Decision Story" | | ☐ | ☐ | |
-| 7 | Scenario incomplete | "Continue Your Story" | | ☐ | ☐ | |
-| 8 | Post-assessment ready | "Take Your Final Check-In" | | ☐ | ☐ | |
-| 9 | Journey complete | "View Your Learning Summary" | | ☐ | ☐ | |
-| 10 | [Other state] | [Expected] | | ☐ | ☐ | |
+| #   | State                     | Expected CTA                 | Actual CTA | Correct? | Route Correct? | Evidence |
+| --- | ------------------------- | ---------------------------- | ---------- | :------: | :------------: | -------- |
+| 1   | New child                 | "Begin Your Adventure"       |            |    ☐     |       ☐        |          |
+| 2   | Pre-assessment incomplete | "Continue Assessment"        |            |    ☐     |       ☐        |          |
+| 3   | Pre-assessment complete   | "Start Lesson 1"             |            |    ☐     |       ☐        |          |
+| 4   | Lesson in progress        | "Continue Your Lesson"       |            |    ☐     |       ☐        |          |
+| 5   | Lesson complete           | [Next activity]              |            |    ☐     |       ☐        |          |
+| 6   | Scenario available        | "Start Your Decision Story"  |            |    ☐     |       ☐        |          |
+| 7   | Scenario incomplete       | "Continue Your Story"        |            |    ☐     |       ☐        |          |
+| 8   | Post-assessment ready     | "Take Your Final Check-In"   |            |    ☐     |       ☐        |          |
+| 9   | Journey complete          | "View Your Learning Summary" |            |    ☐     |       ☐        |          |
+| 10  | [Other state]             | [Expected]                   |            |    ☐     |       ☐        |          |
 
 ---
 
@@ -307,6 +324,7 @@ Test the NextStepCard component across all relevant progress states.
 Repeat this at 4 key points:
 
 #### Point 1: Onboarding/Pre-Assessment
+
 - Step 1: Enter pre-assessment
 - Step 2: Complete 2 of 5 questions
 - Step 3: **Refresh page** (F5)
@@ -316,6 +334,7 @@ Repeat this at 4 key points:
 - Evidence: [TBD]
 
 #### Point 2: Mid-Lesson
+
 - Step 1: Enter Lesson 3
 - Step 2: Complete first activity
 - Step 3: **Close tab / exit app**
@@ -325,6 +344,7 @@ Repeat this at 4 key points:
 - Evidence: [TBD]
 
 #### Point 3: Scenario Choice
+
 - Step 1: Enter Scenario 2
 - Step 2: **Make a choice** (persists state)
 - Step 3: View consequence
@@ -335,11 +355,12 @@ Repeat this at 4 key points:
 - Evidence: [TBD]
 
 #### Point 4: Multi-Day Session
+
 - Step 1: Complete 3 lessons on Day 1
 - Step 2: Log out
 - Step 3: **Next day** — Log in again
 - Step 4: Check home page
-- **Verify**: 
+- **Verify**:
   - Correct day number displayed? Yes / No
   - Saved amount is persistent? Yes / No
   - Next activity is correct? Yes / No
@@ -348,49 +369,50 @@ Repeat this at 4 key points:
 
 ### Persistence Storage Map
 
-| State | Expected Storage | Actual Storage | Verified? |
-|-------|------------------|----------------|:--------:|
-| Onboarding progress | Firestore | | ☐ |
-| Assessment responses | Firestore | | ☐ |
-| Lesson completion | Firestore | | ☐ |
-| Scenario choice | Firestore | | ☐ |
-| Scenario consequence | Firestore | | ☐ |
-| Current activity | Derived from events | | ☐ |
-| XP/Level | Computed from snapshot | | ☐ |
-| Saved amount | Computed from snapshot | | ☐ |
+| State                | Expected Storage       | Actual Storage | Verified? |
+| -------------------- | ---------------------- | -------------- | :-------: |
+| Onboarding progress  | Firestore              |                |     ☐     |
+| Assessment responses | Firestore              |                |     ☐     |
+| Lesson completion    | Firestore              |                |     ☐     |
+| Scenario choice      | Firestore              |                |     ☐     |
+| Scenario consequence | Firestore              |                |     ☐     |
+| Current activity     | Derived from events    |                |     ☐     |
+| XP/Level             | Computed from snapshot |                |     ☐     |
+| Saved amount         | Computed from snapshot |                |     ☐     |
 
 ---
 
 # SECTION 7: MOBILE TESTING
 
 Test on two viewports:
+
 - **375px** (iPhone SE / small mobile)
 - **768px** (iPad / tablet)
 
 ### Layout & Responsiveness (375px)
 
-| Component | Renders? | Text Wraps Properly? | No H-Scroll? | Touch-Friendly (≥48px)? | Issue(s) |
-|-----------|:--------:|:--------------------:|:----------:|:--------------------:|----------|
-| Header | ☐ | ☐ | ☐ | ☐ | |
-| ChapterBanner | ☐ | ☐ | ☐ | ☐ | |
-| GoalWidget | ☐ | ☐ | ☐ | ☐ | |
-| Progress bar | ☐ | ☐ | ☐ | N/A | |
-| Lesson content | ☐ | ☐ | ☐ | ☐ | |
-| Activity input | ☐ | ☐ | ☐ | ☐ | |
-| Scenario choices | ☐ | ☐ | ☐ | ☐ | |
-| Consequence screen | ☐ | ☐ | ☐ | ☐ | |
-| NextStepCard | ☐ | ☐ | ☐ | ☐ | |
-| LearningObjectiveBadge | ☐ | ☐ | ☐ | N/A | |
-| Navigation | ☐ | ☐ | ☐ | ☐ | |
+| Component              | Renders? | Text Wraps Properly? | No H-Scroll? | Touch-Friendly (≥48px)? | Issue(s) |
+| ---------------------- | :------: | :------------------: | :----------: | :---------------------: | -------- |
+| Header                 |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| ChapterBanner          |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| GoalWidget             |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| Progress bar           |    ☐     |          ☐           |      ☐       |           N/A           |          |
+| Lesson content         |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| Activity input         |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| Scenario choices       |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| Consequence screen     |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| NextStepCard           |    ☐     |          ☐           |      ☐       |            ☐            |          |
+| LearningObjectiveBadge |    ☐     |          ☐           |      ☐       |           N/A           |          |
+| Navigation             |    ☐     |          ☐           |      ☐       |            ☐            |          |
 
 ### Layout & Responsiveness (768px)
 
-| Component | Renders? | Layout Sensible? | No Issues? | Issue(s) |
-|-----------|:--------:|:----------------:|:----------:|----------|
-| Multi-column layouts (if any) | ☐ | ☐ | ☐ | |
-| Card widths | ☐ | ☐ | ☐ | |
-| Spacing | ☐ | ☐ | ☐ | |
-| Image sizes | ☐ | ☐ | ☐ | |
+| Component                     | Renders? | Layout Sensible? | No Issues? | Issue(s) |
+| ----------------------------- | :------: | :--------------: | :--------: | -------- |
+| Multi-column layouts (if any) |    ☐     |        ☐         |     ☐      |          |
+| Card widths                   |    ☐     |        ☐         |     ☐      |          |
+| Spacing                       |    ☐     |        ☐         |     ☐      |          |
+| Image sizes                   |    ☐     |        ☐         |     ☐      |          |
 
 ### Mobile-Specific Usability
 
@@ -409,44 +431,54 @@ Test on two viewports:
 For each major screen/journey point, answer these 5 questions:
 
 ### Question 1: "Where am I?"
+
 Can the child identify their position in the journey?
 
 **Test Points**:
+
 - [ ] Home page: Can identify current day/chapter? Yes / No
 - [ ] Lesson: Can identify which lesson? Yes / No
 - [ ] Scenario: Can understand the situation? Yes / No
 - [ ] Progress bar: Understands progress toward goal? Yes / No
 
 ### Question 2: "What am I learning?"
+
 Can they understand the objective?
 
 **Test Points**:
+
 - [ ] Lesson objective is understandable? Yes / No
 - [ ] Activity objective is clear? Yes / No
 - [ ] Knowledge check relates to objective? Yes / No
 
 ### Question 3: "What do I need to do?"
+
 Is the action obvious?
 
 **Test Points**:
+
 - [ ] Home page shows clear next action? Yes / No
 - [ ] Lesson instructions are clear? Yes / No
 - [ ] Activity prompt is understandable? Yes / No
 - [ ] Scenario question is clear? Yes / No
 
 ### Question 4: "What happened?"
+
 After a decision, can they understand the consequence?
 
 **Test Points**:
+
 - [ ] Scenario consequence is displayed? Yes / No
 - [ ] Consequence narrative makes sense? Yes / No
 - [ ] Money change is explained? Yes / No
 - [ ] Why the consequence occurred is clear? Yes / No
 
 ### Question 5: "What next?"
+
 Is there one obvious next action?
 
 **Test Points**:
+
 - [ ] NextStepCard is visible? Yes / No
 - [ ] CTA is clear and actionable? Yes / No
 - [ ] No confusion between multiple paths? Yes / No
@@ -455,10 +487,10 @@ Is there one obvious next action?
 
 List any screen where the answer to any Q1-Q5 is "No":
 
-| Screen | Question | Why Unclear? | Severity | Recommended Fix |
-|--------|----------|-------------|----------|-----------------|
-| | | | P0/P1/P2/P3 | |
-| | | | P0/P1/P2/P3 | |
+| Screen | Question | Why Unclear? | Severity    | Recommended Fix |
+| ------ | -------- | ------------ | ----------- | --------------- |
+|        |          |              | P0/P1/P2/P3 |                 |
+|        |          |              | P0/P1/P2/P3 |                 |
 
 ---
 
@@ -466,22 +498,22 @@ List any screen where the answer to any Q1-Q5 is "No":
 
 Verify localization and terminology consistency (Ghana-specific).
 
-| Check | Expected | Actual | Passes? | Issue(s) |
-|-------|----------|--------|:-------:|----------|
-| Currency: GH₵ used consistently | Yes | | ☐ | |
-| Currency: No $ or USD references | Yes | | ☐ | |
-| Ghanaian examples used | Yes | | ☐ | |
-| Child-friendly vocabulary | Yes | | ☐ | |
-| Realistic money amounts | Yes | | ☐ | |
-| Consistent financial terms | Yes | | ☐ | |
-| No adult banking jargon | Yes | | ☐ | |
-| Cultural appropriateness | Yes | | ☐ | |
+| Check                            | Expected | Actual | Passes? | Issue(s) |
+| -------------------------------- | -------- | ------ | :-----: | -------- |
+| Currency: GH₵ used consistently  | Yes      |        |    ☐    |          |
+| Currency: No $ or USD references | Yes      |        |    ☐    |          |
+| Ghanaian examples used           | Yes      |        |    ☐    |          |
+| Child-friendly vocabulary        | Yes      |        |    ☐    |          |
+| Realistic money amounts          | Yes      |        |    ☐    |          |
+| Consistent financial terms       | Yes      |        |    ☐    |          |
+| No adult banking jargon          | Yes      |        |    ☐    |          |
+| Cultural appropriateness         | Yes      |        |    ☐    |          |
 
 ### Content Issues Found
 
 | Term/Section | Current Wording | Issue | Recommended Change |
-|--------------|-----------------|-------|-------------------|
-| | | | |
+| ------------ | --------------- | ----- | ------------------ |
+|              |                 |       |                    |
 
 ---
 
@@ -491,13 +523,13 @@ After child has completed meaningful progress (e.g., 3-4 lessons + 1 scenario), 
 
 ### Parent Can Determine:
 
-| Question | Answer | Confidence | Evidence |
-|----------|--------|------------|----------|
-| Has the child started? | Yes / No | High / Medium / Low | |
-| Where is the child now? | [Location] | High / Medium / Low | |
-| What has been completed? | [List] | High / Medium / Low | |
-| Pre-assessment status? | Done / In Progress / Not Started | High / Medium / Low | |
-| Current learning progress? | [Summary] | High / Medium / Low | |
+| Question                   | Answer                           | Confidence          | Evidence |
+| -------------------------- | -------------------------------- | ------------------- | -------- |
+| Has the child started?     | Yes / No                         | High / Medium / Low |          |
+| Where is the child now?    | [Location]                       | High / Medium / Low |          |
+| What has been completed?   | [List]                           | High / Medium / Low |          |
+| Pre-assessment status?     | Done / In Progress / Not Started | High / Medium / Low |          |
+| Current learning progress? | [Summary]                        | High / Medium / Low |          |
 
 ### Parent Experience Issues
 
@@ -522,18 +554,19 @@ npm run test:assessment
 npm run test:scenario
 ```
 
-| Test Suite | Result | Pass Count | Fail Count | Blocked |
-|-----------|--------|:----------:|:----------:|:-------:|
-| Unit tests | | | | ☐ |
-| Firebase rules | | | | ☐ |
-| Assessment tests | | | | ☐ |
-| Scenario tests | | | | ☐ |
+| Test Suite       | Result | Pass Count | Fail Count | Blocked |
+| ---------------- | ------ | :--------: | :--------: | :-----: |
+| Unit tests       |        |            |            |    ☐    |
+| Firebase rules   |        |            |            |    ☐    |
+| Assessment tests |        |            |            |    ☐    |
+| Scenario tests   |        |            |            |    ☐    |
 
 ### CRITICAL: Scenario State Integrity
 
 **Test**: Can a client submit fabricated scenario state?
 
 **Method**:
+
 1. Start Scenario with known starting balance
 2. Make valid first choice, observe consequence
 3. Attempt to submit invalid state (e.g., wallet value doesn't match decision history)
@@ -541,11 +574,11 @@ npm run test:scenario
 
 **Test Cases**:
 
-| Case | Starting Balance | Choice | Expected Balance | Submitted Balance (Invalid) | Server Accepts? | Issue Classification |
-|------|------------------|--------|------------------|---------------------------|:---------------:|----------------------|
-| 1 | 50 | Save 10 | 60 | 80 (fabricated) | Yes / No | P0/P1/P2/None |
-| 2 | 60 | Spend 20 | 40 | 30 (fabricated) | Yes / No | P0/P1/P2/None |
-| 3 | 40 | Invest 20 | 50 | 100 (fabricated) | Yes / No | P0/P1/P2/None |
+| Case | Starting Balance | Choice    | Expected Balance | Submitted Balance (Invalid) | Server Accepts? | Issue Classification |
+| ---- | ---------------- | --------- | ---------------- | --------------------------- | :-------------: | -------------------- |
+| 1    | 50               | Save 10   | 60               | 80 (fabricated)             |    Yes / No     | P0/P1/P2/None        |
+| 2    | 60               | Spend 20  | 40               | 30 (fabricated)             |    Yes / No     | P0/P1/P2/None        |
+| 3    | 40               | Invest 20 | 50               | 100 (fabricated)            |    Yes / No     | P0/P1/P2/None        |
 
 **Result**: [Client-side only / Server validates / Server replays / Other]
 
@@ -615,10 +648,10 @@ npm run test:firebase-emulator
 
 Use this to track all discovered issues during testing.
 
-| ID | Area | Title | Severity | Evidence | Reproduction Steps | Recommended Action | Phase |
-|----|------|-------|----------|----------|-------------------|-------------------|-------|
-| | | | P0/P1/P2/P3 | | | | Now/P1/Later |
-| | | | P0/P1/P2/P3 | | | | Now/P1/Later |
+| ID  | Area | Title | Severity    | Evidence | Reproduction Steps | Recommended Action | Phase        |
+| --- | ---- | ----- | ----------- | -------- | ------------------ | ------------------ | ------------ |
+|     |      |       | P0/P1/P2/P3 |          |                    |                    | Now/P1/Later |
+|     |      |       | P0/P1/P2/P3 |          |                    |                    | Now/P1/Later |
 
 ### Issue Classification Guide
 
@@ -687,6 +720,7 @@ Based on testing Journeys A-D above, is the overall experience coherent?
 **Basis**: [One sentence summary of critical finding]
 
 **Key Evidence**:
+
 - [ ] Child can complete onboarding without confusion
 - [ ] Child understands why they're doing activities
 - [ ] Child can see their progress
@@ -785,12 +819,15 @@ Results / Completion
 ## I. Usability Findings
 
 ### Screens where child was confused (Q1-Q5):
+
 [List with context]
 
 ### Screens requiring explanation:
+
 [List with context]
 
 ### Screens that worked intuitively:
+
 [List with context]
 
 ---
@@ -807,26 +844,26 @@ Results / Completion
 
 ## K. Technical Validation
 
-| Test | Result | Count |
-|------|--------|-------|
-| TypeScript | PASS / FAIL | 0 errors |
-| ESLint | PASS / FAIL | 0 errors |
-| Unit tests | PASS / FAIL | [X] pass / [X] fail |
-| Firebase rules | PASS / FAIL | [X] pass / [X] fail |
-| Assessment tests | PASS / FAIL | [X] pass / [X] fail |
-| Scenario tests | PASS / FAIL | [X] pass / [X] fail |
-| **Overall** | **PASS / FAIL** | |
+| Test             | Result          | Count               |
+| ---------------- | --------------- | ------------------- |
+| TypeScript       | PASS / FAIL     | 0 errors            |
+| ESLint           | PASS / FAIL     | 0 errors            |
+| Unit tests       | PASS / FAIL     | [X] pass / [X] fail |
+| Firebase rules   | PASS / FAIL     | [X] pass / [X] fail |
+| Assessment tests | PASS / FAIL     | [X] pass / [X] fail |
+| Scenario tests   | PASS / FAIL     | [X] pass / [X] fail |
+| **Overall**      | **PASS / FAIL** |                     |
 
 ---
 
 ## L. Issue Register Summary
 
 | Severity | Count | Critical Issues |
-|----------|-------|-----------------|
-| **P0** | [X] | [List] |
-| **P1** | [X] | [List] |
-| **P2** | [X] | [List] |
-| **P3** | [X] | [List] |
+| -------- | ----- | --------------- |
+| **P0**   | [X]   | [List]          |
+| **P1**   | [X]   | [List]          |
+| **P2**   | [X]   | [List]          |
+| **P3**   | [X]   | [List]          |
 
 ---
 
@@ -835,6 +872,7 @@ Results / Completion
 ### What must be fixed before the first real children use TATI?
 
 **P0 Blockers**:
+
 1. [Issue]
 2. [Issue]
 3. [Issue]
@@ -844,6 +882,7 @@ Results / Completion
 ### What can wait until after pilot observation?
 
 **P1/P2 Items**:
+
 1. [Issue]
 2. [Issue]
 
@@ -875,9 +914,9 @@ The TATI Junior Money Journey:
 Record date/time of each test session.
 
 | Date | Time | Tester | Phase | Focus Area | Status | Notes |
-|------|------|--------|-------|-----------|--------|-------|
-| | | | | | | |
-| | | | | | | |
+| ---- | ---- | ------ | ----- | ---------- | ------ | ----- |
+|      |      |        |       |            |        |       |
+|      |      |        |       |            |        |       |
 
 ---
 

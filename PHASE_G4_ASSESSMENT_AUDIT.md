@@ -67,22 +67,23 @@ Parent Dashboard: view child results & insights
 
 #### **assessment_attempts**
 
-| Field | Type | Purpose | Constraints |
-|-------|------|---------|-------------|
-| id | uuid | Primary key | Auto-generated |
-| child_profile_id | uuid | Which child | FK to child_profiles, NOT NULL |
-| assessment_id | text | Which assessment ("save-pre", "save-post") | NOT NULL |
-| assessment_type | text | "pre" or "post" | NOT NULL |
-| points | integer | Total points earned | NOT NULL, DEFAULT 0, checked ≥ 0 |
-| max_points | integer | Total possible points | NOT NULL, DEFAULT 0, checked ≥ 0 |
-| competency_scores | jsonb | Per-competency breakdown | NOT NULL, DEFAULT '{}' |
-| status | text | "completed" | NOT NULL, DEFAULT 'completed' |
-| completed_at | timestamptz | When attempt finished | NOT NULL, DEFAULT now() |
-| created_at | timestamptz | When record created | NOT NULL, DEFAULT now() |
-| updated_at | timestamptz | Last modified | NOT NULL, DEFAULT now() |
-| **UNIQUE** | (child_profile_id, assessment_id) | One attempt per child per assessment | |
+| Field             | Type                              | Purpose                                    | Constraints                      |
+| ----------------- | --------------------------------- | ------------------------------------------ | -------------------------------- |
+| id                | uuid                              | Primary key                                | Auto-generated                   |
+| child_profile_id  | uuid                              | Which child                                | FK to child_profiles, NOT NULL   |
+| assessment_id     | text                              | Which assessment ("save-pre", "save-post") | NOT NULL                         |
+| assessment_type   | text                              | "pre" or "post"                            | NOT NULL                         |
+| points            | integer                           | Total points earned                        | NOT NULL, DEFAULT 0, checked ≥ 0 |
+| max_points        | integer                           | Total possible points                      | NOT NULL, DEFAULT 0, checked ≥ 0 |
+| competency_scores | jsonb                             | Per-competency breakdown                   | NOT NULL, DEFAULT '{}'           |
+| status            | text                              | "completed"                                | NOT NULL, DEFAULT 'completed'    |
+| completed_at      | timestamptz                       | When attempt finished                      | NOT NULL, DEFAULT now()          |
+| created_at        | timestamptz                       | When record created                        | NOT NULL, DEFAULT now()          |
+| updated_at        | timestamptz                       | Last modified                              | NOT NULL, DEFAULT now()          |
+| **UNIQUE**        | (child_profile_id, assessment_id) | One attempt per child per assessment       |                                  |
 
-**RLS Policy:** "family manages assessment attempts"  
+**RLS Policy:** "family manages assessment attempts"
+
 ```sql
 FOR ALL TO authenticated
 USING (public.owns_child_profile(child_profile_id))
@@ -93,21 +94,22 @@ WITH CHECK (public.owns_child_profile(child_profile_id))
 
 #### **assessment_responses**
 
-| Field | Type | Purpose | Constraints |
-|-------|------|---------|-------------|
-| id | uuid | Primary key | Auto-generated |
-| attempt_id | uuid | Which attempt | FK to assessment_attempts, NOT NULL |
-| child_profile_id | uuid | Which child (denormalized) | FK to child_profiles, NOT NULL |
-| question_id | text | Which question | NOT NULL |
-| competency | text | Competency category | NOT NULL |
-| option_id | text | Selected option ID (nullable if skipped) | |
-| points | integer | Points for this question | NOT NULL, DEFAULT 0, checked ≥ 0 |
-| max_points | integer | Max possible for question | NOT NULL, DEFAULT 0, checked ≥ 0 |
-| created_at | timestamptz | When recorded | NOT NULL, DEFAULT now() |
-| **UNIQUE** | (attempt_id, question_id) | One response per question per attempt | |
-| **Foreign Key** | (attempt_id, child_profile_id) | Compound FK to assessment_attempts | |
+| Field            | Type                           | Purpose                                  | Constraints                         |
+| ---------------- | ------------------------------ | ---------------------------------------- | ----------------------------------- |
+| id               | uuid                           | Primary key                              | Auto-generated                      |
+| attempt_id       | uuid                           | Which attempt                            | FK to assessment_attempts, NOT NULL |
+| child_profile_id | uuid                           | Which child (denormalized)               | FK to child_profiles, NOT NULL      |
+| question_id      | text                           | Which question                           | NOT NULL                            |
+| competency       | text                           | Competency category                      | NOT NULL                            |
+| option_id        | text                           | Selected option ID (nullable if skipped) |                                     |
+| points           | integer                        | Points for this question                 | NOT NULL, DEFAULT 0, checked ≥ 0    |
+| max_points       | integer                        | Max possible for question                | NOT NULL, DEFAULT 0, checked ≥ 0    |
+| created_at       | timestamptz                    | When recorded                            | NOT NULL, DEFAULT now()             |
+| **UNIQUE**       | (attempt_id, question_id)      | One response per question per attempt    |                                     |
+| **Foreign Key**  | (attempt_id, child_profile_id) | Compound FK to assessment_attempts       |                                     |
 
-**RLS Policy:** "family manages assessment responses"  
+**RLS Policy:** "family manages assessment responses"
+
 ```sql
 FOR ALL TO authenticated
 USING (public.owns_child_profile(child_profile_id))
@@ -151,16 +153,16 @@ export const savePostAssessment: AssessmentDefinition = {
 interface AssessmentQuestion {
   id: string;
   assessmentType: "pre" | "post";
-  competency: Competency;  // One of 10 competencies
+  competency: Competency; // One of 10 competencies
   question: string;
-  imageUrl?: string;       // Scene picture
-  imageBadge?: string;     // Caption chip ("GH₵10 Gift")
-  topic?: string;          // Topic label
-  hint?: string;           // Guidance
+  imageUrl?: string; // Scene picture
+  imageBadge?: string; // Caption chip ("GH₵10 Gift")
+  topic?: string; // Topic label
+  hint?: string; // Guidance
   options: AnswerOption[];
-  idealOptionId?: string;  // "Best" choice (not "correct")
+  idealOptionId?: string; // "Best" choice (not "correct")
   scoring?: ScoringRule;
-  feedback: string;        // Warm message after answering
+  feedback: string; // Warm message after answering
 }
 
 interface AnswerOption {
@@ -168,14 +170,14 @@ interface AnswerOption {
   label: string;
   description?: string;
   icon?: string;
-  points?: number;   // Explicit points (optional)
+  points?: number; // Explicit points (optional)
   response?: string; // Per-option message (optional)
 }
 
 interface ScoringRule {
-  idealPoints?: number;  // Points for idealOptionId
-  otherPoints?: number;  // Points for other options
-  maxPoints?: number;    // Max this question contributes
+  idealPoints?: number; // Points for idealOptionId
+  otherPoints?: number; // Points for other options
+  maxPoints?: number; // Max this question contributes
 }
 ```
 
@@ -228,8 +230,8 @@ interface TrackItem {
   label: string;
   blurb: string;
   icon: string;
-  reward?: number;  // XP reward
-  chip?: string;    // Visual badge
+  reward?: number; // XP reward
+  chip?: string; // Visual badge
 }
 ```
 
@@ -242,10 +244,11 @@ interface TrackItem {
 **File:** `src/routes/child/assessment.$assessmentId.tsx`
 
 **Step 1: BeforeLoad (Server)**
+
 ```typescript
 beforeLoad: async ({ params }) => {
   await assertChildActivity({ data: { itemType: "assessment", itemId: params.assessmentId } });
-}
+};
 ```
 
 - Calls `assertChildActivity()` (server function)
@@ -254,6 +257,7 @@ beforeLoad: async ({ params }) => {
 - **Gap:** Does NOT verify child has completed prerequisites
 
 **Step 2: Load Definition (Client)**
+
 ```typescript
 const definition = getAssessmentDefinition(assessmentId);
 ```
@@ -265,6 +269,7 @@ const definition = getAssessmentDefinition(assessmentId);
 - **Security Note:** Correct answers ARE visible in browser memory; however, they are never used for scoring (scoring happens server-side)
 
 **Step 3: Render (Client)**
+
 ```typescript
 <AssessmentRunner definition={definition} ... />
 ```
@@ -275,6 +280,7 @@ const definition = getAssessmentDefinition(assessmentId);
 - No score calculation in browser
 
 **Step 4: Submit (Client → Server)**
+
 ```typescript
 async function finish(result: AssessmentResult) {
   await saveChildAssessment({
@@ -292,16 +298,17 @@ async function finish(result: AssessmentResult) {
 - Sends **only responses**; also sends points (which gets ignored)
 
 **Step 5: Save (Server)**
+
 ```typescript
 export const saveChildAssessment = createServerFn({ method: "POST" })
   .validator(assessmentInput)
   .handler(async ({ data }) => {
     const childId = await currentChildId();  // From session cookie
     const definition = getAssessmentDefinition(data.assessmentId);
-    
+
     // RECALCULATE score server-side (ignores client's points)
     const calculatedResult = scoreAssessment(definition, data.responses);
-    
+
     // Upsert attempt
     const { data: attempt } = await supabase
       .from("assessment_attempts")
@@ -316,7 +323,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
         completed_at: now(),
       }, { onConflict: "child_profile_id,assessment_id" })
       .select("id");
-    
+
     // Insert responses
     await supabase
       .from("assessment_responses")
@@ -325,6 +332,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
 ```
 
 **Step 6: Record Progress (Server)**
+
 ```typescript
 await record.mutateAsync({
   data: {
@@ -341,6 +349,7 @@ await record.mutateAsync({
 - Stores in `journey_progress` table
 
 **Step 7: Navigate (Client)**
+
 ```typescript
 await navigate({ to: "/child/learn" });
 ```
@@ -367,15 +376,15 @@ await navigate({ to: "/child/learn" });
 ```typescript
 async function finish(result: AssessmentResult) {
   if (definition) await saveAssessmentAttempt(childId, definition, result);
-  
+
   // Track events
   if (result.assessmentType === "post") {
     void trackEvent("post_assessment_completed", { ... });
   }
-  
+
   // Update progress
   await record.mutateAsync({ childId, itemType: "assessment", ... });
-  
+
   // Navigate to results summary
   if (result.assessmentType === "post") {
     navigate({ to: "/learn/$childId/summary", params: { childId } });
@@ -408,7 +417,7 @@ NOT_STARTED
 IN_PROGRESS (in browser localStorage, not in DB)
     ↓
 SUBMITTED (client calls saveChildAssessment)
-    ↓ 
+    ↓
 SCORED (server calculates)
     ↓
 STORED (in assessment_attempts with status="completed")
@@ -420,16 +429,16 @@ COMPLETED (acknowledged by client)
 
 - **One Attempt Per Assessment Per Child**  
   Unique constraint: `(child_profile_id, assessment_id)`
-  
+
 - **UPSERT Semantics**  
   Calling `saveChildAssessment()` twice replaces the first attempt
-  
+
 - **No Explicit State Field**  
   All stored attempts have status = "completed"
-  
+
 - **Immutable Once Stored**  
   No client can update scores after submission
-  
+
 - **No Explicit "attempt ID" in URL**  
   Child can only access their own single attempt per assessment
 
@@ -462,16 +471,16 @@ async function currentChildId(): Promise<string> {
 **Child Assessment Route:**
 
 ```typescript
-export const assertChildActivity = createServerFn()
-  .handler(async ({ data }) => {
-    await currentChildId();  // Throws if not authenticated
-    if (!trackItemExists(data.itemType, data.itemId))
-      throw new Error("That activity is not in this journey.");
-    return { ok: true };
-  });
+export const assertChildActivity = createServerFn().handler(async ({ data }) => {
+  await currentChildId(); // Throws if not authenticated
+  if (!trackItemExists(data.itemType, data.itemId))
+    throw new Error("That activity is not in this journey.");
+  return { ok: true };
+});
 ```
 
 **Checks:**
+
 1. ✅ Child is authenticated (has valid session)
 2. ✅ Assessment exists in track sequence
 3. ❌ Assessment is **not** gated by completion of prerequisites
@@ -485,7 +494,7 @@ beforeLoad: async ({ params }) => {
   } catch {
     throw redirect({ to: "/parent" });
   }
-}
+};
 ```
 
 - Verifies parent owns the child
@@ -515,11 +524,11 @@ await supabase
 
 ### Threat Analysis
 
-| Threat | Current Protection |
-|--------|-------------------|
-| **Child A changes childId parameter** | Route doesn't accept childId parameter; session-derived only |
-| **Child A accesses Child B's assessment** | RLS policy: `owns_child_profile(child_profile_id)` blocks read/write |
-| **Child A's session token leaked** | HTTPOnly cookie + secure transport; token validated server-side |
+| Threat                                        | Current Protection                                                       |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| **Child A changes childId parameter**         | Route doesn't accept childId parameter; session-derived only             |
+| **Child A accesses Child B's assessment**     | RLS policy: `owns_child_profile(child_profile_id)` blocks read/write     |
+| **Child A's session token leaked**            | HTTPOnly cookie + secure transport; token validated server-side          |
 | **Child A submits another child's attemptId** | No direct attemptId in URL; child can only view/edit their own (via RLS) |
 
 ---
@@ -544,7 +553,7 @@ export function scoreAssessment(
     const got = optionPoints(q, responses[q.id]);
     points += got;
     maxPoints += max;
-    
+
     // Per-competency bucket
     const bucket = buckets.get(q.competency) ?? { points: 0, maxPoints: 0 };
     bucket.points += got;
@@ -604,12 +613,12 @@ export function optionPoints(q: AssessmentQuestion, optionId: string | undefined
 
 ### Integrity Guarantees
 
-| Concern | Protection |
-|---------|-----------|
-| **Client submits arbitrary score** | Server **recalculates** from responses; client score ignored |
-| **Client submits wrong optionId** | optionPoints() returns 0 if optionId not in question.options |
-| **Client submits answers not in assessment** | scoreAssessment() only processes responses for questions in definition |
-| **Client submits incompatible responses** | Response validation: z.record(z.string(), z.string()); unknown keys ignored |
+| Concern                                      | Protection                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| **Client submits arbitrary score**           | Server **recalculates** from responses; client score ignored                |
+| **Client submits wrong optionId**            | optionPoints() returns 0 if optionId not in question.options                |
+| **Client submits answers not in assessment** | scoreAssessment() only processes responses for questions in definition      |
+| **Client submits incompatible responses**    | Response validation: z.record(z.string(), z.string()); unknown keys ignored |
 
 ---
 
@@ -648,14 +657,14 @@ const definition = getAssessmentDefinition(assessmentId);
 
 ### Security Assessment
 
-| Field | Exposed? | Risk | Mitigation |
-|-------|----------|------|-----------|
-| `question` | ✅ Yes | Child reads full question | Intentional; child is the test taker |
-| `options[].label` | ✅ Yes | Child reads answer choices | Intentional; child needs to answer |
-| `options[].points` | ✅ Yes | Child sees point values | **Minor:** Child can see scoring math |
-| `idealOptionId` | ✅ Yes | Child knows best answer | **Medium:** Child can game pre-test by selecting "ideal" |
-| `scoring.idealPoints` | ✅ Yes | Child knows point formula | **Minor:** Transparency of scoring |
-| `feedback` | ✅ Yes | Child sees feedback | **Intentional:** Warm, non-punitive messaging |
+| Field                 | Exposed? | Risk                       | Mitigation                                               |
+| --------------------- | -------- | -------------------------- | -------------------------------------------------------- |
+| `question`            | ✅ Yes   | Child reads full question  | Intentional; child is the test taker                     |
+| `options[].label`     | ✅ Yes   | Child reads answer choices | Intentional; child needs to answer                       |
+| `options[].points`    | ✅ Yes   | Child sees point values    | **Minor:** Child can see scoring math                    |
+| `idealOptionId`       | ✅ Yes   | Child knows best answer    | **Medium:** Child can game pre-test by selecting "ideal" |
+| `scoring.idealPoints` | ✅ Yes   | Child knows point formula  | **Minor:** Transparency of scoring                       |
+| `feedback`            | ✅ Yes   | Child sees feedback        | **Intentional:** Warm, non-punitive messaging            |
 
 ### Why This Is Acceptable
 
@@ -669,12 +678,14 @@ const definition = getAssessmentDefinition(assessmentId);
 **Scenario:** Child sees `idealOptionId` before submission, clicks all ideal options.
 
 **Current Outcome:**
+
 - Server calculates score based on ideal choices
 - Pre-test baseline inflated
 - Post-test will show no "growth" (child is already at artificial high)
 - Parent sees: "No improvement on post-test" → Possible false negative on learning effectiveness
 
 **Recommended G4 Investigation:**
+
 - Consider whether pre-test should load definitions differently (with idealOptionId stripped)
 - Or accept current design as-is and document limitation in parent insights
 
@@ -721,13 +732,13 @@ Browser LocalStorage (transient)
 
 ### Properties
 
-| Property | Value |
-|----------|-------|
-| **State Persistence** | LocalStorage only; DB stores final result only |
-| **Idempotency** | Calling saveChildAssessment() twice = UPSERT (replaces first) |
-| **Resubmission** | Child can reopen assessment (if frontend allows), retake, and resubmit |
-| **State Control** | Server sets completed_at; client cannot set arbitrary dates |
-| **Rollback** | No rollback mechanism; parent portal doesn't provide "delete attempt" UI |
+| Property              | Value                                                                    |
+| --------------------- | ------------------------------------------------------------------------ |
+| **State Persistence** | LocalStorage only; DB stores final result only                           |
+| **Idempotency**       | Calling saveChildAssessment() twice = UPSERT (replaces first)            |
+| **Resubmission**      | Child can reopen assessment (if frontend allows), retake, and resubmit   |
+| **State Control**     | Server sets completed_at; client cannot set arbitrary dates              |
+| **Rollback**          | No rollback mechanism; parent portal doesn't provide "delete attempt" UI |
 
 ---
 
@@ -758,10 +769,10 @@ export const saveTrack: Track = {
 
 ### Assessment Positions
 
-| Position | Assessment | Stage | Reward |
-|----------|------------|-------|--------|
-| 1 | save-pre | Getting ready | (none) |
-| 56 | save-post | Bonus stops | 10 XP |
+| Position | Assessment | Stage         | Reward |
+| -------- | ---------- | ------------- | ------ |
+| 1        | save-pre   | Getting ready | (none) |
+| 56       | save-post  | Bonus stops   | 10 XP  |
 
 ### Track Item Query
 
@@ -773,9 +784,7 @@ export const getTrack = (trackId: string): Track => {
 
 function trackItemExists(itemType: string, itemId: string): boolean {
   const track = getTrack("save");
-  return track.sequence.some(
-    (item) => item.kind === itemType && item.id === itemId
-  );
+  return track.sequence.some((item) => item.kind === itemType && item.id === itemId);
 }
 ```
 
@@ -791,6 +800,7 @@ if (!trackItemExists(data.itemType, data.itemId))
 This check verifies the item **exists** in sequence, NOT that prerequisites are **complete**.
 
 **Implication:**
+
 - Child can jump directly to save-post without completing save-pre
 - Child can access save-post without completing any lessons
 - No enforcement of learner readiness
@@ -813,7 +823,7 @@ export const Route = createFileRoute("/parent/child/$childId")({
 function ParentChild() {
   const { childId } = Route.useParams();
   const { child, isLoading, isError } = useChildProfile(childId);
-  
+
   // useChildProfile internally calls assertChildInCurrentFamily()
   // which verifies parent owns childId
 }
@@ -842,21 +852,21 @@ export const getChildLearningData = createServerFn({ method: "GET" }).handler(as
   const childId = await currentChildId();
   const assessmentResult = await supabase
     .from("assessment_attempts")
-    .select(
-      "assessment_id, assessment_type, points, max_points, competency_scores, completed_at",
-    )
+    .select("assessment_id, assessment_type, points, max_points, competency_scores, completed_at")
     .eq("child_profile_id", childId);
   return { assessments: assessmentResult.data ?? [] };
 });
 ```
 
 Parent can see:
+
 - ✅ Pre-test results (points, competencies)
 - ✅ Post-test results (points, competencies)
 - ✅ Growth comparison (via `compareResults()`)
 - ✅ Completion timestamps
 
 Parent **cannot** see:
+
 - ❌ Individual question responses (not stored in parent-visible format)
 - ❌ Specific answer options chosen (only aggregate scores)
 - ❌ Per-question feedback
@@ -866,11 +876,7 @@ Parent **cannot** see:
 **File:** `src/lib/learning/parent-insights.ts`
 
 ```typescript
-export function skillSentence(
-  track: Track,
-  pre: AssessmentResult,
-  post: AssessmentResult,
-): string {
+export function skillSentence(track: Track, pre: AssessmentResult, post: AssessmentResult): string {
   const growth = compareResults(pre, post);
   // Generates human-friendly summary like:
   // "Akosua learned strongest in 'Saving' and 'Goal Setting'"
@@ -900,9 +906,9 @@ CREATE TABLE public.assessment_attempts (
 
 ALTER TABLE public.assessment_attempts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "family manages assessment attempts" 
+CREATE POLICY "family manages assessment attempts"
   ON public.assessment_attempts
-  FOR ALL 
+  FOR ALL
   TO authenticated
   USING (public.owns_child_profile(child_profile_id))
   WITH CHECK (public.owns_child_profile(child_profile_id));
@@ -921,7 +927,7 @@ AS $$
     SELECT 1
     FROM public.child_profiles cp
     JOIN public.family_members fm ON fm.family_id = cp.family_id
-    WHERE cp.id = _child_profile_id 
+    WHERE cp.id = _child_profile_id
       AND fm.user_id = auth.uid()
   );
 $$;
@@ -929,21 +935,21 @@ $$;
 
 ### Scope
 
-| Operation | Allowed? | Condition |
-|-----------|----------|-----------|
-| SELECT * FROM assessment_attempts | ✅ | If owns_child_profile() for all rows |
-| INSERT into assessment_attempts | ✅ | If owns_child_profile(child_profile_id) |
-| UPDATE assessment_attempts | ✅ | If owns_child_profile(child_profile_id) |
-| DELETE from assessment_attempts | ✅ | If owns_child_profile(child_profile_id) |
+| Operation                         | Allowed? | Condition                               |
+| --------------------------------- | -------- | --------------------------------------- |
+| SELECT * FROM assessment_attempts | ✅       | If owns_child_profile() for all rows    |
+| INSERT into assessment_attempts   | ✅       | If owns_child_profile(child_profile_id) |
+| UPDATE assessment_attempts        | ✅       | If owns_child_profile(child_profile_id) |
+| DELETE from assessment_attempts   | ✅       | If owns_child_profile(child_profile_id) |
 
 ### Assessment Responses Policy
 
 Identical to assessment_attempts:
 
 ```sql
-CREATE POLICY "family manages assessment responses" 
+CREATE POLICY "family manages assessment responses"
   ON public.assessment_responses
-  FOR ALL 
+  FOR ALL
   TO authenticated
   USING (public.owns_child_profile(child_profile_id))
   WITH CHECK (public.owns_child_profile(child_profile_id));
@@ -1022,15 +1028,15 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     // NEW: Use AuthenticatedChildContext
     const context = await getAuthenticatedChild();
-    
+
     if (!context) throw new AuthorizationError("...");
-    
-    const childId = context.childId;  // Replace: await currentChildId()
+
+    const childId = context.childId; // Replace: await currentChildId()
     const familyId = context.familyId;
-    
+
     // Validate child owns assessment (existing check)
     // Optionally add: requireAuthenticatedChildResource(context, childId)
-    
+
     // ... rest of logic unchanged
   });
 ```
@@ -1051,7 +1057,7 @@ async function createAuthorizedAssessmentContext(
 ): Promise<AuthorizedAssessmentContext> {
   const definition = getAssessmentDefinition(assessmentId);
   if (!definition) throw new Error("Assessment not found");
-  
+
   return {
     child: context,
     assessmentId: definition.id,
@@ -1073,6 +1079,7 @@ Option 1 is simpler and minimizes code churn. Assessment functions already valid
 **Attack:** Modify request body to upsert attempt for different child.
 
 **Current Protection:**
+
 - ✅ Child ID extracted from validated session token (server-side)
 - ✅ Client request does **not** include childId parameter
 - ✅ Server uses `await currentChildId()` to supply childId
@@ -1088,6 +1095,7 @@ Option 1 is simpler and minimizes code churn. Assessment functions already valid
 **Attack:** Modify localStorage or request to replay/modify another child's attempt record.
 
 **Current Protection:**
+
 - ✅ Attempt record identified by (child_profile_id, assessment_id) unique key
 - ✅ No "attemptId" in child-facing URLs; navigation uses assessmentId only
 - ✅ Supabase RLS policy: `owns_child_profile()` prevents SELECT/UPDATE/DELETE of other child's rows
@@ -1103,12 +1111,14 @@ Option 1 is simpler and minimizes code churn. Assessment functions already valid
 **Attack:** Load definition for an assessment not in the track (e.g., `malicious-assessment`).
 
 **Current Protection:**
+
 - ⚠️ `trackItemExists()` check verifies assessment is in sequence
 - ⚠️ But `getAssessmentDefinition()` returns ANY assessment in ASSESSMENTS registry
 
 **Gap:** If an assessment exists in code but is not in the track, a child could still load it.
 
-**Current Mitigation:** 
+**Current Mitigation:**
+
 - No additional assessments defined in registry (only save-pre, save-post)
 - Future assessments must be added explicitly to both registry and track sequence
 
@@ -1128,6 +1138,7 @@ if (definition.trackId !== "save") {
 **Attack:** POST `{ assessmentId, responses, points: 999, maxPoints: 999 }`
 
 **Current Protection:**
+
 - ✅ Server **recalculates** score: `scoreAssessment(definition, responses)`
 - ✅ Client's `points` field is **ignored**
 - ✅ Stored score always matches server calculation
@@ -1143,6 +1154,7 @@ if (definition.trackId !== "save") {
 **Attack:** POST `{ ..., competencyScores: { "saving": 999 } }`
 
 **Current Protection:**
+
 - ✅ Server recalculates all competency scores
 - ✅ Client competencyScores field is ignored
 
@@ -1155,6 +1167,7 @@ if (definition.trackId !== "save") {
 **Attack:** POST `{ responses: { q1: "optionA", q2: "optionB", ... }, childProfileId: "other-child" }`
 
 **Current Protection:**
+
 - ✅ `childProfileId` not accepted in request
 - ✅ Child ID sourced from session only
 
@@ -1167,6 +1180,7 @@ if (definition.trackId !== "save") {
 **Attack:** Submit same responses twice to increment score.
 
 **Current Protection:**
+
 - ✅ UPSERT with key (child_profile_id, assessment_id)
 - ✅ Second submission **replaces** first record
 
@@ -1179,6 +1193,7 @@ if (definition.trackId !== "save") {
 **Attack:** Parent calls `/child/assessment/$assessmentId` routes.
 
 **Current Protection:**
+
 - ✅ `/child/*` routes validate session is a child session
 - ✅ Parent portal uses `/learn/$childId/assessment/...` routes
 
@@ -1193,7 +1208,7 @@ beforeLoad: async () => {
   const context = await getAuthenticatedChild();
   if (!context) throw redirect({ to: "/auth" });
   // Routes can now use AuthenticatedChildContext.session.kind === "child"
-}
+};
 ```
 
 ---
@@ -1203,6 +1218,7 @@ beforeLoad: async () => {
 **Attack:** Child calls `/parent/child/$childId` routes.
 
 **Current Protection:**
+
 - ✅ Parent routes call `assertChildInCurrentFamily(childId)`
 - ✅ This queries Supabase: is auth.uid() a family member?
 - ✅ Child's Supabase user (parent) check fails
@@ -1216,6 +1232,7 @@ beforeLoad: async () => {
 **Attack:** Browser without session cookie calls `saveChildAssessment()`.
 
 **Current Protection:**
+
 - ✅ `currentChildId()` throws if session invalid/missing
 - ✅ Server function fails before processing
 
@@ -1225,18 +1242,18 @@ beforeLoad: async () => {
 
 ### Threat Summary Table
 
-| Threat | Current | Gap | G4 Recommendation |
-|--------|---------|-----|-------------------|
-| 1. Change childId | ✅ Protected | None | Use AuthenticatedChildContext |
-| 2. Change attemptId | ✅ Protected | None | No change needed |
-| 3. Unauthorized assessment | ⚠️ Mitigated | Only save track defined | Verify trackId server-side |
-| 4. Arbitrary score | ✅ Protected | None | No change needed |
-| 5. Arbitrary competency | ✅ Protected | None | No change needed |
-| 6. Other child's response | ✅ Protected | None | No change needed |
-| 7. Replay submission | ✅ Protected | None | No change needed |
-| 8. Parent on child route | ✅ Protected | None | Explicit session.kind check |
-| 9. Child on parent route | ✅ Protected | None | No change needed |
-| 10. Unauthenticated access | ✅ Protected | None | No change needed |
+| Threat                     | Current      | Gap                     | G4 Recommendation             |
+| -------------------------- | ------------ | ----------------------- | ----------------------------- |
+| 1. Change childId          | ✅ Protected | None                    | Use AuthenticatedChildContext |
+| 2. Change attemptId        | ✅ Protected | None                    | No change needed              |
+| 3. Unauthorized assessment | ⚠️ Mitigated | Only save track defined | Verify trackId server-side    |
+| 4. Arbitrary score         | ✅ Protected | None                    | No change needed              |
+| 5. Arbitrary competency    | ✅ Protected | None                    | No change needed              |
+| 6. Other child's response  | ✅ Protected | None                    | No change needed              |
+| 7. Replay submission       | ✅ Protected | None                    | No change needed              |
+| 8. Parent on child route   | ✅ Protected | None                    | Explicit session.kind check   |
+| 9. Child on parent route   | ✅ Protected | None                    | No change needed              |
+| 10. Unauthenticated access | ✅ Protected | None                    | No change needed              |
 
 ---
 
@@ -1245,6 +1262,7 @@ beforeLoad: async () => {
 ### Gap 1: No Prerequisite Gating (Track Sequencing)
 
 **Current Behavior:**
+
 ```typescript
 function trackItemExists(itemType: string, itemId: string): boolean {
   const track = getTrack("save");
@@ -1256,11 +1274,13 @@ Checks item exists; does NOT check prerequisites complete.
 
 **Scenario:**  
 Child can jump directly to save-post without:
+
 - Completing save-pre
 - Completing any lessons
 - Earning any XP
 
 **Implication:**
+
 - Post-test baseline inflated (child hasn't learned material)
 - Growth comparison meaningless if pre-test skipped
 - Parent insights may be misleading
@@ -1286,13 +1306,13 @@ async function canAccessAssessment(childId: string, assessmentId: string): Promi
       .select("item_id")
       .eq("child_profile_id", childId)
       .eq("status", "completed");
-    
+
     const completed = new Set(progress.data?.map((p) => p.item_id) ?? []);
     const track = getTrack("save");
     const minItemsRequired = 10;
     return completed.size >= minItemsRequired;
   }
-  return true;  // Pre-test always accessible
+  return true; // Pre-test always accessible
 }
 ```
 
@@ -1309,10 +1329,12 @@ Assessment definition loaded in browser with `idealOptionId` and point values vi
 Child sees ideal answer before answering; intentionally selects ideal options.
 
 **Implication:**
+
 - Pre-test becomes unreliable baseline
 - No growth measurement possible (child already at artificial high)
 
 **Recommendation:**
+
 - Document as acceptable under TATI's "no pass/fail" philosophy
 - Monitor through post-test (true learning will show lower scores if pre-test gamed)
 - Consider future enhancement: Strip `idealOptionId` from client-side definition
@@ -1328,15 +1350,18 @@ Responses stored in localStorage with plain text key format.
 Child opens browser dev tools, modifies localStorage to change responses before submission.
 
 **Implication:**
+
 - Changed responses submitted to server
 - Server recalculates score from modified responses
 - Child can inflate score
 
 **Current Mitigation:**
+
 - Only local browser access (no network attack vector)
 - Child must manually edit dev tools
 
 **Recommendation:**
+
 - Accept as acceptable (requires active browser debugging)
 - Monitor for abuse via server logs
 - Document in security guidelines
@@ -1360,7 +1385,7 @@ beforeLoad: async () => {
   if (!context || context.session.kind !== "child") {
     throw redirect({ to: "/auth" });
   }
-}
+};
 ```
 
 ---
@@ -1374,6 +1399,7 @@ Assessment definitions stored as code; schema version = git commit.
 Question wording changes; historical attempts reference old question.
 
 **Implication:**
+
 - Parent views results; questions may be outdated if definitions changed
 - No historical question archive
 
@@ -1439,34 +1465,37 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
     const context = await getAuthenticatedChildContext();
     const childId = context.childId;
     const familyId = context.familyId;
-    
+
     // Validate assessment in track
     const definition = getAssessmentDefinition(data.assessmentId);
     if (!definition) throw new Error("That check-in is not available.");
     if (definition.trackId !== "save") throw new Error("Invalid track.");
-    
+
     // Recalculate score
     const calculatedResult = scoreAssessment(definition, data.responses);
-    
+
     // Upsert with child context
     const { data: attempt, error } = await supabase
       .from("assessment_attempts")
-      .upsert({
-        child_profile_id: childId,                    // From AuthenticatedChildContext
-        assessment_id: definition.id,
-        assessment_type: definition.assessmentType,
-        points: calculatedResult.points,
-        max_points: calculatedResult.maxPoints,
-        competency_scores: data.competencyScores,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "child_profile_id,assessment_id" })
+      .upsert(
+        {
+          child_profile_id: childId, // From AuthenticatedChildContext
+          assessment_id: definition.id,
+          assessment_type: definition.assessmentType,
+          points: calculatedResult.points,
+          max_points: calculatedResult.maxPoints,
+          competency_scores: data.competencyScores,
+          status: "completed",
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "child_profile_id,assessment_id" },
+      )
       .select("id")
       .single();
-    
+
     if (error || !attempt) throw new Error("Could not save that check-in.");
-    
+
     // ... rest unchanged
   });
 ```
@@ -1523,28 +1552,28 @@ saveChildAssessment()
 
 If G4 implementation proceeds, these files require changes:
 
-| File | Changes | Reason |
-|------|---------|--------|
-| src/lib/auth/child-learning.functions.ts | Replace currentChildId() with getAuthenticatedChildContext(); update all server functions | Integrate AuthenticatedChildContext |
-| src/lib/assessment/attempts.ts | Add context parameter to saveAssessmentAttempt(); use context.childId | Consistent authorization source |
-| src/routes/child/assessment.$assessmentId.tsx | Update beforeLoad to use getAuthenticatedChild() | Route-level G3 integration |
-| src/routes/_authenticated/learn.$childId.assessment.$assessmentId.tsx | Same as above | Route-level G3 integration |
-| src/lib/assessment/engine.ts | No changes | Pure scoring logic unchanged |
-| src/lib/assessment/types.ts | No changes | Type definitions unchanged |
+| File                                                                  | Changes                                                                                   | Reason                              |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------- |
+| src/lib/auth/child-learning.functions.ts                              | Replace currentChildId() with getAuthenticatedChildContext(); update all server functions | Integrate AuthenticatedChildContext |
+| src/lib/assessment/attempts.ts                                        | Add context parameter to saveAssessmentAttempt(); use context.childId                     | Consistent authorization source     |
+| src/routes/child/assessment.$assessmentId.tsx                         | Update beforeLoad to use getAuthenticatedChild()                                          | Route-level G3 integration          |
+| src/routes/_authenticated/learn.$childId.assessment.$assessmentId.tsx | Same as above                                                                             | Route-level G3 integration          |
+| src/lib/assessment/engine.ts                                          | No changes                                                                                | Pure scoring logic unchanged        |
+| src/lib/assessment/types.ts                                           | No changes                                                                                | Type definitions unchanged          |
 
 ---
 
 ## 20. FILES THAT SHOULD NOT BE MODIFIED (G4 Constraints)
 
-| File | Reason | Constraint |
-|------|--------|-----------|
-| src/content/assessments/save-junior.ts | Assessment definitions | Read-only; G4 audits, not redesigns |
-| src/content/tracks/save.ts | Track sequence | Read-only; G4 validates, not redesigns |
-| drizzle/migrations/ | Schema baseline | No database changes |
-| firestore.rules | Firestore authorization | Already blocks client writes; unchanged |
-| src/lib/assessment/registry.ts | Assessment lookup | No registry changes |
-| src/lib/learning/progress.ts | Progress tracking | No changes (not assessment-specific) |
-| src/lib/learning/parent-insights.ts | Parent insights | No changes; uses existing score data |
+| File                                   | Reason                  | Constraint                              |
+| -------------------------------------- | ----------------------- | --------------------------------------- |
+| src/content/assessments/save-junior.ts | Assessment definitions  | Read-only; G4 audits, not redesigns     |
+| src/content/tracks/save.ts             | Track sequence          | Read-only; G4 validates, not redesigns  |
+| drizzle/migrations/                    | Schema baseline         | No database changes                     |
+| firestore.rules                        | Firestore authorization | Already blocks client writes; unchanged |
+| src/lib/assessment/registry.ts         | Assessment lookup       | No registry changes                     |
+| src/lib/learning/progress.ts           | Progress tracking       | No changes (not assessment-specific)    |
+| src/lib/learning/parent-insights.ts    | Parent insights         | No changes; uses existing score data    |
 
 ---
 
@@ -1580,7 +1609,7 @@ describe("Assessment Authorization (G4)", () => {
         points: 999,           // Ignored
         maxPoints: 999,        // Ignored
       });
-      
+
       // Server recalculates
       expect(result.points).toBeLessThan(999);
     });
@@ -1588,7 +1617,7 @@ describe("Assessment Authorization (G4)", () => {
     it("should enforce family isolation", () => {
       // Context child belongs to Family A
       const context = { childId: "child-a", familyId: "family-a", ... };
-      
+
       // Attempt should have childId (RLS checked at DB level)
       const result = await saveChildAssessment(context, { ... });
       expect(result.childProfileId).toBe("child-a");
@@ -1749,15 +1778,15 @@ async function getEffectiveChildId(): Promise<string> {
 
 ### Key Differences
 
-| Aspect | Current | Target |
-|--------|---------|--------|
-| **Auth Source** | Session cookie only | AuthenticatedChildContext (G3) |
-| **Expiration Check** | Not checked | Automatic via requireAuthenticatedChild() |
-| **Revocation Check** | Not checked | Automatic via requireAuthenticatedChild() |
-| **Firebase Integration** | Not used | Optional via context.firebase |
-| **Authorization Boundary** | Implicit (RLS) | Explicit (AuthenticatedChildContext) |
-| **Backend Provider** | Supabase (unchanged) | Supabase (unchanged) |
-| **Database Schema** | Unchanged | Unchanged |
+| Aspect                     | Current              | Target                                    |
+| -------------------------- | -------------------- | ----------------------------------------- |
+| **Auth Source**            | Session cookie only  | AuthenticatedChildContext (G3)            |
+| **Expiration Check**       | Not checked          | Automatic via requireAuthenticatedChild() |
+| **Revocation Check**       | Not checked          | Automatic via requireAuthenticatedChild() |
+| **Firebase Integration**   | Not used             | Optional via context.firebase             |
+| **Authorization Boundary** | Implicit (RLS)       | Explicit (AuthenticatedChildContext)      |
+| **Backend Provider**       | Supabase (unchanged) | Supabase (unchanged)                      |
+| **Database Schema**        | Unchanged            | Unchanged                                 |
 
 ---
 
@@ -1796,6 +1825,7 @@ async function getEffectiveChildId(): Promise<string> {
 ### Architecture Quality
 
 **Strengths:**
+
 - ✅ Server-side score calculation prevents client manipulation
 - ✅ Strong RLS policies enforce family isolation
 - ✅ Assessment definitions as code enable version control
@@ -1803,6 +1833,7 @@ async function getEffectiveChildId(): Promise<string> {
 - ✅ Clear separation of pre/post with growth comparison
 
 **Gaps:**
+
 - ⚠️ No prerequisite gating (post-test accessible without pre-test)
 - ⚠️ Ideal answers visible to child (minor risk under TATI design)
 - ⚠️ No explicit role-based access control in routes
@@ -1861,15 +1892,15 @@ async function getEffectiveChildId(): Promise<string> {
 
 ## 27. DESIGN DECISION TRACKING
 
-| Decision | Current | G4 Recommendation | Rationale |
-|----------|---------|-------------------|-----------|
-| Assessment DB | Supabase | Unchanged | No multi-region need; RLS sufficient |
-| Score Calculation | Server-side | Unchanged | Gold standard; client cannot manipulate |
-| Prerequisite Gating | None | Document & defer | Low immediate risk; assess in G5 |
-| Pre-Test Baseline | No integrity check | Monitor via post-test | TATI design accepts this |
-| Question Security | Definitions public | Document & accept | Client owns answers; scoring server-side |
-| Offline Support | Not supported | Future phase | Out of G4 scope |
-| Teacher Access | Not implemented | Future phase | Document for G5 implementation |
+| Decision            | Current            | G4 Recommendation     | Rationale                                |
+| ------------------- | ------------------ | --------------------- | ---------------------------------------- |
+| Assessment DB       | Supabase           | Unchanged             | No multi-region need; RLS sufficient     |
+| Score Calculation   | Server-side        | Unchanged             | Gold standard; client cannot manipulate  |
+| Prerequisite Gating | None               | Document & defer      | Low immediate risk; assess in G5         |
+| Pre-Test Baseline   | No integrity check | Monitor via post-test | TATI design accepts this                 |
+| Question Security   | Definitions public | Document & accept     | Client owns answers; scoring server-side |
+| Offline Support     | Not supported      | Future phase          | Out of G4 scope                          |
+| Teacher Access      | Not implemented    | Future phase          | Document for G5 implementation           |
 
 ---
 

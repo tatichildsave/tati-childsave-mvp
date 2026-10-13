@@ -6,13 +6,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
-import { getCurrentParentContext, createParentSession } from "@/lib/backend/firebase/parent-auth.server";
-import { FirebaseFamilyRepository, FirebaseJourneyProgressRepository } from "@/lib/backend/firebase/repositories";
+import {
+  getCurrentParentContext,
+  createParentSession,
+} from "@/lib/backend/firebase/parent-auth.server";
+import {
+  FirebaseFamilyRepository,
+  FirebaseJourneyProgressRepository,
+} from "@/lib/backend/firebase/repositories";
 import { getUserRoles } from "@/lib/auth/roles.server";
 import type { ChildProfile } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import type { Json } from "@/integrations/supabase/types";
-
 
 const createChildInput = z.object({
   name: z.string().trim().min(2).max(30),
@@ -115,10 +120,10 @@ export const updateChildProfile = createServerFn({ method: "POST" })
       const { uid } = await getCurrentParentContext();
       const db = getFirebaseAdminDb();
       const repo = new FirebaseFamilyRepository(db, uid);
-      
+
       // Verify child belongs to parent's family
       await repo.assertChildAccess(input.id);
-      
+
       // Update the child
       await repo.updateChild(input.id, input.changes as Partial<ChildProfile>);
     } catch (error) {
@@ -133,9 +138,11 @@ export const updateChildProfile = createServerFn({ method: "POST" })
  * Server derives parent uid from authenticated request context
  */
 export const assertChildInFamily = createServerFn({ method: "POST" })
-  .validator(z.object({
-    childId: z.string().min(1),
-  }))
+  .validator(
+    z.object({
+      childId: z.string().min(1),
+    }),
+  )
   .handler(async ({ data: { childId } }) => {
     try {
       const { uid } = await getCurrentParentContext();
@@ -156,69 +163,79 @@ export const assertChildInFamily = createServerFn({ method: "POST" })
  */
 export const getChildJourneyProgress = createServerFn({ method: "POST" })
   .validator(z.string().min(1))
-  .handler(async ({ data: childId }): Promise<Array<{
-    id: string;
-    track_id: string;
-    item_type: string;
-    item_id: string;
-    status: string;
-    score: number | null;
-    max_score: number | null;
-    details: Json;
-    created_at: string;
-    updated_at: string;
-  }>> => {
-    try {
-      const db = getFirebaseAdminDb();
-      
-      // Get the child document to find their family
-      const familyDocs = await db
-        .collectionGroup("children")
-        .where("id", "==", childId)
-        .limit(1)
-        .get();
-      
-      if (familyDocs.empty) {
-        console.log("[getChildJourneyProgress] Child not found:", childId);
-        return [];
-      }
-      
-      const childDoc = familyDocs.docs[0];
-      if (!childDoc) {
-        console.log("[getChildJourneyProgress] Child doc unexpectedly missing:", childId);
-        return [];
-      }
+  .handler(
+    async ({
+      data: childId,
+    }): Promise<
+      Array<{
+        id: string;
+        track_id: string;
+        item_type: string;
+        item_id: string;
+        status: string;
+        score: number | null;
+        max_score: number | null;
+        details: Json;
+        created_at: string;
+        updated_at: string;
+      }>
+    > => {
+      try {
+        const db = getFirebaseAdminDb();
 
-      const childData = childDoc.data();
-      const familyId = childData['familyId'];
-      
-      console.log("[getChildJourneyProgress] Found child:", childId, "family:", familyId);
-      
-      // Get journey progress using the repository
-      const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
-      const progress = await progressRepo.getProgress(childId);
-      
-      console.log("[getChildJourneyProgress] Loaded progress for child:", childId, "events:", progress.length);
-      
-      // Return properly typed array for serialization
-      return progress.map(event => ({
-        id: event.id,
-        track_id: event.track_id,
-        item_type: event.item_type,
-        item_id: event.item_id,
-        status: event.status,
-        score: event.score,
-        max_score: event.max_score,
-        details: event.details as Json,
-        created_at: event.created_at,
-        updated_at: event.updated_at,
-      }));
-    } catch (error) {
-      console.error("[getChildJourneyProgress] Error for child:", childId, error);
-      throw error;
-    }
-  });
+        // Get the child document to find their family
+        const familyDocs = await db
+          .collectionGroup("children")
+          .where("id", "==", childId)
+          .limit(1)
+          .get();
 
+        if (familyDocs.empty) {
+          console.log("[getChildJourneyProgress] Child not found:", childId);
+          return [];
+        }
+
+        const childDoc = familyDocs.docs[0];
+        if (!childDoc) {
+          console.log("[getChildJourneyProgress] Child doc unexpectedly missing:", childId);
+          return [];
+        }
+
+        const childData = childDoc.data();
+        const familyId = childData["familyId"];
+
+        console.log("[getChildJourneyProgress] Found child:", childId, "family:", familyId);
+
+        // Get journey progress using the repository
+        const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
+        const progress = await progressRepo.getProgress(childId);
+
+        console.log(
+          "[getChildJourneyProgress] Loaded progress for child:",
+          childId,
+          "events:",
+          progress.length,
+        );
+
+        // Return properly typed array for serialization
+        return progress.map((event) => ({
+          id: event.id,
+          track_id: event.track_id,
+          item_type: event.item_type,
+          item_id: event.item_id,
+          status: event.status,
+          score: event.score,
+          max_score: event.max_score,
+          details: event.details as Json,
+          created_at: event.created_at,
+          updated_at: event.updated_at,
+        }));
+      } catch (error) {
+        console.error("[getChildJourneyProgress] Error for child:", childId, error);
+        throw error;
+      }
+    },
+  );
 
 /**
  * Verify provisioning authorization (admin or provisioner role required)
@@ -248,11 +265,11 @@ export const ensureFamilyFn = createServerFn({ method: "POST" })
     try {
       const context = await getCurrentParentContext();
       const roles = await getUserRoles(context.uid);
-      
+
       // CRITICAL: Verify provisioning authorization
       // Only admins/provisioners can create families
       requireProvisioningRole(roles);
-      
+
       const db = getFirebaseAdminDb();
       const repo = new FirebaseFamilyRepository(db, context.uid);
       const familyId = await repo.ensureFamily();

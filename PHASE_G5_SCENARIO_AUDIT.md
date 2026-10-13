@@ -4,23 +4,27 @@
 
 **Status:** Audit complete, no implementation changes made  
 **Date:** 2026-09-25  
-**Scope:** Comprehensive analysis of scenario architecture, security, and G3/G4 integration points  
+**Scope:** Comprehensive analysis of scenario architecture, security, and G3/G4 integration points
 
 ---
 
 ## 1. EXECUTIVE SUMMARY
 
 ### Current State
+
 The TATI ChildSave MVP implements a **branching decision-based scenario engine** with 14-day financial consequence simulation ("The School Reopening Challenge"). Scenarios are currently persisted using Supabase, with localStorage as an offline cache. The engine is **pure and reusable** across TATI Junior/Teen/Plus platforms.
 
 ### G3/G4 Context
+
 - **G3 Integration (Partial):** `loadChildScenario()` and `saveChildScenario()` use `currentChildId()`, which now (post-G4) internally calls `getCurrentChildContext()`. This provides G3 authentication.
 - **G4 Context (Partial):** Assessment scoring is server-authoritative. No explicit scenario scoring system exists yet (only state/money tracking).
 
 ### G5 Objective
+
 Enhance scenario authorization to fully use `AuthenticatedChildContext` from G3, implement server-side validation of scenario state transitions, prevent cross-child/cross-family access, and establish decision integrity.
 
 ### Key Findings
+
 1. ✅ RLS policies (`owns_child_profile()`) provide database-level isolation
 2. ✅ Compound foreign keys prevent cross-child decision attachment
 3. ⚠️ **No application-level validation** that submitted choices belong to current node
@@ -31,9 +35,11 @@ Enhance scenario authorization to fully use `AuthenticatedChildContext` from G3,
 8. ✅ Decisions are logged in `scenario_decisions` for audit trail
 
 ### Security Posture
+
 **Current:** Moderate risk. Database-level RLS prevents cross-family access, but no application-level choice validation. Client can submit invalid choice IDs, which the engine silently ignores (treated as no-op).
 
 **Recommended:** Add application-layer validation in server functions to:
+
 - Verify choice belongs to current node
 - Verify node is reachable in current game state
 - Validate scenario state consistency before save
@@ -46,6 +52,7 @@ Enhance scenario authorization to fully use `AuthenticatedChildContext` from G3,
 ### Components
 
 #### 2.1 Type System (src/lib/scenario/types.ts)
+
 ```typescript
 ScenarioState {
   scenarioId: string;
@@ -105,6 +112,7 @@ ScenarioChoice {
 ```
 
 #### 2.2 Pure Engine (src/lib/scenario/engine.ts)
+
 - **Purpose:** Financial consequence simulation + story branching
 - **Key Functions:**
   - `createInitialState(scenario)` → Starting state
@@ -114,22 +122,26 @@ ScenarioChoice {
 - **No I/O:** All logic is pure functions; no database or HTTP calls
 
 #### 2.3 Persistence Layer (src/lib/scenario/session.ts)
+
 - **localStorage Cache:** `readCachedState()`, `writeCachedState()` for instant resume
-- **Backend Storage:** 
+- **Backend Storage:**
   - `loadSession(childId, scenarioId)` → Fetch from `scenario_sessions`
   - `saveSession(childId, state)` → UPSERT to `scenario_sessions`
   - `recordDecision(childId, sessionId, state)` → Log to `scenario_decisions`
 
 #### 2.4 React Hook (src/lib/scenario/useScenarioRunner.ts)
+
 - Resume logic: Fetch backend, compare with cache, use newest by timestamp
 - Callbacks: `start()`, `choose(choiceId)`, `continueOn()`, `restart()`
 - Persistence adapter pattern allows dependency injection
 
 #### 2.5 Components
+
 - **ScenarioPlayer:** Renders any scenario + handles completion
 - **ScenarioCard:** Thumbnail on journey page
 
 #### 2.6 Server Functions (src/lib/auth/child-learning.functions.ts)
+
 ```typescript
 loadChildScenario(scenario Id)  → GET session state
   ├─ Uses currentChildId() [post-G4: calls getCurrentChildContext()]
@@ -155,6 +167,7 @@ saveChildScenario(state)  → POST full state + record last decision
 **Goal:** Earn GH₵80 for school bag (starting capital: GH₵50)
 
 #### Story Arc
+
 ```
 Day 1: plan-the-money → Initial allocation decision
 Day 1-2: earn-at-the-stall → Earning opportunity
@@ -166,6 +179,7 @@ Day 12-14: Final days + completion
 ```
 
 #### Competencies Tracked
+
 1. goal-setting
 2. saving
 3. earning
@@ -176,12 +190,15 @@ Day 12-14: Final days + completion
 8. financial-resilience
 
 #### Ending Conditions
+
 - Reaches goal (GH₵80+) → Success ending
 - Below goal → Alternative ending (still completes story)
 - No failure state (every path is valid)
 
 #### Content Structure
+
 Each choice has:
+
 - **Label & Description** → UI button text
 - **Effect** → Modify available/saved/competencies/flags
 - **Consequence** → Narrative + ledger (what happened)
@@ -195,6 +212,7 @@ Each choice has:
 ### Supabase Tables
 
 #### scenario_sessions
+
 ```sql
 id                 uuid PRIMARY KEY
 child_profile_id   uuid NOT NULL FK→child_profiles
@@ -215,6 +233,7 @@ RLS Policy: owns_child_profile(child_profile_id)
 **Size Constraints:** State JSONB contains full decision history (max ~200 decisions = ~50KB)
 
 #### scenario_decisions
+
 ```sql
 id                 uuid PRIMARY KEY
 session_id         uuid NOT NULL FK→scenario_sessions(id)
@@ -234,6 +253,7 @@ RLS Policy: owns_child_profile(child_profile_id)
 **Idempotency:** UPSERT with duplicate ignore means submitting same decision twice → no duplicate row
 
 #### journey_progress
+
 ```sql
 id                 uuid PRIMARY KEY
 child_profile_id   uuid NOT NULL
@@ -341,15 +361,18 @@ Scenarios update `journey_progress` when completed, storing final state in `deta
 ```
 
 ### State Persistence Timing
+
 - **Automatic:** After every decision (applyChoice) → saveChildScenario()
 - **Cache + Backend:** localStorage updates immediately, backend upsert is async
 - **Resume Safe:** Fetch backend state on next session load; cache acts as offline buffer
 
 ### Session Expiration
+
 - ✅ Sessions never expire (always resumable)
 - ⚠️ No explicit "abandon" mechanism (only parent can view completed state)
 
 ### Duplicate Submissions
+
 - Client repeats same choice → POST saveChildScenario again
 - Server UPSERT on (child_profile_id, scenario_id) → dedupes session
 - Decision record UPSERT on (session_id, node_id, day_number) + ignoreDuplicates → only first recorded
@@ -380,7 +403,7 @@ Else:
          ↓
 persist(newState)
          ↓
-saveChildScenario({scenarioId, nodeId, decisions, ...}) 
+saveChildScenario({scenarioId, nodeId, decisions, ...})
          ↓
 Server function:
   ├─ currentChildId() → G3 context
@@ -403,6 +426,7 @@ Server function:
 **Purpose:** Audit trail for parent dashboard + research
 
 ### Decision Audit Requirements
+
 - ✅ Decisions persist durably
 - ✅ Decisions logged with context (day, node, choice)
 - ⚠️ No validation that decision was valid choice for node
@@ -441,6 +465,7 @@ ENDS [ending-1-goal-reached | ending-2-below-goal]
 ### Branching Mechanics
 
 #### Choice Effects
+
 ```typescript
 effect: {
   available?: number;           // Pocket money delta (can be negative)
@@ -454,6 +479,7 @@ effect: {
 ```
 
 #### Consequence Display
+
 ```typescript
 consequence: {
   decisionChip?: string;   // "Decision: You lent Kwame GH₵10"
@@ -468,6 +494,7 @@ consequence: {
 ```
 
 #### Node Transitions
+
 ```typescript
 choice: {
   next?: string;           // Next node ID (if any)
@@ -481,17 +508,19 @@ choice: {
 ```
 
 ### Scheduled Events
+
 **Use Case:** Day 1 choice → Day 8 consequence (debt collection appears)
 
 **Implementation:**
+
 ```typescript
 scheduled: [
   {
     dueDay: 8,
     nodeId: "kwame-debt-collection",
-    requiresFlag: "lentToKwame"  // Only if child lent money
-  }
-]
+    requiresFlag: "lentToKwame", // Only if child lent money
+  },
+];
 
 // In advance():
 // Check if any scheduled event dueDay === currentDay
@@ -518,6 +547,7 @@ Save too little →  Easy to overspend
 ### Money Ledger
 
 Each consequence shows:
+
 - **Pocket before & after:** "GH₵30 → GH₵20"
 - **Savings before & after:** "GH₵20 → GH₵25"
 - **Note:** "−GH₵10 for Kwame" or "+GH₵15 stall earnings"
@@ -525,6 +555,7 @@ Each consequence shows:
 ### Competency Changes
 
 Hidden (never shown as score):
+
 ```typescript
 competencies: {
   "goal-setting": 2,
@@ -560,7 +591,7 @@ consequence                   │
 
 decision → complete
   (if choice has ending: true)
-  
+
 complete
   (terminal state)
   (parent can view summary)
@@ -663,6 +694,7 @@ Returns: context.childId
 ```
 
 ### What's Happening
+
 - `currentChildId()` now internally uses `getCurrentChildContext()`
 - This means `loadChildScenario()` and `saveChildScenario()` indirectly use G3 context
 - But there's no explicit reference to full `AuthenticatedChildContext` in scenario functions
@@ -672,12 +704,12 @@ Returns: context.childId
 ```
 Instead of:
   const childId = await currentChildId();
-  
+
 Use explicitly:
   const context = await getCurrentChildContext();
   const childId = context.childId;
   const familyId = context.familyId;
-  
+
 Then validate:
   ├─ context.session.kind === "child"
   ├─ context.session not expired/revoked
@@ -760,6 +792,7 @@ Translation: "Is this child in a family where the current user is a member?"
 ### Authorization Scenarios
 
 #### Child A accessing own scenario session
+
 ```
 Child A session
          ↓
@@ -776,6 +809,7 @@ Row visible → Load/save ✓
 ```
 
 #### Child A accessing Child B's scenario session (same family)
+
 ```
 Child A session + Child B's scenario_id
          ↓
@@ -793,6 +827,7 @@ BUT: Only parent routes call this; child routes always use currentChildId()
 ```
 
 #### Parent accessing child's scenario session
+
 ```
 Parent session + Child C's scenario_id
          ↓
@@ -809,6 +844,7 @@ Row visible → Parent can view ✓
 ```
 
 #### Child A accessing Child B's scenario session (different family)
+
 ```
 Child A session [from Family F]
          ↓
@@ -844,6 +880,7 @@ CONSTRAINT scenario_decisions_session_child_fkey
 ```
 
 **Compound FK:** Decision must reference session + child together. If attacker tries:
+
 ```
 INSERT INTO scenario_decisions (session_id=child-b-session, child_profile_id=child-a)
          ↓
@@ -853,6 +890,7 @@ FK violation: (child-b-session, child-a) doesn't exist ✓
 ### Application-Level Safeguards
 
 #### loadChildScenario()
+
 ```
 currentChildId() → "child-a-uuid" (from session)
          ↓
@@ -865,6 +903,7 @@ RLS enforces: even if query runs, row hidden if user doesn't own it ✓
 ```
 
 #### saveChildScenario()
+
 ```
 currentChildId() → "child-a-uuid"
          ↓
@@ -894,7 +933,7 @@ If attacker tries to save with child_profile_id = "child-b-uuid":
 ```
 owns_child_profile(child_profile_id)
          ↓
-Checks: 
+Checks:
   1. Is this child in a family?
   2. Is the current user a member of that family?
          ↓
@@ -905,6 +944,7 @@ Else → Access denied
 ### Scenarios
 
 #### Family A accessing Family B's child's data
+
 ```
 Parent A (in family A)
          ↓
@@ -917,6 +957,7 @@ Checks: Is child-b in same family as parent A?
 ```
 
 #### Malicious request from Family A to Family B's scenario session
+
 ```
 Parent A + Child B scenario_id
          ↓
@@ -944,9 +985,10 @@ Row hidden; query returns empty
 ### Current Mechanism
 
 #### Session Upsert
+
 ```
-UPSERT scenario_sessions 
-  ON (child_profile_id, scenario_id) 
+UPSERT scenario_sessions
+  ON (child_profile_id, scenario_id)
   DO UPDATE SET state = ?, updated_at = now()
          ↓
 Same child + same scenario: 1 row total (state updated)
@@ -954,6 +996,7 @@ Multiple submissions: Latest state wins (by updated_at in client logic)
 ```
 
 #### Decision Upsert
+
 ```
 UPSERT scenario_decisions
   ON (session_id, node_id, day_number)
@@ -966,6 +1009,7 @@ Multiple submissions: First one recorded, rest ignored
 ### Replay Scenarios
 
 #### Scenario 1: Same decision submitted twice
+
 ```
 Choice: "save-40" at node "plan-the-money" on day 1
          ↓
@@ -985,6 +1029,7 @@ Outcome: ✅ Idempotent (safe replay)
 ```
 
 #### Scenario 2: Different choices on same node
+
 ```
 User chooses "save-40" → applyChoice() → consequence shown
          ↓
@@ -1002,6 +1047,7 @@ NO: Previous decision not recorded in scenario_decisions (only last decision in 
 ```
 
 #### Scenario 3: Offline changes + sync
+
 ```
 User is offline (saveChildScenario fails)
          ↓
@@ -1033,21 +1079,25 @@ Previous offline decisions missing from audit trail ⚠️
 ### Current Validation
 
 #### Input Validation (Zod)
+
 ```typescript
-scenarioStateInput = z.object({
-  scenarioId: z.string().min(1).max(128),
-  nodeId: z.string().min(1).max(128),
-  phase: z.string().min(1).max(32),
-  day: z.number().int().min(1).max(366),
-  available: z.number().min(0),
-  saved: z.number().min(0),
-  goalTarget: z.number().min(0),
-  decisions: z.array(z.unknown()).max(200),
-  updatedAt: z.string().datetime(),
-}).passthrough();
+scenarioStateInput = z
+  .object({
+    scenarioId: z.string().min(1).max(128),
+    nodeId: z.string().min(1).max(128),
+    phase: z.string().min(1).max(32),
+    day: z.number().int().min(1).max(366),
+    available: z.number().min(0),
+    saved: z.number().min(0),
+    goalTarget: z.number().min(0),
+    decisions: z.array(z.unknown()).max(200),
+    updatedAt: z.string().datetime(),
+  })
+  .passthrough();
 ```
 
 **Assessment:**
+
 - ✅ Basic type validation
 - ✅ Bounds checking (day ≤ 366)
 - ✅ No negative money
@@ -1057,6 +1107,7 @@ scenarioStateInput = z.object({
 - ⚠️ No validation that goalTarget matches scenario definition
 
 #### State Integrity Checks
+
 ```
 saveChildScenario(state)
          ↓
@@ -1074,6 +1125,7 @@ UPSERT without validating:
 ### Potential Attacks
 
 #### Attack 1: Jump to ending node
+
 ```
 Client submits: { nodeId: "ending-goal-reached", phase: "complete", ... }
          ↓
@@ -1086,6 +1138,7 @@ Parent sees "Story completed" ✗
 ```
 
 #### Attack 2: Manipulate money
+
 ```
 Client submits: { available: 10000, saved: 50000, goalTarget: 80, ... }
          ↓
@@ -1098,6 +1151,7 @@ Journey progress reflects artificial wealth ✗
 ```
 
 #### Attack 3: Skip days
+
 ```
 Client submits: { day: 14, nodeId: "final-node", phase: "complete", ... }
          ↓
@@ -1181,7 +1235,7 @@ After scenario completion, could:
 ### journey_progress Table
 
 ```
-id, child_profile_id, track_id, item_type, item_id, 
+id, child_profile_id, track_id, item_type, item_id,
 status, score, max_score, details, created_at, updated_at
 
 item_type: "assessment" | "lesson" | "scenario" | "reflection"
@@ -1266,6 +1320,7 @@ OR record is updated if UPSERT on same (child, item_type, item_id) ⚠️
 **No achievements implemented for scenarios.**
 
 Firestore rules anticipate:
+
 ```
 match /achievements/{achievementId}
 ```
@@ -1299,6 +1354,7 @@ Award achievement & celebrate
 ### Schema
 
 #### scenario_sessions
+
 ```
 Primary Key:     id (uuid)
 Ownership:       child_profile_id (FK → child_profiles)
@@ -1312,11 +1368,13 @@ RLS:             owns_child_profile(child_profile_id)
 ```
 
 **Size Considerations:**
+
 - 1 scenario session ≈ 30-50KB (full state + 200-decision history)
 - 10,000 children × 1 scenario ≈ 300-500MB uncompressed
 - JSONB compression in Postgres ≈ 40-60% of size
 
 #### scenario_decisions
+
 ```
 Primary Key:     id (uuid)
 Ownership:       child_profile_id (FK → child_profiles)
@@ -1330,6 +1388,7 @@ RLS:             owns_child_profile(child_profile_id)
 ```
 
 **Index Analysis:**
+
 - idx_scenario_decisions_session (session_id) → Fast lookup by session
 - idx_scenario_decisions_child (child_profile_id) → RLS enforcement
 - Compound FK naturally indexed
@@ -1337,6 +1396,7 @@ RLS:             owns_child_profile(child_profile_id)
 ### Constraints & Triggers
 
 #### Constraints
+
 ```sql
 UNIQUE (child_profile_id, scenario_id)  -- Only 1 active session per child
 UNIQUE (session_id, node_id, day_number) -- Deduplicate decisions
@@ -1345,6 +1405,7 @@ scenario_decisions_session_child_fkey -- Compound FK
 ```
 
 #### Triggers
+
 ```sql
 scenario_sessions_set_updated_at -- auto-update updated_at on modification
 ```
@@ -1366,6 +1427,7 @@ scenario_sessions_set_updated_at -- auto-update updated_at on modification
 ### Query Patterns
 
 #### Load scenario state
+
 ```sql
 SELECT id, state FROM scenario_sessions
 WHERE child_profile_id = $1 AND scenario_id = $2
@@ -1374,19 +1436,21 @@ LIMIT 1
 ```
 
 #### Save scenario state
+
 ```sql
-UPSERT scenario_sessions 
+UPSERT scenario_sessions
   (child_profile_id, scenario_id, state, current_node_id, ...)
-ON CONFLICT (child_profile_id, scenario_id) 
+ON CONFLICT (child_profile_id, scenario_id)
 DO UPDATE SET state = ..., updated_at = now()
 -- RLS enforces: WITH CHECK owns_child_profile($1)
 ```
 
 #### Record decision (audit trail)
+
 ```sql
 UPSERT scenario_decisions
   (session_id, child_profile_id, node_id, choice_id, day_number, ...)
-ON CONFLICT (session_id, node_id, day_number) 
+ON CONFLICT (session_id, node_id, day_number)
 DO NOTHING
 -- ignoreDuplicates + RLS: only first decision recorded
 ```
@@ -1440,6 +1504,7 @@ $$
 ### RLS Application in Scenarios
 
 #### SELECT scenario_sessions
+
 ```
 Query: SELECT * FROM scenario_sessions WHERE child_profile_id = $1
          ↓
@@ -1451,6 +1516,7 @@ If owns_child_profile($1) = FALSE:
 ```
 
 #### INSERT scenario_decisions
+
 ```
 Query: INSERT INTO scenario_decisions (child_profile_id, session_id, ...)
          ↓
@@ -1487,7 +1553,7 @@ If owns_child_profile(child_profile_id) = FALSE:
 match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
   allow read: if canAccessChild(familyId, childId);
   allow write: if false;
-  
+
   match /decisions/{decisionId} {
     allow read: if canAccessChild(familyId, childId);
     allow write: if false;
@@ -1500,13 +1566,14 @@ match /families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey} {
 ### Firestore Structure (Future)
 
 If Firebase becomes primary in G6+:
+
 ```
 /families/{familyId}/
   /children/{childId}/
     /scenarioSessions/{scenarioKey}/
       state: { ... full ScenarioState JSONB ... }
       current_node_id, day_number, status, completed_at
-      
+
     /scenarioSessions/{scenarioKey}/decisions/{decisionId}/
       session_id, node_id, choice_id, day_number, details
 ```
@@ -1536,7 +1603,9 @@ If Firebase becomes active in future:
 ### Age Tiers
 
 #### Junior (Age 8-12)
+
 **Requirements:**
+
 - ✅ Simple 14-day scenario (School Reopening)
 - ✅ Visual money representation (GH₵ amounts, ledger)
 - ✅ Clear choices (no moral ambiguity)
@@ -1546,7 +1615,9 @@ If Firebase becomes active in future:
 **Current Support:** ✅ Fully supported
 
 #### Teen (Age 13-18)
+
 **Requirements:**
+
 - ✅ Multi-day scenarios (14+ days)
 - ✅ Complex decisions (lending, investing, earning)
 - ✅ Delayed consequences (debt collection day 8)
@@ -1558,99 +1629,119 @@ If Firebase becomes active in future:
 ### Mechanics
 
 #### Earning
+
 ```
 Scenario nodes: "earn-at-the-stall", "earn-extra"
 Effect: available += 15
 Real-world mapping: Child does chores/odd jobs
 ```
+
 **Current Support:** ✅ Full
 
 #### Saving
+
 ```
 Choice: "transferToSaved: 40"
 Effect: available -= 40, saved += 40
 Real-world mapping: Move money to protected savings
 ```
+
 **Current Support:** ✅ Full
 
 #### Spending
+
 ```
 Choice: "effect: { available: -15 }"
 Effect: Pocket money goes down
 Real-world mapping: Buy snacks, transport, etc.
 ```
+
 **Current Support:** ✅ Full
 
 #### Donating
+
 **Current Support:** ⚠️ Not in School Reopening scenario; could add choice: "effect: {available: -X}"
 
 #### Investing
+
 **Current Support:** ⚠️ Not in School Reopening; could add scheduled returns: "schedule: {inDays: 7, nodeId: 'investment-returns'}"
 
 #### Borrowing/Lending
+
 ```
 Scenario: kwame-request → lend money to friend
 Effect: available -= 10 (lent amount)
 Schedule: day 8 → kwame-debt-collection (repayment)
 Flag: lentToKwame (triggers debt node)
 ```
+
 **Current Support:** ✅ Full
 
 #### Budgeting
+
 ```
 Implicit: Child allocates initial GH₵50 across days
 No explicit budgeting UI; implicit in consequence narratives
 ```
+
 **Current Support:** ⚠️ Implicit only (could add explicit budgeting mini-game)
 
 #### Tracking Money
+
 ```
 Ledger shown after each decision: "GH₵30 → GH₵20"
 Totals on completion: earned, spent, saved
 ```
+
 **Current Support:** ✅ Full
 
 #### Ghana Cedi (GH₵)
+
 ```
 All amounts in GH₵; no currency exchange
 Scenario: GH₵50 start, GH₵80 goal
 Ledger: Shows as GH₵X
 ```
+
 **Current Support:** ✅ Full
 
 #### Multi-Day Scenarios
+
 ```
 14-day School Reopening
 Day tracking: state.day
 Scheduled events: appear on specific days
 ```
+
 **Current Support:** ✅ Full
 
 #### Consequence-Driven Learning
+
 ```
 Every choice shows a consequence ("Here's what happened")
 No right/wrong framing; all paths show consequences
 Hidden competency tracking (not shown as scores)
 ```
+
 **Current Support:** ✅ Full
 
 ### Summary Table
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Junior scenarios | ✅ | 14-day School Reopening fully supported |
-| Teen scenarios | ✅ | Engine supports complexity; no Teen scenario defined yet |
-| Earning | ✅ | +GH₵ effects in place |
-| Saving | ✅ | transferToSaved, transferAllToSaved |
-| Spending | ✅ | −GH₵ effects |
-| Donating | ⚠️ | Possible via −GH₵ effect; not in current scenario |
-| Investing | ⚠️ | Possible via schedule + flags; not in current scenario |
-| Borrowing/Lending | ✅ | kwame-request scenario implements lending |
-| Budgeting | ⚠️ | Implicit; could enhance with explicit allocation |
-| Money tracking | ✅ | Ledger, totals, per-node history |
-| Ghana cedi | ✅ | All amounts in GH₵ |
-| Multi-day | ✅ | 14-day scenario with day transitions |
-| Consequence-driven | ✅ | Full narrative + consequence system |
+| Feature            | Status | Notes                                                    |
+| ------------------ | ------ | -------------------------------------------------------- |
+| Junior scenarios   | ✅     | 14-day School Reopening fully supported                  |
+| Teen scenarios     | ✅     | Engine supports complexity; no Teen scenario defined yet |
+| Earning            | ✅     | +GH₵ effects in place                                    |
+| Saving             | ✅     | transferToSaved, transferAllToSaved                      |
+| Spending           | ✅     | −GH₵ effects                                             |
+| Donating           | ⚠️     | Possible via −GH₵ effect; not in current scenario        |
+| Investing          | ⚠️     | Possible via schedule + flags; not in current scenario   |
+| Borrowing/Lending  | ✅     | kwame-request scenario implements lending                |
+| Budgeting          | ⚠️     | Implicit; could enhance with explicit allocation         |
+| Money tracking     | ✅     | Ledger, totals, per-node history                         |
+| Ghana cedi         | ✅     | All amounts in GH₵                                       |
+| Multi-day          | ✅     | 14-day scenario with day transitions                     |
+| Consequence-driven | ✅     | Full narrative + consequence system                      |
 
 ---
 
@@ -1659,6 +1750,7 @@ Hidden competency tracking (not shown as scores)
 ### Concurrent Request Handling
 
 #### Scenario 1: Two tabs, same child, same scenario
+
 ```
 Tab A: User chooses "save-40"
   └─ POST saveChildScenario(state-A)
@@ -1677,13 +1769,14 @@ UPSERT scenario_sessions ON (child_profile_id, scenario_id)
 **Risk:** User loses work from one tab
 
 #### Scenario 2: Double-click "Continue" button
+
 ```
 User clicks "Continue" → POST advance()
 User clicks again (impatient) → POST advance() again
          ↓
 First request: advance(state-1) → state-2
   └─ saveChildScenario(state-2)
-  
+
 Second request: advance(state-1) → state-2 (same)
   └─ saveChildScenario(state-2) again
          ↓
@@ -1694,6 +1787,7 @@ UPSERT scenario_sessions → state-2 (idempotent) ✓
 **Risk:** Low (UPSERT handles duplicate)
 
 #### Scenario 3: Network retry after timeout
+
 ```
 POST saveChildScenario → timeout (network stalls)
 Client retries (auto or manual)
@@ -1709,6 +1803,7 @@ UPSERT scenario_sessions + UPSERT scenario_decisions (ignoreDuplicates)
 ### Performance Considerations
 
 #### Query Performance
+
 ```
 SELECT id, state FROM scenario_sessions
 WHERE child_profile_id = $1 AND scenario_id = $2
@@ -1719,6 +1814,7 @@ Index: UNIQUE (child_profile_id, scenario_id)
 ```
 
 #### JSONB Size
+
 ```
 Average scenario state: 30-50KB
 Complex scenario (200+ decisions): up to 100KB
@@ -1733,6 +1829,7 @@ Fetching state from Postgres:
 ```
 
 #### Decision Recording
+
 ```
 INSERT scenario_decisions (1 row per decision)
 UPSERT on (session_id, node_id, day_number)
@@ -1742,6 +1839,7 @@ UPSERT on (session_id, node_id, day_number)
 ```
 
 #### Update Frequency
+
 ```
 saveChildScenario called after every choice
   └─ Network latency: ~100-500ms
@@ -1783,73 +1881,85 @@ Over 14-day scenario (≈50 decisions):
 ### Authentication Threats
 
 #### Threat: Unauthenticated scenario access
+
 **Attack:** User without session tries to access /child/scenario/kwame-request  
 **Current Defense:** Route beforeLoad: assertChildActivity() validates G3 context  
 **Status:** ✅ Protected (throw → redirect to login)  
-**Severity:** Critical  
+**Severity:** Critical
 
 #### Threat: Expired session
+
 **Attack:** Session cookie expired; user tries to load scenario  
 **Current Defense:** getCurrentChildContext() checks expiresAt; throws AuthorizationError  
 **Status:** ✅ Protected (session revalidation on every request)  
-**Severity:** Critical  
+**Severity:** Critical
 
 #### Threat: Revoked session (e.g., family member removed)
+
 **Attack:** Parent removes child; child continues with old session  
 **Current Defense:** session.revokedAt checked in requireAuthenticatedChild()  
 **Status:** ✅ Protected (if revocation marks revokedAt)  
-**Severity:** Critical  
+**Severity:** Critical
 
 #### Threat: Forged session cookie
+
 **Attack:** Attacker crafts fake session cookie  
 **Current Defense:** HTTP-only cookies + server-side validation (getCookie → validateChildSession)  
 **Status:** ✅ Protected (HTTP-only prevents JS theft; server validates crypto)  
-**Severity:** Critical  
+**Severity:** Critical
 
 ### Authorization Threats
 
 #### Threat: Cross-child access (Child A reads Child B's session)
+
 **Attack:** Attacker navigates to /child/scenario/child-b-id  
-**Current Defense:**  
+**Current Defense:**
+
 - Route uses URL param `scenarioId` only (not childId for child routes)
 - loadChildScenario() derives childId from authenticated session
 - RLS enforces owns_child_profile() at database layer
-**Status:** ✅ Protected (multi-layer defense)  
-**Severity:** Critical  
+  **Status:** ✅ Protected (multi-layer defense)  
+  **Severity:** Critical
 
 #### Threat: Cross-family access (Family A views Family B child's progress)
+
 **Attack:** Parent A tries /learn/child-b-id/scenario/  
 **Current Defense:** assertChildInCurrentFamily() in route beforeLoad  
 **Status:** ✅ Protected (explicit family validation)  
-**Severity:** Critical  
+**Severity:** Critical
 
 #### Threat: Role escalation (Child escalates to parent)
+
 **Attack:** Child tries to call parent-specific function  
 **Current Defense:** Different routes for child vs parent; session type validation  
 **Status:** ✅ Protected (route-level separation)  
-**Severity:** High  
+**Severity:** High
 
 #### Threat: Session ID spoofing in recordDecision()
+
 **Attack:** Attacker submits sessionId from different child's session  
 **Current Defense:** Compound FK (session_id, child_profile_id) validated at DB  
 **Status:** ✅ Protected (FK violation rejected)  
-**Severity:** High  
+**Severity:** High
 
 ### Input Manipulation Threats
 
 #### Threat: Fake scenarioId
+
 **Attack:** POST saveChildScenario({ scenarioId: "fake-scenario", ... })  
 **Current Defense:** getScenarioDefinition(scenarioId) checks registry  
 **Status:** ✅ Protected (throw if not found)  
-**Severity:** Medium  
+**Severity:** Medium
 
 #### Threat: Fake sessionId
+
 **Attack:** POST saveChildScenario({ sessionId: "attacker-uuid", ... })  
 **Current Defense:** sessionId is server-generated from UPSERT; client doesn't submit it  
 **Status:** ✅ Protected (sessionId only from server response)  
-**Severity:** Low  
+**Severity:** Low
 
 #### Threat: Fake nodeId
+
 **Attack:** POST saveChildScenario({ nodeId: "ending-node", ... })  
 **Current Defense:** No validation that nodeId exists in scenario ⚠️  
 **Status:** ⚠️ **NOT PROTECTED** (state saved with invalid nodeId)  
@@ -1857,6 +1967,7 @@ Over 14-day scenario (≈50 decisions):
 **Recommended Fix:** Validate nodeId in getScenarioDefinition() before save
 
 #### Threat: Fake day
+
 **Attack:** POST saveChildScenario({ day: 100, ... })  
 **Current Defense:** Zod validates day ≤ 366; no max-day validation ⚠️  
 **Status:** ⚠️ **PARTIALLY PROTECTED** (unrealistic but accepted)  
@@ -1864,6 +1975,7 @@ Over 14-day scenario (≈50 decisions):
 **Recommended Fix:** Validate day ≤ scenario.totalDays
 
 #### Threat: Fake choiceId
+
 **Attack:** POST saveChildScenario with invalid choiceId in decisions  
 **Current Defense:** applyChoice() silently ignores unknown choiceIds  
 **Status:** ⚠️ **NOT PROTECTED** (state saved without choice validation)  
@@ -1871,12 +1983,14 @@ Over 14-day scenario (≈50 decisions):
 **Recommended Fix:** Validate every choice in decisions[] against scenario
 
 #### Threat: Negative money
+
 **Attack:** POST with available: -1000  
 **Current Defense:** Zod: z.number().min(0)  
 **Status:** ✅ Protected (Zod validation)  
-**Severity:** Medium  
+**Severity:** Medium
 
 #### Threat: Massive money
+
 **Attack:** POST with available: 999999999  
 **Current Defense:** No upper bound ⚠️  
 **Status:** ⚠️ **NOT PROTECTED** (accepted by Zod)  
@@ -1886,6 +2000,7 @@ Over 14-day scenario (≈50 decisions):
 ### State Attacks
 
 #### Threat: Node skipping (Jump from Day 1 to Day 14)
+
 **Attack:** POST saveChildScenario({ nodeId: "final-node", day: 14, ... })  
 **Current Defense:** No validation that day/nodeId path is reachable ⚠️  
 **Status:** ⚠️ **NOT PROTECTED**  
@@ -1893,24 +2008,28 @@ Over 14-day scenario (≈50 decisions):
 **Recommended Fix:** Graph-walk validation from start to reached node
 
 #### Threat: Day skipping (Day 1 → Day 5)
+
 **Attack:** applyChoice() with advanceDays: 100  
 **Current Defense:** advanceDays from choice effect (not client-supplied)  
 **Status:** ✅ Protected (effect comes from definition, not client)  
-**Severity:** Low  
+**Severity:** Low
 
 #### Threat: Replay (Submit same choice twice for double effect)
+
 **Attack:** POST saveChildScenario twice with state.decisions[last] = "save-40"  
 **Current Defense:** UPSERT on (session_id, node_id, day_number) + ignoreDuplicates  
 **Status:** ✅ Protected (idempotent, decision deduped)  
-**Severity:** Medium (if not protected)  
+**Severity:** Medium (if not protected)
 
 #### Threat: Session cloning (Restore from backup)
+
 **Attack:** Attacker restores old localStorage state + tries to submit  
 **Current Defense:** UPSERT scenario_sessions compares updatedAt timestamps  
 **Status:** ⚠️ **PARTIALLY PROTECTED** (backend always wins; cache might be stale)  
-**Severity:** Low (user loses work, doesn't gain it)  
+**Severity:** Low (user loses work, doesn't gain it)
 
 #### Threat: Concurrent decisions (Two choices submitted simultaneously)
+
 **Attack:** Tab A: choice-1, Tab B: choice-2 at same time  
 **Current Defense:** UPSERT last-write-wins ⚠️  
 **Status:** ⚠️ **PARTIALLY PROTECTED** (one state discarded silently)  
@@ -1920,73 +2039,79 @@ Over 14-day scenario (≈50 decisions):
 ### Database Attacks
 
 #### Threat: RLS bypass via direct query
+
 **Attack:** SELECT * FROM scenario_sessions WHERE scenario_id = "any"  
 **Current Defense:** Supabase Auth enforces RLS; direct queries go through RLS  
 **Status:** ✅ Protected (Supabase RLS enforced)  
-**Severity:** Critical (if not protected)  
+**Severity:** Critical (if not protected)
 
 #### Threat: Unauthorized UPDATE via supabase-js
+
 **Attack:** supabase.from("scenario_sessions").update({...})  
 **Current Defense:** RLS WITH CHECK enforces owns_child_profile()  
 **Status:** ✅ Protected (RLS enforced on all operations)  
-**Severity:** Critical (if not protected)  
+**Severity:** Critical (if not protected)
 
 #### Threat: Compound FK bypass
+
 **Attack:** INSERT scenario_decisions (session_id=A, child_profile_id=B)  
 **Current Defense:** Compound FK requires both to match existing session row  
 **Status:** ✅ Protected (FK violation rejected)  
-**Severity:** High (if not protected)  
+**Severity:** High (if not protected)
 
 ### Firebase Threats
 
 #### Threat: Firebase UID spoofing
+
 **Attack:** Submit firebaseUid = "anyone's-uid"  
 **Current Defense:** Firebase UID comes from Firebase Auth (Google's service)  
 **Status:** ✅ Protected (Firebase verifies signature)  
-**Severity:** Critical (if not protected)  
+**Severity:** Critical (if not protected)
 
 #### Threat: Firebase identity mismatch
+
 **Attack:** Firebase UID from Family A + Session from Family B  
 **Current Defense:** requireAuthenticatedChild() validates firebase.familyId === session.familyId  
 **Status:** ✅ Protected (mismatch throws AuthorizationError)  
-**Severity:** High (if not protected)  
+**Severity:** High (if not protected)
 
 #### Threat: Admin SDK exposure
+
 **Attack:** firebase-admin credentials visible in browser  
 **Current Defense:** .server.ts files only; TanStack Start build prevents client import  
 **Status:** ✅ Protected (build-time enforcement)  
-**Severity:** Critical (if exposed)  
+**Severity:** Critical (if exposed)
 
 ### Summary Table
 
-| Threat | Current Status | Severity | Recommended G5 Action |
-|--------|---|---|---|
-| **Unauthenticated access** | ✅ Protected | Critical | ✓ Maintain |
-| **Expired session** | ✅ Protected | Critical | ✓ Maintain |
-| **Revoked session** | ✅ Protected | Critical | ✓ Maintain |
-| **Forged cookie** | ✅ Protected | Critical | ✓ Maintain |
-| **Cross-child access** | ✅ Protected | Critical | ✓ Maintain |
-| **Cross-family access** | ✅ Protected | Critical | ✓ Maintain |
-| **Role escalation** | ✅ Protected | High | ✓ Maintain |
-| **Session ID spoofing** | ✅ Protected | High | ✓ Maintain |
-| **Fake scenarioId** | ✅ Protected | Medium | ✓ Maintain |
-| **Fake sessionId** | ✅ Protected | Low | ✓ Maintain |
-| **Fake nodeId** | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD VALIDATION** |
-| **Fake day** | ⚠️ PARTIAL | Medium | 🔧 Improve bounds |
-| **Fake choiceId** | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD VALIDATION** |
-| **Negative money** | ✅ Protected | Medium | ✓ Maintain |
-| **Massive money** | ⚠️ NOT PROTECTED | Low | 🔧 Add max bound |
-| **Node skipping** | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD REACHABILITY CHECK** |
-| **Day skipping** | ✅ Protected | Low | ✓ Maintain |
-| **Replay** | ✅ Protected | Medium | ✓ Maintain |
-| **Session cloning** | ⚠️ PARTIAL | Low | ℹ️ Accept |
-| **Concurrent decisions** | ⚠️ PARTIAL | Medium | 🔧 Consider optimistic lock |
-| **RLS bypass** | ✅ Protected | Critical | ✓ Maintain |
-| **Unauthorized UPDATE** | ✅ Protected | Critical | ✓ Maintain |
-| **Compound FK bypass** | ✅ Protected | High | ✓ Maintain |
-| **Firebase UID spoofing** | ✅ Protected | Critical | ✓ Maintain |
-| **Firebase family mismatch** | ✅ Protected | High | ✓ Maintain |
-| **Admin SDK exposure** | ✅ Protected | Critical | ✓ Maintain |
+| Threat                       | Current Status   | Severity | Recommended G5 Action         |
+| ---------------------------- | ---------------- | -------- | ----------------------------- |
+| **Unauthenticated access**   | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Expired session**          | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Revoked session**          | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Forged cookie**            | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Cross-child access**       | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Cross-family access**      | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Role escalation**          | ✅ Protected     | High     | ✓ Maintain                    |
+| **Session ID spoofing**      | ✅ Protected     | High     | ✓ Maintain                    |
+| **Fake scenarioId**          | ✅ Protected     | Medium   | ✓ Maintain                    |
+| **Fake sessionId**           | ✅ Protected     | Low      | ✓ Maintain                    |
+| **Fake nodeId**              | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD VALIDATION**         |
+| **Fake day**                 | ⚠️ PARTIAL       | Medium   | 🔧 Improve bounds             |
+| **Fake choiceId**            | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD VALIDATION**         |
+| **Negative money**           | ✅ Protected     | Medium   | ✓ Maintain                    |
+| **Massive money**            | ⚠️ NOT PROTECTED | Low      | 🔧 Add max bound              |
+| **Node skipping**            | ⚠️ NOT PROTECTED | **High** | 🔧 **ADD REACHABILITY CHECK** |
+| **Day skipping**             | ✅ Protected     | Low      | ✓ Maintain                    |
+| **Replay**                   | ✅ Protected     | Medium   | ✓ Maintain                    |
+| **Session cloning**          | ⚠️ PARTIAL       | Low      | ℹ️ Accept                     |
+| **Concurrent decisions**     | ⚠️ PARTIAL       | Medium   | 🔧 Consider optimistic lock   |
+| **RLS bypass**               | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Unauthorized UPDATE**      | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Compound FK bypass**       | ✅ Protected     | High     | ✓ Maintain                    |
+| **Firebase UID spoofing**    | ✅ Protected     | Critical | ✓ Maintain                    |
+| **Firebase family mismatch** | ✅ Protected     | High     | ✓ Maintain                    |
+| **Admin SDK exposure**       | ✅ Protected     | Critical | ✓ Maintain                    |
 
 ---
 
@@ -2190,24 +2315,24 @@ validateNodeReachability(scenario, nodeId)
 ```
 In saveChildScenario:
   const context = await getCurrentChildContext();
-  
+
   // Explicit use of full context:
   const childId = context.childId;
   const familyId = context.familyId;
   const sessionId = context.sessionId;
-  
+
   // Validate context state:
   if (context.session.kind !== "child") throw new AuthorizationError(...);
   if (context.session.expiresAt < new Date()) throw new AuthorizationError(...);
   if (context.session.revokedAt) throw new AuthorizationError(...);
-  
+
   // Firebase optional check:
   if (context.firebase) {
     if (context.firebase.familyId !== context.familyId) {
       throw new AuthorizationError("Firebase family mismatch");
     }
   }
-  
+
   // Proceed with childId = context.childId (server-derived)
 ```
 
@@ -2220,10 +2345,12 @@ In saveChildScenario:
 **File:** `src/lib/auth/child-learning.functions.ts`
 
 **Functions to update:**
+
 - `loadChildScenario()` - Add explicit G3 context + scenario validation
 - `saveChildScenario()` - Add state/choice/node validation + reachability check
 
 **Changes:**
+
 - Use `getCurrentChildContext()` explicitly (currently via currentChildId())
 - Add `validateScenarioState()` function
 - Add `validateChoices()` function
@@ -2239,11 +2366,13 @@ In saveChildScenario:
 **File:** `src/lib/scenario/registry.ts`
 
 **Additions:**
+
 - Precompute reachability graph per scenario
 - Add index maps for O(1) node/choice lookups
 - Return enhanced metadata with definitions
 
 **Changes:**
+
 - For each scenario, compute reachable_nodes Set
 - Build node_index Map<nodeId, ScenarioNode>
 - Build choice_index Map<nodeId, Map<choiceId, ScenarioChoice>>
@@ -2257,9 +2386,11 @@ In saveChildScenario:
 **File:** `src/lib/scenario/types.ts`
 
 **Additions:**
+
 - Optional: `ScenarioDefinition` could include computed metadata
 
 **Changes:**
+
 - If precomputing in registry: No changes needed
 - If storing metadata in definition: Add optional fields
 
@@ -2272,9 +2403,11 @@ In saveChildScenario:
 **File:** `src/lib/scenario/engine.ts`
 
 **Additions:**
+
 - Optional: Add validation mode to applyChoice()
 
 **Changes:**
+
 - Currently engine is pure; validation done by caller
 - Could add assertions for debug builds
 
@@ -2287,6 +2420,7 @@ In saveChildScenario:
 **File:** Firestore rules + Supabase migrations
 
 **Status:** ✅ Already sufficient; no policy changes needed
+
 - owns_child_profile() enforces family isolation
 - Compound FK prevents cross-child attachment
 - No new RLS policies required for G5
@@ -2298,6 +2432,7 @@ In saveChildScenario:
 **File:** `drizzle/migrations/00XX_g5_scenario_enhancements.sql`
 
 **Optional additions:**
+
 - Version column on scenario_sessions (for optimistic locking)
 - Archived_at column (for retention policy)
 - Competency tracking table (learner_competencies, if implementing)
@@ -2311,6 +2446,7 @@ In saveChildScenario:
 **File:** `tests/auth/scenario-authorization.test.ts` (NEW)
 
 **Test coverage:**
+
 - Authentication: authenticated vs expired vs revoked
 - Authorization: correct child, wrong child, cross-family
 - Choice validation: valid choice, invalid choice
@@ -2373,7 +2509,8 @@ In saveChildScenario:
 
 ### 6. Routes (MINIMAL CHANGES)
 
-**Files:** 
+**Files:**
+
 - `src/routes/child/scenario.$scenarioId.tsx`
 - `src/routes/_authenticated/learn.$childId.scenario.$scenarioId.tsx`
 
@@ -2403,11 +2540,13 @@ In saveChildScenario:
 ## 30. TEST PLAN
 
 ### Test File
+
 `tests/auth/scenario-authorization.test.ts` (NEW)
 
 ### Test Categories
 
 #### 1. Authentication (5 tests)
+
 ```
 ✅ Authenticated child can load/save scenarios
 ❌ Unauthenticated user blocked
@@ -2417,6 +2556,7 @@ In saveChildScenario:
 ```
 
 #### 2. Authorization (6 tests)
+
 ```
 ✅ Child can access own scenario session
 ❌ Child A cannot access Child B's session (same family)
@@ -2427,6 +2567,7 @@ In saveChildScenario:
 ```
 
 #### 3. Scenario Validity (5 tests)
+
 ```
 ✅ Valid scenario loads
 ❌ Invalid scenarioId rejected
@@ -2436,6 +2577,7 @@ In saveChildScenario:
 ```
 
 #### 4. Choice Validation (6 tests)
+
 ```
 ✅ Valid choice applied
 ❌ Invalid choiceId rejected
@@ -2446,6 +2588,7 @@ In saveChildScenario:
 ```
 
 #### 5. Node/Day Validation (6 tests)
+
 ```
 ✅ Valid node progression
 ❌ Node jump attempted (day 1 → 14)
@@ -2456,6 +2599,7 @@ In saveChildScenario:
 ```
 
 #### 6. Money Validation (5 tests)
+
 ```
 ✅ Valid money changes applied
 ❌ Negative available rejected
@@ -2465,6 +2609,7 @@ In saveChildScenario:
 ```
 
 #### 7. State Integrity (5 tests)
+
 ```
 ✅ Full state validation
 ❌ Inconsistent state rejected
@@ -2474,6 +2619,7 @@ In saveChildScenario:
 ```
 
 #### 8. Idempotency (3 tests)
+
 ```
 ✅ Same decision submitted twice → no duplicate
 ✅ Replay from cache safe
@@ -2481,6 +2627,7 @@ In saveChildScenario:
 ```
 
 #### 9. Firebase Integration (3 tests)
+
 ```
 ✅ Firebase unavailable → continues
 ✅ Firebase identity present → validates familyId match
@@ -2488,6 +2635,7 @@ In saveChildScenario:
 ```
 
 #### 10. Audit Trail (2 tests)
+
 ```
 ✅ Decisions recorded in scenario_decisions
 ✅ One decision per (session, node, day)
@@ -2500,6 +2648,7 @@ In saveChildScenario:
 ### Phased Rollout
 
 #### Phase 1: Deploy G5 Code (No Breaking Changes)
+
 ```
 1. Deploy enhanced loadChildScenario() + saveChildScenario()
    ├─ New validation in server functions
@@ -2513,6 +2662,7 @@ In saveChildScenario:
 ```
 
 #### Phase 2: Gradual Enforcement
+
 ```
 1. Week 1: Log validation failures (no errors)
    └─ Identify any problematic existing sessions
@@ -2525,6 +2675,7 @@ In saveChildScenario:
 ```
 
 #### Phase 3: Cleanup (Optional)
+
 ```
 1. Archive old incomplete sessions (e.g., > 30 days inactive)
 2. Validate all archived sessions compliance
@@ -2538,6 +2689,7 @@ In saveChildScenario:
 ### If G5 Introduction Causes Issues
 
 #### Rollback Step 1: Disable New Validation
+
 ```
 In loadChildScenario() + saveChildScenario():
   ├─ Remove state validation checks
@@ -2546,6 +2698,7 @@ In loadChildScenario() + saveChildScenario():
 ```
 
 #### Rollback Step 2: Restore Previous Server Functions
+
 ```
 If validation was buggy:
   ├─ Revert child-learning.functions.ts to pre-G5 version
@@ -2555,6 +2708,7 @@ If validation was buggy:
 ```
 
 #### Rollback Step 3: Preserve Data
+
 ```
 All scenario_sessions + scenario_decisions remain untouched
   ├─ No schema changes = no migration needed to revert
@@ -2645,12 +2799,14 @@ Persist to Backend
 ## 34. G5 IMPLEMENTATION CHECKLIST
 
 ### Pre-Implementation
+
 - [ ] Confirm this audit is understood and approved
 - [ ] All tests designed and ready
 - [ ] Validation logic pseudocode reviewed
 - [ ] No scope creep (only validation, no redesign)
 
 ### Implementation Phase 1: Core Validation
+
 - [ ] Add `validateScenarioState()` function
 - [ ] Add `validateChoice()` function
 - [ ] Add `validateNodeReachability()` function
@@ -2659,6 +2815,7 @@ Persist to Backend
 - [ ] Enhance scenario registry with precomputed metadata
 
 ### Implementation Phase 2: Testing
+
 - [ ] Write 40+ tests in `scenario-authorization.test.ts`
 - [ ] Run test suite → all pass
 - [ ] Manual QA: Test full scenario flow as child
@@ -2666,6 +2823,7 @@ Persist to Backend
 - [ ] Manual QA: Test node skip (should reject)
 
 ### Implementation Phase 3: Deployment
+
 - [ ] Deploy G5 code
 - [ ] Monitor error logs
 - [ ] Verify no regressions
@@ -2675,6 +2833,7 @@ Persist to Backend
 - [ ] Build: npm run build
 
 ### Implementation Phase 4: Documentation
+
 - [ ] Update PHASE_G5_COMPLETION_REPORT.md
 - [ ] Document all validation added
 - [ ] Document security threats closed
@@ -2690,6 +2849,7 @@ Persist to Backend
 **Recommendation:** Proceed with G5 implementation following this audit plan.
 
 **Rationale:**
+
 1. ✅ Architecture is sound (database constraints + RLS sufficient)
 2. ✅ Security is moderate (multi-layer defense in place)
 3. ⚠️ Application-level validation **critical gap** (choiceId, nodeId, day validation)
@@ -2698,6 +2858,7 @@ Persist to Backend
 6. ✅ Implementation is additive (no breaking changes)
 
 **Key Threats Addressed by G5:**
+
 - ❌ Fake choiceId → ✅ Validate choice in current node
 - ❌ Node skipping → ✅ Validate path reachable from start
 - ❌ Unrealistic day → ✅ Validate day ≤ scenario.totalDays
@@ -2705,6 +2866,7 @@ Persist to Backend
 - ❌ Concurrent conflicts → ✅ Consider optimistic locking (optional)
 
 **Non-Blockers (Defer to G6+):**
+
 - Achievement system
 - Competency persistence table
 - Scenario prerequisites/gating
@@ -2718,6 +2880,7 @@ Persist to Backend
 ✅ **Audit Complete - No Application Code Modified**
 
 This audit is **READ-ONLY**. No files changed:
+
 - ✅ No src/ files modified
 - ✅ No migrations added
 - ✅ No RLS policies changed
@@ -2726,10 +2889,10 @@ This audit is **READ-ONLY**. No files changed:
 - ✅ No application behavior altered
 
 **Documentation Created:**
+
 - ✅ PHASE_G5_SCENARIO_AUDIT.md (this file)
 - ✅ SCENARIO_SYSTEM_INVENTORY.md (inventory of all scenario code)
 
 **Ready for G5 Implementation Authorization**
 
 ---
-

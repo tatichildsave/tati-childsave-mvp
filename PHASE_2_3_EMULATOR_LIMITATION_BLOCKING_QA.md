@@ -12,12 +12,12 @@ The authentication identity bridge is **correctly implemented for production** b
 
 ### The Gap
 
-| Aspect | Production | Local Emulator | Result |
-|--------|-----------|-----------------|--------|
-| **Supabase JWT sent to Firestore** | ✅ Accepted | ❌ Rejected | **Emulator incompatible** |
-| **OIDC Provider Config** | ✅ Automatic (Google Cloud) | ❌ Not configured | **No Supabase trust** |
-| **request.auth.uid Populated** | ✅ From Supabase UID | ❌ Null or missing | **Auth fails** |
-| **Firestore Rules Evaluation** | ✅ Works correctly | ❌ Fails without auth | **QA blocked** |
+| Aspect                             | Production                  | Local Emulator        | Result                    |
+| ---------------------------------- | --------------------------- | --------------------- | ------------------------- |
+| **Supabase JWT sent to Firestore** | ✅ Accepted                 | ❌ Rejected           | **Emulator incompatible** |
+| **OIDC Provider Config**           | ✅ Automatic (Google Cloud) | ❌ Not configured     | **No Supabase trust**     |
+| **request.auth.uid Populated**     | ✅ From Supabase UID        | ❌ Null or missing    | **Auth fails**            |
+| **Firestore Rules Evaluation**     | ✅ Works correctly          | ❌ Fails without auth | **QA blocked**            |
 
 ---
 
@@ -69,6 +69,7 @@ The local Firebase Emulator does NOT reproduce production authentication behavio
 ### Why the Emulator Fails
 
 **Production Firebase**:
+
 - Firestore is configured to trust external OIDC providers
 - Supabase is registered as a valid OIDC provider
 - When Firestore receives Supabase JWT:
@@ -78,6 +79,7 @@ The local Firebase Emulator does NOT reproduce production authentication behavio
   4. Rules evaluate successfully
 
 **Firebase Emulator** (local on 127.0.0.1:8080):
+
 - Does NOT trust external OIDC providers
 - Only recognizes Firebase Auth tokens
 - When Firestore Emulator receives Supabase JWT:
@@ -90,6 +92,7 @@ The local Firebase Emulator does NOT reproduce production authentication behavio
 ### Evidence
 
 **Firestore Rules** (lines 1-8 of firestore.rules):
+
 ```javascript
 function signedIn() {
   return request.auth != null;  // ← This will be false in emulator
@@ -103,6 +106,7 @@ function userDoc() {
 ```
 
 If the emulator doesn't populate `request.auth`, then:
+
 - `signedIn()` = false
 - `userDoc()` = {}
 - `hasRole('facilitator')` = false
@@ -111,6 +115,7 @@ If the emulator doesn't populate `request.auth`, then:
 ### Confirmation From Previous Work
 
 Session notes show:
+
 - 9 Firebase Auth Emulator users were created successfully
 - When attempting to log in via `/academy/login`, got: "email and password don't match"
 - This is correct behavior: Users exist in Firebase Auth Emulator, but app uses Supabase Auth
@@ -131,18 +136,21 @@ The original plan was:
 The Supabase configured in the app (`https://ggtjulmplujaqmsppque.supabase.co`) is a **production cloud instance**, not a local emulator.
 
 **To create a Supabase test account, I would need one of**:
+
 1. ✅ Direct Supabase dashboard access (to create test user manually)
 2. ✅ Supabase API token + REST API capability (to programmatically create user)
 3. ✅ Existing Supabase test account credentials (to reuse)
 4. ✅ Local Supabase emulator (configured in app to use instead of cloud)
 
 **Current situation**:
+
 - ❌ No Supabase dashboard access available
 - ❌ No Supabase API token visible
 - ❌ No existing test credentials documented
 - ❌ No Supabase emulator configured (app points to cloud only)
 
 **Per user's instruction**:
+
 > "If creating a Supabase account requires access that is unavailable, STOP and report exactly what access is missing."
 
 ### What Access Is Missing
@@ -150,6 +158,7 @@ The Supabase configured in the app (`https://ggtjulmplujaqmsppque.supabase.co`) 
 To proceed with Phase 3, **one of the following is required**:
 
 **Option A: Production Supabase Access**
+
 ```
 1. Access to Supabase dashboard at https://supabase.com/dashboard
 2. Project: ggtjulmplujaqmsppque
@@ -158,6 +167,7 @@ To proceed with Phase 3, **one of the following is required**:
 ```
 
 **Option B: Supabase API Key**
+
 ```
 1. Supabase service role API key (for admin operations)
 2. Endpoint: https://ggtjulmplujaqmsppque.supabase.co
@@ -165,6 +175,7 @@ To proceed with Phase 3, **one of the following is required**:
 ```
 
 **Option C: Local Supabase Emulator**
+
 ```
 1. Supabase CLI configured in project
 2. supabase start command working locally
@@ -173,6 +184,7 @@ To proceed with Phase 3, **one of the following is required**:
 ```
 
 **Option D: Leverage Production Firebase for QA**
+
 ```
 1. Test against production Firebase (NOT emulator)
 2. Create Supabase test account (requires Option A or B)
@@ -187,18 +199,21 @@ To proceed with Phase 3, **one of the following is required**:
 ### What This Means for H3.3
 
 **H3.3 Code is Correct**:
+
 - ✅ Firestore rules properly implement school isolation
 - ✅ Authorization logic correctly checks roles
 - ✅ Security model enforces multi-tenancy
 - ✅ Identity mapping is sound
 
 **H3.3 Cannot Be Fully QA Tested Locally**:
+
 - ❌ Cannot test end-to-end browser flow with local emulator
 - ❌ Cannot verify real Supabase auth flow
 - ❌ Cannot test that school admin actually sees school data
 - ❌ Cannot test that cross-school access is denied
 
 **Why This Isn't a Code Defect**:
+
 - This is a **known Firebase Emulator limitation**
 - Not an application bug
 - Not a missing feature
@@ -207,6 +222,7 @@ To proceed with Phase 3, **one of the following is required**:
 ### Options for H3.3 QA
 
 **Option 1: Code Review + Rule Analysis (Minimum)**
+
 - ✅ Review H3.3 implementation (already done)
 - ✅ Verify Firestore rules syntax (already done)
 - ✅ Analyze authorization logic (already done)
@@ -215,6 +231,7 @@ To proceed with Phase 3, **one of the following is required**:
 - ❌ Does NOT test actual browser flow
 
 **Option 2: Production Firebase Testing (Higher Confidence)**
+
 - ✅ Create real Supabase account (requires access)
 - ✅ Log in via real Supabase auth
 - ✅ Test against production Firestore (real rules)
@@ -223,6 +240,7 @@ To proceed with Phase 3, **one of the following is required**:
 - ⚠️ Requires extra cleanup afterward
 
 **Option 3: Emulator Testing with Firebase Auth (Lower Confidence)**
+
 - ✅ Use Firebase Auth Emulator users (already created)
 - ✅ Test Firestore rules evaluation (partial)
 - ✅ Verify rule syntax and logic (already automated)
@@ -231,6 +249,7 @@ To proceed with Phase 3, **one of the following is required**:
 - ⚠️ Behavior may differ from production
 
 **Option 4: Accept as Known Limitation (Document + Skip)**
+
 - ✅ Document the emulator limitation clearly
 - ✅ Note that code review passed
 - ✅ Note that automated tests pass
@@ -247,6 +266,7 @@ To proceed with Phase 3, **one of the following is required**:
 **Create document**: `H3_3_MANUAL_QA_BLOCKED_EMULATOR_LIMITATION.md`
 
 **Contents**:
+
 1. What works: Identity bridge is correctly implemented for production
 2. What's blocked: Local emulator cannot test the bridge
 3. Why: Firebase Emulator doesn't trust Supabase OIDC tokens
@@ -265,6 +285,7 @@ To proceed with Phase 3, **one of the following is required**:
 ### User Authority
 
 **This requires user decision** because:
+
 - User forbids weakening security or bypassing auth (rules Option 1 out)
 - User forbids changing auth provider (rules migrating to Firebase out)
 - User requires transparent reporting (demands documentation)
@@ -322,13 +343,14 @@ Which would you prefer?
 ### Could We Fix This?
 
 **No**, not without deviating from user requirements:
+
 - Would need to implement custom OIDC validation in emulator (not standard)
 - Would need to modify Firestore rules or auth (forbidden: "do not alter security")
 - Would need to add test-only code to app (forbidden: "no development-only bypasses")
 - Would need to weaken rules (forbidden: "do not loosen Firestore rules")
 
 **Solution requires one of**:
+
 - Using production Firebase (accept risk)
 - Using local Supabase emulator (requires reconfiguring app)
 - Accepting limitation and proceeding with code review (transparent)
-

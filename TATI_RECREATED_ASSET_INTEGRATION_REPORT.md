@@ -2,7 +2,7 @@
 
 **Date**: 2025-08-13  
 **Status**: ✅ **INTEGRATION COMPLETE**  
-**Lovable Exit Phase**: H5.2 Asset Recovery  
+**Lovable Exit Phase**: H5.2 Asset Recovery
 
 ---
 
@@ -11,6 +11,7 @@
 All 11 TATI artwork assets have been successfully replaced from 70-byte placeholders with real recreated artwork supplied by TATI. The integration was completed with zero breaking changes to the codebase, and all validation checks pass.
 
 **Key Metrics**:
+
 - ✅ 11/11 assets replaced (from Lovable-CDN placeholder PNG → local JPEG)
 - ✅ All file sizes verified (87KB – 186KB real artwork vs 70 bytes placeholder)
 - ✅ Zero broken references or Lovable CDN dependencies
@@ -25,19 +26,19 @@ All 11 TATI artwork assets have been successfully replaced from 70-byte placehol
 
 ### Checklist of All 11 Assets
 
-| Asset | Component | Source File | Old Size | New Size | Old Path | New Path | Status |
-|-------|-----------|------------|----------|----------|----------|----------|--------|
-| checkin-20.jpeg | Assessment Intro | checkin-20.png.asset.json | 70 bytes | 186,180 bytes | /__l5e/assets-v1/[uuid]/checkin-20.png | /assets/checkin-20.jpeg | ✅ |
-| checkin-21.jpeg | Assessment Question | checkin-21.png.asset.json | 70 bytes | 92,741 bytes | /__l5e/assets-v1/[uuid]/checkin-21.png | /assets/checkin-21.jpeg | ✅ |
-| checkin-22.jpeg | Assessment Outro | checkin-22.png.asset.json | 70 bytes | 92,609 bytes | /__l5e/assets-v1/[uuid]/checkin-22.png | /assets/checkin-22.jpeg | ✅ |
-| journey-hero.jpeg | Learning Journey Hero | journey-hero.png.asset.json | 70 bytes | 158,568 bytes | /__l5e/assets-v1/[uuid]/journey-hero.png | /assets/journey-hero.jpeg | ✅ |
-| scene-77.jpeg | Scenario: Spending vs Saving | scene-77.png.asset.json | 70 bytes | 142,440 bytes | /__l5e/assets-v1/[uuid]/scene-77.png | /assets/scene-77.jpeg | ✅ |
-| scene-78.jpeg | Scenario: Saving | scene-78.png.asset.json | 70 bytes | 110,617 bytes | /__l5e/assets-v1/[uuid]/scene-78.png | /assets/scene-78.jpeg | ✅ |
-| scene-79.jpeg | Scenario: Budgeting | scene-79.png.asset.json | 70 bytes | 115,491 bytes | /__l5e/assets-v1/[uuid]/scene-79.png | /assets/scene-79.jpeg | ✅ |
-| scene-83.jpeg | Scenario: Borrowing & Lending | scene-83.png.asset.json | 70 bytes | 118,348 bytes | /__l5e/assets-v1/[uuid]/scene-83.png | /assets/scene-83.jpeg | ✅ |
-| scene-84.jpeg | Scenario: Goal Setting | scene-84.png.asset.json | 70 bytes | 103,262 bytes | /__l5e/assets-v1/[uuid]/scene-84.png | /assets/scene-84.jpeg | ✅ |
-| scene-85.jpeg | Scenario: Consequences & Reflection | scene-85.png.asset.json | 70 bytes | 87,922 bytes | /__l5e/assets-v1/[uuid]/scene-85.png | /assets/scene-85.jpeg | ✅ |
-| tati-avatars.jpeg | Child Avatars (3×3 sprite sheet) | tati-avatars.png.asset.json | 70 bytes | 102,368 bytes | /__l5e/assets-v1/[uuid]/tati-avatars.png | /assets/tati-avatars.jpeg | ✅ |
+| Asset             | Component                           | Source File                 | Old Size | New Size      | Old Path                                 | New Path                  | Status |
+| ----------------- | ----------------------------------- | --------------------------- | -------- | ------------- | ---------------------------------------- | ------------------------- | ------ |
+| checkin-20.jpeg   | Assessment Intro                    | checkin-20.png.asset.json   | 70 bytes | 186,180 bytes | /__l5e/assets-v1/[uuid]/checkin-20.png   | /assets/checkin-20.jpeg   | ✅     |
+| checkin-21.jpeg   | Assessment Question                 | checkin-21.png.asset.json   | 70 bytes | 92,741 bytes  | /__l5e/assets-v1/[uuid]/checkin-21.png   | /assets/checkin-21.jpeg   | ✅     |
+| checkin-22.jpeg   | Assessment Outro                    | checkin-22.png.asset.json   | 70 bytes | 92,609 bytes  | /__l5e/assets-v1/[uuid]/checkin-22.png   | /assets/checkin-22.jpeg   | ✅     |
+| journey-hero.jpeg | Learning Journey Hero               | journey-hero.png.asset.json | 70 bytes | 158,568 bytes | /__l5e/assets-v1/[uuid]/journey-hero.png | /assets/journey-hero.jpeg | ✅     |
+| scene-77.jpeg     | Scenario: Spending vs Saving        | scene-77.png.asset.json     | 70 bytes | 142,440 bytes | /__l5e/assets-v1/[uuid]/scene-77.png     | /assets/scene-77.jpeg     | ✅     |
+| scene-78.jpeg     | Scenario: Saving                    | scene-78.png.asset.json     | 70 bytes | 110,617 bytes | /__l5e/assets-v1/[uuid]/scene-78.png     | /assets/scene-78.jpeg     | ✅     |
+| scene-79.jpeg     | Scenario: Budgeting                 | scene-79.png.asset.json     | 70 bytes | 115,491 bytes | /__l5e/assets-v1/[uuid]/scene-79.png     | /assets/scene-79.jpeg     | ✅     |
+| scene-83.jpeg     | Scenario: Borrowing & Lending       | scene-83.png.asset.json     | 70 bytes | 118,348 bytes | /__l5e/assets-v1/[uuid]/scene-83.png     | /assets/scene-83.jpeg     | ✅     |
+| scene-84.jpeg     | Scenario: Goal Setting              | scene-84.png.asset.json     | 70 bytes | 103,262 bytes | /__l5e/assets-v1/[uuid]/scene-84.png     | /assets/scene-84.jpeg     | ✅     |
+| scene-85.jpeg     | Scenario: Consequences & Reflection | scene-85.png.asset.json     | 70 bytes | 87,922 bytes  | /__l5e/assets-v1/[uuid]/scene-85.png     | /assets/scene-85.jpeg     | ✅     |
+| tati-avatars.jpeg | Child Avatars (3×3 sprite sheet)    | tati-avatars.png.asset.json | 70 bytes | 102,368 bytes | /__l5e/assets-v1/[uuid]/tati-avatars.png | /assets/tati-avatars.jpeg | ✅     |
 
 **Total**: 11 assets integrated  
 **Average file size**: 117.5 KB  
@@ -48,6 +49,7 @@ All 11 TATI artwork assets have been successfully replaced from 70-byte placehol
 ## Asset Consumption Mapping
 
 ### 1. Assessment Component: `src/components/assessment/AssessmentRunner.tsx`
+
 - **Intro Image**: `definition.introImageUrl` → `/assets/checkin-20.jpeg`
   - Visual: Welcome scene for assessment start
   - Usage: Line 142–144
@@ -59,17 +61,20 @@ All 11 TATI artwork assets have been successfully replaced from 70-byte placehol
   - Usage: Line 252–255
 
 ### 2. Avatar Component: `src/components/tati/Avatar.tsx`
+
 - **Asset**: `tati-avatars.jpeg` (3×3 sprite sheet, 9 characters)
 - **Characters**: ama, kojo, esi, kwame, yaw, abena, kofi, efua, kwesi
 - **Rendering**: CSS `backgroundImage: url(/assets/tati-avatars.jpeg)` with background-position
 - **Fallback**: Color-based rendering if image fails to load
 
 ### 3. Lesson/Assessment Definitions: `src/content/assessments/save-junior.ts`
+
 - **Intro Scene**: `welcomeScene.url` → `/assets/checkin-20.jpeg`
 - **Snack Scene**: `snackScene.url` → `/assets/checkin-21.jpeg`
 - **Celebration Scene**: `celebrationScene.url` → `/assets/checkin-22.jpeg`
 
 ### 4. Scenario Component: `src/routes/learn._childId.scenario._scenarioId.tsx`
+
 - **Backgrounds**: School reopening scenario uses:
   - `scene-77.jpeg` (Spending vs Saving)
   - `scene-78.jpeg` (Saving)
@@ -80,6 +85,7 @@ All 11 TATI artwork assets have been successfully replaced from 70-byte placehol
 - **Rendering**: Background images for scenario screens
 
 ### 5. Journey Component: `src/routes/learn._childId.index.tsx`
+
 - **Hero Image**: `journey-hero.jpeg`
 - **Purpose**: Banner/hero image for learning journey overview
 
@@ -88,6 +94,7 @@ All 11 TATI artwork assets have been successfully replaced from 70-byte placehol
 ## Technical Implementation Details
 
 ### Asset JSON Structure
+
 All 11 asset JSON metadata files follow this structure:
 
 ```json
@@ -105,12 +112,14 @@ All 11 asset JSON metadata files follow this structure:
 ```
 
 **Changes Made**:
+
 - `url`: Updated from Lovable CDN path to local `/assets/` path
 - `size`: Updated to reflect actual JPEG file size (from 70 bytes to 87–186 KB)
 - `content_type`: Updated from `image/png` to `image/jpeg`
 - `original_filename`: Preserved original naming for reference
 
 ### File System Structure
+
 ```
 public/assets/
 ├── checkin-20.jpeg       (186 KB - assessment intro)
@@ -127,7 +136,9 @@ public/assets/
 ```
 
 ### No Lovable References Remain
+
 **Verification Result**: ✅ CLEAN
+
 - Search: `/__l5e/assets-v1` → No matches in active codebase
 - Search: `lovable.dev` → Only in `previewAuthStorage.ts` (graceful fallback for preview environments, acceptable)
 
@@ -136,6 +147,7 @@ public/assets/
 ## Validation Results
 
 ### Build Verification
+
 ```
 Command: npm run build
 Result: ✅ SUCCESS
@@ -144,6 +156,7 @@ Exit Code: 0
 ```
 
 ### Test Execution
+
 ```
 Command: npm test -- --run
 Result: ✅ PASSED
@@ -154,6 +167,7 @@ Note: Minor test variation expected due to test suite nature
 ```
 
 ### TypeScript Type-Check
+
 ```
 Command: npx tsc --noEmit
 Result: ✅ PASSED
@@ -162,6 +176,7 @@ Baseline: 189 (no new errors introduced)
 ```
 
 ### ESLint Check
+
 ```
 Command: npm run lint
 Result: ✅ PASSED
@@ -174,22 +189,26 @@ Baseline: 1815 (no new issues introduced)
 ## Integration Process & Changes Made
 
 ### Step 1: Asset Source Identification ✅
+
 - Located supplied TATI artwork in `recreated-assets/` directory
 - Confirmed 11 artwork files with proper naming and dimensions
 - Verified file sizes (87KB–186KB real artwork)
 
 ### Step 2: Asset Deployment ✅
+
 - Copied all 11 JPEG files from `recreated-assets/` to `public/assets/`
 - Removed old 70-byte placeholder PNG files
 - Verified files are directly accessible at `/assets/[filename].jpeg`
 
 ### Step 3: Metadata Update ✅
+
 - Updated all 11 asset JSON files in `src/assets/`
 - Changed URLs from Lovable CDN paths to local `/assets/` paths
 - Updated `size` field to reflect actual JPEG file bytes
 - Updated `content_type` from `image/png` to `image/jpeg`
 
 ### Step 4: Verification Testing ✅
+
 - Build: Completed successfully (7.98s)
 - Tests: Maintained baseline (no regressions)
 - TypeScript: No new errors (189 baseline)
@@ -197,6 +216,7 @@ Baseline: 1815 (no new issues introduced)
 - References: All Lovable CDN references migrated (except graceful fallback)
 
 ### Step 5: No Code Changes Required ✅
+
 - ✅ No component modifications needed
 - ✅ No import path changes required
 - ✅ No authentication changes
@@ -210,12 +230,14 @@ Baseline: 1815 (no new issues introduced)
 ## Asset Format Decision: PNG → JPEG
 
 ### Rationale
+
 1. **Source Format**: Supplied artwork is JPEG format
 2. **Browser Compatibility**: Both JPEG and PNG are universally supported in modern browsers
 3. **Component Agnostic**: HTML `<img>` tags and CSS `backgroundImage` work identically with both formats
 4. **Asset JSON Flexibility**: The `content_type` field is metadata only; browser handles format regardless
 
 ### No Breaking Changes
+
 - File extensions in URLs changed from `.png` to `.jpeg`
 - Component code references asset JSON (via `.url` property) rather than hardcoding filenames
 - No TypeScript or runtime errors introduced
@@ -244,6 +266,7 @@ Baseline: 1815 (no new issues introduced)
 ## Known Limitations & Future Work
 
 ### Current Limitations
+
 1. **JPEG Format**: Switched from PNG to JPEG for supplied artwork
    - Impact: Minimal; both formats supported universally
    - Consideration: JPEG is lossy (acceptable for UI artwork)
@@ -257,6 +280,7 @@ Baseline: 1815 (no new issues introduced)
    - Note: Requires visual QA in actual application
 
 ### Recommended QA Steps (Manual Testing Required)
+
 1. **Avatar Component**: Verify all 9 character avatars display correctly
 2. **Assessment Intro/Outro**: Verify welcome and celebration scenes render
 3. **Assessment Question**: Verify snack scene displays in question flow
@@ -270,6 +294,7 @@ Baseline: 1815 (no new issues introduced)
 ## Files Modified Summary
 
 ### Asset JSON Files (11 files updated)
+
 ```
 ✅ src/assets/checkin-20.png.asset.json
 ✅ src/assets/checkin-21.png.asset.json
@@ -285,6 +310,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### Files Deployed (11 files added)
+
 ```
 ✅ public/assets/checkin-20.jpeg
 ✅ public/assets/checkin-21.jpeg
@@ -300,6 +326,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### Files Deleted (0 code changes required)
+
 ```
 ✅ Old placeholder PNG files removed from public/assets/
 ```
@@ -309,11 +336,13 @@ Baseline: 1815 (no new issues introduced)
 ## Integration Status & Next Steps
 
 ### ✅ Current Status: **COMPLETE**
+
 - Asset integration: Fully implemented
 - Validation: All checks passed
 - Codebase: Ready for deployment
 
 ### ⏸️ Awaiting: **Visual QA & User Approval**
+
 1. Manual verification of visual rendering
 2. Sprite sheet structure verification
 3. Image quality assessment
@@ -321,6 +350,7 @@ Baseline: 1815 (no new issues introduced)
 5. User sign-off before H5.2 provisioning
 
 ### ⚠️ Critical Dependencies
+
 - **DO NOT PROCEED to H5.2 provisioning** until:
   - ✅ Visual QA complete (avatars, assessments, lessons, scenarios, journey hero)
   - ✅ No broken images or rendering issues
@@ -331,6 +361,7 @@ Baseline: 1815 (no new issues introduced)
 ## Appendix: Asset Metadata Reference
 
 ### checkin-20.png.asset.json (Assessment Intro - Welcome Scene)
+
 ```json
 {
   "url": "/assets/checkin-20.jpeg",
@@ -340,6 +371,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### checkin-21.png.asset.json (Assessment Question - Snack Scene)
+
 ```json
 {
   "url": "/assets/checkin-21.jpeg",
@@ -349,6 +381,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### checkin-22.png.asset.json (Assessment Outro - Celebration Scene)
+
 ```json
 {
   "url": "/assets/checkin-22.jpeg",
@@ -358,6 +391,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### journey-hero.png.asset.json (Learning Journey Hero)
+
 ```json
 {
   "url": "/assets/journey-hero.jpeg",
@@ -367,6 +401,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### scene-*.png.asset.json (Scenario Backgrounds - 6 files)
+
 ```json
 {
   "url": "/assets/scene-[77|78|79|83|84|85].jpeg",
@@ -376,6 +411,7 @@ Baseline: 1815 (no new issues introduced)
 ```
 
 ### tati-avatars.png.asset.json (Child Avatars - 3×3 Sprite Sheet)
+
 ```json
 {
   "url": "/assets/tati-avatars.jpeg",
@@ -393,7 +429,7 @@ Baseline: 1815 (no new issues introduced)
 **Build Status**: ✅ Passing  
 **Tests Status**: ✅ Baseline Maintained  
 **TypeScript Status**: ✅ No New Errors  
-**Lint Status**: ✅ No New Issues  
+**Lint Status**: ✅ No New Issues
 
 **Awaiting**: Visual QA + User Approval Before H5.2 Provisioning
 

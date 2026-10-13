@@ -8,9 +8,10 @@
 
 ## Executive Summary
 
-Phase H3.2.3 successfully implements the **facilitator learner detail page** answering the core question: *"What is happening with this learner, and how can I support their learning?"*
+Phase H3.2.3 successfully implements the **facilitator learner detail page** answering the core question: _"What is happening with this learner, and how can I support their learning?"_
 
 **Key Deliverables:**
+
 - New route: `/academy/cohorts/:childId` (learner detail page)
 - Data-access layer: `getAssignedLearnerDetail()` function with 5 supporting functions
 - UI: 7-section learner dashboard showing progress, activities, assessments, competencies, and support signals
@@ -25,6 +26,7 @@ The implementation is production-ready and follows established patterns from H3.
 ## Discovery Phase
 
 ### Codebase Inspection
+
 1. **H3.2.2 Authorization Pattern** (H3.2.2/Firestore rules)
    - Verified: `facilitatorAssignments` collection indexed by `uid`
    - Query: `where("facilitatorUids", "array-contains", facilitatorUid)`
@@ -42,12 +44,13 @@ The implementation is production-ready and follows established patterns from H3.
    - Fields: `kind` (lesson|scenario|assessment), `itemId`, `status`, `completedAt`
    - Subcollections: assessmentAttempts, scenarioSessions, competencies, achievements
 
-4. **Component Library** (src/components/tati/*, src/components/academy/*)
+4. **Component Library** (src/components/tati/_, src/components/academy/_)
    - TATI components: Page, PageHeader, Card, Button, Avatar, Badge, LoadingState, EmptyState, ErrorState
    - Academy components: AcademyShell, AcademyHeader, AcademySidebar, LearnerRoster
    - Validation: Button sizes ("md"|"lg"), Card tones ("primary"|"surface"|"muted")
 
 ### Key Decisions
+
 - **Design Pattern:** Follow H3.2.2 facilitatorAssignments authorization
 - **Button Sizes:** Use "md" (not "sm") per component library standards
 - **Card Tones:** Use "muted" (not "warning") for neutral UI
@@ -59,10 +62,12 @@ The implementation is production-ready and follows established patterns from H3.
 ## Files Created
 
 ### [src/routes/academy/cohorts/$childId.tsx](src/routes/academy/cohorts/$childId.tsx)
+
 **Size:** 330 lines  
 **Purpose:** Learner detail page showing complete progress, activities, and support insights
 
 **Key Sections:**
+
 1. **Header Section** (lines 1-50)
    - Avatar, child name, TATI ID, support signal badge
    - Back button to `/academy/cohorts`
@@ -99,6 +104,7 @@ The implementation is production-ready and follows established patterns from H3.
    - Authorization check: Redirects to login if not facilitator
 
 **Authorization Flow:**
+
 ```typescript
 const session = useQuery(() => getFacilitatorSession());
 if (!session.data) redirect to login;
@@ -112,13 +118,17 @@ if (learner error) show generic "not found" message (no data leak);
 ## Files Modified
 
 ### [src/routes/academy/cohorts.tsx](src/routes/academy/cohorts.tsx)
+
 **Changes:**
+
 - Line 125: Fixed `currentActivity` type by using spread operator `...(summary.currentActivityType && { currentActivity: summary.currentActivityType })`
   - Resolved TypeScript exactOptionalPropertyTypes error
   - Now properly conditionally includes optional property
 
 ### [src/routes/academy/dashboard.tsx](src/routes/academy/dashboard.tsx)
+
 **Changes:**
+
 - Line 108: Changed `size="sm"` → `size="md"` (Button 1)
 - Line 109: Changed `size="sm"` → `size="md"` (Button 2)
 - Removed unnecessary `const todayActivity = undefined` assignment
@@ -129,15 +139,17 @@ if (learner error) show generic "not found" message (no data leak);
 ## Data-Access Layer Extensions
 
 ### [src/lib/academy/data-access.ts](src/lib/academy/data-access.ts)
+
 **Size Increase:** 360 → 600 lines (+240 lines of new functionality)
 
 #### New Type Interfaces (Lines 1-120)
+
 ```typescript
 export interface FirestoreProgressEvent {
   id: string;
-  kind: string;           // "lesson" | "scenario" | "assessment"
-  itemId: string;         // Content ID
-  status: string;         // "completed" | "in-progress" | "not-started"
+  kind: string; // "lesson" | "scenario" | "assessment"
+  itemId: string; // Content ID
+  status: string; // "completed" | "in-progress" | "not-started"
   completedAt: Date | null;
 }
 
@@ -158,7 +170,7 @@ export interface CompetencyRecord {
   id: string;
   name: string;
   level: "Beginner" | "Intermediate" | "Advanced" | "Mastery";
-  score: number;  // 0-100
+  score: number; // 0-100
 }
 
 export interface ActivityLogEntry {
@@ -193,6 +205,7 @@ export interface LearnerDetailView {
 #### New Query Functions (Lines 280-560)
 
 **`getAssignedLearnerDetail(facilitatorUid: string, childId: string): Promise<LearnerDetailView>`**
+
 - **Purpose:** Primary API for learner detail view
 - **Authorization:** Verifies facilitator assignment via H3.2.2 pattern
 - **Implementation:**
@@ -204,24 +217,28 @@ export interface LearnerDetailView {
 - **Throws:** `Error` with message "Learner not assigned" if unauthorized
 
 **`getChildAssessments(familyId: string, childId: string): Promise<AssessmentRecord[]>`**
+
 - **Purpose:** Fetch assessment attempts (pre/post)
 - **Data Source:** Firestore `assessmentAttempts` subcollection
 - **Authorization:** Relies on Firestore rule (facilitator read-only)
 - **Returns:** Array of assessment records with scores and dates
 
 **`getChildScenarioSessions(familyId: string, childId: string): Promise<ActivityLogEntry[]>`**
+
 - **Purpose:** Fetch scenario sessions for activity log
 - **Data Source:** Firestore `scenarioSessions` subcollection
 - **Authorization:** Relies on Firestore rule (facilitator read-only)
 - **Returns:** Array of scenario sessions converted to activity log format
 
 **`getAssignedChildren(facilitatorUid: string): Promise<AssignedChild[]>`**
+
 - **Purpose:** [From H3.2.2] Query children assigned to facilitator
 - **Implementation:** Queries facilitatorAssignments collection
 - **Returns:** Array of children with IDs and metadata
 - **Used by:** Dashboard to populate learner list
 
 **`getChildJourneyProgress(familyId: string, childId: string): Promise<FirestoreProgressEvent[]>`**
+
 - **Purpose:** Fetch journey progress events (activities)
 - **Data Source:** Firestore `journeyProgress` subcollection
 - **Returns:** Sorted array of progress events by completedAt
@@ -230,6 +247,7 @@ export interface LearnerDetailView {
 #### Support Functions (Lines 410-520)
 
 **`computeChildProgressSummary(child: any, progressEvents: FirestoreProgressEvent[]): ChildProgressSummary`**
+
 - **Purpose:** Aggregates progress into dashboard view
 - **Calculation:**
   - Completed count: `progressEvents.filter(e => e.status === "completed").length`
@@ -238,6 +256,7 @@ export interface LearnerDetailView {
 - **Returns:** `ChildProgressSummary` for cohort roster
 
 **`deriveSupportSignal(progressEvents: FirestoreProgressEvent[], lastActivityAt: Date | null, totalActivities: number): string`**
+
 - **Purpose:** Determines learner support signal (deterministic)
 - **Rules:**
   - "not-started": `completed === 0`
@@ -251,6 +270,7 @@ export interface LearnerDetailView {
 ## Security Implementation
 
 ### Authorization Pattern (H3.2.2)
+
 ```typescript
 // 1. Verify facilitator session
 const session = await getFacilitatorSession();
@@ -270,6 +290,7 @@ const learner = await getChildProgress(...);
 ```
 
 ### Firestore Rules Validation
+
 ```firestore
 // From Firestore security rules
 match /families/{familyId}/children/{childId} {
@@ -284,6 +305,7 @@ function isAssignedFacilitator(familyId, childId) {
 ```
 
 ### Privacy Verification
+
 - ✅ **Parent data blocked:** `parentInsights` subcollection write-protected
 - ✅ **Family document blocked:** Direct family doc access requires parent auth
 - ✅ **No unguarded queries:** All facilitator queries filtered by assignment
@@ -294,6 +316,7 @@ function isAssignedFacilitator(familyId, childId) {
 ## UI/UX Implementation
 
 ### Layout Structure
+
 ```
 [AcademyShell]
   [AcademyHeader] - "Learner Name · TATI ID"
@@ -308,11 +331,13 @@ function isAssignedFacilitator(familyId, childId) {
 ```
 
 ### Responsive Design
+
 - **Mobile (320px):** Single column, touch-friendly spacing
 - **Tablet (768px):** 2-column layout for timeline/competencies
 - **Desktop (1024px+):** 3-column layout for optimal scanning
 
 ### Accessibility (WCAG 2.2 AA)
+
 - ✅ Semantic HTML: `<section>`, `<article>`, `<h2>` hierarchy
 - ✅ Color contrast: Support signal badges with sufficient contrast
 - ✅ Keyboard navigation: All buttons focusable, Tab key support
@@ -320,6 +345,7 @@ function isAssignedFacilitator(familyId, childId) {
 - ✅ Screen reader: Learner name announced, progress percentage spoken
 
 ### Support Signal Design
+
 - **Badge colors:** Green (on-track), Orange (needs-support), Gray (not-started)
 - **Neutral language:** "This learner is on track" (no judgment)
 - **Explanation:** Clear actionable text per signal
@@ -330,32 +356,37 @@ function isAssignedFacilitator(familyId, childId) {
 ## Error Handling
 
 ### LoadingState
+
 ```typescript
 <LoadingState title="Loading learner details..." />
 ```
 
 ### AuthenticationError
+
 ```typescript
 if (!session?.facilitatorUid) redirect("/academy/login");
 ```
 
 ### AuthorizationError (Generic)
+
 ```typescript
 if (error?.message.includes("not assigned")) {
-  <ErrorState 
+  <ErrorState
     title="Learner not found"
-    description="The learner you're looking for isn't available." 
+    description="The learner you're looking for isn't available."
   />
 }
 ```
+
 **Note:** No "unauthorized access" message to prevent information leak.
 
 ### NetworkError
+
 ```typescript
 if (error?.code === 'permission-denied' || error?.code === 'not-found') {
-  <ErrorState 
+  <ErrorState
     title="Unable to load"
-    description="Try refreshing the page or checking your connection." 
+    description="Try refreshing the page or checking your connection."
   />
 }
 ```
@@ -365,6 +396,7 @@ if (error?.code === 'permission-denied' || error?.code === 'not-found') {
 ## Testing & Validation
 
 ### TypeScript Compilation
+
 ```
 ✅ PASSED
 Command: npx tsc --noEmit
@@ -372,6 +404,7 @@ Result: 0 errors
 ```
 
 ### ESLint Code Quality
+
 ```
 ✅ PASSED
 Command: npx eslint src/routes/academy/cohorts.tsx src/routes/academy/cohorts/$childId.tsx src/routes/academy/dashboard.tsx src/lib/academy/data-access.ts --max-warnings 0
@@ -379,6 +412,7 @@ Result: 0 violations
 ```
 
 ### Production Build
+
 ```
 ✅ PASSED
 Command: npm run build
@@ -388,6 +422,7 @@ Deploy-ready: Yes
 ```
 
 ### Browser Testing Checklist
+
 - [ ] **Authentication:** Unauthenticated user redirects to `/academy/login`
 - [ ] **Authorization:** Unauthorized facilitator sees generic "not found" message
 - [ ] **Assigned Learner:** Authorized facilitator loads and views complete learner detail
@@ -404,6 +439,7 @@ Deploy-ready: Yes
 ## Regression Verification
 
 ### Protected Systems (Unchanged)
+
 - ✅ **G5.1 Scenario Integrity:** scenarioSessions write-protected
 - ✅ **G6.1 Error Recovery:** error-capture.ts unchanged
 - ✅ **Child Authentication:** Firebase Auth + TATI ID + PIN (unchanged)
@@ -412,6 +448,7 @@ Deploy-ready: Yes
 - ✅ **Firestore Rules:** Original 154/166 lines + H3.2.2 additions intact
 
 ### Compatibility
+
 - ✅ **TanStack Start:** Routes load without errors
 - ✅ **Vite v8.1.5:** Builds successfully
 - ✅ **React Query:** Async queries work correctly
@@ -423,6 +460,7 @@ Deploy-ready: Yes
 ## Known Limitations & Deferred Functionality
 
 ### H3.3 & Beyond
+
 1. **Today's Activity Widget** (Dashboard)
    - Current: `todayActivity` always undefined (placeholder)
    - Deferred to H3.3: Load actual scheduled cohort activities
@@ -447,13 +485,13 @@ Deploy-ready: Yes
 
 ## Files Summary
 
-| File | Lines | Status | Changes |
-|------|-------|--------|---------|
-| src/routes/academy/cohorts/$childId.tsx | 330 | ✅ NEW | Learner detail page |
-| src/routes/academy/cohorts.tsx | 145 | ✅ MODIFIED | Fixed RosterItem type |
-| src/routes/academy/dashboard.tsx | 195 | ✅ MODIFIED | Button sizes |
-| src/lib/academy/data-access.ts | 600 | ✅ MODIFIED | 4 new functions, 5 types |
-| Total New Code | 570 | ✅ COMPLETE | Production-ready |
+| File                                    | Lines | Status      | Changes                  |
+| --------------------------------------- | ----- | ----------- | ------------------------ |
+| src/routes/academy/cohorts/$childId.tsx | 330   | ✅ NEW      | Learner detail page      |
+| src/routes/academy/cohorts.tsx          | 145   | ✅ MODIFIED | Fixed RosterItem type    |
+| src/routes/academy/dashboard.tsx        | 195   | ✅ MODIFIED | Button sizes             |
+| src/lib/academy/data-access.ts          | 600   | ✅ MODIFIED | 4 new functions, 5 types |
+| Total New Code                          | 570   | ✅ COMPLETE | Production-ready         |
 
 ---
 

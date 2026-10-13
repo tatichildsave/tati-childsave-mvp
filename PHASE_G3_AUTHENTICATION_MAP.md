@@ -1,4 +1,5 @@
 # PHASE G3 AUTHENTICATION MAP DESIGN
+
 ## Firebase Child Identity Integration with Existing TATI Session System
 
 **Design Date**: January 24, 2025  
@@ -12,13 +13,15 @@
 
 Phase G3 integrates Firebase child identity (from G2) with the existing TATI ID + PIN authentication system. The design preserves the proven security model while adding Firebase as a complementary identity layer.
 
-**Core Principle**: 
+**Core Principle**:
+
 ```
 Firebase = Identity Layer (Who the child is)
 Supabase = Application Session (What the child can do)
 ```
 
 **Target Architecture**:
+
 ```
 TATI ID + PIN
    ↓
@@ -519,22 +522,23 @@ Flow:
 
 # 4. SOURCE-OF-TRUTH MATRIX
 
-| Data | Current Source | G2 Created | G3 Source | G4+ Future | Mutability |
-|------|---|---|---|---|---|
-| **tatiId** | child_profiles.tati_id (Supabase) | — | Supabase (login) | Supabase (login) | Immutable |
-| **childProfileId** | child_profiles.id (Supabase) | — | Supabase | Supabase | Immutable |
-| **PIN Credential** | child_credentials.pin_hash (Supabase) | — | Supabase | Supabase (deprecated in G4+) | Mutable (rotation) |
-| **firebaseUid** | — | childAuthIdentities.firebaseUid (Firestore) | Firestore | Firestore (or Firebase Auth) | Immutable |
-| **familyId** | child_profiles.family_id (Supabase) | Also in Firestore | Supabase (source), Firestore (copy) | Supabase + Firestore | Immutable |
-| **ChildSession** | child_sessions (Supabase) | — | Supabase | Supabase (G3-G4) → **Firebase** (G5+) | Mutable (revocation) |
-| **Learning Progress** | journey_progress (Supabase) | — | Supabase | Supabase (G3-G4) → **Firestore** (G5+) | Mutable |
-| **Competencies** | learner_competencies (Supabase) | — | Supabase | Supabase (G3-G4) → Firestore (G5+) | Mutable |
-| **Achievements** | learner_achievements (Supabase) | — | Supabase | Supabase (G3-G4) → Firestore (G5+) | Mutable |
-| **Child Status** | child_profiles.active (Supabase) | Also childAuthIdentities.status (Firestore) | Supabase (primary) | Both (synchronized) | Mutable (revocation) |
-| **Session TTL** | 30 minutes (child_sessions.expires_at) | — | Supabase | Supabase (or Firebase token) | Configuration |
-| **Role** | Implicit "child" in ChildSession | — | Supabase (session context) | Derived from both | Immutable (per-session) |
+| Data                  | Current Source                         | G2 Created                                  | G3 Source                           | G4+ Future                             | Mutability              |
+| --------------------- | -------------------------------------- | ------------------------------------------- | ----------------------------------- | -------------------------------------- | ----------------------- |
+| **tatiId**            | child_profiles.tati_id (Supabase)      | —                                           | Supabase (login)                    | Supabase (login)                       | Immutable               |
+| **childProfileId**    | child_profiles.id (Supabase)           | —                                           | Supabase                            | Supabase                               | Immutable               |
+| **PIN Credential**    | child_credentials.pin_hash (Supabase)  | —                                           | Supabase                            | Supabase (deprecated in G4+)           | Mutable (rotation)      |
+| **firebaseUid**       | —                                      | childAuthIdentities.firebaseUid (Firestore) | Firestore                           | Firestore (or Firebase Auth)           | Immutable               |
+| **familyId**          | child_profiles.family_id (Supabase)    | Also in Firestore                           | Supabase (source), Firestore (copy) | Supabase + Firestore                   | Immutable               |
+| **ChildSession**      | child_sessions (Supabase)              | —                                           | Supabase                            | Supabase (G3-G4) → **Firebase** (G5+)  | Mutable (revocation)    |
+| **Learning Progress** | journey_progress (Supabase)            | —                                           | Supabase                            | Supabase (G3-G4) → **Firestore** (G5+) | Mutable                 |
+| **Competencies**      | learner_competencies (Supabase)        | —                                           | Supabase                            | Supabase (G3-G4) → Firestore (G5+)     | Mutable                 |
+| **Achievements**      | learner_achievements (Supabase)        | —                                           | Supabase                            | Supabase (G3-G4) → Firestore (G5+)     | Mutable                 |
+| **Child Status**      | child_profiles.active (Supabase)       | Also childAuthIdentities.status (Firestore) | Supabase (primary)                  | Both (synchronized)                    | Mutable (revocation)    |
+| **Session TTL**       | 30 minutes (child_sessions.expires_at) | —                                           | Supabase                            | Supabase (or Firebase token)           | Configuration           |
+| **Role**              | Implicit "child" in ChildSession       | —                                           | Supabase (session context)          | Derived from both                      | Immutable (per-session) |
 
 **Key Invariants**:
+
 - ✅ `childProfileId` is immutable (shared key)
 - ✅ `familyId` must be consistent (Supabase ≈ Firestore)
 - ✅ `firebaseUid` format: `child_{childProfileId}` (deterministic)
@@ -584,33 +588,33 @@ Hybrid Model (Recommended for G3):
 // Existing (preserved)
 type ChildSession = {
   kind: "child";
-  childId: string;           // From child_profiles.id
-  sessionId: string;         // From child_sessions.id
-  createdAt: string;         // ISO timestamp
-  expiresAt: string;         // ISO timestamp
-  revokedAt: string | null;  // ISO timestamp or null
+  childId: string; // From child_profiles.id
+  sessionId: string; // From child_sessions.id
+  createdAt: string; // ISO timestamp
+  expiresAt: string; // ISO timestamp
+  revokedAt: string | null; // ISO timestamp or null
 };
 
 // NEW: Add optional Firebase context
 // (This is NOT replacing ChildSession, just extending context)
 type FirebaseChildIdentity = {
-  firebaseUid: string;       // e.g., "child_<uuid>"
-  familyId: string;          // From Firestore + Supabase
-  status: "active" | "revoked";  // From Firestore
+  firebaseUid: string; // e.g., "child_<uuid>"
+  familyId: string; // From Firestore + Supabase
+  status: "active" | "revoked"; // From Firestore
 };
 
 // NEW: Unified context for routes
 type AuthenticatedChildContext = {
   // Existing application session (primary)
   session: ChildSession;
-  
+
   // Firebase identity metadata (optional, supplementary)
   firebase?: FirebaseChildIdentity;
-  
+
   // Convenience accessors
-  childId: string;           // session.childId
-  sessionId: string;         // session.sessionId
-  tatiId: string;            // From child_profiles (loaded)
+  childId: string; // session.childId
+  sessionId: string; // session.sessionId
+  tatiId: string; // From child_profiles (loaded)
 };
 ```
 
@@ -766,35 +770,35 @@ export type ChildSession = {
 
 // NEW: Add Firebase context type
 export type FirebaseChildIdentity = {
-  firebaseUid: string;       // Format: child_<childProfileId>
-  familyId: string;          // From Firestore mapping
-  status: "active" | "revoked";  // From Firestore
+  firebaseUid: string; // Format: child_<childProfileId>
+  familyId: string; // From Firestore mapping
+  status: "active" | "revoked"; // From Firestore
 };
 
 // NEW: Unified authenticated child context
 export type AuthenticatedChildContext = {
   // Application session (primary, always present)
   session: ChildSession;
-  
+
   // Child profile data (always present when authenticated)
   profile: {
-    id: string;              // childProfileId
-    tatiId: string;          // TATI-XXXXXXXX
-    name: string;            // Child name
-    age: number;             // Age
-    avatar: string;          // Avatar key
-    tier: string;            // "junior", "teen", "plus"
+    id: string; // childProfileId
+    tatiId: string; // TATI-XXXXXXXX
+    name: string; // Child name
+    age: number; // Age
+    avatar: string; // Avatar key
+    tier: string; // "junior", "teen", "plus"
     curriculum_level: string | null;
-    familyId: string;        // Family ID
+    familyId: string; // Family ID
   };
-  
+
   // Firebase identity (optional, available if G2 identity created)
   firebase?: FirebaseChildIdentity;
-  
+
   // Convenience accessors
-  readonly childId: string;  // Alias for session.childId
+  readonly childId: string; // Alias for session.childId
   readonly sessionId: string; // Alias for session.sessionId
-  readonly familyId: string;  // From profile
+  readonly familyId: string; // From profile
 };
 ```
 
@@ -815,7 +819,7 @@ const COOKIE_NAME = "tati_child_session";
 /**
  * Derive complete authenticated child context from HTTP-only session cookie.
  * This is the main entry point for route guards and server functions.
- * 
+ *
  * NEVER TRUST: childId, familyId from client
  * ALWAYS DERIVE: From validated session token + Supabase/Firestore queries
  */
@@ -823,26 +827,26 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
   // Step 1: Validate session cookie (existing logic)
   const token = getCookie(COOKIE_NAME);
   if (!token) return null;
-  
+
   const session = await validateChildSession(token);
   if (!session) return null;
-  
+
   // Step 2: Load child profile (existing logic)
   const profile = await loadChildProfile(session.child_profile_id);
   if (!profile) return null;
-  
+
   // Step 3: Optionally resolve Firebase identity (new logic)
   let firebase: FirebaseChildIdentity | undefined = undefined;
   try {
     const firebaseIdentity = await getChildFirebaseIdentity(
       session.child_profile_id,
-      profile.family_id
+      profile.family_id,
     );
     if (firebaseIdentity) {
       firebase = {
         firebaseUid: firebaseIdentity,
         familyId: profile.family_id,
-        status: "active"  // Already verified by getChildFirebaseIdentity
+        status: "active", // Already verified by getChildFirebaseIdentity
       };
     }
   } catch (err) {
@@ -850,17 +854,23 @@ export async function getAuthenticatedChild(): Promise<AuthenticatedChildContext
     // Gracefully continue without Firebase context
     console.debug("Firebase identity resolution failed:", err);
   }
-  
+
   // Step 4: Construct unified context
   return {
     session,
     profile,
     firebase,
-    
+
     // Convenience accessors
-    get childId() { return session.child_profile_id; },
-    get sessionId() { return session.id; },
-    get familyId() { return profile.family_id; }
+    get childId() {
+      return session.child_profile_id;
+    },
+    get sessionId() {
+      return session.id;
+    },
+    get familyId() {
+      return profile.family_id;
+    },
   } as AuthenticatedChildContext;
 }
 
@@ -872,20 +882,20 @@ export function requireAuthenticatedChild(context: unknown): AuthenticatedChildC
   if (!context || typeof context !== "object") {
     throw new AuthorizationError("Child authentication required.");
   }
-  
+
   const ctx = context as any;
   if (!ctx.session || ctx.session.kind !== "child") {
     throw new AuthorizationError("Child session required.");
   }
-  
+
   if (ctx.session.revokedAt) {
     throw new AuthorizationError("This child session has been revoked.");
   }
-  
+
   if (Date.parse(ctx.session.expiresAt) <= Date.now()) {
     throw new AuthorizationError("This child session has expired.");
   }
-  
+
   return ctx as AuthenticatedChildContext;
 }
 
@@ -895,7 +905,7 @@ async function loadChildProfile(childId: string) {
     .select("*")
     .eq("id", childId)
     .single();
-  
+
   if (error || !data) return null;
   return data;
 }
@@ -907,21 +917,21 @@ async function loadChildProfile(childId: string) {
 
 ## 7.1 Failure Matrix
 
-| Scenario | Auth Result | Authz Result | User Sees | Server Behavior |
-|----------|---|---|---|---|
-| **Child has no Firebase identity** | ✅ SUCCESS (Supabase) | ✅ ALLOWED | Learner experience | Firebase context undefined, Supabase used for all operations |
-| **Firebase identity exists + active** | ✅ SUCCESS (Supabase) | ✅ ALLOWED | Learner experience | Firebase context available (used for future phases) |
-| **Firebase identity revoked** | ✅ SUCCESS (Supabase) | ⚠️ WARNING (log but allow) | Learner experience | Firebase context shows status="revoked", Supabase operations continue |
-| **Firebase mapping wrong family** | ✅ SUCCESS (Supabase) | ❌ DENIED | ERROR page, redirect to login | getChildFirebaseIdentity throws "access denied", child forced to re-login |
-| **ChildSession expired (30 min)** | ❌ FAIL | ❌ DENIED | "Session expired, log in again" | beforeLoad guard redirects to /child/login |
-| **ChildSession revoked** | ❌ FAIL | ❌ DENIED | "Session revoked" error | beforeLoad guard throws AuthorizationError |
-| **Firebase UID unknown** | ✅ SUCCESS (Supabase) | ✅ ALLOWED | Learner experience | Firebase context undefined (identity not created yet) |
-| **Supabase child profile deleted** | ❌ FAIL | ❌ DENIED | "Profile not found" error | loadChildProfile() returns null, getAuthenticatedChild() returns null |
-| **TATI ID/PIN invalid** | ❌ FAIL | N/A | "Invalid TATI ID or PIN" error | childLogin() catches verifyChildCredential() failure |
-| **Firebase emulator unavailable** | ✅ SUCCESS (Supabase) | ✅ ALLOWED (graceful) | Learner experience | getChildFirebaseIdentity() catch → continue without Firebase |
-| **PIN credential revoked** | ❌ FAIL | N/A | "Invalid TATI ID or PIN" error | verifyChildPin() fails, childLogin() error |
-| **Token cookie missing** | ❌ FAIL | ❌ DENIED | "Please log in" | getChildSession() returns null, beforeLoad redirects |
-| **Token cookie tampered** | ❌ FAIL | ❌ DENIED | "Please log in" | validateChildSession() returns null (token_hash won't match) |
+| Scenario                              | Auth Result           | Authz Result               | User Sees                       | Server Behavior                                                           |
+| ------------------------------------- | --------------------- | -------------------------- | ------------------------------- | ------------------------------------------------------------------------- |
+| **Child has no Firebase identity**    | ✅ SUCCESS (Supabase) | ✅ ALLOWED                 | Learner experience              | Firebase context undefined, Supabase used for all operations              |
+| **Firebase identity exists + active** | ✅ SUCCESS (Supabase) | ✅ ALLOWED                 | Learner experience              | Firebase context available (used for future phases)                       |
+| **Firebase identity revoked**         | ✅ SUCCESS (Supabase) | ⚠️ WARNING (log but allow) | Learner experience              | Firebase context shows status="revoked", Supabase operations continue     |
+| **Firebase mapping wrong family**     | ✅ SUCCESS (Supabase) | ❌ DENIED                  | ERROR page, redirect to login   | getChildFirebaseIdentity throws "access denied", child forced to re-login |
+| **ChildSession expired (30 min)**     | ❌ FAIL               | ❌ DENIED                  | "Session expired, log in again" | beforeLoad guard redirects to /child/login                                |
+| **ChildSession revoked**              | ❌ FAIL               | ❌ DENIED                  | "Session revoked" error         | beforeLoad guard throws AuthorizationError                                |
+| **Firebase UID unknown**              | ✅ SUCCESS (Supabase) | ✅ ALLOWED                 | Learner experience              | Firebase context undefined (identity not created yet)                     |
+| **Supabase child profile deleted**    | ❌ FAIL               | ❌ DENIED                  | "Profile not found" error       | loadChildProfile() returns null, getAuthenticatedChild() returns null     |
+| **TATI ID/PIN invalid**               | ❌ FAIL               | N/A                        | "Invalid TATI ID or PIN" error  | childLogin() catches verifyChildCredential() failure                      |
+| **Firebase emulator unavailable**     | ✅ SUCCESS (Supabase) | ✅ ALLOWED (graceful)      | Learner experience              | getChildFirebaseIdentity() catch → continue without Firebase              |
+| **PIN credential revoked**            | ❌ FAIL               | N/A                        | "Invalid TATI ID or PIN" error  | verifyChildPin() fails, childLogin() error                                |
+| **Token cookie missing**              | ❌ FAIL               | ❌ DENIED                  | "Please log in"                 | getChildSession() returns null, beforeLoad redirects                      |
+| **Token cookie tampered**             | ❌ FAIL               | ❌ DENIED                  | "Please log in"                 | validateChildSession() returns null (token_hash won't match)              |
 
 ## 7.2 Detailed Failure Scenarios
 
@@ -1132,6 +1142,7 @@ Failure Scenario: Firebase Firestore emulator crashes
 ```
 
 **Explicit Guarantee**:
+
 - If `getChildFirebaseIdentity()` fails → Log warning + continue
 - If Firestore is down → No child is locked out
 - If Firebase credential is wrong → Supabase continues working
@@ -1167,6 +1178,7 @@ Failure Modes:
 If Firebase integration causes issues:
 
 1. **Immediate**: Set `getChildFirebaseIdentity()` to always return null
+
    ```typescript
    export async function getChildFirebaseIdentity(...) {
      return null; // Disable Firebase resolution
@@ -1320,21 +1332,21 @@ Risk: If both systems are used for authentication in parallel
 
 ## 10.1 Threat Model vs. G3 Design
 
-| Threat | Attack Vector | G3 Mitigation | Status |
-|--------|---|---|---|
-| **Session Fixation** | Attacker forces child to use attacker's cookie | HTTP-only flag prevents JavaScript access; SameSite=Lax prevents cross-site cookie injection | ✅ MITIGATED |
-| **Token Theft** | Attacker steals token from cookie | Stored as SHA256 hash in DB, token never logged; HTTP-only prevents JavaScript access | ✅ MITIGATED |
-| **Child Impersonation** | Attacker guesses childProfileId or claims to be Child A | ChildSession.childId bound to validated token; no client-supplied IDs trusted; familyId verified | ✅ MITIGATED |
-| **Firebase UID Spoofing** | Child sends fake Firebase UID in request | Firebase UID never accepted from client; always resolved server-side from Firestore mapping | ✅ MITIGATED |
-| **Family Crossing** | Child A tries to access Family B data | getChildFirebaseIdentity() verifies familyId match; Query constraints check status + familyId | ✅ MITIGATED |
-| **Child Crossing** | Child A accesses Child B's progress | requireChildSession() enforces childId match; Progress queries filtered by child_profile_id | ✅ MITIGATED |
-| **Role Escalation** | Child elevates to parent role | ChildSession.role immutably "child"; No parent-creation code in child routes | ✅ MITIGATED |
-| **Stale Firebase Mapping** | Old Firebase UID after revocation | Status field checked; Revoked UIDs return null from resolveChildFromFirebaseUid() | ✅ MITIGATED |
-| **Revoked Identity Bypass** | Child uses Firebase UID after revocation | Firestore query: `WHERE status == "active"` blocks revoked identities | ✅ MITIGATED |
-| **Expired Session Bypass** | Child uses token after 30 min | validateChildSession() checks `expires_at > now()`; Automatic rejection | ✅ MITIGATED |
-| **PIN Exposure in Logs** | PIN appears in error messages or logs | PIN hash used; Comparison is constant-time; Error messages generic ("Invalid TATI ID or PIN") | ✅ MITIGATED |
-| **Admin SDK Exposure** | firebase-admin imported in browser | .server.ts files only; TanStack Start build system prevents client access | ✅ MITIGATED |
-| **Emulator Production Fallthrough** | Test Firebase emulator credential in production | Environment variables checked; No Firebase credential hardcoded in code; Admin SDK auto-detects emulator | ✅ MITIGATED |
+| Threat                              | Attack Vector                                           | G3 Mitigation                                                                                            | Status       |
+| ----------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| **Session Fixation**                | Attacker forces child to use attacker's cookie          | HTTP-only flag prevents JavaScript access; SameSite=Lax prevents cross-site cookie injection             | ✅ MITIGATED |
+| **Token Theft**                     | Attacker steals token from cookie                       | Stored as SHA256 hash in DB, token never logged; HTTP-only prevents JavaScript access                    | ✅ MITIGATED |
+| **Child Impersonation**             | Attacker guesses childProfileId or claims to be Child A | ChildSession.childId bound to validated token; no client-supplied IDs trusted; familyId verified         | ✅ MITIGATED |
+| **Firebase UID Spoofing**           | Child sends fake Firebase UID in request                | Firebase UID never accepted from client; always resolved server-side from Firestore mapping              | ✅ MITIGATED |
+| **Family Crossing**                 | Child A tries to access Family B data                   | getChildFirebaseIdentity() verifies familyId match; Query constraints check status + familyId            | ✅ MITIGATED |
+| **Child Crossing**                  | Child A accesses Child B's progress                     | requireChildSession() enforces childId match; Progress queries filtered by child_profile_id              | ✅ MITIGATED |
+| **Role Escalation**                 | Child elevates to parent role                           | ChildSession.role immutably "child"; No parent-creation code in child routes                             | ✅ MITIGATED |
+| **Stale Firebase Mapping**          | Old Firebase UID after revocation                       | Status field checked; Revoked UIDs return null from resolveChildFromFirebaseUid()                        | ✅ MITIGATED |
+| **Revoked Identity Bypass**         | Child uses Firebase UID after revocation                | Firestore query: `WHERE status == "active"` blocks revoked identities                                    | ✅ MITIGATED |
+| **Expired Session Bypass**          | Child uses token after 30 min                           | validateChildSession() checks `expires_at > now()`; Automatic rejection                                  | ✅ MITIGATED |
+| **PIN Exposure in Logs**            | PIN appears in error messages or logs                   | PIN hash used; Comparison is constant-time; Error messages generic ("Invalid TATI ID or PIN")            | ✅ MITIGATED |
+| **Admin SDK Exposure**              | firebase-admin imported in browser                      | .server.ts files only; TanStack Start build system prevents client access                                | ✅ MITIGATED |
+| **Emulator Production Fallthrough** | Test Firebase emulator credential in production         | Environment variables checked; No Firebase credential hardcoded in code; Admin SDK auto-detects emulator | ✅ MITIGATED |
 
 ## 10.2 Security Invariants (Never Broken)
 
@@ -1949,6 +1961,7 @@ Principle 5: PREPARATION FOR MIGRATION
 The recommended model preserves the proven TATI ID + PIN authentication and ChildSession architecture while adding Firebase identity resolution as a supplementary layer prepared for future phases.
 
 Key findings:
+
 1. **Supabase remains the authentication authority** (TATI ID + PIN)
 2. **ChildSession remains the application session** (HTTP-only cookie, 30-min TTL)
 3. **Firebase provides identity mapping** (childProfileId ↔ firebaseUid)

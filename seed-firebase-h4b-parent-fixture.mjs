@@ -88,7 +88,11 @@ async function seedParentAccount() {
 
     // 3. Create family membership for parent
     console.log("3️⃣ Creating family membership for parent...");
-    const membershipRef = db.collection("users").doc(parentUser.uid).collection("familyMemberships").doc(familyId);
+    const membershipRef = db
+      .collection("users")
+      .doc(parentUser.uid)
+      .collection("familyMemberships")
+      .doc(familyId);
     const membershipDoc = await membershipRef.get();
 
     if (!membershipDoc.exists) {
@@ -126,7 +130,11 @@ async function seedParentAccount() {
 
     // 5. Check if existing test child from H4.B is linked to this family
     console.log("5️⃣ Linking test child to family...");
-    const existingChildRef = db.collection("families").doc(familyId).collection("children").doc(childId);
+    const existingChildRef = db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(childId);
     const existingChildDoc = await existingChildRef.get();
 
     if (!existingChildDoc.exists) {
@@ -141,7 +149,11 @@ async function seedParentAccount() {
     // 6. Create a test child if needed for standalone testing
     console.log("6️⃣ Creating test child for parent (optional)...");
     const testChildId = "test-child-parent-portal";
-    const testChildRef = db.collection("families").doc(familyId).collection("children").doc(testChildId);
+    const testChildRef = db
+      .collection("families")
+      .doc(familyId)
+      .collection("children")
+      .doc(testChildId);
     const testChildDoc = await testChildRef.get();
 
     if (!testChildDoc.exists) {

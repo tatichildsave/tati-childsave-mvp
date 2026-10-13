@@ -1,8 +1,9 @@
 # PHASE H3.1.0 — TATI ACADEMY SCREEN & UX ARCHITECTURE
+
 **Status:** READ-ONLY UX/PRODUCT ARCHITECTURE PHASE  
 **Date:** 2026-09-26  
 **Scope:** Complete Academy information architecture, screen design, component specification  
-**Deliverable:** Definitive MVP screen set and UX patterns for H3.1+ implementation  
+**Deliverable:** Definitive MVP screen set and UX patterns for H3.1+ implementation
 
 ---
 
@@ -13,6 +14,7 @@
 **Academy is the facilitator experience within the TATI connected ecosystem.** It enables teachers/community educators to deliver TATI effectively in group settings (schools, classrooms, learning centers).
 
 **NOT:**
+
 - ❌ An analytics dashboard
 - ❌ A generic LMS
 - ❌ A surveillance system
@@ -20,6 +22,7 @@
 - ❌ A parent-teacher communication tool
 
 **IS:**
+
 - ✅ A facilitator support system for daily class management
 - ✅ A learner monitoring dashboard (read-only, for support)
 - ✅ A session planning and debrief tool
@@ -80,21 +83,22 @@ Academy contains **9 core screens** organized in a primary navigation model:
 
 **Why these screens?**
 
-| Screen | Serves | Question It Answers |
-|--------|--------|---|
-| **Dashboard** | Primary entry | What should I do today? Where's the quickest action? |
-| **Cohorts** | Overview | Which classes do I teach? |
-| **Cohort Overview** | Class context | Who's in this cohort? How are they progressing? |
-| **Learner Profile** | Individual support | How is this learner doing? What do they need? |
-| **Curriculum** | Activity planning | What activities does this cohort have? In what order? |
-| **Session Guide** | Preparation | How should I facilitate today's activity? |
-| **Active Session** | Live monitoring | Who's completed? Who needs support? |
-| **Session Debrief** | Reflection | What happened? What's next? |
-| **Profile** | Account | My login, my information |
+| Screen              | Serves             | Question It Answers                                   |
+| ------------------- | ------------------ | ----------------------------------------------------- |
+| **Dashboard**       | Primary entry      | What should I do today? Where's the quickest action?  |
+| **Cohorts**         | Overview           | Which classes do I teach?                             |
+| **Cohort Overview** | Class context      | Who's in this cohort? How are they progressing?       |
+| **Learner Profile** | Individual support | How is this learner doing? What do they need?         |
+| **Curriculum**      | Activity planning  | What activities does this cohort have? In what order? |
+| **Session Guide**   | Preparation        | How should I facilitate today's activity?             |
+| **Active Session**  | Live monitoring    | Who's completed? Who needs support?                   |
+| **Session Debrief** | Reflection         | What happened? What's next?                           |
+| **Profile**         | Account            | My login, my information                              |
 
 ### 1.3 What's NOT in MVP
 
 **NOT INCLUDED:**
+
 - ❌ Lesson authoring interface
 - ❌ Curriculum builder or drag-and-drop
 - ❌ Detailed analytics dashboard
@@ -135,12 +139,14 @@ Academy contains **9 core screens** organized in a primary navigation model:
 
 **Left:** TATI logo (clickable to /academy/dashboard)
 **Center:** Breadcrumb trail + page title
-**Right:** 
+**Right:**
+
 - Facilitator name / school
 - Profile icon (click → /academy/profile)
 - Logout button
 
 **Example:**
+
 ```
 TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 ```
@@ -163,6 +169,7 @@ TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 ```
 
 **Behavior:**
+
 - Expand on hover to show full text
 - Current section highlighted
 - Cohort list auto-expands if only 1-2 cohorts
@@ -172,12 +179,14 @@ TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 ### 2.4 Mobile/Tablet Adaptations
 
 **Tablet (768px-1024px):**
+
 - Sidebar collapses to icons
 - Main content expands
 - Bottom navigation appears for key actions
 - Cohort navigation moves to primary content area
 
 **Mobile (< 768px):**
+
 - Hamburger menu (no persistent sidebar)
 - Full-width main content
 - Bottom navigation with 3-4 primary actions:
@@ -189,6 +198,7 @@ TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 ### 2.5 Bottom Navigation (Mobile + Tablet)
 
 **Mobile bottom nav (4 items):**
+
 ```
 ┌─────────────────────────────────────┐
 │ Dashboard  |  Cohorts  |  Profile   │
@@ -196,6 +206,7 @@ TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 ```
 
 **Context-aware:** If viewing a cohort, bottom nav includes:
+
 ```
 ┌─────────────────────────────────────────┐
 │ Overview  |  Learners  |  Curriculum   │
@@ -207,6 +218,7 @@ TATI    Home / Grade 5A / Learner Details         Kofi Mensah    Sign out
 **Format:** Home / Cohort / Page / Optional Detail
 
 **Examples:**
+
 ```
 Home / My Cohorts
 Home / Grade 5A
@@ -215,6 +227,7 @@ Home / Grade 5A / Session / Active
 ```
 
 **Behavior:**
+
 - Clickable navigation (each level is a link)
 - Ellipsis (...) if breadcrumb is too long
 - Not shown on mobile (replaced with back button)
@@ -227,6 +240,7 @@ Home / Grade 5A / Session / Active
 **Label (12px, uppercase, tracking-widest):** Eyebrow/category
 
 **Example Dashboard:**
+
 ```
 [Dashboard icon] ← Eyebrow: "Today"
 What should I do today?  ← H1: Page title
@@ -243,6 +257,7 @@ What should I do today?  ← H1: Page title
 4. **Empty/error states** — Page-level messaging
 
 **Tone:** Never use red for learner data. Use:
+
 - ✅ Green: Success, completion
 - ⚠️ Yellow/Amber: Needs attention, incomplete
 - 🔵 Blue: Info, neutral status
@@ -251,6 +266,7 @@ What should I do today?  ← H1: Page title
 ### 2.9 Loading States
 
 **Full page load:**
+
 ```
 ┌─────────────────────────────────────┐
 │ [Skeleton Header]                   │
@@ -262,6 +278,7 @@ What should I do today?  ← H1: Page title
 ```
 
 **Incremental load:**
+
 ```
 [Header] Loaded
 [Primary content area] Skeleton, then real
@@ -273,6 +290,7 @@ What should I do today?  ← H1: Page title
 ### 2.10 Error States
 
 **Network error example:**
+
 ```
 ┌──────────────────────────────────────┐
 │ ⚠️  Can't load cohort                 │
@@ -282,6 +300,7 @@ What should I do today?  ← H1: Page title
 ```
 
 **Permission denied example:**
+
 ```
 ┌──────────────────────────────────────┐
 │ 🔒 You don't have access             │
@@ -293,6 +312,7 @@ What should I do today?  ← H1: Page title
 ### 2.11 Empty States
 
 **Empty cohorts list:**
+
 ```
 ┌────────────────────────────────────┐
 │ 🏫 No cohorts yet                  │
@@ -303,6 +323,7 @@ What should I do today?  ← H1: Page title
 ```
 
 **Empty session results (first session of cohort):**
+
 ```
 ┌────────────────────────────────────┐
 │ 📊 No sessions yet                 │
@@ -318,19 +339,19 @@ What should I do today?  ← H1: Page title
 
 ### 3.1 Screen List with Data Requirements
 
-| # | Screen | Route | Purpose | Key Data | Users | Mobile |
-|---|--------|-------|---------|----------|-------|--------|
-| 1 | Academy Login | `/academy/login` | Facilitator authentication | None | Unauthenticated | ✅ |
-| 2 | Dashboard | `/academy/dashboard` | Primary entry point | Cohorts, today's activity, at-risk | Facilitators | ✅ |
-| 3 | My Cohorts | `/academy/cohorts` | List assigned cohorts | All facilitator's cohorts | Facilitators | ✅ |
-| 4 | Cohort Overview | `/academy/cohorts/{cohortId}` | Class context | Cohort, learners, progress, schedule | Facilitators | ✅ |
-| 5 | Learner Roster | Part of Cohort Overview | Learner table | All enrolled learners, status | Facilitators | ⚠️ |
-| 6 | Learner Profile | `/academy/cohorts/{cohortId}/learner/{childId}` | Individual learner | Progress, assessments, competencies | Facilitators | ✅ |
-| 7 | Curriculum View | `/academy/cohorts/{cohortId}/curriculum` | Activity sequence | Track structure, activities, schedule | Facilitators | ✅ |
-| 8 | Session Guide | `/academy/cohorts/{cohortId}/curriculum/activity/{itemId}` | Facilitation prep | Activity objectives, guide, tips | Facilitators | ✅ |
-| 9 | Active Session | `/academy/cohorts/{cohortId}/session/active/{sessionId}` | Live monitoring | Participation, progress, facilitator actions | Facilitators | ⚠️ |
-| 10 | Session Debrief | `/academy/cohorts/{cohortId}/session/debrief/{sessionId}` | Reflection & review | Session outcomes, insights, next steps | Facilitators | ✅ |
-| 11 | Profile | `/academy/profile` | Account settings | Name, email, school, cohorts | Facilitators | ✅ |
+| #   | Screen          | Route                                                      | Purpose                    | Key Data                                     | Users           | Mobile |
+| --- | --------------- | ---------------------------------------------------------- | -------------------------- | -------------------------------------------- | --------------- | ------ |
+| 1   | Academy Login   | `/academy/login`                                           | Facilitator authentication | None                                         | Unauthenticated | ✅     |
+| 2   | Dashboard       | `/academy/dashboard`                                       | Primary entry point        | Cohorts, today's activity, at-risk           | Facilitators    | ✅     |
+| 3   | My Cohorts      | `/academy/cohorts`                                         | List assigned cohorts      | All facilitator's cohorts                    | Facilitators    | ✅     |
+| 4   | Cohort Overview | `/academy/cohorts/{cohortId}`                              | Class context              | Cohort, learners, progress, schedule         | Facilitators    | ✅     |
+| 5   | Learner Roster  | Part of Cohort Overview                                    | Learner table              | All enrolled learners, status                | Facilitators    | ⚠️     |
+| 6   | Learner Profile | `/academy/cohorts/{cohortId}/learner/{childId}`            | Individual learner         | Progress, assessments, competencies          | Facilitators    | ✅     |
+| 7   | Curriculum View | `/academy/cohorts/{cohortId}/curriculum`                   | Activity sequence          | Track structure, activities, schedule        | Facilitators    | ✅     |
+| 8   | Session Guide   | `/academy/cohorts/{cohortId}/curriculum/activity/{itemId}` | Facilitation prep          | Activity objectives, guide, tips             | Facilitators    | ✅     |
+| 9   | Active Session  | `/academy/cohorts/{cohortId}/session/active/{sessionId}`   | Live monitoring            | Participation, progress, facilitator actions | Facilitators    | ⚠️     |
+| 10  | Session Debrief | `/academy/cohorts/{cohortId}/session/debrief/{sessionId}`  | Reflection & review        | Session outcomes, insights, next steps       | Facilitators    | ✅     |
+| 11  | Profile         | `/academy/profile`                                         | Account settings           | Name, email, school, cohorts                 | Facilitators    | ✅     |
 
 ---
 
@@ -341,6 +362,7 @@ What should I do today?  ← H1: Page title
 **Primary question:** "What should I do today?"
 
 **Secondary questions:**
+
 - Which cohort should I work with?
 - What's next in the programme?
 - Is anyone struggling?
@@ -408,6 +430,7 @@ What should I do today?  ← H1: Page title
   - Status: "Ready to start" or "Already started" or "Session complete"
 
 **If no session scheduled:**
+
 ```
 No session scheduled today
 
@@ -418,6 +441,7 @@ Grade 5A's next activity is Days 3–4 (Sept 28)
 **Section 2: Class at a Glance**
 
 For each facilitator's cohort (up to 3 on dashboard):
+
 - Cohort name
 - Progress bar (8/28 activities)
 - Quick metrics:
@@ -429,6 +453,7 @@ For each facilitator's cohort (up to 3 on dashboard):
 **Section 3: Learners Needing Support**
 
 Auto-generated list of learners with support signals:
+
 - Learner name
 - Cohort
 - Support signal (e.g., "Behind", "Stuck", "Low engagement")
@@ -440,6 +465,7 @@ Auto-generated list of learners with support signals:
 ### 4.4 Dashboard Load Behavior
 
 **Priority load order:**
+
 1. Header + greeting
 2. Today's session card (highest priority)
 3. Cohorts overview
@@ -498,6 +524,7 @@ Auto-generated list of learners with support signals:
 ### 5.2 Cohort Card Components
 
 Each cohort card displays:
+
 - **Cohort name** (Grade 5A, Grade 4C, etc)
 - **Learner count** ("25 learners enrolled")
 - **Progress bar** (visual + "8/28 activities")
@@ -509,16 +536,17 @@ Each cohort card displays:
 
 ### 5.3 Cohort Status States
 
-| State | Badge Color | Meaning |
-|-------|-------------|---------|
-| **Not started** | Gray | No sessions held yet |
-| **In progress** | Blue | Cohort is active, 1-27 of 28 activities done |
-| **Completed** | Green | All 28 activities done |
+| State           | Badge Color | Meaning                                      |
+| --------------- | ----------- | -------------------------------------------- |
+| **Not started** | Gray        | No sessions held yet                         |
+| **In progress** | Blue        | Cohort is active, 1-27 of 28 activities done |
+| **Completed**   | Green       | All 28 activities done                       |
 
 ### 5.4 Filtering (If Multiple Cohorts)
 
 **Not MVP:** Hide advanced filtering
 **MVP simple sort:**
+
 - Default: In progress first, then not started, then completed
 - "Show completed cohorts" toggle
 
@@ -531,6 +559,7 @@ Each cohort card displays:
 **Primary question:** "How is this class doing?"
 
 **Secondary questions:**
+
 - How many learners? Where are they in the journey?
 - Who's struggling? Who's ahead?
 - When's the next session?
@@ -597,6 +626,7 @@ Each cohort card displays:
 ### 6.3 Cohort Header Section
 
 **Information displayed:**
+
 - Cohort name (large, bold)
 - Facilitator name
 - Learner count
@@ -604,23 +634,27 @@ Each cohort card displays:
 - Start date + current activity
 
 **Optional actions:**
+
 - [View curriculum] — Go to activity sequence
 - [Manage cohort] — Edit (admin only)
 
 ### 6.4 Cohort Overview Cards
 
 **Progress Card:**
+
 - Progress bar (visual)
 - "8 of 28 activities" text
 - Percentage
 - Current activity name
 
 **Engagement Card:**
+
 - "23/25 present" (or "Not started")
 - Sessions held: 3
 - Avg time per session: 42 min
 
 **Competency Overview:**
+
 - List of competencies (5-8 max)
 - Score 0-3 scale
 - Level label (growing/strong)
@@ -628,6 +662,7 @@ Each cohort card displays:
 - No comparison between learners
 
 **At-Risk Summary:**
+
 - Count of learners needing support
 - Brief description ("Behind schedule", "Low engagement", etc)
 - [View details] link to full list
@@ -635,6 +670,7 @@ Each cohort card displays:
 ### 6.5 Learner Roster Table
 
 **Columns (Desktop):**
+
 - Learner name
 - Current activity (e.g., "Days 1–2")
 - Status badge (on track | behind | stuck)
@@ -643,6 +679,7 @@ Each cohort card displays:
 - [View] link
 
 **Mobile:** Card-based layout instead of table
+
 ```
 [Learner Card]
 Name: Kwame
@@ -653,11 +690,13 @@ Last: 2 hours ago
 ```
 
 **Sorting:** Default by name, can sort by:
+
 - Progress
 - Status
 - Engagement
 
 **Filtering:** Show only:
+
 - All
 - On track
 - Needs support / Behind
@@ -672,6 +711,7 @@ Last: 2 hours ago
 **Primary question:** "How can I support this learner?"
 
 **Secondary:**
+
 - Where are they in the journey?
 - What assessments have they taken?
 - What decisions did they make?
@@ -756,6 +796,7 @@ Last: 2 hours ago
 ### 7.3 Learner Header Section
 
 **Displays:**
+
 - Learner avatar/name
 - TATI ID (for cross-reference)
 - Age, grade level
@@ -764,12 +805,14 @@ Last: 2 hours ago
 - Enrollment date
 
 **Actions:**
+
 - [Back to roster]
 - (Admin only: Remove from cohort)
 
 ### 7.4 Journey Progress Section
 
 **Shows:**
+
 - Timeline of key milestones (pre-test → lessons → scenarios → post-test)
 - Visual progress (dots/checkmarks for completed)
 - Current position highlight
@@ -781,6 +824,7 @@ Last: 2 hours ago
 ### 7.5 Competencies Section
 
 For each competency (5-8 total):
+
 - **Name** (e.g., "goal-setting")
 - **Score** (0-3 scale, visual bar)
 - **Level** ("Beginning" | "Growing" | "Strong")
@@ -793,18 +837,21 @@ For each competency (5-8 total):
 ### 7.6 Assessment Results Section
 
 **Pre-Assessment:**
+
 - Timestamp
 - Score (X/25 points)
 - Breakdown by competency
 - [View responses] link (if facilitator should see detailed answers)
 
 **Post-Assessment:**
+
 - Status: "Not yet taken"
 - Expected completion: (if applicable)
 
 ### 7.7 Recent Decisions Section
 
 Shows last 3 scenario decisions:
+
 - Scenario name
 - Choice made (plain language)
 - Consequence description
@@ -814,6 +861,7 @@ Shows last 3 scenario decisions:
 ### 7.8 Facilitator Notes Section
 
 **Text input field:**
+
 - Placeholder: "Add notes about this learner..."
 - Max 500 characters
 - Auto-save on blur
@@ -824,12 +872,14 @@ Shows last 3 scenario decisions:
 ### 7.9 Support Signals
 
 **What triggers a "needs support" signal:**
+
 - ❌ No progress for 3+ days
 - ❌ Same activity repeated 3+ times
 - ❌ Very low assessment scores (< 40%)
 - ❌ All scenario choices very conservative (all minimum decisions)
 
 **Signals displayed as badge, never as judgment:**
+
 - ⚠️ "Needs attention"
 - "Consider checking in"
 - "Not started" (neutral)
@@ -843,6 +893,7 @@ Shows last 3 scenario decisions:
 **Primary question:** "What activities will my class do, in what order?"
 
 **Secondary:**
+
 - What's each activity?
 - How long does it take?
 - What are we teaching?
@@ -902,6 +953,7 @@ Shows last 3 scenario decisions:
 ### 8.3 Activity Card Components
 
 Each activity card shows:
+
 - **Number + Name** (e.g., "3. Set a Goal")
 - **Type icon** (📝 Lesson, 🎬 Scenario, ❓ Assessment, 🤔 Reflection)
 - **Duration** (e.g., "~20 min" or "~45 min across 2 sessions")
@@ -913,17 +965,18 @@ Each activity card shows:
 
 ### 8.4 Activity Status States
 
-| State | Icon | Meaning | Next Action |
-|-------|------|---------|---|
-| **Not started** | ○ | Cohort hasn't reached yet | Start session |
-| **In progress** | → | Cohort currently on it | Continue / Complete |
-| **Complete** | ✓ | Cohort finished it | Review or move on |
-| **Skipped** | ⊘ | Facilitator skipped it | (Can't undo in MVP) |
+| State           | Icon | Meaning                   | Next Action         |
+| --------------- | ---- | ------------------------- | ------------------- |
+| **Not started** | ○    | Cohort hasn't reached yet | Start session       |
+| **In progress** | →    | Cohort currently on it    | Continue / Complete |
+| **Complete**    | ✓    | Cohort finished it        | Review or move on   |
+| **Skipped**     | ⊘    | Facilitator skipped it    | (Can't undo in MVP) |
 
 ### 8.5 Filtering & Sorting (MVP)
 
 **Not included:** No complex filtering
 **MVP simple view:**
+
 - Show all 28 activities in order
 - Visual grouping by module (if applicable)
 - Can collapse/expand sections if large number
@@ -937,6 +990,7 @@ Each activity card shows:
 **Primary question:** "How should I facilitate this activity?"
 
 **Secondary:**
+
 - What's the learning goal?
 - What will learners do?
 - What should I discuss?
@@ -1100,11 +1154,13 @@ Each activity card shows:
 ### 9.3 Session Guide Components
 
 **Header:**
+
 - Activity name, type, duration
 - Learning objective (1-2 sentences)
 - Key competencies developed
 
 **Facilitation Steps:**
+
 - Clear sequence (Intro → Activity → Debrief → Wrap-up)
 - Timing for each step
 - Exact language ("Say to learners:")
@@ -1112,16 +1168,19 @@ Each activity card shows:
 - Discussion prompts (open-ended questions)
 
 **Materials Section:**
+
 - What's needed
 - What's NOT needed
 - Tech setup (if applicable)
 
 **Troubleshooting Section:**
+
 - Common challenges
 - Suggested responses (not scripts)
 - What to watch for
 
 **Philosophy Note:**
+
 - How this activity fits the learning model
 - Why we facilitate this way, not traditionally
 
@@ -1146,6 +1205,7 @@ Tone should feel like: "You're the expert on your class. Here's context to help 
 **Primary question:** "Who's progressing? Who needs help?"
 
 **Secondary:**
+
 - How many have started?
 - How many have completed?
 - What's the status right now?
@@ -1225,6 +1285,7 @@ Tone should feel like: "You're the expert on your class. Here's context to help 
 ### 10.3 Live Participation Section
 
 **Displays:**
+
 - Progress: "23/25 submitted" + percentage
 - Status breakdown:
   - Submitted choices
@@ -1234,12 +1295,14 @@ Tone should feel like: "You're the expert on your class. Here's context to help 
 - [Pause/Resume] if needed
 
 **Progress visualization:**
+
 - Horizontal progress bar (visual + numeric)
 - Timeline curve showing progression over time (if data available)
 
 ### 10.4 Interim Results Section
 
 **Shows (in real-time):**
+
 - Choice distribution (for scenarios)
   - Which choices are most popular
   - Count and percentage
@@ -1248,6 +1311,7 @@ Tone should feel like: "You're the expert on your class. Here's context to help 
 - "Results update as learners submit" note
 
 **NOT SHOWN:**
+
 - Individual learner names next to choices
 - Rankings or comparisons
 - Praise/shame language
@@ -1255,12 +1319,14 @@ Tone should feel like: "You're the expert on your class. Here's context to help 
 ### 10.5 Learner Status Table/List
 
 **Columns (Desktop):**
+
 - Status icon (✓ submitted | → in progress | ○ not started)
 - Learner name
 - Choice made (if scenario) or status (if assessment/lesson)
 - Time submitted / time elapsed
 
 **Mobile:** Card layout
+
 ```
 ✓ Kwame
 Choice: save-40
@@ -1268,11 +1334,13 @@ Submitted 2 min ago
 ```
 
 **Sorting options:**
+
 - By status (completed first, then in progress)
 - By name (A-Z)
 - By time (fastest first)
 
 **Filtering (optional):**
+
 - Show all
 - Show submitted only
 - Show still working
@@ -1285,6 +1353,7 @@ Submitted 2 min ago
 **[End session]** — Completes session, goes to debrief
 
 **Also available:**
+
 - Timer (if needed for timing clarity)
 - [Pause session] (rare, if technical issue)
 - Help tooltip (?)
@@ -1296,6 +1365,7 @@ Submitted 2 min ago
 **Timestamp:** "Updated just now" or "Updated 2 min ago"
 
 **If learner drops offline:**
+
 - Stays in "still working" status
 - Can retry after session if needed (G6.1 error recovery)
 
@@ -1308,6 +1378,7 @@ Submitted 2 min ago
 **Primary question:** "What happened? What's next?"
 
 **Secondary:**
+
 - Who engaged? Who struggled?
 - What did we learn?
 - Any follow-up needed?
@@ -1425,6 +1496,7 @@ Submitted 2 min ago
 ### 11.3 Session Complete Confirmation
 
 **Displays:**
+
 - "Session complete" confirmation
 - Timestamp
 - Duration
@@ -1433,6 +1505,7 @@ Submitted 2 min ago
 ### 11.4 Session Outcomes Section
 
 **Displays:**
+
 - Attendance (count + %)
 - Engagement (count + %)
 - Completion rate
@@ -1441,11 +1514,13 @@ Submitted 2 min ago
 - Key insights (auto-generated insight, 1-2 sentences)
 
 **Example insight:**
+
 > "Class split roughly into three groups based on risk appetite. Good diversity for discussion on different strategies."
 
 ### 11.5 Learner Follow-up Section
 
 Lists learners who may need support:
+
 - Learner name
 - Issue/signal (e.g., "Cautious saver", "Didn't complete", "Tech issue")
 - Recommended action
@@ -1456,6 +1531,7 @@ Lists learners who may need support:
 ### 11.6 Facilitator Reflection Section
 
 Optional text fields for facilitator to capture thinking:
+
 - **"What went well?"** (open text)
 - **"What could improve?"** (open text)
 - **"Notes for next session?"** (open text)
@@ -1466,6 +1542,7 @@ Optional text fields for facilitator to capture thinking:
 ### 11.7 Next Steps Section
 
 **Shows:**
+
 - Next activity name + type
 - Scheduled date (if assigned)
 - Duration
@@ -1488,12 +1565,14 @@ This keeps facilitator aware of parent communication without needing access to p
 **Support signals** are **neutral, data-driven indicators** that a learner might benefit from facilitator attention.
 
 **NOT:**
+
 - ❌ Judgments ("failing", "behind")
 - ❌ Rankings
 - ❌ Diagnoses
 - ❌ Penalties
 
 **IS:**
+
 - ✅ Patterns observed
 - ✅ Opportunities to help
 - ✅ Suggestions, not mandates
@@ -1501,13 +1580,13 @@ This keeps facilitator aware of parent communication without needing access to p
 
 ### 12.2 Signal Types & Triggers
 
-| Signal | Triggers | Example | Facilitator Action |
-|--------|----------|---------|---|
-| **Not started** | 0 activities completed + enrolled 3+ days | Kwame enrolled but no login | Welcome/tech check |
-| **Behind** | Completed < 60% expected activities for days elapsed | On day 5, completed day 1-2 items only | Catch-up discussion |
-| **Stuck** | Same activity attempted 3+ times OR no progress 3+ days | Attempted scenario 3 times, same choice | 1:1 check-in |
+| Signal             | Triggers                                                        | Example                                    | Facilitator Action   |
+| ------------------ | --------------------------------------------------------------- | ------------------------------------------ | -------------------- |
+| **Not started**    | 0 activities completed + enrolled 3+ days                       | Kwame enrolled but no login                | Welcome/tech check   |
+| **Behind**         | Completed < 60% expected activities for days elapsed            | On day 5, completed day 1-2 items only     | Catch-up discussion  |
+| **Stuck**          | Same activity attempted 3+ times OR no progress 3+ days         | Attempted scenario 3 times, same choice    | 1:1 check-in         |
 | **Low engagement** | Submitted but minimal interaction (quick guess, no exploration) | Chose first option in 10 seconds, moved on | Encourage reflection |
-| **Curious** | Retries/explores beyond minimum (positive signal) | Tried multiple scenario outcomes | Praise autonomy |
+| **Curious**        | Retries/explores beyond minimum (positive signal)               | Tried multiple scenario outcomes           | Praise autonomy      |
 
 ### 12.3 How Signals Appear in Academy
 
@@ -1516,6 +1595,7 @@ This keeps facilitator aware of parent communication without needing access to p
 **Learner profile:** Signal explanation (e.g., "Behind schedule")
 
 **Language never shaming:**
+
 - ❌ "Struggling"
 - ✅ "Needs support"
 - ✅ "Consider checking in"
@@ -1544,35 +1624,38 @@ Facilitator responds: "That makes sense. Let's try again..."
 
 ### 13.1 Complete Data Access Matrix
 
-| Data | JUNIOR (Child) | PARENT | FACILITATOR | ADMIN |
-|------|---|---|---|---|
-| **Own learner profile** | Read | N/A | N/A | Read/Write |
-| **Assigned learner profile** | N/A | Read own child | Read assigned learners | Read/Write all |
-| **Parent-private data** | ❌ | Read own | ❌ **BLOCKED** | Read/Write |
-| **Learner progress** | Read/Create own | Read own child | Read assigned cohort | Read/Write all |
-| **Scenario decisions** | Create/Read own | Read own child | Read assigned cohort | Read/Write all |
-| **Assessment results** | Read own | Read own child | Read assigned cohort | Read/Write all |
-| **Competencies** | Read own | Read own child | Read assigned cohort | Read/Write all |
-| **Facilitator notes** | ❌ | ❌ | Read/Create/Edit own | Read/Write all |
-| **Session records** | ❌ | ❌ | Create/Read/Edit own | Read/Write all |
-| **Cohort management** | ❌ | ❌ | ❌ Read only | Read/Write |
-| **Facilitator assignments** | ❌ | ❌ | ❌ | Read/Write |
+| Data                         | JUNIOR (Child)  | PARENT         | FACILITATOR            | ADMIN          |
+| ---------------------------- | --------------- | -------------- | ---------------------- | -------------- |
+| **Own learner profile**      | Read            | N/A            | N/A                    | Read/Write     |
+| **Assigned learner profile** | N/A             | Read own child | Read assigned learners | Read/Write all |
+| **Parent-private data**      | ❌              | Read own       | ❌ **BLOCKED**         | Read/Write     |
+| **Learner progress**         | Read/Create own | Read own child | Read assigned cohort   | Read/Write all |
+| **Scenario decisions**       | Create/Read own | Read own child | Read assigned cohort   | Read/Write all |
+| **Assessment results**       | Read own        | Read own child | Read assigned cohort   | Read/Write all |
+| **Competencies**             | Read own        | Read own child | Read assigned cohort   | Read/Write all |
+| **Facilitator notes**        | ❌              | ❌             | Read/Create/Edit own   | Read/Write all |
+| **Session records**          | ❌              | ❌             | Create/Read/Edit own   | Read/Write all |
+| **Cohort management**        | ❌              | ❌             | ❌ Read only           | Read/Write     |
+| **Facilitator assignments**  | ❌              | ❌             | ❌                     | Read/Write     |
 
 ### 13.2 Firestore Rule Implications
 
 **NO changes to existing rules for:**
+
 - ✅ Family isolation
 - ✅ Parent-private data blocking
 - ✅ Child session immutability
 - ✅ G5.1 scenario integrity
 
 **NEW rules required for Academy:**
+
 - ✅ academyOrganizations/* collections (admin-only, except facilitator reads)
 - ✅ cohorts/* collections (facilitator access control)
 - ✅ sessions/* collections (facilitator CRUD own sessions)
 - ✅ enrollments/* collections (facilitator reads enrolled learners)
 
 **Rules to verify unchanged:**
+
 - families/{familyId}/children/{childId}/parentInsights — facilitators have NO access
 - families/{familyId}/children/{childId}/scenarioSessions — read-only to facilitators
 - families/{familyId}/children/{childId}/assessmentAttempts — read-only to facilitators
@@ -1584,6 +1667,7 @@ Facilitator responds: "That makes sense. Let's try again..."
 ### 14.1 Existing Components to Reuse
 
 **From src/components/tati/:**
+
 - `Page` (with role="academy" support ✅ exists)
 - `PageHeader` (with breadcrumbs, back button)
 - `Card` (tone: surface/muted/primary)
@@ -1599,6 +1683,7 @@ Facilitator responds: "That makes sense. Let's try again..."
 ### 14.2 New Academy Components
 
 **High-level components:**
+
 ```
 src/components/academy/
 ├─ AcademyShell.tsx        ← Main layout wrapper
@@ -1622,6 +1707,7 @@ State.tsx ← Empty states for Academy
 ```
 
 **Primitive components:**
+
 - `MetricCard` (displays single metric: number + label)
 - `ProgressBar` (horizontal progress visualization)
 - `StatusBadge` (status indicator badge)
@@ -1630,6 +1716,7 @@ State.tsx ← Empty states for Academy
 ### 14.3 Component Composition Example
 
 **Dashboard:**
+
 ```tsx
 <AcademyShell>
   <DashboardCard>
@@ -1643,6 +1730,7 @@ State.tsx ← Empty states for Academy
 ```
 
 **Cohort Overview:**
+
 ```tsx
 <AcademyShell>
   <PageHeader title="Grade 5A" breadcrumb={...} />
@@ -1655,6 +1743,7 @@ State.tsx ← Empty states for Academy
 ### 14.4 Component API Design
 
 **Example: LearnerRoster**
+
 ```tsx
 <LearnerRoster
   learners={[{id, name, progress, status, engagement, lastActivity}]}
@@ -1670,17 +1759,18 @@ State.tsx ← Empty states for Academy
 
 ### 15.1 Breakpoint Definitions
 
-| Breakpoint | Size | Device | Priority |
-|---|---|---|---|
-| **Mobile** | 320-424px | Phone (old) | Usable but not optimized |
-| **Mobile+** | 425-767px | Phone (modern) | ✅ Fully supported |
-| **Tablet** | 768-1023px | iPad, tablets | ✅ Fully supported |
-| **Desktop** | 1024-1279px | Laptop | ✅ Primary experience |
-| **Desktop+** | 1280px+ | Large screens | ✅ Optimized |
+| Breakpoint   | Size        | Device         | Priority                 |
+| ------------ | ----------- | -------------- | ------------------------ |
+| **Mobile**   | 320-424px   | Phone (old)    | Usable but not optimized |
+| **Mobile+**  | 425-767px   | Phone (modern) | ✅ Fully supported       |
+| **Tablet**   | 768-1023px  | iPad, tablets  | ✅ Fully supported       |
+| **Desktop**  | 1024-1279px | Laptop         | ✅ Primary experience    |
+| **Desktop+** | 1280px+     | Large screens  | ✅ Optimized             |
 
 ### 15.2 Layout Adaptations by Breakpoint
 
 **Mobile (< 425px):**
+
 - Single column
 - Hamburger menu (no sidebar)
 - Bottom navigation
@@ -1689,6 +1779,7 @@ State.tsx ← Empty states for Academy
 - Collapsed sections (expandable)
 
 **Mobile+ (425-767px):**
+
 - Single column
 - Hamburger menu
 - Bottom navigation
@@ -1697,6 +1788,7 @@ State.tsx ← Empty states for Academy
 - Improved touch targets (48px minimum)
 
 **Tablet (768-1023px):**
+
 - Sidebar (collapsed/icons) + main content
 - Two-column layout possible
 - Table view available
@@ -1704,6 +1796,7 @@ State.tsx ← Empty states for Academy
 - Sidebar toggleable
 
 **Desktop (1024px+):**
+
 - Sidebar (expanded) + main content
 - Two-three column layouts
 - Table view with horizontal scroll if needed
@@ -1713,16 +1806,19 @@ State.tsx ← Empty states for Academy
 ### 15.3 Component-Level Responsiveness
 
 **Dashboard cards:**
+
 - Mobile: Stack vertically
 - Tablet: 2-column grid
 - Desktop: 3-column or 2-column + sidebar
 
 **Learner roster:**
+
 - Mobile: Card layout (one per card)
 - Tablet: Table with fewer columns (name, status, action)
 - Desktop: Full table (name, progress, status, engagement, action)
 
 **Session monitor:**
+
 - Mobile: Live progress + single learner list (scrollable)
 - Desktop: Progress + learner list side-by-side
 
@@ -1737,11 +1833,11 @@ State.tsx ← Empty states for Academy
 ### 15.5 Responsive Typography
 
 | Element | Mobile | Tablet | Desktop |
-|---------|--------|--------|---------|
-| H1 | 24px | 26px | 28px |
-| H2 | 18px | 19px | 20px |
-| Label | 11px | 12px | 12px |
-| Body | 14px | 15px | 16px |
+| ------- | ------ | ------ | ------- |
+| H1      | 24px   | 26px   | 28px    |
+| H2      | 18px   | 19px   | 20px    |
+| Label   | 11px   | 12px   | 12px    |
+| Body    | 14px   | 15px   | 16px    |
 
 ---
 
@@ -1750,6 +1846,7 @@ State.tsx ← Empty states for Academy
 ### 16.1 WCAG 2.2 AA Target
 
 Academy maintains all TATI Junior/Parent accessibility standards:
+
 - ✅ Color contrast (4.5:1 normal text, 3:1 large text)
 - ✅ Focus indicators (2px, high contrast)
 - ✅ Keyboard navigation (Tab, Enter, Escape)
@@ -1760,6 +1857,7 @@ Academy maintains all TATI Junior/Parent accessibility standards:
 ### 16.2 Semantic HTML
 
 **Use:**
+
 - `<button>` for buttons
 - `<a>` for links
 - `<h1-h6>` for headings
@@ -1770,6 +1868,7 @@ Academy maintains all TATI Junior/Parent accessibility standards:
 - `<main>` for main content
 
 **Avoid:**
+
 - ❌ `<div>` for buttons (use `<button>`)
 - ❌ `<div>` for links (use `<a>`)
 - ❌ Skipped heading levels (h1 → h3)
@@ -1791,11 +1890,13 @@ Academy maintains all TATI Junior/Parent accessibility standards:
 ### 16.4 Focus Management
 
 **Focus ring:**
+
 - 2px outline, high-contrast color
 - Visible on all interactive elements
 - Rounded to match component shape
 
 **Focus states should:**
+
 - ✅ Be visible and high-contrast
 - ✅ Not be removed without replacement
 - ✅ Use theme's focus ring (already defined in TATI)
@@ -1805,11 +1906,13 @@ Academy maintains all TATI Junior/Parent accessibility standards:
 **Status should NOT be conveyed by color alone:**
 
 ❌ Bad:
+
 ```
 Red = Error, Green = Success
 ```
 
 ✅ Good:
+
 ```
 Icon + Color + Text:
 ❌ "Error" in red
@@ -1820,10 +1923,12 @@ Icon + Color + Text:
 ### 16.6 Form Accessibility
 
 **Labels:**
+
 - Each input must have associated `<label>`
 - For checkboxes/radios, label wraps input
 
 **Error messages:**
+
 - Associated with form field via aria-describedby
 - Text, not just color
 - Clear and actionable
@@ -1831,11 +1936,13 @@ Icon + Color + Text:
 ### 16.7 Screen Reader Support
 
 **Use ARIA labels where content is visual-only:**
+
 - Status badges: `aria-label="At-risk learner"`
 - Icons without text: `aria-label="Sort ascending"`
 - Live regions: `aria-live="polite"` for dynamic updates (session monitor)
 
 **Example:**
+
 ```jsx
 <button aria-label="Start session">
   <PlayIcon /> Start
@@ -1845,13 +1952,18 @@ Icon + Color + Text:
 ### 16.8 Motion Accessibility
 
 **Respect prefers-reduced-motion:**
+
 ```css
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 ```
 
 **Academy animations should:**
+
 - ✅ Be applied via CSS class
 - ✅ Respect motion preference
 - ✅ Not distract from core content
@@ -1867,7 +1979,7 @@ Icon + Color + Text:
   facilitatorId: string;
   facilitatorName: string;
   schoolName: string;
-  
+
   todayActivity?: {
     itemId: string;
     itemName: string;
@@ -1877,7 +1989,7 @@ Icon + Color + Text:
     duration: number; // minutes
     scheduledTime?: timestamp;
   };
-  
+
   cohorts: [
     {
       cohortId: string;
@@ -1890,7 +2002,7 @@ Icon + Color + Text:
       status: "not-started" | "in-progress" | "completed";
     }
   ];
-  
+
   atRiskLearners: [
     {
       childId: string;
@@ -1913,13 +2025,13 @@ Icon + Color + Text:
   facilitatorName: string;
   learnerCount: number;
   startDate: timestamp;
-  
+
   progress: {
     completed: number;
     total: number;
     percentage: number;
   };
-  
+
   engagement: {
     present: number;
     total: number;
@@ -1927,7 +2039,7 @@ Icon + Color + Text:
     sessionsHeld: number;
     avgTimePerSession: number; // minutes
   };
-  
+
   competencies: [
     {
       id: string;
@@ -1937,9 +2049,9 @@ Icon + Color + Text:
       description: string;
     }
   ];
-  
+
   atRiskCount: number;
-  
+
   learners: [
     {
       childId: string;
@@ -1950,7 +2062,7 @@ Icon + Color + Text:
       lastActivityTime: timestamp;
     }
   ];
-  
+
   nextSessions: [
     {
       sessionId: string;
@@ -1974,9 +2086,9 @@ Icon + Color + Text:
   cohortId: string;
   cohortName: string;
   enrollmentDate: timestamp;
-  
+
   status: "on-track" | "behind" | "stuck";
-  
+
   journey: {
     currentActivity: string;
     daysInJourney: number;
@@ -1985,7 +2097,7 @@ Icon + Color + Text:
     completedActivities: number;
     totalActivities: number;
   };
-  
+
   competencies: [
     {
       id: string;
@@ -1996,7 +2108,7 @@ Icon + Color + Text:
       evidence: [{ itemId: string; score: number }];
     }
   ];
-  
+
   assessments: [
     {
       assessmentId: string;
@@ -2007,7 +2119,7 @@ Icon + Color + Text:
       responses?: object; // if facilitator needs to review
     }
   ];
-  
+
   recentDecisions: [
     {
       scenarioId: string;
@@ -2019,7 +2131,7 @@ Icon + Color + Text:
       timestamp: timestamp;
     }
   ];
-  
+
   facilitatorNotes?: {
     text: string;
     updatedAt: timestamp;
@@ -2038,10 +2150,10 @@ Icon + Color + Text:
   activityId: string;
   activityName: string;
   activityType: "scenario" | "lesson" | "assessment";
-  
+
   startedAt: timestamp;
   elapsedMinutes: number;
-  
+
   participation: {
     total: number;
     submitted: number;
@@ -2049,7 +2161,7 @@ Icon + Color + Text:
     notStarted: number;
     percentage: number;
   };
-  
+
   learnerStatus: [
     {
       childId: string;
@@ -2060,7 +2172,7 @@ Icon + Color + Text:
       elapsedSeconds?: number;
     }
   ];
-  
+
   interimResults?: {
     choiceDistribution?: [
       { choiceId: string; choiceName: string; count: number; percentage: number }
@@ -2079,7 +2191,10 @@ Icon + Color + Text:
 ```graphql
 # Get dashboard data
 query GetFacilitatorDashboard($uid: String!) {
-  facilitator(uid: $uid) { name, school }
+  facilitator(uid: $uid) {
+    name
+    school
+  }
   todayActivity(facilitatorId: $uid)
   myCohortsOverview(facilitatorId: $uid)
   atRiskLearners(facilitatorId: $uid)
@@ -2117,6 +2232,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.1:** Academy Authentication + Shell  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/login` route
 - Academy shell layout
 - Sidebar navigation
@@ -2126,6 +2242,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.2:** Dashboard + My Cohorts  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/dashboard` screen
 - `/academy/cohorts` screen
 - Dashboard cards
@@ -2135,6 +2252,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.3:** Cohort Overview + Roster  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/cohorts/{cohortId}` screen
 - Cohort header + metrics
 - Learner roster (table + filtering)
@@ -2144,6 +2262,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.4:** Learner Profile + Details  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/cohorts/{cohortId}/learner/{childId}` screen
 - Journey progress timeline
 - Competencies display
@@ -2153,6 +2272,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.5:** Curriculum + Session Guide  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/cohorts/{cohortId}/curriculum` screen
 - Activity sequence
 - `/academy/curriculum/activity/{itemId}` session guide
@@ -2162,6 +2282,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.6:** Active Session + Monitoring  
 **Duration:** 3-4 days  
 **Deliverables:**
+
 - `/academy/cohorts/{cohortId}/session/active/{sessionId}` screen
 - Real-time participation monitoring
 - Interim results display
@@ -2171,6 +2292,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.7:** Session Debrief + Reflection  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/cohorts/{cohortId}/session/debrief/{sessionId}` screen
 - Session outcomes summary
 - Learner follow-up indicators
@@ -2180,6 +2302,7 @@ query GetSessionProgress($sessionId: String!) {
 **Phase H3.8:** Profile + QA/Security/Accessibility  
 **Duration:** 2-3 days  
 **Deliverables:**
+
 - `/academy/profile` screen
 - End-to-end QA (all flows)
 - Security audit (Firestore rules)
@@ -2209,6 +2332,7 @@ H3.8 (QA + Polish) [requires all above]
 ```
 
 **Parallelizable:**
+
 - H3.4 (Learner) and H3.5 (Curriculum) can overlap
 - Component extraction can happen in parallel
 
@@ -2331,6 +2455,7 @@ H3.8 (QA + Polish) [requires all above]
 **❌ NOT IN MVP:**
 
 **Advanced Features:**
+
 - ❌ Lesson authoring interface
 - ❌ Curriculum builder / drag-and-drop
 - ❌ Advanced analytics dashboard
@@ -2343,6 +2468,7 @@ H3.8 (QA + Polish) [requires all above]
 - ❌ Multi-school view for admin
 
 **Compliance Features:**
+
 - ❌ GDPR data deletion tools
 - ❌ Data export per child
 - ❌ Audit logs for facilitator
@@ -2350,6 +2476,7 @@ H3.8 (QA + Polish) [requires all above]
 - ❌ Advanced role-based access control
 
 **Surveillance:**
+
 - ❌ Keystroke logging
 - ❌ Screen recording
 - ❌ Webcam monitoring
@@ -2357,12 +2484,14 @@ H3.8 (QA + Polish) [requires all above]
 - ❌ Biometric data
 
 **Grading:**
+
 - ❌ Grades or scoring by facilitator
 - ❌ Pass/fail determinations
 - ❌ Child rankings or comparisons
 - ❌ Performance metrics for facilitators
 
 **LMS Features:**
+
 - ❌ Discussion forums
 - ❌ Peer collaboration tools
 - ❌ Threaded comments
@@ -2371,6 +2500,7 @@ H3.8 (QA + Polish) [requires all above]
 - ❌ Assignment submission
 
 **Teen Experience:**
+
 - ❌ Teen-specific routes
 - ❌ Teen dashboard
 - ❌ Teen progress tracking
@@ -2381,7 +2511,7 @@ H3.8 (QA + Polish) [requires all above]
 **Privacy:** No features that enable surveillance or family data exposure  
 **Scope:** 9-11 screens is ambitious; authoring/reporting adds complexity  
 **Pilot:** TATI is testing a hypothesis, not building a full LMS  
-**Timeline:** 3-4 weeks doesn't allow for advanced features  
+**Timeline:** 3-4 weeks doesn't allow for advanced features
 
 ---
 
@@ -2390,6 +2520,7 @@ H3.8 (QA + Polish) [requires all above]
 ### 21.1 External Dependencies
 
 **Required:**
+
 - ✅ Supabase Auth (parent + facilitator login)
 - ✅ Firebase Auth (child identity)
 - ✅ Firestore (learner data, cohorts, sessions)
@@ -2399,6 +2530,7 @@ H3.8 (QA + Polish) [requires all above]
 - ✅ TATI design system (components)
 
 **NOT required for MVP:**
+
 - ❌ WebSocket infrastructure (polling sufficient)
 - ❌ Background jobs (sync data manually)
 - ❌ Email service (later phases)
@@ -2407,6 +2539,7 @@ H3.8 (QA + Polish) [requires all above]
 ### 21.2 Data Assumptions
 
 **Assumed available by H3.1:**
+
 - ✅ academyOrganizations, cohorts, enrollments collections in Firestore
 - ✅ Facilitator role in user_roles table
 - ✅ Cohort assignments (facilitatorUids array in cohort doc)
@@ -2414,6 +2547,7 @@ H3.8 (QA + Polish) [requires all above]
 - ✅ Facilitator assignments (faciliatatorUids in child profile)
 
 **Assumed NOT available (use defaults):**
+
 - ❌ Student IDs or enrollment numbers (use TATI ID)
 - ❌ Grade distribution data (show competencies, not grades)
 - ❌ Attendance history (start fresh with sessions)
@@ -2421,12 +2555,14 @@ H3.8 (QA + Polish) [requires all above]
 ### 21.3 Technical Assumptions
 
 **Assumed working:**
+
 - ✅ Firestore rules support facilitator access
 - ✅ Child session model unchanged (G6.1 intact)
 - ✅ Scenario integrity verification (G5.1 intact)
 - ✅ Parent privacy blocking (parentInsights blocked)
 
 **Polling strategy:**
+
 - 3-5 second refresh on session monitor (HTTP, not WebSocket)
 - Should not exceed Firestore read quota for MVP cohorts (< 100 learners)
 
@@ -2437,8 +2573,10 @@ H3.8 (QA + Polish) [requires all above]
 **Before H3.1 implementation, resolve:**
 
 ### Decision 1: Facilitator Account Provisioning
+
 **Question:** Self-service signup vs admin-only provisioning?  
 **Options:**
+
 - **A)** Self-service: Facilitator signs up independently
 - **B)** Admin-only: Admin invites facilitator + creates account
 
@@ -2450,8 +2588,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 2: Real-Time Monitoring
+
 **Question:** Real-time subscriptions (WebSocket) vs polling (HTTP)?  
 **Options:**
+
 - **A)** WebSocket subscriptions (instant updates, complex)
 - **B)** HTTP polling every 3-5s (simpler, slight latency)
 
@@ -2463,8 +2603,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 3: At-Risk Detection
+
 **Question:** Automatic algorithmic signals vs manual facilitator flagging?  
 **Options:**
+
 - **A)** Automatic: System flags "behind", "stuck", etc based on rules
 - **B)** Manual: Facilitator manually flags learners as needing support
 
@@ -2476,8 +2618,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 4: Facilitator Notes Format
+
 **Question:** Structured templates vs free-form text?  
 **Options:**
+
 - **A)** Structured: Checklists, predefined options (better analysis)
 - **B)** Free-form text: Open text field (more flexible)
 
@@ -2489,8 +2633,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 5: Parent Visibility of Facilitator
+
 **Question:** What can parents see about facilitator and sessions?  
 **Options:**
+
 - **A)** Facilitator name only (no session details)
 - **B)** Facilitator name + facilitator notes (full transparency)
 - **C)** No facilitator info (parent sees only child progress)
@@ -2503,8 +2649,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 6: Multi-Cohort Support
+
 **Question:** Can one facilitator manage 2+ cohorts?  
 **Options:**
+
 - **A)** Yes: Facilitator switches between cohorts (more code)
 - **B)** No: Each facilitator has 1 cohort (simpler)
 
@@ -2516,8 +2664,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 7: Session Guide Format
+
 **Question:** PDF vs markdown vs in-app interactive?  
 **Options:**
+
 - **A)** PDF: Downloadable, offline, printed
 - **B)** Markdown: In-app, easier to iterate, plain text
 - **C)** In-app interactive: Guided steps with checkboxes
@@ -2530,8 +2680,10 @@ H3.8 (QA + Polish) [requires all above]
 ---
 
 ### Decision 8: Cohort Duplication Across Years
+
 **Question:** Can "Grade 5A 2025" copy settings/enrollments from "Grade 5A 2024"?  
 **Options:**
+
 - **A)** Yes: Template/duplicate feature
 - **B)** No: Admin creates fresh cohort each year
 
@@ -2549,12 +2701,14 @@ Academy MVP is complete when:
 ### Functional Criteria
 
 **Authentication:**
+
 - ✅ Facilitator can login with email + password or Google
 - ✅ Child/parent cannot access /academy/*
 - ✅ Facilitator session persists across reloads
 - ✅ Logout works
 
 **Navigation:**
+
 - ✅ All 9 screens accessible
 - ✅ Breadcrumbs work
 - ✅ Back button works
@@ -2562,23 +2716,27 @@ Academy MVP is complete when:
 - ✅ Mobile hamburger menu works
 
 **Dashboard:**
+
 - ✅ Shows today's activity (if scheduled)
 - ✅ Shows assigned cohorts
 - ✅ Shows at-risk learners
 - ✅ [Start session] CTA works
 
 **Cohorts:**
+
 - ✅ Lists all assigned cohorts
 - ✅ Shows progress, engagement, at-risk count
 - ✅ Links to cohort overview
 
 **Cohort Overview:**
+
 - ✅ Shows all learners
 - ✅ Displays progress, competencies
 - ✅ Shows session schedule
 - ✅ Can filter/sort roster
 
 **Learner Profile:**
+
 - ✅ Shows journey progress
 - ✅ Shows competencies
 - ✅ Shows assessments
@@ -2586,11 +2744,13 @@ Academy MVP is complete when:
 - ✅ Facilitator can add notes
 
 **Curriculum:**
+
 - ✅ Lists all activities in order
 - ✅ Shows activity types, duration, objectives
 - ✅ Links to session guide
 
 **Session Guide:**
+
 - ✅ Shows learning objective
 - ✅ Shows facilitation steps
 - ✅ Shows materials needed
@@ -2598,12 +2758,14 @@ Academy MVP is complete when:
 - ✅ [Start session] button works
 
 **Active Session:**
+
 - ✅ Shows live participation (polling)
 - ✅ Interim results update
 - ✅ Learner status list works
 - ✅ [End session] button works
 
 **Session Debrief:**
+
 - ✅ Shows session outcomes
 - ✅ Shows learners needing follow-up
 - ✅ Facilitator can add reflection notes
@@ -2663,12 +2825,14 @@ Academy MVP is complete when:
 ### On Completed Phases
 
 **H0-H2.0 (Complete):**
+
 - ✅ TATI design system (used as-is)
 - ✅ Component library (reused)
 - ✅ Junior experience (unmodified)
 - ✅ Parent experience (unmodified)
 
 **H3.0.1 (Just Complete):**
+
 - ✅ Product & data contract (this is the specification)
 - ✅ Role/privacy model (defines authorization)
 - ✅ Firestore schema (defines data structures)
@@ -2676,16 +2840,19 @@ Academy MVP is complete when:
 ### On Parallel/Future Phases
 
 **Firebase/Firestore (Parallel):**
+
 - 🔲 academyOrganizations, cohorts collections must exist
 - 🔲 Facilitator firestore.rules must be in place
 - 🔲 Learner enrollment flow must work
 
 **Backend Functions (Parallel):**
+
 - 🔲 Facilitator role assignment
 - 🔲 Session recording (on child activity)
 - 🔲 Competency calculation (continuous)
 
 **Auth System (Parallel):**
+
 - 🔲 Facilitator login in Supabase
 - 🔲 Role assignment in user_roles table
 
@@ -2701,12 +2868,12 @@ Academy MVP is complete when:
 ✅ **Accessibility roadmap** (WCAG AA)  
 ✅ **Implementation sequence** (8 phases, 17-25 days)  
 ✅ **Test strategy** (auth, privacy, functional, UX, responsive, accessibility)  
-✅ **8 open decisions** for approval  
+✅ **8 open decisions** for approval
 
 ### What This Doesn't Include (Out of Scope for H3.1.0)
 
 - ❌ Component code
-- ❌ Route implementation  
+- ❌ Route implementation
 - ❌ Backend API modifications
 - ❌ Firestore rule changes
 - ❌ Database schema changes
@@ -2753,6 +2920,6 @@ Academy MVP is complete when:
 
 **Status:** ARCHITECTURE COMPLETE ✅  
 **Ready for:** Implementation (H3.1 onwards)  
-**Waiting for:** Approval + decision gate responses  
+**Waiting for:** Approval + decision gate responses
 
-*"Academy is not a dashboard. It's a facilitator support system."*
+_"Academy is not a dashboard. It's a facilitator support system."_

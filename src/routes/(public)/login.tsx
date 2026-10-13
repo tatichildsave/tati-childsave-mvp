@@ -74,7 +74,7 @@ function LoginPage() {
         // Create server session cookie with ID token
         const idToken = await userCredential.user.getIdToken();
         await createParentSessionFn({ data: { idToken } });
-        
+
         navigate({ to: "/parent", replace: true });
       }
     } catch (signInError) {
@@ -101,11 +101,11 @@ function LoginPage() {
 
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      
+
       // Create server session cookie with ID token
       const idToken = await result.user.getIdToken();
       await createParentSessionFn({ data: { idToken } });
-      
+
       navigate({ to: "/parent", replace: true });
     } catch (googleError) {
       const message = googleError instanceof Error ? googleError.message : "";

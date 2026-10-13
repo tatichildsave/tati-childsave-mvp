@@ -12,9 +12,11 @@
 TATI ChildSave currently uses **Supabase Authentication** for parents, facilitators, and legacy child login, with **Firebase/Firestore** for authorization and data. Firebase Authentication is **installed but dormant**.
 
 ### Key Finding
+
 Consolidating to **Firebase Authentication only** is **technically straightforward and materially simplifies** TATI's authentication stack. No real users exist to migrate, removing the primary migration risk.
 
 ### Prerequisites for Migration
+
 1. Firestore rules require zero changes (already expect Firebase UID format)
 2. auth-attacher middleware must be deleted (Firestore trusts Firebase Auth natively)
 3. Server-side authenticat identity bridge must be updated (trivial change)
@@ -22,6 +24,7 @@ Consolidating to **Firebase Authentication only** is **technically straightforwa
 5. Testing infrastructure supports Firebase Auth Emulator
 
 ### Why This Matters
+
 - **Current state**: Supabase → Firestore JWT bridge adds unnecessary complexity
 - **Target state**: Firebase UID → Firestore rules, native trust relationship
 - **Benefit**: Eliminated 3 environment variables, removed middleware, simplified provider detection
@@ -35,22 +38,23 @@ Consolidating to **Firebase Authentication only** is **technically straightforwa
 
 Supabase Authentication is used for **three distinct authentication paths**:
 
-| **User Type** | **Feature** | **File** | **Function** | **Classification** |
-|---|---|---|---|---|
-| **Parent (Adult)** | Email/password login | `src/routes/login.tsx:47` | `supabase.auth.signInWithPassword()` | **Authentication** |
-| **Parent (Adult)** | Email/password signup | `src/routes/signup.tsx:68` | `supabase.auth.signUp()` | **Authentication** |
-| **Parent (Adult)** | Google OAuth login | `src/routes/login.tsx:63` | Lovable integration (Supabase backed) | **Authentication + OAuth** |
-| **Parent (Adult)** | Session retrieval | `src/routes/_authenticated/route.tsx:9` | `supabase.auth.getUser()` | **Session Management** |
-| **Facilitator** | Email/password login | `src/routes/academy/login.tsx` | `supabase.auth.signInWithPassword()` | **Authentication** |
-| **Facilitator** | Logout | `src/lib/auth/facilitator-auth.functions.ts:106` | `supabase.auth.signOut()` | **Session Management** |
-| **Child (Legacy)** | TATI ID + PIN login | `src/lib/auth/child-auth.functions.ts` | Database queries only (not Supabase Auth) | **Authorization** |
+| **User Type**      | **Feature**           | **File**                                         | **Function**                              | **Classification**         |
+| ------------------ | --------------------- | ------------------------------------------------ | ----------------------------------------- | -------------------------- |
+| **Parent (Adult)** | Email/password login  | `src/routes/login.tsx:47`                        | `supabase.auth.signInWithPassword()`      | **Authentication**         |
+| **Parent (Adult)** | Email/password signup | `src/routes/signup.tsx:68`                       | `supabase.auth.signUp()`                  | **Authentication**         |
+| **Parent (Adult)** | Google OAuth login    | `src/routes/login.tsx:63`                        | Lovable integration (Supabase backed)     | **Authentication + OAuth** |
+| **Parent (Adult)** | Session retrieval     | `src/routes/_authenticated/route.tsx:9`          | `supabase.auth.getUser()`                 | **Session Management**     |
+| **Facilitator**    | Email/password login  | `src/routes/academy/login.tsx`                   | `supabase.auth.signInWithPassword()`      | **Authentication**         |
+| **Facilitator**    | Logout                | `src/lib/auth/facilitator-auth.functions.ts:106` | `supabase.auth.signOut()`                 | **Session Management**     |
+| **Child (Legacy)** | TATI ID + PIN login   | `src/lib/auth/child-auth.functions.ts`           | Database queries only (not Supabase Auth) | **Authorization**          |
 
 ## 1.2 Supabase Auth Endpoints Used
 
 ### Create Client
+
 - **File**: `src/integrations/supabase/client.ts:2`
 - **Import**: `createClient` from `@supabase/supabase-js` v2.116.0
-- **Configuration**: 
+- **Configuration**:
   - URL: `VITE_SUPABASE_URL` (production cloud instance)
   - API Key: `VITE_SUPABASE_PUBLISHABLE_KEY`
   - Session persistence: `localStorage` (browser)
@@ -81,6 +85,7 @@ supabase.auth.signOut()
 **File**: `src/integrations/supabase/auth-attacher.ts`  
 **Purpose**: Attach Supabase JWT to server function calls  
 **Mechanism**:
+
 1. Client calls `supabase.auth.getSession()`
 2. Extracts `session.access_token` (JWT)
 3. Adds to server function header: `Authorization: Bearer {access_token}`
@@ -90,30 +95,30 @@ supabase.auth.signOut()
 
 ## 1.4 Server-Side Supabase Usage
 
-| **File** | **Usage** | **Purpose** |
-|---|---|---|
-| `src/lib/auth/facilitator-auth.functions.ts` | `supabase.auth.getUser()`, `signInWithPassword()` | Facilitator authentication |
-| `src/lib/auth/roles.server.ts` | `supabaseAdmin` from client.server | Read/write user roles from `user_roles` table |
-| `src/lib/auth/child-session.server.ts` | `supabaseAdmin` | Load child profiles from `child_profiles` table |
-| `src/lib/analytics.ts` | `supabase` client | Analytics event tracking |
-| `src/lib/assessment/attempts.ts` | `supabase` client | Load assessment attempts |
-| `src/lib/progress/service.ts` | `supabase` client | Record learning progress |
-| `src/lib/scenario/session.ts` | `supabase` client | Save scenario session state |
-| `src/lib/gamification/achievements.ts` | `supabase` client | Load/save achievements |
+| **File**                                     | **Usage**                                         | **Purpose**                                     |
+| -------------------------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| `src/lib/auth/facilitator-auth.functions.ts` | `supabase.auth.getUser()`, `signInWithPassword()` | Facilitator authentication                      |
+| `src/lib/auth/roles.server.ts`               | `supabaseAdmin` from client.server                | Read/write user roles from `user_roles` table   |
+| `src/lib/auth/child-session.server.ts`       | `supabaseAdmin`                                   | Load child profiles from `child_profiles` table |
+| `src/lib/analytics.ts`                       | `supabase` client                                 | Analytics event tracking                        |
+| `src/lib/assessment/attempts.ts`             | `supabase` client                                 | Load assessment attempts                        |
+| `src/lib/progress/service.ts`                | `supabase` client                                 | Record learning progress                        |
+| `src/lib/scenario/session.ts`                | `supabase` client                                 | Save scenario session state                     |
+| `src/lib/gamification/achievements.ts`       | `supabase` client                                 | Load/save achievements                          |
 
 **Key Finding**: Server-side Supabase is used primarily for **data access** (Firestore's role), not authentication. This suggests a data repository layer, not a Supabase-specific requirement.
 
 ## 1.5 Classification Summary
 
-| **Classification** | **Count** | **Examples** |
-|---|---|---|
-| **Authentication** | 4 | login, signup, OAuth, logout |
-| **Session Management** | 3 | getSession, getUser, signOut |
-| **Authorization** | 1 | Role checks via Firestore |
-| **Database Access** | 8+ | Roles, profiles, progress, assessments |
-| **Middleware** | 1 | auth-attacher JWT bridge |
-| **JWT Handling** | 1 | Authorization header injection |
-| **Legacy/Unused** | 0 | None identified |
+| **Classification**     | **Count** | **Examples**                           |
+| ---------------------- | --------- | -------------------------------------- |
+| **Authentication**     | 4         | login, signup, OAuth, logout           |
+| **Session Management** | 3         | getSession, getUser, signOut           |
+| **Authorization**      | 1         | Role checks via Firestore              |
+| **Database Access**    | 8+        | Roles, profiles, progress, assessments |
+| **Middleware**         | 1         | auth-attacher JWT bridge               |
+| **JWT Handling**       | 1         | Authorization header injection         |
+| **Legacy/Unused**      | 0         | None identified                        |
 
 ---
 
@@ -136,17 +141,18 @@ export function getFirebaseAuth(): Auth | null {
 
 ### Where Firebase Auth Exists
 
-| **Location** | **Status** | **Purpose** |
-|---|---|---|
-| **Package**: `firebase v12.19.0` | ✅ Installed | Web SDK available |
-| **Admin SDK**: `firebase-admin v14.4.0` | ✅ Installed | Server-side operations |
-| **Client**: `src/integrations/firebase/client.ts` | ✅ Configured | Browser initialization |
-| **Emulator**: `127.0.0.1:9099` | ✅ Running | Local Auth testing |
-| **Tests**: Various `.test.ts` files | ✅ Partial use | Firebase Auth Emulator tests |
+| **Location**                                      | **Status**     | **Purpose**                  |
+| ------------------------------------------------- | -------------- | ---------------------------- |
+| **Package**: `firebase v12.19.0`                  | ✅ Installed   | Web SDK available            |
+| **Admin SDK**: `firebase-admin v14.4.0`           | ✅ Installed   | Server-side operations       |
+| **Client**: `src/integrations/firebase/client.ts` | ✅ Configured  | Browser initialization       |
+| **Emulator**: `127.0.0.1:9099`                    | ✅ Running     | Local Auth testing           |
+| **Tests**: Various `.test.ts` files               | ✅ Partial use | Firebase Auth Emulator tests |
 
 ### Where Firebase Auth is NOT Used
 
 ❌ **No calls to these functions exist in production code**:
+
 - `signInWithEmailAndPassword()`
 - `createUserWithEmailAndPassword()`
 - `onAuthStateChanged()`
@@ -158,11 +164,13 @@ export function getFirebaseAuth(): Auth | null {
 ### Where Firebase Auth EXISTS for Testing
 
 **Admin SDK Usage** (`src/lib/backend/firebase/admin.server.ts`):
+
 ```typescript
 export async function getFirebaseAdminAuth(): Auth;
 ```
 
 Used in:
+
 - `tests/firebase/admin.server.test.ts` — Firebase Admin SDK lazy initialization
 - `tests/firebase/child-auth.server.test.ts` — Child identity creation
 - `tests/firebase/firestore.rules.test.ts` — Firestore rule validation
@@ -171,12 +179,12 @@ Used in:
 
 Firebase is **actively used for Firestore** (not authentication):
 
-| **Component** | **Status** | **Purpose** |
-|---|---|---|
-| **Firestore Rules** | ✅ Active | Authorization enforcement |
-| **Data Storage** | ✅ Active | Users, families, schools, assessments, etc. |
-| **Request.auth.uid** | ✅ Active | Role checks use Supabase UID |
-| **Admin SDK** | ✅ Active | Server-side data operations |
+| **Component**        | **Status** | **Purpose**                                 |
+| -------------------- | ---------- | ------------------------------------------- |
+| **Firestore Rules**  | ✅ Active  | Authorization enforcement                   |
+| **Data Storage**     | ✅ Active  | Users, families, schools, assessments, etc. |
+| **Request.auth.uid** | ✅ Active  | Role checks use Supabase UID                |
+| **Admin SDK**        | ✅ Active  | Server-side data operations                 |
 
 ## 2.3 Provider Abstraction Layer
 
@@ -184,25 +192,26 @@ Firebase is **actively used for Firestore** (not authentication):
 
 ```typescript
 export function getActiveBackendProviderName(): BackendProviderName {
-  return "supabase";  // Hard-coded
+  return "supabase"; // Hard-coded
 }
 ```
 
 **Finding**: Backend provider pattern exists but Supabase is hard-coded. Switching would require:
+
 1. Change return value to `"firebase"`
 2. Register Firebase provider with `registerBackendProvider()`
 3. Implement Firebase service implementations
 
 ## 2.4 Firebase Auth Status Conclusion
 
-| **Aspect** | **Status** | **Implication** |
-|---|---|---|
-| SDK Installed | ✅ Yes | No new dependencies needed |
-| Client Configured | ✅ Yes | Minimal config changes |
-| Emulator Available | ✅ Yes | Testing can begin immediately |
-| Active Use | ❌ No | Can be enabled without breaking changes |
-| Tests Exist | ✅ Partial | Firebase tests exist but aren't run in CI |
-| Production Path | ❌ Never used | Clean slate for implementation |
+| **Aspect**         | **Status**    | **Implication**                           |
+| ------------------ | ------------- | ----------------------------------------- |
+| SDK Installed      | ✅ Yes        | No new dependencies needed                |
+| Client Configured  | ✅ Yes        | Minimal config changes                    |
+| Emulator Available | ✅ Yes        | Testing can begin immediately             |
+| Active Use         | ❌ No         | Can be enabled without breaking changes   |
+| Tests Exist        | ✅ Partial    | Firebase tests exist but aren't run in CI |
+| Production Path    | ❌ Never used | Clean slate for implementation            |
 
 ---
 
@@ -230,17 +239,18 @@ Firestore /users/{uid}
 
 Every Firestore document that references user identity uses the Supabase UID:
 
-| **Document Path** | **UID Stored** | **Purpose** | **Owner Check** |
-|---|---|---|---|
-| `/users/{uid}` | Direct key | Profile + roles | `request.auth.uid == uid` |
-| `/schools/{schoolId}/admins/{uid}` | Direct key | School admin assignment | `request.auth.uid in admins` |
-| `/families/{familyId}` | `createdBy` field | Family ownership | `request.resource.data.createdBy == request.auth.uid` |
-| `/families/{familyId}/members/{uid}` | Direct key | Family member role | `request.auth.uid in members` |
-| `/families/{familyId}/children/{childId}` | `createdBy` field | Child ownership | Parent-created |
+| **Document Path**                         | **UID Stored**    | **Purpose**             | **Owner Check**                                       |
+| ----------------------------------------- | ----------------- | ----------------------- | ----------------------------------------------------- |
+| `/users/{uid}`                            | Direct key        | Profile + roles         | `request.auth.uid == uid`                             |
+| `/schools/{schoolId}/admins/{uid}`        | Direct key        | School admin assignment | `request.auth.uid in admins`                          |
+| `/families/{familyId}`                    | `createdBy` field | Family ownership        | `request.resource.data.createdBy == request.auth.uid` |
+| `/families/{familyId}/members/{uid}`      | Direct key        | Family member role      | `request.auth.uid in members`                         |
+| `/families/{familyId}/children/{childId}` | `createdBy` field | Child ownership         | Parent-created                                        |
 
 ### Role Storage Locations
 
 **Firestore** (Primary authority):
+
 ```typescript
 // /users/{uid}
 {
@@ -256,6 +266,7 @@ Every Firestore document that references user identity uses the Supabase UID:
 ```
 
 **Supabase** (Deprecated, being phased out):
+
 ```sql
 -- user_roles table
 user_id | role
@@ -277,7 +288,7 @@ function userDoc() {
 }
 
 function isSchoolAdmin(schoolId) {
-  return signedIn() && 
+  return signedIn() &&
     exists(/databases/$(database)/documents/schools/$(schoolId)/admins/$(request.auth.uid));
 }
 ```
@@ -317,6 +328,7 @@ ADULT IDENTITY                    CHILD IDENTITY
 ```
 
 **Finding**: Child authentication can remain Supabase-based during Firebase Auth migration. They use:
+
 - TATI ID (child_profiles.tati_id) — unique learner identifier
 - PIN (child_credentials.pin_hash) — one-time session token
 - Session cookie (tati_child_session) — browser storage
@@ -324,11 +336,13 @@ ADULT IDENTITY                    CHILD IDENTITY
 ## 3.5 Identity Model Impact of Migration
 
 ### Changes Required
+
 1. ✅ Firestore rules require **no changes** — they check `request.auth.uid` and it will come from Firebase Auth instead
 2. ✅ Document structure requires **no changes** — `/users/{uid}` will use Firebase UID instead of Supabase UID
 3. ✅ Ownership enforcement requires **no changes** — `createdBy` field comparison remains identical
 
 ### What Must Change
+
 1. ❌ All existing Supabase UID references in `/users/{uid}` documents must map to new Firebase UID
    - **Mitigation**: No users exist in production; emulator can be reset
 2. ❌ Role documents must be recreated with Firebase UID as key
@@ -339,15 +353,17 @@ ADULT IDENTITY                    CHILD IDENTITY
 ### Server-Side Identity Bridge
 
 Current implementation (`src/integrations/supabase/auth-attacher.ts`):
+
 ```typescript
 const { data } = await supabase.auth.getSession();
-const token = data.session?.access_token;  // Supabase JWT
+const token = data.session?.access_token; // Supabase JWT
 return next({
   headers: token ? { Authorization: `Bearer ${token}` } : {},
 });
 ```
 
 After migration:
+
 ```typescript
 // Delete auth-attacher entirely
 // Firestore automatically trusts Firebase Auth
@@ -365,25 +381,27 @@ After migration:
 
 ### Functions Using request.auth
 
-| **Function** | **Usage** | **Supabase Specific?** | **Must Change?** |
-|---|---|---|---|
-| `signedIn()` | `request.auth != null` | ❌ No | ✅ No — works with Firebase Auth |
-| `userDoc()` | `get(/users/$(request.auth.uid))` | ❌ No — just uses UID | ✅ No |
-| `hasRole(role)` | Checks `userDoc().roles` array | ❌ No | ✅ No |
-| `isAdmin()` | Calls `hasRole('admin')` | ❌ No | ✅ No |
-| `isSchoolAdmin(schoolId)` | `exists(/schools/{schoolId}/admins/$(request.auth.uid))` | ❌ No — just UID | ✅ No |
-| `canAccessSchool()` | Calls `isAdmin()` or `isSchoolAdmin()` | ❌ No | ✅ No |
+| **Function**              | **Usage**                                                | **Supabase Specific?** | **Must Change?**                 |
+| ------------------------- | -------------------------------------------------------- | ---------------------- | -------------------------------- |
+| `signedIn()`              | `request.auth != null`                                   | ❌ No                  | ✅ No — works with Firebase Auth |
+| `userDoc()`               | `get(/users/$(request.auth.uid))`                        | ❌ No — just uses UID  | ✅ No                            |
+| `hasRole(role)`           | Checks `userDoc().roles` array                           | ❌ No                  | ✅ No                            |
+| `isAdmin()`               | Calls `hasRole('admin')`                                 | ❌ No                  | ✅ No                            |
+| `isSchoolAdmin(schoolId)` | `exists(/schools/{schoolId}/admins/$(request.auth.uid))` | ❌ No — just UID       | ✅ No                            |
+| `canAccessSchool()`       | Calls `isAdmin()` or `isSchoolAdmin()`                   | ❌ No                  | ✅ No                            |
 
 ### Critical Finding: No Supabase-Specific Claims Used
 
 The rules **never check**:
+
 - ✅ JWT `iss` (issuer) claim
-- ✅ JWT `sub` (subject) claim  
+- ✅ JWT `sub` (subject) claim
 - ✅ Supabase-specific custom claims
 - ✅ Email verification status from Supabase
 - ✅ OAuth provider information
 
 **Instead, rules rely on**:
+
 - `request.auth.uid` — Works identically with Firebase Auth
 - Document structure — Unchanged with Firebase Auth
 - Role array in `/users/{uid}` — Unchanged with Firebase Auth
@@ -391,6 +409,7 @@ The rules **never check**:
 ## 4.2 Request.auth.uid Guarantee
 
 Firestore automatically populates `request.auth.uid` from:
+
 - **With Supabase JWT**: `sub` claim (Supabase UUID)
 - **With Firebase Auth**: Firebase UID
 
@@ -398,25 +417,25 @@ Firestore automatically populates `request.auth.uid` from:
 
 ## 4.3 Collections and Subcollections Using auth
 
-| **Path** | **Auth Check** | **Firestore Rule** | **Firebase Compatible?** |
-|---|---|---|---|
-| `/users/{uid}` | Read by self or admin | `request.auth.uid == uid \|\| isAdmin()` | ✅ Yes |
-| `/families/{familyId}` | Read by member or admin | `isActiveFamilyMember() \|\| isAdmin()` | ✅ Yes |
-| `/schools/{schoolId}` | Read by school admin or platform admin | `canAccessSchool(schoolId)` | ✅ Yes |
-| `/schools/{schoolId}/admins/{uid}` | Check for admin existence | `exists(/schools/.../admins/$(request.auth.uid))` | ✅ Yes |
-| `/families/{familyId}/members/{uid}` | Read by member or admin | `isActiveFamilyMember()` | ✅ Yes |
-| `/families/{familyId}/children/{childId}` | Complex access rules | Multiple role checks | ✅ Yes |
+| **Path**                                  | **Auth Check**                         | **Firestore Rule**                                | **Firebase Compatible?** |
+| ----------------------------------------- | -------------------------------------- | ------------------------------------------------- | ------------------------ |
+| `/users/{uid}`                            | Read by self or admin                  | `request.auth.uid == uid \|\| isAdmin()`          | ✅ Yes                   |
+| `/families/{familyId}`                    | Read by member or admin                | `isActiveFamilyMember() \|\| isAdmin()`           | ✅ Yes                   |
+| `/schools/{schoolId}`                     | Read by school admin or platform admin | `canAccessSchool(schoolId)`                       | ✅ Yes                   |
+| `/schools/{schoolId}/admins/{uid}`        | Check for admin existence              | `exists(/schools/.../admins/$(request.auth.uid))` | ✅ Yes                   |
+| `/families/{familyId}/members/{uid}`      | Read by member or admin                | `isActiveFamilyMember()`                          | ✅ Yes                   |
+| `/families/{familyId}/children/{childId}` | Complex access rules                   | Multiple role checks                              | ✅ Yes                   |
 
 ## 4.4 Summary: Firestore Rules Migration Complexity
 
-| **Aspect** | **Complexity** | **Effort** |
-|---|---|---|
-| Rule logic changes | ✅ **Zero** | 0 hours |
-| Rule deployment | ✅ **Zero** | 0 hours |
-| Collection structure changes | ✅ **Zero** | 0 hours |
-| Document schema changes | ✅ **Zero** | 0 hours |
-| UID format conversion | ❌ **High** (data migration) | 2-4 hours |
-| Access control validation | ✅ **Minimal** | 1-2 hours testing |
+| **Aspect**                   | **Complexity**               | **Effort**        |
+| ---------------------------- | ---------------------------- | ----------------- |
+| Rule logic changes           | ✅ **Zero**                  | 0 hours           |
+| Rule deployment              | ✅ **Zero**                  | 0 hours           |
+| Collection structure changes | ✅ **Zero**                  | 0 hours           |
+| Document schema changes      | ✅ **Zero**                  | 0 hours           |
+| UID format conversion        | ❌ **High** (data migration) | 2-4 hours         |
+| Access control validation    | ✅ **Minimal**               | 1-2 hours testing |
 
 **Conclusion**: Firestore rules are **authentication-agnostic**. They work with any provider that populates `request.auth.uid`.
 
@@ -455,6 +474,7 @@ export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
 ### What This Does
 
 The middleware bridges the browser session (Supabase localStorage) to server functions (which call Firestore). Without it:
+
 - Server functions wouldn't know who the client is
 - Firestore wouldn't authenticate the request
 - Authorization rules couldn't evaluate `request.auth.uid`
@@ -469,6 +489,7 @@ The middleware bridges the browser session (Supabase localStorage) to server fun
 ```
 
 **Why**:
+
 - Firebase SDK automatically attaches `Authorization: Bearer` header with ID token
 - Firestore recognizes Firebase UID natively (no OIDC needed)
 - No custom middleware required
@@ -476,39 +497,42 @@ The middleware bridges the browser session (Supabase localStorage) to server fun
 ## 5.3 Server Functions Using the Bridge
 
 All server functions receive authenticated identity via:
+
 1. TanStack Start's `server$()` wrapper
 2. `getUser()` or equivalent to retrieve context
 3. Firestore queries with implicit auth
 
 **Functions that depend on this middleware**:
 
-| **File** | **Function** | **Auth Type** |
-|---|---|---|
-| `src/lib/auth/facilitator-auth.functions.ts` | `checkFacilitatorStatus()` | Firestore query with auth |
-| `src/lib/academy/school-data.ts` | `createSchool()`, `getSchool()` | Firestore with auth |
-| `src/lib/family.ts` | `ensureFamily()`, `getFamilyChildren()` | Firestore with auth |
-| `src/lib/progress/service.ts` | `recordProgress()` | Firestore with auth |
-| `src/lib/scenario/session.ts` | `loadSession()`, `saveSession()` | Firestore with auth |
-| `src/lib/assessment/attempts.ts` | Assessment queries | Firestore with auth |
+| **File**                                     | **Function**                            | **Auth Type**             |
+| -------------------------------------------- | --------------------------------------- | ------------------------- |
+| `src/lib/auth/facilitator-auth.functions.ts` | `checkFacilitatorStatus()`              | Firestore query with auth |
+| `src/lib/academy/school-data.ts`             | `createSchool()`, `getSchool()`         | Firestore with auth       |
+| `src/lib/family.ts`                          | `ensureFamily()`, `getFamilyChildren()` | Firestore with auth       |
+| `src/lib/progress/service.ts`                | `recordProgress()`                      | Firestore with auth       |
+| `src/lib/scenario/session.ts`                | `loadSession()`, `saveSession()`        | Firestore with auth       |
+| `src/lib/assessment/attempts.ts`             | Assessment queries                      | Firestore with auth       |
 
 ## 5.4 Migration Path
 
 ### Step 1: Remove auth-attacher
+
 ```typescript
 // src/start.ts BEFORE
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],  // ← Delete this
+  functionMiddleware: [attachSupabaseAuth], // ← Delete this
   // ...
 }));
 
 // AFTER
 export const startInstance = createStart(() => ({
-  functionMiddleware: [],  // No middleware needed
+  functionMiddleware: [], // No middleware needed
   // ...
 }));
 ```
 
 ### Step 2: Firebase Auth Setup (Already Done)
+
 ```typescript
 // src/integrations/firebase/client.ts (already configured)
 export function getFirebaseAuth(): Auth | null {
@@ -517,17 +541,18 @@ export function getFirebaseAuth(): Auth | null {
 ```
 
 ### Step 3: Firestore Trust (Already Set Up)
+
 Firestore automatically trusts Firebase Auth for the project. No configuration needed.
 
 ## 5.5 Complexity Assessment
 
-| **Component** | **Changes Needed** | **Complexity** |
-|---|---|---|
-| `auth-attacher.ts` | **Delete file** | ✅ Trivial |
-| `start.ts` | Remove middleware registration | ✅ Trivial |
-| Firestore rules | None | ✅ Zero |
-| Server functions | None | ✅ Zero |
-| Firebase SDK | Already configured | ✅ Zero |
+| **Component**      | **Changes Needed**             | **Complexity** |
+| ------------------ | ------------------------------ | -------------- |
+| `auth-attacher.ts` | **Delete file**                | ✅ Trivial     |
+| `start.ts`         | Remove middleware registration | ✅ Trivial     |
+| Firestore rules    | None                           | ✅ Zero        |
+| Server functions   | None                           | ✅ Zero        |
+| Firebase SDK       | Already configured             | ✅ Zero        |
 
 **Total Middleware Effort**: **15 minutes**
 
@@ -538,6 +563,7 @@ Firestore automatically trusts Firebase Auth for the project. No configuration n
 ## 6.1 Parent Authentication Flow
 
 ### Current (Supabase)
+
 ```
 Parent → /signup
    ↓
@@ -553,6 +579,7 @@ Session in localStorage + /users/{supabase-uid} created
 ```
 
 ### Proposed (Firebase)
+
 ```
 Parent → /signup
    ↓
@@ -567,7 +594,8 @@ Session in localStorage + /users/{firebase-uid} created
 → /parent dashboard
 ```
 
-**Changes**: 
+**Changes**:
+
 - `supabase.auth.signUp()` → `createUserWithEmailAndPassword()`
 - No middleware changes (auth-attacher deleted)
 - Firestore rules unchanged
@@ -575,6 +603,7 @@ Session in localStorage + /users/{firebase-uid} created
 ## 6.2 Facilitator Authentication Flow
 
 ### Current (Supabase + Firestore)
+
 ```
 Facilitator → /academy/login
    ↓
@@ -594,6 +623,7 @@ If not: → Error
 ```
 
 ### Proposed (Firebase + Firestore)
+
 ```
 Facilitator → /academy/login
    ↓
@@ -613,6 +643,7 @@ If not: → Error
 ```
 
 **Changes**:
+
 - `supabase.auth.signInWithPassword()` → `signInWithEmailAndPassword()`
 - `user.id` → `user.uid` in callback
 - Role check unchanged
@@ -620,6 +651,7 @@ If not: → Error
 ## 6.3 School Administrator Flow
 
 ### Current (Supabase + Firestore + Lovable)
+
 ```
 Admin → /academy/admin/schools
    ↓
@@ -635,6 +667,7 @@ Server function: getAllSchools()
 ```
 
 ### Proposed (Firebase + Firestore)
+
 ```
 Admin → /academy/admin/schools
    ↓
@@ -654,6 +687,7 @@ Server function: getAllSchools()
 ## 6.4 Child Authentication Flow
 
 ### Current (Supabase TATI ID + PIN)
+
 ```
 Child → /child
    ↓
@@ -670,6 +704,7 @@ Set session cookie: tati_child_session
 ```
 
 **Status**: **NOT changing** — Child authentication remains Supabase-based because:
+
 1. Child accounts don't exist in adult authentication (no email/password)
 2. TATI ID + PIN is custom application logic (not auth provider concern)
 3. Separate session mechanism (cookies, not browser localStorage)
@@ -680,6 +715,7 @@ Set session cookie: tati_child_session
 ## 6.5 OAuth (Google) Flow
 
 ### Current (Lovable + Supabase)
+
 ```
 Parent → /login → "Sign in with Google"
    ↓
@@ -693,6 +729,7 @@ Session + /users/{supabase-uid} created
 ```
 
 ### Proposed (Firebase + Google)
+
 ```
 Parent → /login → "Sign in with Google"
    ↓
@@ -710,6 +747,7 @@ Session + /users/{firebase-uid} created
 ## 6.6 Password Reset Flow
 
 ### Current (Supabase)
+
 ```
 Parent → /login → "Forgot password?"
    ↓
@@ -729,6 +767,7 @@ Password updated in Supabase
 ```
 
 ### Proposed (Firebase)
+
 ```
 Parent → /login → "Forgot password?"
    ↓
@@ -755,37 +794,38 @@ Password updated in Firebase
 
 ## 7.1 Feature Migration Matrix
 
-| **Current Supabase Capability** | **Firebase Replacement** | **Files Affected** | **Complexity** | **Breaking Change?** |
-|---|---|---|---|---|
-| Email/password signup | `createUserWithEmailAndPassword()` | `src/routes/signup.tsx` | ✅ Trivial | ❌ No (same UX) |
-| Email/password login | `signInWithEmailAndPassword()` | `src/routes/login.tsx`, `src/routes/academy/login.tsx` | ✅ Trivial | ❌ No (same UX) |
-| Google OAuth | `signInWithPopup(auth, GoogleAuthProvider)` | `src/routes/login.tsx`, `src/routes/signup.tsx` | ✅ Low | ❌ No (same UX) |
-| Session management | `onAuthStateChanged()` listener | `src/routes/_authenticated/route.tsx` | ✅ Low | ❌ No (same behavior) |
-| Get current user | `getAuth().currentUser` | All authenticated routes | ✅ Low | ❌ No (same behavior) |
-| Logout | `signOut(auth)` | `src/lib/auth/facilitator-auth.functions.ts` | ✅ Trivial | ❌ No (same UX) |
-| Password reset | `sendPasswordResetEmail(auth, email)` | **Not yet implemented** | ✅ Low | ✅ New feature |
-| Email verification | `sendEmailVerification(user)` | **Not yet implemented** | ✅ Low | ✅ New feature |
-| JWT to server | Automatic (SDK handles) | Delete `auth-attacher.ts` | ✅ Trivial | ❌ No (same result) |
-| UID identity | Firebase UID (28 chars) | All Firestore rules | ✅ Zero code changes | ✅ Data migration only |
-| Role assignment | Update `/users/{uid}.roles` | `src/lib/auth/roles.server.ts` | ✅ Zero (unchanged) | ❌ No |
-| Admin checking | Firestore rule `hasRole('admin')` | All rules | ✅ Zero | ❌ No |
+| **Current Supabase Capability** | **Firebase Replacement**                    | **Files Affected**                                     | **Complexity**       | **Breaking Change?**   |
+| ------------------------------- | ------------------------------------------- | ------------------------------------------------------ | -------------------- | ---------------------- |
+| Email/password signup           | `createUserWithEmailAndPassword()`          | `src/routes/signup.tsx`                                | ✅ Trivial           | ❌ No (same UX)        |
+| Email/password login            | `signInWithEmailAndPassword()`              | `src/routes/login.tsx`, `src/routes/academy/login.tsx` | ✅ Trivial           | ❌ No (same UX)        |
+| Google OAuth                    | `signInWithPopup(auth, GoogleAuthProvider)` | `src/routes/login.tsx`, `src/routes/signup.tsx`        | ✅ Low               | ❌ No (same UX)        |
+| Session management              | `onAuthStateChanged()` listener             | `src/routes/_authenticated/route.tsx`                  | ✅ Low               | ❌ No (same behavior)  |
+| Get current user                | `getAuth().currentUser`                     | All authenticated routes                               | ✅ Low               | ❌ No (same behavior)  |
+| Logout                          | `signOut(auth)`                             | `src/lib/auth/facilitator-auth.functions.ts`           | ✅ Trivial           | ❌ No (same UX)        |
+| Password reset                  | `sendPasswordResetEmail(auth, email)`       | **Not yet implemented**                                | ✅ Low               | ✅ New feature         |
+| Email verification              | `sendEmailVerification(user)`               | **Not yet implemented**                                | ✅ Low               | ✅ New feature         |
+| JWT to server                   | Automatic (SDK handles)                     | Delete `auth-attacher.ts`                              | ✅ Trivial           | ❌ No (same result)    |
+| UID identity                    | Firebase UID (28 chars)                     | All Firestore rules                                    | ✅ Zero code changes | ✅ Data migration only |
+| Role assignment                 | Update `/users/{uid}.roles`                 | `src/lib/auth/roles.server.ts`                         | ✅ Zero (unchanged)  | ❌ No                  |
+| Admin checking                  | Firestore rule `hasRole('admin')`           | All rules                                              | ✅ Zero              | ❌ No                  |
 
 ## 7.2 Detailed Replacement Specs
 
 ### Email/Password Authentication
 
 **Replace In**: `src/routes/signup.tsx:68`
+
 ```typescript
 // BEFORE (Supabase)
 const { data, error } = await supabase.auth.signUp({
   email: email.trim(),
   password,
-  options: { data: { full_name: fullName.trim() } }
+  options: { data: { full_name: fullName.trim() } },
 });
 
 // AFTER (Firebase)
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { getFirebaseAuth } from '@/integrations/firebase/client';
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getFirebaseAuth } from "@/integrations/firebase/client";
 
 const auth = getFirebaseAuth();
 const userCred = await createUserWithEmailAndPassword(auth, email.trim(), password);
@@ -795,6 +835,7 @@ const error = null;
 ```
 
 **Replace In**: `src/routes/login.tsx:47`
+
 ```typescript
 // BEFORE (Supabase)
 const { data, error } = await supabase.auth.signInWithPassword({
@@ -803,7 +844,7 @@ const { data, error } = await supabase.auth.signInWithPassword({
 });
 
 // AFTER (Firebase)
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const auth = getFirebaseAuth();
 const userCred = await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -813,14 +854,15 @@ const error = null;
 ### Google OAuth
 
 **Replace In**: `src/routes/login.tsx:63`
+
 ```typescript
 // BEFORE (Lovable + Supabase)
-const result = await lovable.auth.signInWithOAuth('google', {
+const result = await lovable.auth.signInWithOAuth("google", {
   redirect_uri: window.location.origin,
 });
 
 // AFTER (Firebase)
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 const auth = getFirebaseAuth();
 const provider = new GoogleAuthProvider();
@@ -830,6 +872,7 @@ const result = await signInWithPopup(auth, provider);
 ### Session Management
 
 **Replace In**: `src/routes/_authenticated/route.tsx`
+
 ```typescript
 // BEFORE (Supabase)
 supabase.auth.getSession().then(({ data }) => {
@@ -837,7 +880,7 @@ supabase.auth.getSession().then(({ data }) => {
 });
 
 // AFTER (Firebase)
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from "firebase/auth";
 
 onAuthStateChanged(getFirebaseAuth(), (user) => {
   // user is already logged in
@@ -847,12 +890,13 @@ onAuthStateChanged(getFirebaseAuth(), (user) => {
 ### Logout
 
 **Replace In**: `src/lib/auth/facilitator-auth.functions.ts:106`
+
 ```typescript
 // BEFORE (Supabase)
 await supabase.auth.signOut();
 
 // AFTER (Firebase)
-import { signOut } from 'firebase/auth';
+import { signOut } from "firebase/auth";
 
 await signOut(getFirebaseAuth());
 ```
@@ -860,11 +904,12 @@ await signOut(getFirebaseAuth());
 ### Facilitator Status Check
 
 **No changes needed** — Role checking remains identical:
+
 ```typescript
 // src/lib/auth/facilitator-auth.functions.ts
 export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
   const db = getFirebaseFirestore();
-  const userDocRef = doc(db, "users", userId);  // userId is now Firebase UID
+  const userDocRef = doc(db, "users", userId); // userId is now Firebase UID
   const userDocSnap = await getDoc(userDocRef);
   const roles = userDocSnap.data()?.["roles"] as string[];
   return Array.isArray(roles) && roles.includes("facilitator");
@@ -873,16 +918,16 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
 
 ## 7.3 Code Replacement Complexity Breakdown
 
-| **Feature** | **Files** | **Methods** | **Lines** | **Est. Effort** |
-|---|---|---|---|---|
-| Email signup | 1 | 1 | 8 | 15 min |
-| Email login | 2 | 2 | 10 | 20 min |
-| Google OAuth | 2 | 2 | 8 | 15 min |
-| Session management | 3 | 3 | 12 | 20 min |
-| Logout | 1 | 1 | 2 | 5 min |
-| Delete auth-attacher | 2 | N/A | 16 | 5 min |
-| Remove Supabase client | 1 | N/A | ~50 | 10 min |
-| **TOTAL** | **~12** | **~14** | **~106** | **90 minutes** |
+| **Feature**            | **Files** | **Methods** | **Lines** | **Est. Effort** |
+| ---------------------- | --------- | ----------- | --------- | --------------- |
+| Email signup           | 1         | 1           | 8         | 15 min          |
+| Email login            | 2         | 2           | 10        | 20 min          |
+| Google OAuth           | 2         | 2           | 8         | 15 min          |
+| Session management     | 3         | 3           | 12        | 20 min          |
+| Logout                 | 1         | 1           | 2         | 5 min           |
+| Delete auth-attacher   | 2         | N/A         | 16        | 5 min           |
+| Remove Supabase client | 1         | N/A         | ~50       | 10 min          |
+| **TOTAL**              | **~12**   | **~14**     | **~106**  | **90 minutes**  |
 
 ---
 
@@ -891,6 +936,7 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
 ## 8.1 Current Environment Setup
 
 ### Supabase Variables (Active)
+
 ```env
 VITE_SUPABASE_URL=https://ggtjulmplujaqmsppque.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_3rMbg1g2sfnNJGJMcjZolA_d559Eq9Q
@@ -900,6 +946,7 @@ SUPABASE_URL=https://ggtjulmplujaqmsppque.supabase.co
 ```
 
 ### Firebase Variables (Already Configured)
+
 ```env
 VITE_FIREBASE_API_KEY=AIzaSyBTCuKIWxzuUoIion9LMllhp82RjwiUmJsA
 VITE_FIREBASE_AUTH_DOMAIN=tatichildsavemvp.firebaseapp.com
@@ -911,6 +958,7 @@ VITE_FIREBASE_MEASUREMENT_ID=G-03THSKYE7X
 ```
 
 ### Emulator Variables (Dev Only)
+
 ```env
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
@@ -921,10 +969,12 @@ VITE_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
 ## 8.2 Post-Migration Environment
 
 ### Variables to Keep
+
 - ✅ All Firebase variables (already present)
 - ✅ Emulator variables (for dev)
 
 ### Variables to Remove
+
 - ❌ `VITE_SUPABASE_URL`
 - ❌ `VITE_SUPABASE_PUBLISHABLE_KEY`
 - ❌ `SUPABASE_PROJECT_ID`
@@ -932,6 +982,7 @@ VITE_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
 - ❌ `SUPABASE_URL`
 
 ### Variables to Add
+
 - ✅ None (Firebase already configured)
 
 ## 8.3 Environment Migration
@@ -953,12 +1004,12 @@ VITE_FIREBASE_PROJECT_ID=...
 
 ## 8.4 Effort for Environment Changes
 
-| **Task** | **Effort** |
-|---|---|
-| Remove Supabase vars from .env.local | 2 min |
-| Remove Supabase vars from .env.example | 2 min |
-| Update README with new env setup | 5 min |
-| **Total** | **9 minutes** |
+| **Task**                               | **Effort**    |
+| -------------------------------------- | ------------- |
+| Remove Supabase vars from .env.local   | 2 min         |
+| Remove Supabase vars from .env.example | 2 min         |
+| Update README with new env setup       | 5 min         |
+| **Total**                              | **9 minutes** |
 
 ---
 
@@ -967,15 +1018,18 @@ VITE_FIREBASE_PROJECT_ID=...
 ## 9.1 Current Testing State
 
 ### Tests Using Supabase
+
 - ❌ **0 tests** directly call Supabase Auth
 - ✅ Some tests mock Supabase responses
 
 ### Tests Using Firebase Auth Emulator
+
 - ✅ `tests/firebase/emulator-setup.ts` — Emulator configuration
 - ✅ `tests/firebase/firestore.rules.test.ts` — Rule testing with Firebase Auth
 - ✅ `tests/firebase/child-auth.server.test.ts` — Child identity with Firebase Admin SDK
 
 ### Test Commands
+
 ```bash
 npm test              # Run all tests
 npm run build        # Verify build
@@ -1001,16 +1055,16 @@ Full integration test
 
 ### Test Coverage Matrix
 
-| **Scenario** | **Current** | **Post-Migration** |
-|---|---|---|
-| Parent signup | ⚠️ Cloud Supabase | ✅ Emulator |
-| Parent login | ⚠️ Cloud Supabase | ✅ Emulator |
-| Google OAuth | ⚠️ Lovable? | ✅ Firebase Emulator |
-| Facilitator login | ⚠️ Cloud Supabase | ✅ Emulator |
-| Admin dashboard | ✅ Firestore Emulator | ✅ Firestore Emulator |
-| Role checking | ✅ Firestore Emulator | ✅ Firestore Emulator |
-| School creation | ✅ Firestore Emulator | ✅ Firestore Emulator |
-| Firestore rules | ✅ Firestore Emulator | ✅ Firestore Emulator |
+| **Scenario**      | **Current**           | **Post-Migration**    |
+| ----------------- | --------------------- | --------------------- |
+| Parent signup     | ⚠️ Cloud Supabase     | ✅ Emulator           |
+| Parent login      | ⚠️ Cloud Supabase     | ✅ Emulator           |
+| Google OAuth      | ⚠️ Lovable?           | ✅ Firebase Emulator  |
+| Facilitator login | ⚠️ Cloud Supabase     | ✅ Emulator           |
+| Admin dashboard   | ✅ Firestore Emulator | ✅ Firestore Emulator |
+| Role checking     | ✅ Firestore Emulator | ✅ Firestore Emulator |
+| School creation   | ✅ Firestore Emulator | ✅ Firestore Emulator |
+| Firestore rules   | ✅ Firestore Emulator | ✅ Firestore Emulator |
 
 ## 9.3 Test Modifications Required
 
@@ -1043,22 +1097,22 @@ Full integration test
 
 ### Existing Tests to Update
 
-| **File** | **Changes** |
-|---|---|
+| **File**                                      | **Changes**                                    |
+| --------------------------------------------- | ---------------------------------------------- |
 | `tests/auth/assessment-authorization.test.ts` | Use Firebase Auth instead of Supabase in setup |
-| `tests/firebase/firestore.rules.test.ts` | Already uses Firebase Auth — no changes |
-| `tests/g6_1/pilot-reliability.test.ts` | Update auth setup to use Firebase |
+| `tests/firebase/firestore.rules.test.ts`      | Already uses Firebase Auth — no changes        |
+| `tests/g6_1/pilot-reliability.test.ts`        | Update auth setup to use Firebase              |
 
 ## 9.4 Testing Complexity Assessment
 
-| **Component** | **Complexity** | **Effort** |
-|---|---|---|
-| Parent auth tests | ✅ Low | 2-3 hours |
-| Facilitator auth tests | ✅ Low | 2-3 hours |
-| OAuth tests | ⚠️ Medium | 3-4 hours |
-| Integration tests | ✅ Low | 1-2 hours |
-| Rule validation | ✅ Zero | 0 hours |
-| **Total Testing Effort** | | **8-12 hours** |
+| **Component**            | **Complexity** | **Effort**     |
+| ------------------------ | -------------- | -------------- |
+| Parent auth tests        | ✅ Low         | 2-3 hours      |
+| Facilitator auth tests   | ✅ Low         | 2-3 hours      |
+| OAuth tests              | ⚠️ Medium      | 3-4 hours      |
+| Integration tests        | ✅ Low         | 1-2 hours      |
+| Rule validation          | ✅ Zero        | 0 hours        |
+| **Total Testing Effort** |                | **8-12 hours** |
 
 ---
 
@@ -1067,22 +1121,27 @@ Full integration test
 ## 10.1 Risks That Disappear (No Real Users)
 
 ### Risk: Password Migration
+
 - ❌ **Not a concern**: No production passwords exist
 - **Why**: TATI MVP has never launched; no real users created
 
 ### Risk: Account Migration
+
 - ❌ **Not a concern**: No production accounts to migrate
 - **Why**: Only test accounts exist (can be recreated)
 
 ### Risk: Existing Sessions Breaking
+
 - ❌ **Not a concern**: No active user sessions to break
 - **Why**: App has no production users
 
 ### Risk: Email Verification Status Lost
+
 - ❌ **Not a concern**: No verified emails in production
 - **Why**: MVP environment only
 
 ### Risk: OAuth Account Association
+
 - ❌ **Not a concern**: No existing Google OAuth users
 - **Why**: No real parents have signed up via Google
 
@@ -1094,6 +1153,7 @@ Full integration test
 
 **Concern**: New Firebase Auth code might have bugs  
 **Mitigation**:
+
 - Type-safe Firebase SDK
 - Comprehensive test suite (to be written)
 - Gradual rollout to QA first
@@ -1105,6 +1165,7 @@ Full integration test
 
 **Concern**: Firestore might not authenticate requests without middleware  
 **Mitigation**:
+
 - Firestore natively trusts Firebase Auth
 - No configuration needed
 - Verified by existing Firestore rule tests
@@ -1115,6 +1176,7 @@ Full integration test
 
 **Concern**: New Firebase UIDs differ from Supabase UUIDs  
 **Mitigation**:
+
 - Firestore rules work with both formats (use uid generically)
 - Document keys use UID but are application-transparent
 - Child authentication remains separate (uses different ID format already)
@@ -1125,6 +1187,7 @@ Full integration test
 
 **Concern**: Existing /users/{supabase-uid} docs won't match Firebase UIDs  
 **Mitigation**:
+
 - No production users; emulator data can be reset
 - Migration script can bulk-copy data if needed
 
@@ -1134,6 +1197,7 @@ Full integration test
 
 **Concern**: Rules might not evaluate correctly with Firebase auth  
 **Mitigation**:
+
 - Existing Firestore rule tests pass with Firebase Auth already
 - Rules are authentication-agnostic (tested & verified)
 
@@ -1141,14 +1205,14 @@ Full integration test
 
 ## 10.3 Risk Matrix
 
-| **Risk** | **Probability** | **Impact** | **Mitigation** | **Residual Risk** |
-|---|---|---|---|---|
-| Code bugs | Medium | High | Testing + code review | Low |
-| Firestore auth failure | Low | Critical | Already verified working | Very Low |
-| UID format issues | Low | Medium | Test with data | Very Low |
-| Session loss | Very Low | Medium | No users to lose | Very Low |
-| Password reset broken | Medium | Low | Implement + test | Low |
-| Child auth breaks | Low | High | Keep Supabase separate | Very Low |
+| **Risk**               | **Probability** | **Impact** | **Mitigation**           | **Residual Risk** |
+| ---------------------- | --------------- | ---------- | ------------------------ | ----------------- |
+| Code bugs              | Medium          | High       | Testing + code review    | Low               |
+| Firestore auth failure | Low             | Critical   | Already verified working | Very Low          |
+| UID format issues      | Low             | Medium     | Test with data           | Very Low          |
+| Session loss           | Very Low        | Medium     | No users to lose         | Very Low          |
+| Password reset broken  | Medium          | Low        | Implement + test         | Low               |
+| Child auth breaks      | Low             | High       | Keep Supabase separate   | Very Low          |
 
 **Overall Risk Assessment**: **LOW to MODERATE**  
 **Primary Risk**: Code quality (not infrastructure)
@@ -1201,6 +1265,7 @@ Full integration test
 ## 11.2 Component Diagram
 
 ### Before (Supabase-centric)
+
 ```
 Browser
 ├─ Supabase Session (localStorage)
@@ -1213,6 +1278,7 @@ Browser
 ```
 
 ### After (Firebase-centric)
+
 ```
 Browser
 ├─ Firebase Session (localStorage)
@@ -1227,38 +1293,38 @@ Browser
 
 ## 11.3 Deleted Components
 
-| **Component** | **Delete?** | **Replacement** |
-|---|---|---|
-| `src/integrations/supabase/client.ts` | ✅ Yes | Remove entirely |
-| `src/integrations/supabase/auth-attacher.ts` | ✅ Yes | No replacement needed |
-| `src/integrations/supabase/auth-middleware.ts` | ✅ Yes | No replacement needed |
-| `src/integrations/supabase/types.ts` | ✅ Yes | Use Firebase types |
-| Supabase environment variables | ✅ Yes | Remove from .env |
-| `@supabase/supabase-js` dependency | ✅ Conditional | Keep if child auth remains |
+| **Component**                                  | **Delete?**    | **Replacement**            |
+| ---------------------------------------------- | -------------- | -------------------------- |
+| `src/integrations/supabase/client.ts`          | ✅ Yes         | Remove entirely            |
+| `src/integrations/supabase/auth-attacher.ts`   | ✅ Yes         | No replacement needed      |
+| `src/integrations/supabase/auth-middleware.ts` | ✅ Yes         | No replacement needed      |
+| `src/integrations/supabase/types.ts`           | ✅ Yes         | Use Firebase types         |
+| Supabase environment variables                 | ✅ Yes         | Remove from .env           |
+| `@supabase/supabase-js` dependency             | ✅ Conditional | Keep if child auth remains |
 
 ## 11.4 Modified Components
 
-| **Component** | **Change** | **Impact** |
-|---|---|---|
-| `src/routes/login.tsx` | Replace Supabase with Firebase | UX unchanged |
-| `src/routes/signup.tsx` | Replace Supabase with Firebase | UX unchanged |
-| `src/routes/academy/login.tsx` | Replace Supabase with Firebase | UX unchanged |
-| `src/lib/auth/facilitator-auth.functions.ts` | Change user.id → user.uid | Transparent |
-| `src/start.ts` | Remove auth-attacher middleware | Functionality unchanged |
-| `src/lib/backend/provider.ts` | Change return to "firebase" | Enable Firebase provider |
-| Firestore rules | **No changes** | Perfect compatibility |
+| **Component**                                | **Change**                      | **Impact**               |
+| -------------------------------------------- | ------------------------------- | ------------------------ |
+| `src/routes/login.tsx`                       | Replace Supabase with Firebase  | UX unchanged             |
+| `src/routes/signup.tsx`                      | Replace Supabase with Firebase  | UX unchanged             |
+| `src/routes/academy/login.tsx`               | Replace Supabase with Firebase  | UX unchanged             |
+| `src/lib/auth/facilitator-auth.functions.ts` | Change user.id → user.uid       | Transparent              |
+| `src/start.ts`                               | Remove auth-attacher middleware | Functionality unchanged  |
+| `src/lib/backend/provider.ts`                | Change return to "firebase"     | Enable Firebase provider |
+| Firestore rules                              | **No changes**                  | Perfect compatibility    |
 
 ## 11.5 Preserved Components
 
-| **Component** | **Status** | **Why** |
-|---|---|---|
-| Child authentication | ✅ Unchanged | Separate system |
-| Firestore schema | ✅ Unchanged | Fully compatible |
-| Firestore rules | ✅ Unchanged | Auth-agnostic |
-| Role system | ✅ Unchanged | Same format |
-| School admin assignments | ✅ Unchanged | Same structure |
-| Analytics | ⚠️ Update needed | Use Firebase Events if desired |
-| Assessment system | ✅ Mostly unchanged | May move data to Firebase |
+| **Component**            | **Status**          | **Why**                        |
+| ------------------------ | ------------------- | ------------------------------ |
+| Child authentication     | ✅ Unchanged        | Separate system                |
+| Firestore schema         | ✅ Unchanged        | Fully compatible               |
+| Firestore rules          | ✅ Unchanged        | Auth-agnostic                  |
+| Role system              | ✅ Unchanged        | Same format                    |
+| School admin assignments | ✅ Unchanged        | Same structure                 |
+| Analytics                | ⚠️ Update needed    | Use Firebase Events if desired |
+| Assessment system        | ✅ Mostly unchanged | May move data to Firebase      |
 
 ---
 
@@ -1320,6 +1386,7 @@ Browser
 ### Success Criteria
 
 Migration is successful when:
+
 - ✅ All parents can sign up/login via Firebase
 - ✅ All facilitators can sign up/login via Firebase
 - ✅ School admins can manage schools (unchanged UX)
@@ -1331,23 +1398,25 @@ Migration is successful when:
 
 ## 12.2 Recommendation Summary
 
-| **Aspect** | **Assessment** | **Confidence** |
-|---|---|---|
-| **Feasibility** | ✅ Highly Feasible | 95% |
-| **Risk** | ✅ Low | 90% |
-| **Timeline** | ✅ 2-3 days | 85% |
-| **Benefit** | ✅ Significant | 90% |
-| **Recommendation** | ✅ **GO** | **STRONG** |
+| **Aspect**         | **Assessment**     | **Confidence** |
+| ------------------ | ------------------ | -------------- |
+| **Feasibility**    | ✅ Highly Feasible | 95%            |
+| **Risk**           | ✅ Low             | 90%            |
+| **Timeline**       | ✅ 2-3 days        | 85%            |
+| **Benefit**        | ✅ Significant     | 90%            |
+| **Recommendation** | ✅ **GO**          | **STRONG**     |
 
 ## 12.3 Recommended Implementation Path
 
 ### Phase 1: Setup & Planning (1 day)
+
 1. ✅ Audit complete (you're here)
 2. ❌ Create Firebase Auth migration branch
 3. ❌ Set up test suite for Firebase Auth
 4. ❌ Brief team on changes
 
 ### Phase 2: Code Migration (1 day)
+
 1. ❌ Update `src/routes/login.tsx` (20 min)
 2. ❌ Update `src/routes/signup.tsx` (20 min)
 3. ❌ Update `src/routes/academy/login.tsx` (20 min)
@@ -1359,6 +1428,7 @@ Migration is successful when:
 9. ❌ TypeScript compilation check (15 min)
 
 ### Phase 3: Testing (1-2 days)
+
 1. ❌ Unit tests for each auth flow
 2. ❌ Integration tests (signup → dashboard)
 3. ❌ Firestore rule validation
@@ -1368,6 +1438,7 @@ Migration is successful when:
 7. ❌ Security audit
 
 ### Phase 4: QA & Release (1 day)
+
 1. ❌ H3.3 manual QA with Firebase Auth
 2. ❌ Regression testing against H3.2
 3. ❌ Production readiness checklist
@@ -1401,12 +1472,14 @@ Migration is successful when:
 ## Complete File List (by modification type)
 
 ### Files to Delete
+
 1. `src/integrations/supabase/client.ts`
 2. `src/integrations/supabase/auth-attacher.ts`
 3. `src/integrations/supabase/auth-middleware.ts`
 4. `src/integrations/supabase/types.ts`
 
 ### Files to Modify
+
 1. `src/routes/login.tsx` (30 lines)
 2. `src/routes/signup.tsx` (40 lines)
 3. `src/routes/academy/login.tsx` (30 lines)
@@ -1417,6 +1490,7 @@ Migration is successful when:
 8. `.env.example` (remove 5 vars)
 
 ### Files with Zero Changes
+
 1. `firestore.rules` (0 changes)
 2. `src/lib/auth/authorization.server.ts` (0 changes)
 3. `src/lib/auth/child-session.server.ts` (0 changes)
@@ -1425,11 +1499,13 @@ Migration is successful when:
 6. All routes using authentication (0 changes to logic)
 
 ### Files to Create (Testing)
+
 1. `tests/auth/firebase-signup.test.ts` (new)
 2. `tests/auth/firebase-login.test.ts` (new)
 3. `tests/auth/firebase-oauth.test.ts` (new)
 
 ### Files to Update (Documentation)
+
 1. `README.md` (authentication section)
 2. Deployment docs
 3. Contributing guide
@@ -1439,12 +1515,14 @@ Migration is successful when:
 # APPENDIX B — EXECUTION CHECKLIST
 
 ## Pre-Migration
+
 - [ ] Audit complete (READ-ONLY) ✅
 - [ ] Team briefed on changes
 - [ ] Feature branch created
 - [ ] Backup current state
 
 ## Code Changes
+
 - [ ] Delete Supabase client files
 - [ ] Update login route
 - [ ] Update signup route
@@ -1457,6 +1535,7 @@ Migration is successful when:
 - [ ] Linting passes
 
 ## Testing
+
 - [ ] Firebase Auth signup test
 - [ ] Firebase Auth login test
 - [ ] Google OAuth test
@@ -1469,6 +1548,7 @@ Migration is successful when:
 - [ ] npm run build passes
 
 ## QA
+
 - [ ] H3.3 manual QA (all flows)
 - [ ] H3.2 regression testing
 - [ ] Browser console clean
@@ -1476,6 +1556,7 @@ Migration is successful when:
 - [ ] Security audit passed
 
 ## Release
+
 - [ ] Documentation updated
 - [ ] Release notes written
 - [ ] PR reviewed and approved
@@ -1490,13 +1571,15 @@ Migration is successful when:
 ## External Dependencies to Update
 
 ### Packages to Remove
+
 ```json
 {
-  "@supabase/supabase-js": "^2.116.0"  // Can be removed if child auth isn't using Supabase
+  "@supabase/supabase-js": "^2.116.0" // Can be removed if child auth isn't using Supabase
 }
 ```
 
 ### Packages Already Present
+
 ```json
 {
   "firebase": "^12.19.0",
@@ -1505,15 +1588,17 @@ Migration is successful when:
 ```
 
 ### Packages to Keep (if child auth stays)
+
 ```json
 {
-  "@supabase/supabase-js": "^2.116.0"  // Needed for child TATI ID + PIN auth
+  "@supabase/supabase-js": "^2.116.0" // Needed for child TATI ID + PIN auth
 }
 ```
 
 ## Environment Configuration Changes
 
 ### Remove from .env.local and .env.example
+
 ```env
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
@@ -1523,6 +1608,7 @@ SUPABASE_URL
 ```
 
 ### Already Present (No Changes)
+
 ```env
 VITE_FIREBASE_API_KEY
 VITE_FIREBASE_AUTH_DOMAIN

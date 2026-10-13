@@ -43,10 +43,14 @@ function initializeAdminApp() {
       console.log("[Firebase] Service account initialized for project:", serviceAccount.project_id);
     } catch (error) {
       console.error("[Firebase] Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
-      throw new Error(`Invalid FIREBASE_SERVICE_ACCOUNT JSON format: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Invalid FIREBASE_SERVICE_ACCOUNT JSON format: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   } else if (!isEmulatorMode()) {
-    console.warn("[Firebase] No FIREBASE_SERVICE_ACCOUNT provided. Admin SDK will use default credentials.");
+    console.warn(
+      "[Firebase] No FIREBASE_SERVICE_ACCOUNT provided. Admin SDK will use default credentials.",
+    );
   }
 
   // Initialize app
@@ -55,24 +59,30 @@ function initializeAdminApp() {
   };
 
   if (serviceAccountCredential) {
-    initConfig['credential'] = serviceAccountCredential;
+    initConfig["credential"] = serviceAccountCredential;
   } else if (!isEmulatorMode()) {
     // Production mode only - use application default
     try {
-      initConfig['credential'] = applicationDefault();
+      initConfig["credential"] = applicationDefault();
     } catch (error) {
-      console.warn("[Firebase] Could not get application default credentials:", error instanceof Error ? error.message : error);
+      console.warn(
+        "[Firebase] Could not get application default credentials:",
+        error instanceof Error ? error.message : error,
+      );
     }
   }
   // Emulator mode: no credentials needed, Admin SDK uses FIRESTORE_EMULATOR_HOST env var
 
-  console.log("[Firebase] Initializing Admin SDK with project:", initConfig['projectId']);
+  console.log("[Firebase] Initializing Admin SDK with project:", initConfig["projectId"]);
   if (isEmulatorMode()) {
     console.log("[Firebase] Running in emulator mode");
     console.log("[Firebase] FIRESTORE_EMULATOR_HOST:", process.env["FIRESTORE_EMULATOR_HOST"]);
-    console.log("[Firebase] FIREBASE_AUTH_EMULATOR_HOST:", process.env["FIREBASE_AUTH_EMULATOR_HOST"]);
+    console.log(
+      "[Firebase] FIREBASE_AUTH_EMULATOR_HOST:",
+      process.env["FIREBASE_AUTH_EMULATOR_HOST"],
+    );
   }
-  
+
   adminApp = initializeApp(initConfig);
   console.log("[Firebase] Admin SDK app initialized");
 

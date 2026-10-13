@@ -1,7 +1,8 @@
 # PHASE H3.0.1 — TATI ACADEMY PRODUCT & DATA CONTRACT
+
 **Status:** READ-ONLY DISCOVERY & SPECIFICATION  
 **Date:** 2026-09-26  
-**Scope:** Complete facilitator operating model, school/cohort/session relationships, data ownership, security implications  
+**Scope:** Complete facilitator operating model, school/cohort/session relationships, data ownership, security implications
 
 ---
 
@@ -12,6 +13,7 @@ Academy exists because:
 > **Parents may not have sufficient time to personally facilitate the TATI programme every day. A facilitator (teacher, community educator) must be able to deliver TATI effectively in a school/classroom setting.**
 
 This contract defines:
+
 - ✅ How facilitators operate (their jobs, decisions, context)
 - ✅ School/cohort/session/learner hierarchy (data structure)
 - ✅ Data ownership boundaries (who creates, who reads, privacy)
@@ -29,12 +31,14 @@ This contract defines:
 ### 1.1 Why Academy Exists
 
 **Scenario:**
+
 - Parent Ama wants her child Kwame (age 10) to develop financial capability
 - Parent Ama is a trader in Kumasi; she's at the market 10+ hours/day
 - She cannot personally guide Kwame through 14-day TATI journey
 - Solution: Teacher Kofi at Kwame's school uses TATI in the classroom
 
 **TATI Academy enables:**
+
 - Teacher Kofi to deliver TATI to 25 learners in one Grade 5 cohort
 - Teacher Kofi to see who understands, who is stuck, who needs support
 - Teacher Kofi to facilitate class discussions (scenario outcomes, money decisions)
@@ -68,6 +72,7 @@ This contract defines:
 ```
 
 **Relationships:**
+
 - 1 SCHOOL → many FACILITATORS
 - 1 FACILITATOR → 1+ COHORTS
 - 1 COHORT → 25+ LEARNERS
@@ -78,24 +83,28 @@ This contract defines:
 ### 1.3 Fundamental Principles
 
 **Principle 1: Child Autonomy**
+
 - Child makes decisions in scenarios
 - Child earns/saves money through choices
 - Data about child's learning comes FROM child's actions
 - Facilitator sees results; does NOT manipulate them
 
 **Principle 2: Parent Partnership**
+
 - Parent is NOT responsible for daily instruction (teacher is)
 - Parent IS responsible for home reinforcement
 - Parent sees what child learned, not granular classroom data
 - Parent receives actionable conversation starters
 
 **Principle 3: Facilitator Leadership**
+
 - Facilitator decides WHEN to do each activity (day 1, day 2, etc)
 - Facilitator guides class discussion on scenario consequences
 - Facilitator identifies learners needing support
 - Facilitator is NOT a data analyst (insights must be clear)
 
 **Principle 4: Data Integrity**
+
 - Scenario choices (G5.1) verified server-side before saving
 - No facilitator can modify child's progress/assessments
 - All data writes are audited (who, when, what)
@@ -112,39 +121,39 @@ This contract defines:
 ### 2.2 Facilitator Decision Points
 
 **Daily:**
+
 1. **Session preparation** — Which activity runs today?
 2. **Participation** — Who's here, who's present, who needs support?
 3. **Group facilitation** — How do I guide the class discussion?
 4. **Feedback** — Who understood, who struggled?
 
-**Weekly:**
-5. **Learner identification** — Which children are behind or at-risk?
-6. **Parent communication** — What should parents know/discuss at home?
-7. **Adjustment** — Do we need more time on this concept?
+**Weekly:** 5. **Learner identification** — Which children are behind or at-risk? 6. **Parent communication** — What should parents know/discuss at home? 7. **Adjustment** — Do we need more time on this concept?
 
-**At end of journey:**
-8. **Reflection** — What worked well, what would I change?
-9. **Measurement** — Did learners grow in financial capability?
+**At end of journey:** 8. **Reflection** — What worked well, what would I change? 9. **Measurement** — Did learners grow in financial capability?
 
 ### 2.3 Facilitator Data Needs
 
 **Before Session:**
+
 - Today's activity (what, how long, materials needed)
 - Who completed last activity (pacing awareness)
 - Learner roster (names, TATI IDs for check-in)
 - Session guide (what to discuss, when to pause)
 
 **During Session:**
+
 - Live participation tracking (who's progressing, who's stuck)
 - Scenario consequence visualization (what happens to their money)
 - Class-wide status (is everyone moving forward?)
 
 **After Session:**
+
 - Participation summary (who was present, who engaged, who struggled)
 - Outcome snapshot (common learner choices, competency gains)
 - At-risk alerts (who needs one-on-one support?)
 
 **For Parent Communication:**
+
 - Learner competencies (growth areas to discuss at home)
 - Recent decisions (what did learner choose in scenarios?)
 - Conversation starters (specific prompts for home)
@@ -152,6 +161,7 @@ This contract defines:
 ### 2.4 Facilitator Cannot See
 
 **❌ BLOCKED (Privacy boundaries):**
+
 - Parent names, emails, contact information
 - Parent feedback submitted to parents
 - Parent-only insights
@@ -206,6 +216,7 @@ TATI ECOSYSTEM
 ### 3.2 Key Relationships
 
 **School → Cohort → Learner Chain:**
+
 ```
 Ashanti School (schoolId)
   ├─ Grade 5A (cohortId) — 25 learners — Teacher Kofi
@@ -219,6 +230,7 @@ Ashanti School (schoolId)
 ```
 
 **Facilitator Authorization:**
+
 ```
 Teacher Kofi (facilitator-uid-1)
   ├─ Can READ: Ashanti School data (school-level)
@@ -231,6 +243,7 @@ Teacher Kofi (facilitator-uid-1)
 ```
 
 **Parent Authorization:**
+
 ```
 Parent Ama (parent-uid-2)
   ├─ Can READ: Own family data
@@ -242,6 +255,7 @@ Parent Ama (parent-uid-2)
 ```
 
 **Admin Authorization:**
+
 ```
 Admin (admin-uid-1)
   ├─ Can READ/WRITE: All schools
@@ -259,21 +273,21 @@ Admin (admin-uid-1)
 
 **Who Creates What:**
 
-| Data | Created By | Owned By | Readable By | Modifiable By |
-|------|---|---|---|---|
-| **School record** | Admin | Admin | Admin, assigned facilitators | Admin |
-| **Cohort record** | Admin | Admin | Admin, assigned facilitators | Admin |
-| **Learner enrollment** | Admin or parent | Cohort | Facilitator, Parent, Admin | Admin |
-| **Child profile** | Parent | Parent | Parent, assigned facilitators, Admin | Parent, Admin |
-| **TATI ID** | System | Child | Facilitator (for roster), Parent, Admin | Never |
-| **Child session** | Child | Child | Child, Parent, Admin | Child (revoke only) |
-| **Journey progress** | Child (through activity) | Child | Child, Parent, assigned facilitators, Admin | System only (via activity) |
-| **Assessment result** | Child (through test) | Child | Child, Parent, assigned facilitators, Admin | System only (via test engine) |
-| **Scenario session** | Child (through choices) | Child | Child, Parent, assigned facilitators, Admin | Child (via scenario choices only) |
-| **Competency record** | System (via assessment) | Child | Child, Parent, assigned facilitators, Admin | System only (via assessment) |
-| **Parent insights** | System | Parent | Parent, Admin | System only |
-| **Facilitator notes** | Facilitator | Facilitator | Facilitator, Admin | Facilitator only |
-| **Session record** | Facilitator | Facilitator | Facilitator, Admin | Facilitator |
+| Data                   | Created By               | Owned By    | Readable By                                 | Modifiable By                     |
+| ---------------------- | ------------------------ | ----------- | ------------------------------------------- | --------------------------------- |
+| **School record**      | Admin                    | Admin       | Admin, assigned facilitators                | Admin                             |
+| **Cohort record**      | Admin                    | Admin       | Admin, assigned facilitators                | Admin                             |
+| **Learner enrollment** | Admin or parent          | Cohort      | Facilitator, Parent, Admin                  | Admin                             |
+| **Child profile**      | Parent                   | Parent      | Parent, assigned facilitators, Admin        | Parent, Admin                     |
+| **TATI ID**            | System                   | Child       | Facilitator (for roster), Parent, Admin     | Never                             |
+| **Child session**      | Child                    | Child       | Child, Parent, Admin                        | Child (revoke only)               |
+| **Journey progress**   | Child (through activity) | Child       | Child, Parent, assigned facilitators, Admin | System only (via activity)        |
+| **Assessment result**  | Child (through test)     | Child       | Child, Parent, assigned facilitators, Admin | System only (via test engine)     |
+| **Scenario session**   | Child (through choices)  | Child       | Child, Parent, assigned facilitators, Admin | Child (via scenario choices only) |
+| **Competency record**  | System (via assessment)  | Child       | Child, Parent, assigned facilitators, Admin | System only (via assessment)      |
+| **Parent insights**    | System                   | Parent      | Parent, Admin                               | System only                       |
+| **Facilitator notes**  | Facilitator              | Facilitator | Facilitator, Admin                          | Facilitator only                  |
+| **Session record**     | Facilitator              | Facilitator | Facilitator, Admin                          | Facilitator                       |
 
 ### 4.2 Privacy Boundaries (What Facilitators CANNOT Access)
 
@@ -287,6 +301,7 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 ```
 
 **Parent-only collections:**
+
 - parentInsights (conversation starters, growth summaries)
 - parentFeedback (parent-to-parent notes)
 - familyNotes (home-specific observations)
@@ -296,6 +311,7 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 ### 4.3 Facilitator-Specific Visibility
 
 **What Facilitators SEE in learner profile:**
+
 - Name (for classroom roster)
 - TATI ID (for non-identifying learner lookup)
 - Age (developmental context)
@@ -303,6 +319,7 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 - Tier: "junior" (classification only)
 
 **What Facilitators SEE in progress:**
+
 - Journey progress (which lessons/scenarios done)
 - Assessment results (scores, competency breakdown)
 - Scenario outcomes (money earned/saved, choices made)
@@ -311,6 +328,7 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 - Engagement (time spent, activity sequence)
 
 **What Facilitators DO NOT SEE:**
+
 - Parent names, emails, phone numbers
 - Family address or location (privacy)
 - Any parent-submitted data
@@ -326,6 +344,7 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 ### 5.1 Existing Collections (No Changes)
 
 **Users:**
+
 ```firestore
 users/{uid}
 {
@@ -341,6 +360,7 @@ users/{uid}
 ```
 
 **Families:**
+
 ```firestore
 families/{familyId}
 {
@@ -354,6 +374,7 @@ families/{familyId}
 ```
 
 **Family Members:**
+
 ```firestore
 families/{familyId}/members/{uid}
 {
@@ -365,6 +386,7 @@ families/{familyId}/members/{uid}
 ```
 
 **Children (Family-scoped):**
+
 ```firestore
 families/{familyId}/children/{childId}
 {
@@ -387,6 +409,7 @@ families/{familyId}/children/{childId}
 ```
 
 **Journey Progress (per child):**
+
 ```firestore
 families/{familyId}/children/{childId}/journeyProgress/{itemKey}
 {
@@ -422,6 +445,7 @@ families/{familyId}/children/{childId}/journeyProgress/{itemKey}
 ```
 
 **Assessment Attempts (per child):**
+
 ```firestore
 families/{familyId}/children/{childId}/assessmentAttempts/{attemptId}
 {
@@ -446,6 +470,7 @@ families/{familyId}/children/{childId}/assessmentAttempts/{attemptId}
 ```
 
 **Scenario Sessions (per child):**
+
 ```firestore
 families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey}
 {
@@ -474,6 +499,7 @@ families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey}
 ```
 
 **Scenario Decisions (per scenario session):**
+
 ```firestore
 families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey}/decisions/{decisionId}
 {
@@ -485,6 +511,7 @@ families/{familyId}/children/{childId}/scenarioSessions/{scenarioKey}/decisions/
 ```
 
 **Competencies (per child):**
+
 ```firestore
 families/{familyId}/children/{childId}/competencies/{competencyId}
 {
@@ -500,6 +527,7 @@ families/{familyId}/children/{childId}/competencies/{competencyId}
 ```
 
 **Achievements (per child):**
+
 ```firestore
 families/{familyId}/children/{childId}/achievements/{achievementId}
 {
@@ -513,6 +541,7 @@ families/{familyId}/children/{childId}/achievements/{achievementId}
 ```
 
 **Parent Insights (per child - parent-only):**
+
 ```firestore
 families/{familyId}/children/{childId}/parentInsights/{insightId}
 {
@@ -536,6 +565,7 @@ families/{familyId}/children/{childId}/parentInsights/{insightId}
 ### 5.2 NEW Collections for Academy (Schema Only)
 
 **Schools/Organizations:**
+
 ```firestore
 academyOrganizations/{orgId}
 {
@@ -554,6 +584,7 @@ academyOrganizations/{orgId}
 ```
 
 **Cohorts (per school):**
+
 ```firestore
 academyOrganizations/{orgId}/cohorts/{cohortId}
 {
@@ -573,6 +604,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}
 ```
 
 **Cohort Enrollments:**
+
 ```firestore
 academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId}
 {
@@ -585,6 +617,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId}
 ```
 
 **Cohort Sessions (facilitator-led activities):**
+
 ```firestore
 academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 {
@@ -672,24 +705,24 @@ Firestore Tier (Learning & Cohorts)
 
 ### 6.1 Access Control by Resource
 
-| Resource | JUNIOR (Child) | PARENT | FACILITATOR | ADMIN |
-|---|---|---|---|---|
-| **Own user profile** | View/Update own | View/Update own | View/Update own | View/Update any |
-| **academyOrganizations** | ❌ | ❌ | Read assigned school | Read/Write/Delete |
-| **cohorts** | ❌ | ❌ | Read assigned cohorts | Read/Write/Delete |
-| **cohort enrollments** | ❌ | ❌ | Read (view roster) | Read/Write/Delete |
-| **cohort sessions** | ❌ | ❌ | Create/Read/Update own | Read/Write/Delete |
-| **Family record** | ❌ | Read/Update own | ❌ | Read/Write/Delete |
-| **Own child profile** | Read own | Read/Update own | ❌ (see via enrollment) | Read/Write/Delete |
-| **Assigned child profile** | ❌ | ❌ | Read only | Read/Write/Delete |
-| **journeyProgress** | Create/Read own | Read own child | Read assigned children | Read/Write/Delete |
-| **assessmentAttempts** | Read own | Read own child | Read assigned children | Read/Write/Delete |
-| **scenarioSessions** | Create/Read own | Read own child | Read assigned children | Read/Write/Delete |
-| **competencies** | Read own | Read own child | Read assigned children | Read/Write/Delete |
-| **achievements** | Read own | Read own child | Read assigned children | Read/Write/Delete |
-| **parentInsights** | ❌ | Read own child | ❌ **BLOCKED** | Read/Write/Delete |
-| **Facilitator notes** | ❌ | ❌ | Create/Read/Update own | Read/Write/Delete |
-| **Feedback** | Create own | Create own | Create own | Read/Write/Delete |
+| Resource                   | JUNIOR (Child)  | PARENT          | FACILITATOR             | ADMIN             |
+| -------------------------- | --------------- | --------------- | ----------------------- | ----------------- |
+| **Own user profile**       | View/Update own | View/Update own | View/Update own         | View/Update any   |
+| **academyOrganizations**   | ❌              | ❌              | Read assigned school    | Read/Write/Delete |
+| **cohorts**                | ❌              | ❌              | Read assigned cohorts   | Read/Write/Delete |
+| **cohort enrollments**     | ❌              | ❌              | Read (view roster)      | Read/Write/Delete |
+| **cohort sessions**        | ❌              | ❌              | Create/Read/Update own  | Read/Write/Delete |
+| **Family record**          | ❌              | Read/Update own | ❌                      | Read/Write/Delete |
+| **Own child profile**      | Read own        | Read/Update own | ❌ (see via enrollment) | Read/Write/Delete |
+| **Assigned child profile** | ❌              | ❌              | Read only               | Read/Write/Delete |
+| **journeyProgress**        | Create/Read own | Read own child  | Read assigned children  | Read/Write/Delete |
+| **assessmentAttempts**     | Read own        | Read own child  | Read assigned children  | Read/Write/Delete |
+| **scenarioSessions**       | Create/Read own | Read own child  | Read assigned children  | Read/Write/Delete |
+| **competencies**           | Read own        | Read own child  | Read assigned children  | Read/Write/Delete |
+| **achievements**           | Read own        | Read own child  | Read assigned children  | Read/Write/Delete |
+| **parentInsights**         | ❌              | Read own child  | ❌ **BLOCKED**          | Read/Write/Delete |
+| **Facilitator notes**      | ❌              | ❌              | Create/Read/Update own  | Read/Write/Delete |
+| **Feedback**               | Create own      | Create own      | Create own              | Read/Write/Delete |
 
 ### 6.2 Firestore Rules Implementation
 
@@ -758,23 +791,23 @@ match /families/{familyId}/children/{childId}/parentInsights/{insightId} {
 1. ADMIN ACTION: Create school
    POST /admin/schools
    → academyOrganizations/{orgId}
-   
+
 2. ADMIN ACTION: Create cohort + assign facilitator
    POST /admin/cohorts
    → academyOrganizations/{orgId}/cohorts/{cohortId}
    → Set facilitatorUids: [facilitator-uid-1]
-   
+
 3. PARENT ACTION: Create family + child
    POST /parent/family/children
    → families/{familyId}/children/{childId}
    → Set tatiId, name, age, etc
-   
+
 4. ADMIN ACTION: Enroll child in cohort
    POST /admin/cohorts/{cohortId}/enroll
    → academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments/{childId}
    → Also set families/{familyId}/children/{childId}/cohortId = cohortId
    → Also set families/{familyId}/children/{childId}/facilitatorUids = [uid1]
-   
+
 5. FACILITATOR SEES: Cohort roster at /academy/cohorts/{cohortId}
    GET /academyOrganizations/{orgId}/cohorts/{cohortId}/enrollments
    → List of all children, with journeyProgress summary
@@ -789,17 +822,17 @@ DAY 1: Morning (8:00 AM)
 
 1. FACILITATOR: Opens /academy/cohorts/{cohortId}/session/new
    Sees: "Today's activity: Days 1–2 · Plan and earn (Scenario)"
-   
+
 2. FACILITATOR: Clicks "Start session"
    POST /cohorts/{cohortId}/sessions
    → Creates academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
    → Sets activity: "scenario:kwame-request--ch1"
    → Opens /academy/cohorts/{cohortId}/session/active/{sessionId}
-   
+
 3. FACILITATOR: Guides class discussion
    "You have 14 days, GH₵50, want a GH₵80 school bag.
     How much goes in the savings box?"
-   
+
 4. CHILDREN (in classroom at individual devices):
    - Open /child/home
    - Navigate to /child/scenario/kwame-request
@@ -808,7 +841,7 @@ DAY 1: Morning (8:00 AM)
    - POST to server: scenario decision saved + verified (G5.1)
    → families/{familyId}/children/{childId}/scenarioSessions/kwame-request
    → decision recorded: { choiceId: "save-40", competencies: {...} }
-   
+
 5. FACILITATOR: Real-time monitoring
    GET /academy/cohorts/{cohortId}/session/active (polling every 3s)
    Sees:
@@ -816,26 +849,26 @@ DAY 1: Morning (8:00 AM)
    - Ama: ✓ completed (chose save-30)
    - Akos: ⏳ in progress
    - [23 more learners with status]
-   
+
 6. FACILITATOR: Waits for 23/25 to complete
    (Some faster, some slower - facilitator pauses class discussion)
-   
+
 7. CHILDREN: Submit choices
    Last learner finishes at 8:35 AM
-   
+
 8. FACILITATOR: Session monitor shows all done
    "Results: 8 chose save-40, 12 chose save-30, 5 chose save-20"
-   
+
 9. FACILITATOR: Facilitates discussion
    "Why did more of you choose save-30? What does that tell us?"
    (Class discusses decision rationale)
-   
+
 10. FACILITATOR: Adds notes
     POST /sessions/{sessionId}
     facilitatorNotes: "Class engaged. Interesting split between save-40
     (bold savers) and save-30 (balanced). Three learners needed clarification
     on goal-setting."
-    
+
 11. FACILITATOR: Ends session
     PATCH /sessions/{sessionId}
     → Sets status: completed
@@ -843,20 +876,20 @@ DAY 1: Morning (8:00 AM)
        - Participation: 25/25 present, 23/25 engaged
        - Common choices: {save-40: 8, save-30: 12, save-20: 5}
        - Competency gains: avg goal-setting +2.1, saving +1.9
-    
+
 12. FACILITATOR: Views /academy/cohorts/{cohortId}/session/debrief
     Sees summary:
     - "85% engagement (21/25)"
     - "Average competency growth: +2.0"
     - "At risk: 2 learners"
     - "Next: Watch for retention on saving habit"
-    
+
 13. SYSTEM: Triggers parent updates
     For each learner:
     → Recompute parentInsights
     → Generate conversation starters
     → New competency sentence: "Kwame is becoming more confident..."
-    
+
 14. PARENT (at home, evening):
     Opens /parent/child/child-123
     Sees:
@@ -877,29 +910,29 @@ DAY 1: Morning (8:00 AM)
    - Last activity: timestamp (who hasn't done anything recently?)
    - Engagement: "High", "Medium", "Low" (based on decisions/time)
    - Competencies: which are weak?
-   
+
 2. FACILITATOR: Sees Akos marked "STUCK"
    (No progress in 3 days, repeated wrong choices, low competency)
-   
+
 3. FACILITATOR: Clicks Akos card → /academy/cohorts/{cohortId}/learner/child-xyz
    Sees:
    - Journey progress: Pre-assessment (5/25 pts) → Lesson 1 done → Scenario ch1 in progress
    - Scenario state: Day 1, saved GH₵5 (very conservative), made 1 choice
    - Assessment insight: "Struggling with goal-setting (0.5/3)"
    - Competency: "needs-vs-wants" not yet practiced
-   
+
 4. FACILITATOR: Recognizes the pattern
    "Akos is over-cautious. Probably anxious about money. Needs one-on-one support."
-   
+
 5. FACILITATOR: Adds note
    /learners/child-xyz
    facilitatorNotes: "Follow up with Akos. Seems anxious about money safety.
    Recommend: Show how savings box works, practice with real cedis."
-   
+
 6. SYSTEM: Flags for admin
    → If 5+ learners stuck, school may need intervention
    → Triggers alert: "Class struggling with goal-setting (avg 1.2/3)"
-   
+
 7. PARENT (Akos's mother):
    Opens /parent/child/child-xyz
    Sees:
@@ -916,11 +949,13 @@ DAY 1: Morning (8:00 AM)
 ### 8.1 What is a "Session"?
 
 **NOT:**
+
 - ❌ Individual child activity (that's independent learning)
 - ❌ Just data collection (that's surveillance)
 - ❌ Teacher delivering lecture (that's traditional teaching)
 
 **IS:**
+
 - ✅ Guided group experience where facilitator orchestrates TATI activity
 - ✅ Facilitator prepares, contextualizes, discusses outcomes
 - ✅ Learners make autonomous choices in TATI, facilitator doesn't prescribe answers
@@ -930,12 +965,14 @@ DAY 1: Morning (8:00 AM)
 ### 8.2 Session Structure
 
 **Pre-Session (Facilitator prep):**
+
 1. **Open**: /academy/cohorts/{cohortId}/session/new
 2. **See**: Today's activity (lesson/scenario/assessment) + guide
 3. **Decide**: Timing, pacing, discussion points
 4. **Brief class**: "Today we're doing Days 1–2 of the School Reopening story..."
 
 **During Session (Group + Individual):**
+
 1. **Introduce**: Scenario context (e.g., "You have 14 days, GH₵50...")
 2. **Release**: Children work individually at own pace (devices)
 3. **Monitor**: Facilitator watches participation (polling or live)
@@ -943,12 +980,14 @@ DAY 1: Morning (8:00 AM)
 5. **Facilitate**: Stop, check in, discuss interim results
 
 **Post-Session (Group debrief):**
+
 1. **Reveal**: What choices did the class make?
 2. **Discuss**: Why did you choose that? What happened?
 3. **Reflect**: What did you learn about money today?
 4. **Note**: Facilitator logs outcomes + notes
 
 **Recording:**
+
 ```firestore
 academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 {
@@ -963,6 +1002,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 ### 8.3 Session Data Collection (Privacy-Preserving)
 
 **What Gets Recorded:**
+
 - ✅ Who was present (name needed for attendance)
 - ✅ Who engaged (did they make choices, ask questions?)
 - ✅ Common outcomes (not individual comparisons)
@@ -970,6 +1010,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 - ✅ Competency growth (aggregated, not ranked)
 
 **What DOESN'T:**
+
 - ❌ Compare learners publicly (no leaderboards)
 - ❌ Shame or highlight struggling learners
 - ❌ Rank children by speed or correctness
@@ -984,6 +1025,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 ### 9.1 Facilitator Navigation Model
 
 **Mental Model:**
+
 ```
 "I have a class. I need to teach them financial capability.
  What do I do today? How are they doing? Who needs help?"
@@ -1145,26 +1187,31 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 ### 10.1 The Five Immutable Principles
 
 **1. Children Own Their Choices**
+
 - Child makes every decision in scenarios
 - No facilitator, parent, or admin can undo or modify a choice
 - Choices are immutable once recorded (write-once)
 
 **2. Facilitators Own Sessions, Not Progress**
+
 - Facilitator records WHO ATTENDED, not who succeeded
 - Facilitator cannot modify child's journey progress
 - Facilitator CAN add notes (narrative context only)
 
 **3. Parents Own Family Context**
+
 - Parent sets child's profile (name, age, avatar)
 - Parent decides when child starts/pauses programme
 - Parent sees insights, but cannot see facilitator context
 
 **4. System Owns Outcomes**
+
 - Competency scores derived automatically from choices + assessments
 - Badges awarded by rule, not by facilitator discretion
 - No manual score adjustment (preserves integrity)
 
 **5. Admin Owns Operations**
+
 - Admin creates schools, cohorts, assigns facilitators
 - Admin provisions accounts (no self-service for facilitators in MVP)
 - Admin can see all data, modify structure, generate reports
@@ -1172,21 +1219,25 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 ### 10.2 Conflict Resolution (What Happens When?)
 
 **Scenario: Facilitator says "Learner didn't understand, redo assessment"**
+
 - ❌ Facilitator cannot modify score
 - ✅ Facilitator CAN facilitate re-attempts (child takes assessment again)
 - ✅ Both attempts recorded; learner starts with highest score
 
 **Scenario: Parent says "Child is too stressed, pause programme"**
+
 - ✅ Parent can set child's onboarding_completed = false
 - ✅ Child account remains active, but journeys disabled
 - ✅ Facilitator sees child in cohort but inactive
 
 **Scenario: Facilitator says "Network error, child's choice didn't save"**
+
 - ✅ Child retries at /child/scenario/{scenarioId}
 - ✅ Previous choices still there (G6.1 error recovery)
 - ✅ If duplicate submission, server deduplicates (first wins)
 
 **Scenario: Admin detects data corruption**
+
 - ✅ Admin can manually correct Firestore (atomic operation)
 - ✅ Audit log records the change (who, when, why)
 - ✅ No facilitator or parent involvement
@@ -1198,6 +1249,7 @@ academyOrganizations/{orgId}/cohorts/{cohortId}/sessions/{sessionId}
 ### 11.1 New Firestore Rules Required
 
 **Current Rules (Unchanged):**
+
 - ✅ Family isolation preserved
 - ✅ Parent-only data (parentInsights) blocked from facilitators
 - ✅ Child session immutability preserved
@@ -1211,12 +1263,12 @@ match /academyOrganizations/{orgId} {
   // Only admin creates/modifies schools
   allow read: if isAdmin() || hasFacilitatorInOrg(orgId);
   allow create, update, delete: if isAdmin();
-  
+
   // Cohorts and sessions
   match /cohorts/{cohortId} {
     allow read: if isAdmin() || isFacilitatorOfCohort(orgId, cohortId);
     allow create, update, delete: if isAdmin();
-    
+
     match /sessions/{sessionId} {
       // Facilitator can create and read own sessions
       allow create: if isFacilitatorOfCohort(orgId, cohortId)
@@ -1232,6 +1284,7 @@ match /academyOrganizations/{orgId} {
 ### 11.2 Authorization Boundaries (Enforced at Firestore Rules Level)
 
 **Facilitator CANNOT:**
+
 - ❌ Read other schools' data
 - ❌ Modify child assessments or progress
 - ❌ Access parent-private data
@@ -1240,6 +1293,7 @@ match /academyOrganizations/{orgId} {
 - ❌ Create or modify cohorts (admin only)
 
 **Facilitator CAN:**
+
 - ✅ Read assigned cohort(s) and all learners in it
 - ✅ Create session records (with own facilitatorUid)
 - ✅ Add notes/observations (own records)
@@ -1249,18 +1303,21 @@ match /academyOrganizations/{orgId} {
 ### 11.3 Data Lifecycle & Audit
 
 **What Must Be Logged:**
+
 - ✅ Every choice a child makes (immutable record)
 - ✅ Every session a facilitator facilitates
 - ✅ Every update to learner enrollment
 - ✅ Every role assignment (facilitator provisioning)
 
 **What Must Be Protected:**
+
 - ✅ PIN hash (never exposed to browser)
 - ✅ Parent email (never exposed to facilitator)
 - ✅ Session tokens (HttpOnly cookies)
 - ✅ TATI IDs (non-identifying, but tracked)
 
 **Retention Policy (Needs Product Decision):**
+
 - Q: How long do we keep session data after cohort completes?
 - Q: Can learner data be exported by parent?
 - Q: Can facilitator access completed cohorts' data?
@@ -1281,6 +1338,7 @@ profiles (id, email, displayName, ...)
 ```
 
 **New Tables (NOT NEEDED for MVP - use Firestore)**
+
 - ~~academies~~ (moved to Firestore)
 - ~~cohorts~~ (moved to Firestore)
 - ~~facilitator_assignments~~ (moved to Firestore)
@@ -1337,36 +1395,42 @@ families/{familyId}/children/{childId}
 Academy data contract is ready for implementation when:
 
 ✅ **Hierarchy Clear**
+
 - Schools exist in Firestore
 - Cohorts assigned to schools with facilitators
 - Learners enrolled in cohorts
 - Sessions record facilitator-led activities
 
 ✅ **Authorization Tight**
+
 - Facilitators can only read assigned cohorts
 - Facilitators cannot modify child progress
 - Parent-private data blocked from facilitators
 - Admin can see all data
 
 ✅ **Privacy Preserved**
+
 - Facilitator never sees parent names/emails
 - Child names protected (TATI ID for roster)
 - Sensitive competency data shared warmly (not as raw scores)
 - Family relationships kept distinct from school relationships
 
 ✅ **Sessions Trackable**
+
 - Every facilitator activity recorded
 - Attendance recorded per session
 - Engagement measured (not ranked)
 - Facilitator notes captured for context
 
 ✅ **Data Integrity Maintained**
+
 - Child choices immutable
 - Progress owned by child, not facilitator
 - Assessments scored by system, not facilitator
 - G5.1, G6.1 protections active
 
 ✅ **Parent Connection Preserved**
+
 - Parent can see child learned in school
 - Parent gets conversation starters based on competencies
 - Parent never sees facilitator/cohort data
@@ -1379,26 +1443,31 @@ Academy data contract is ready for implementation when:
 ### What Academy Does NOT Include in MVP
 
 **NOT:** Grading/ranking children
+
 - No "top performer" leaderboard
 - No grades (only competency levels: growing/strong)
 - No percentage scores shown to other parents
 
 **NOT:** Attendance enforcement
+
 - Facilitator notes who attended; no penalties
 - Absence does not prevent future learning
 - No truancy system
 
 **NOT:** Mastery gates
+
 - Child can move forward regardless of score
 - Optional challenge materials for extension
 - No child left behind by pace
 
 **NOT:** Teacher productivity metrics
+
 - Facilitator's performance NOT measured
 - No "best teacher" comparison
 - Focus: Did the cohort learn? Not: How efficient is the teacher?
 
 **NOT:** Advanced LMS features
+
 - No lesson authoring by facilitators
 - No content customization
 - No syllabus builder
@@ -1407,6 +1476,7 @@ Academy data contract is ready for implementation when:
 - No parent-facilitator messaging (Phase 2)
 
 **NOT:** Certificates/degrees
+
 - No course completion certificates (Phase 2)
 - No credentials issued
 - Focus: Growth, not credentials
@@ -1512,7 +1582,7 @@ This product & data contract defines:
 ✅ **Security implications** (new rules, no existing rule changes)  
 ✅ **Session definition** (guided group experience, not surveillance)  
 ✅ **Information architecture** (8 key screens)  
-✅ **Critical success criteria** (how to know it works)  
+✅ **Critical success criteria** (how to know it works)
 
 **No code has been modified. No Firestore rules changed. No authentication touched.**
 
@@ -1524,6 +1594,6 @@ This contract is ready for product approval and can guide H3.1 implementation im
 
 **Status:** SPECIFICATION COMPLETE ✅  
 **Decision Gate:** Ready for approval before H3.1 begins  
-**Next Step:** Approve data contract, then proceed to H3.1 (Facilitator Authentication)  
+**Next Step:** Approve data contract, then proceed to H3.1 (Facilitator Authentication)
 
-*"The best software is built on a clear contract. This is ours."*
+_"The best software is built on a clear contract. This is ours."_
