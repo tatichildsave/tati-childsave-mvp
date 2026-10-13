@@ -77,12 +77,16 @@ function AdminLoginPage() {
     try {
       const auth = getFirebaseAuth();
       if (!auth) {
-        setError("Authentication not available. Please reload the page.");
+        const msg = "Authentication not available. Please reload the page.";
+        console.error("[Admin Login] Firebase Auth not initialized:", msg);
+        setError(msg);
         setBusy(false);
         return;
       }
 
+      console.log("[Admin Login] Attempting sign in with:", email);
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log("[Admin Login] Sign in successful, UID:", userCredential.user.uid);
 
       // Verify admin role
       const db = getFirebaseFirestore();
@@ -103,6 +107,7 @@ function AdminLoginPage() {
       setBusy(false);
     } catch (signInError) {
       const message = signInError instanceof Error ? signInError.message.toLowerCase() : "";
+      console.error("[Admin Login] Sign in error:", signInError);
       setError(
         message.includes("invalid") ||
           message.includes("wrong-password") ||
