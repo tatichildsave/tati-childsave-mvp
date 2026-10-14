@@ -15,7 +15,11 @@ import Step1Family from "./step-1-family";
 import Step2Parent from "./step-2-parent";
 import Step3Children from "./step-3-children";
 import Step4Review from "./step-4-review";
-import { provisionFamily } from "@/lib/backend/provisioning.functions";
+import { 
+  provisionParent, 
+  provisionFamily, 
+  provisionChild 
+} from "@/lib/backend/provisioning.functions";
 
 export const Route = createFileRoute("/admin/enroll/")({
   component: EnrollmentWorkflow,
@@ -80,23 +84,13 @@ function EnrollmentWorkflow() {
 
       setLoading(true);
       try {
-        // Call provisionParent function
-        const response = await fetch("/api/provisioning/parent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: data.parentEmail,
-            displayName: data.parentName,
-            phone: data.parentPhone,
-          }),
+        // Call provisionParent server function
+        const result = await provisionParent({
+          email: data.parentEmail,
+          displayName: data.parentName,
+          phone: data.parentPhone || undefined,
         });
 
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to create parent account");
-        }
-
-        const result = await response.json();
         setData((prev) => ({
           ...prev,
           parentUid: result.parentUid,
@@ -144,31 +138,35 @@ function EnrollmentWorkflow() {
 
     try {
       // Step 1: Create family
-      const familyResponse = await fetch("/api/provisioning/family", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.familyName,
-          notes: data.familyNotes,
-          parentUid: data.parentUid,
-        }),
+      const familyResult = await provisionFamily({
+        name: data.familyName,
+        notes: data.familyNotes || undefined,
+        parentUid: data.parentUid!,
       });
 
-      if (!familyResponse.ok) {
-        const error = await familyResponse.json();
-        throw new Error(error.message || "Failed to create family");
-      }
-
-      const familyResult = await familyResponse.json();
       const familyId = familyResult.familyId;
 
-      // Step 2: Create children with TATI IDs (if not already generated)
-      // In this case, Step 3 already generated them, so we just confirm
-      // The full implementation would call provisionChild for each child here
+      // Step 2: Create children with their TATI IDs and PINs
+      for (const child of data.children) {
+        if (child.tatiId && child.pin) {
+          // Child was already provisioned in Step 3
+          // Just confirm by calling provisionChild to finalize
+          await provisionChild({
+            familyId,
+            name: child.name,
+            age: child.age,
+            dateOfBirth: child.dateOfBirth || undefined,
+            preferredName: child.preferredName || undefined,
+            tatiId: child.tatiId,
+          });
+        }
+      }
 
       // Enrollment complete
       setLoading(false);
-      // Step 4 will handle redirect
+      
+      // Redirect to families page
+      navigate({ to: "/admin/families" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Enrollment failed");
       setLoading(false);
