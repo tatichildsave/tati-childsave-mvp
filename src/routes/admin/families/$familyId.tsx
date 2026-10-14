@@ -5,7 +5,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Page, PageHeader, Card, Button, Text, Badge, Tabs, Alert } from "@/components/tati";
+import { Page, PageHeader, Card, Button } from "@/components/tati";
 
 export const Route = createFileRoute("/admin/families/$familyId")({
   component: FamilyDetail,

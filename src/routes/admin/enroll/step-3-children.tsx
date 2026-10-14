@@ -4,7 +4,7 @@
  * Each child gets a unique TATI ID and 4-digit PIN (shown once)
  */
 
-import { Input, Label, Text, Button, Card, Alert } from "@/components/tati";
+import { Button, Card } from "@/components/tati";
 import type { EnrollmentData } from "./index";
 import { useState } from "react";
 
@@ -119,14 +119,14 @@ export default function Step3Children({
       {/* Added Children List */}
       {data.children.length > 0 && (
         <div className="space-y-4">
-          <Text className="font-semibold">Added Children ({data.children.length})</Text>
+          <p className="font-semibold">Added Children ({data.children.length})</p>
           {data.children.map((child, index) => (
             <Card key={index} className="p-4 bg-green-50 border border-green-200">
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <Text className="font-semibold">{child.name}</Text>
-                    <Text className="text-sm text-gray-600">Age: {child.age}</Text>
+                    <p className="font-semibold">{child.name}</p>
+                    <p className="text-sm text-gray-600">Age: {child.age}</p>
                   </div>
                   <button
                     onClick={() => removeChild(index)}
@@ -138,18 +138,18 @@ export default function Step3Children({
 
                 <div className="bg-white rounded p-3 space-y-2">
                   <div>
-                    <Text className="text-xs font-semibold text-gray-600">TATI ID</Text>
-                    <Text className="font-mono text-lg font-bold text-blue-600">
+                    <p className="text-xs font-semibold text-gray-600">TATI ID</p>
+                    <p className="font-mono text-lg font-bold text-blue-600">
                       {child.tatiId}
-                    </Text>
+                    </p>
                   </div>
 
                   <div>
-                    <Text className="text-xs font-semibold text-gray-600">4-Digit PIN</Text>
+                    <p className="text-xs font-semibold text-gray-600">4-Digit PIN</p>
                     <div className="flex items-center gap-2">
-                      <Text className="font-mono text-lg font-bold text-blue-600">
+                      <p className="font-mono text-lg font-bold text-blue-600">
                         {child.pin}
-                      </Text>
+                      </p>
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
                         Shown once
                       </span>
@@ -158,8 +158,8 @@ export default function Step3Children({
 
                   {child.preferredName && (
                     <div>
-                      <Text className="text-xs font-semibold text-gray-600">Preferred Name</Text>
-                      <Text className="text-sm">{child.preferredName}</Text>
+                      <p className="text-xs font-semibold text-gray-600">Preferred Name</p>
+                      <p className="text-sm">{child.preferredName}</p>
                     </div>
                   )}
                 </div>
@@ -171,14 +171,16 @@ export default function Step3Children({
 
       {/* New Child Form */}
       <Card className="p-4 bg-gray-50 border border-gray-200">
-        <Text className="font-semibold mb-4">
+        <p className="font-semibold mb-4">
           {data.children.length === 0 ? "Add First Child" : "Add Another Child"}
-        </Text>
+        </p>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="childName">Child Name *</Label>
-            <Input
+            <label htmlFor="childName" className="block text-sm font-semibold mb-2">
+              Child Name *
+            </label>
+            <input
               id="childName"
               type="text"
               placeholder="e.g., Sarah Johnson"
@@ -186,13 +188,16 @@ export default function Step3Children({
               onChange={(e) => setNewChild({ ...newChild, name: e.target.value })}
               disabled={generatingIndex !== null}
               autoFocus
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="childAge">Age (5-18) *</Label>
-              <Input
+              <label htmlFor="childAge" className="block text-sm font-semibold mb-2">
+                Age (5-18) *
+              </label>
+              <input
                 id="childAge"
                 type="number"
                 min="5"
@@ -201,41 +206,49 @@ export default function Step3Children({
                 value={newChild.age}
                 onChange={(e) => setNewChild({ ...newChild, age: e.target.value })}
                 disabled={generatingIndex !== null}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>
 
             <div>
-              <Label htmlFor="dateOfBirth">Date of Birth (Optional)</Label>
-              <Input
+              <label htmlFor="dateOfBirth" className="block text-sm font-semibold mb-2">
+                Date of Birth (Optional)
+              </label>
+              <input
                 id="dateOfBirth"
                 type="date"
                 value={newChild.dateOfBirth}
                 onChange={(e) => setNewChild({ ...newChild, dateOfBirth: e.target.value })}
                 disabled={generatingIndex !== null}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="preferredName">Preferred Name (Optional)</Label>
-            <Input
+            <label htmlFor="preferredName" className="block text-sm font-semibold mb-2">
+              Preferred Name (Optional)
+            </label>
+            <input
               id="preferredName"
               type="text"
               placeholder="e.g., Sara (if full name is Sarah)"
               value={newChild.preferredName}
               onChange={(e) => setNewChild({ ...newChild, preferredName: e.target.value })}
               disabled={generatingIndex !== null}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
             />
           </div>
 
           {error && (
-            <Alert type="error">{error}</Alert>
+            <div className="bg-red-50 border border-red-200 rounded p-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           )}
 
           <Button
             onClick={generateTatiIdAndPin}
             disabled={generatingIndex !== null}
-            loading={generatingIndex !== null}
             className="w-full"
           >
             {generatingIndex !== null ? "Generating..." : "Generate TATI ID & PIN"}
@@ -245,19 +258,19 @@ export default function Step3Children({
 
       {/* At Least One Child Required */}
       {data.children.length === 0 && (
-        <Alert type="info">
-          <p className="text-sm">
+        <div className="bg-blue-50 border border-blue-200 rounded p-4">
+          <p className="text-sm text-blue-800">
             <strong>Required:</strong> At least one child must be added before proceeding.
           </p>
-        </Alert>
+        </div>
       )}
 
-      <Alert type="warning">
-        <p className="text-sm">
+      <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+        <p className="text-sm text-yellow-800">
           <strong>⚠️ Important:</strong> The PIN is displayed here only once. Make sure the parent
           has noted it down before proceeding to the next step.
         </p>
-      </Alert>
+      </div>
     </div>
   );
 }

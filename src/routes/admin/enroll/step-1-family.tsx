@@ -3,7 +3,6 @@
  * Simple form to capture family name and optional notes
  */
 
-import { Input, Textarea, Label } from "@/components/tati";
 import type { EnrollmentData } from "./index";
 
 interface Step1FamilyProps {
@@ -29,8 +28,10 @@ export default function Step1Family({ data, onDataChange }: Step1FamilyProps) {
   return (
     <div className="space-y-6">
       <div>
-        <Label htmlFor="familyName">Family Name *</Label>
-        <Input
+        <label htmlFor="familyName" className="block text-sm font-semibold mb-2">
+          Family Name *
+        </label>
+        <input
           id="familyName"
           type="text"
           placeholder="e.g., Johnson Family"
@@ -38,17 +39,21 @@ export default function Step1Family({ data, onDataChange }: Step1FamilyProps) {
           onChange={handleFamilyNameChange}
           required
           autoFocus
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <Label htmlFor="familyNotes">Notes (Optional)</Label>
-        <Textarea
+        <label htmlFor="familyNotes" className="block text-sm font-semibold mb-2">
+          Notes (Optional)
+        </label>
+        <textarea
           id="familyNotes"
           placeholder="Add any additional notes about the family (e.g., language preferences, special needs)"
           value={data.familyNotes || ""}
           onChange={handleNotesChange}
           rows={4}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 

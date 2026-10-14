@@ -4,7 +4,6 @@
  * Integrates with provisionParent server function
  */
 
-import { Input, Label, Text, Alert } from "@/components/tati";
 import type { EnrollmentData } from "./index";
 import { useState } from "react";
 
@@ -58,8 +57,10 @@ export default function Step2Parent({
   return (
     <div className="space-y-6">
       <div>
-        <Label htmlFor="parentEmail">Email Address *</Label>
-        <Input
+        <label htmlFor="parentEmail" className="block text-sm font-semibold mb-2">
+          Email Address *
+        </label>
+        <input
           id="parentEmail"
           type="email"
           placeholder="parent@example.com"
@@ -69,15 +70,18 @@ export default function Step2Parent({
           required
           autoFocus
           aria-invalid={emailError ? "true" : "false"}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
         />
         {emailError && (
-          <Text className="text-red-600 text-sm mt-1">{emailError}</Text>
+          <p className="text-red-600 text-sm mt-1">{emailError}</p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="parentName">Display Name *</Label>
-        <Input
+        <label htmlFor="parentName" className="block text-sm font-semibold mb-2">
+          Display Name *
+        </label>
+        <input
           id="parentName"
           type="text"
           placeholder="e.g., John Johnson"
@@ -85,27 +89,31 @@ export default function Step2Parent({
           onChange={handleNameChange}
           disabled={loading}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
         />
       </div>
 
       <div>
-        <Label htmlFor="parentPhone">Phone Number (Optional)</Label>
-        <Input
+        <label htmlFor="parentPhone" className="block text-sm font-semibold mb-2">
+          Phone Number (Optional)
+        </label>
+        <input
           id="parentPhone"
           type="tel"
           placeholder="e.g., +1 (555) 123-4567"
           value={data.parentPhone || ""}
           onChange={handlePhoneChange}
           disabled={loading}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
         />
       </div>
 
-      <Alert type="info">
-        <p className="text-sm">
+      <div className="bg-blue-50 border border-blue-200 rounded p-4">
+        <p className="text-sm text-blue-800">
           <strong>Important:</strong> A temporary account will be created for this parent email.
           The parent will set their own password on first login.
         </p>
-      </Alert>
+      </div>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
         <p className="text-sm text-yellow-800">

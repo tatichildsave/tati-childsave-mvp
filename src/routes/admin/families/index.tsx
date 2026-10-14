@@ -5,7 +5,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Page, PageHeader, Card, Button, Input, Text, Badge, Empty } from "@/components/tati";
+import { Page, PageHeader, Card, Button } from "@/components/tati";
 
 export const Route = createFileRoute("/admin/families/")({
   component: FamiliesList,
@@ -81,11 +81,12 @@ function FamiliesList() {
       {/* Search and Filter */}
       <Card className="mb-6 p-4">
         <div className="space-y-4">
-          <Input
+          <input
             type="text"
             placeholder="Search by family name, parent name, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <div className="flex gap-2 flex-wrap">
@@ -108,15 +109,15 @@ function FamiliesList() {
 
       {/* Families List */}
       {filteredFamilies.length === 0 ? (
-        <Empty
-          title="No families found"
-          description="Try adjusting your search or filters"
-          action={
-            <Button onClick={() => navigate({ to: "/admin/enroll" })} variant="primary">
+        <Card className="p-8 text-center">
+          <div>
+            <p className="text-lg font-semibold mb-2">No families found</p>
+            <p className="text-gray-600 mb-4">Try adjusting your search or filters</p>
+            <Button onClick={() => navigate({ to: "/admin/enroll" })}>
               Enrol New Family
             </Button>
-          }
-        />
+          </div>
+        </Card>
       ) : (
         <div className="space-y-4">
           {filteredFamilies.map((family) => (
@@ -127,24 +128,32 @@ function FamiliesList() {
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <Text className="font-semibold text-lg">{family.name}</Text>
-                  <Text className="text-sm text-gray-600">{family.parentName}</Text>
+                  <p className="font-semibold text-lg">{family.name}</p>
+                  <p className="text-sm text-gray-600">{family.parentName}</p>
                 </div>
-                <Badge label={family.status} className={getStatusColor(family.status)} />
+                <span className={`px-3 py-1 rounded text-sm font-semibold ${
+                  family.status === "active"
+                    ? "bg-green-100 text-green-800"
+                    : family.status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                }`}>
+                  {family.status}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                 <div>
-                  <Text className="text-gray-600">Email</Text>
-                  <Text className="font-mono text-xs">{family.parentEmail}</Text>
+                  <p className="text-gray-600">Email</p>
+                  <p className="font-mono text-xs">{family.parentEmail}</p>
                 </div>
                 <div>
-                  <Text className="text-gray-600">Children</Text>
-                  <Text className="font-semibold">{family.childrenCount}</Text>
+                  <p className="text-gray-600">Children</p>
+                  <p className="font-semibold">{family.childrenCount}</p>
                 </div>
                 <div>
-                  <Text className="text-gray-600">Enrolled</Text>
-                  <Text className="font-semibold">{family.createdAt}</Text>
+                  <p className="text-gray-600">Enrolled</p>
+                  <p className="font-semibold">{family.createdAt}</p>
                 </div>
                 <div className="text-right">
                   <Button
@@ -152,8 +161,7 @@ function FamiliesList() {
                       e.stopPropagation();
                       navigate({ to: `/admin/families/${family.id}` });
                     }}
-                    variant="outline"
-                    size="sm"
+                    className="text-sm"
                   >
                     View →
                   </Button>
