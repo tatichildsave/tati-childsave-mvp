@@ -11,10 +11,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Page, PageHeader, Card, Button, Text, Alert } from "@/components/tati";
-import Step1Family from "./_step-1-family";
-import Step2Parent from "./_step-2-parent";
-import Step3Children from "./_step-3-children";
-import Step4Review from "./_step-4-review";
+import Step1Family from "./step-1-family";
+import Step2Parent from "./step-2-parent";
+import Step3Children from "./step-3-children";
+import Step4Review from "./step-4-review";
 import { provisionFamily } from "@/lib/backend/provisioning.functions";
 
 export const Route = createFileRoute("/admin/enroll/")({
