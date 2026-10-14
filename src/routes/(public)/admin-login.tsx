@@ -10,6 +10,7 @@ import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { getFirebaseFirestore } from "@/integrations/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import { Page, PageHeader, Card, CardNote, Button } from "@/components/tati";
+import { createParentSessionFn } from "@/lib/backend/firebase/family.functions";
 
 export const Route = createFileRoute("/(public)/admin-login")({
   head: () => ({
@@ -57,8 +58,15 @@ function AdminLoginPage() {
           if (userDocSnap.exists()) {
             const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
             if (Array.isArray(roles) && roles.includes("admin")) {
-              navigate({ to: "/admin", replace: true });
-              return;
+              try {
+                const idToken = await user.getIdToken();
+                await createParentSessionFn({ data: { idToken } });
+                navigate({ to: "/admin", replace: true });
+                return;
+              } catch (sessionError) {
+                console.error("[Admin Login] Failed to create session cookie in effect:", sessionError);
+                // Fall through to setChecking(false) to show error on page
+              }
             }
           }
         }
@@ -107,9 +115,19 @@ function AdminLoginPage() {
           console.log("[Admin Login] User roles:", roles);
           
           if (Array.isArray(roles) && roles.includes("admin")) {
-            console.log("[Admin Login] Admin role confirmed, navigating to /admin");
-            navigate({ to: "/admin", replace: true });
-            return;
+            console.log("[Admin Login] Admin role confirmed, creating session cookie");
+            try {
+              const idToken = await userCredential.user.getIdToken();
+              await createParentSessionFn({ data: { idToken } });
+              console.log("[Admin Login] Session cookie created, navigating to /admin");
+              navigate({ to: "/admin", replace: true });
+              return;
+            } catch (sessionError) {
+              console.error("[Admin Login] Failed to create session cookie:", sessionError);
+              setError("Failed to create admin session. Please try signing in again.");
+              setBusy(false);
+              return;
+            }
           } else {
             console.log("[Admin Login] User exists but does not have admin role");
           }
@@ -157,8 +175,18 @@ function AdminLoginPage() {
         if (userDocSnap.exists()) {
           const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
           if (Array.isArray(roles) && roles.includes("admin")) {
-            navigate({ to: "/admin", replace: true });
-            return;
+            console.log("[Admin Login] Admin role confirmed (Google), creating session cookie");
+            try {
+              const idToken = await result.user.getIdToken();
+              await createParentSessionFn({ data: { idToken } });
+              console.log("[Admin Login] Session cookie created, navigating to /admin");
+              navigate({ to: "/admin", replace: true });
+              return;
+            } catch (sessionError) {
+              console.error("[Admin Login] Failed to create session cookie:", sessionError);
+              setError("Failed to create admin session. Please try signing in again.");
+              return;
+            }
           }
         }
       }
