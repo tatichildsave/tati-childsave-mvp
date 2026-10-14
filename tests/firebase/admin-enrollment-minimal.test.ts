@@ -31,67 +31,39 @@ describe("Admin Enrollment Minimal Tests (No Emulator)", () => {
 
   describe("Validation functions work without external dependencies", () => {
     it("should validate family data - empty name fails", () => {
-      const invalidFamily = {
-        name: "",
-        address: "123 Main St",
-        phone: "+233123456789",
-        location: "Accra",
-      };
-
-      expect(() => validateFamilyData(invalidFamily)).toThrow();
+      const result = validateFamilyData("");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should validate family data - valid data passes", () => {
-      const validFamily = {
-        name: "Test Family",
-        address: "123 Main St",
-        phone: "+233123456789",
-        location: "Accra",
-      };
-
-      expect(() => validateFamilyData(validFamily)).not.toThrow();
+      const result = validateFamilyData("Test Family");
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
     });
 
     it("should validate parent data - empty email fails", () => {
-      const invalidParent = {
-        name: "Test Parent",
-        email: "",
-        phone: "+233123456789",
-        password: "TestPass@123",
-      };
-
-      expect(() => validateParentData(invalidParent)).toThrow();
+      const result = validateParentData("", "Test Parent");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should validate parent data - valid data passes", () => {
-      const validParent = {
-        name: "Test Parent",
-        email: "parent@test.example.com",
-        phone: "+233123456789",
-        password: "TestPass@123",
-      };
-
-      expect(() => validateParentData(validParent)).not.toThrow();
+      const result = validateParentData("parent@test.example.com", "Test Parent");
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
     });
 
     it("should validate child data - empty name fails", () => {
-      const invalidChild = {
-        name: "",
-        age: 8,
-        gender: "M",
-      };
-
-      expect(() => validateChildData(invalidChild)).toThrow();
+      const result = validateChildData("", 8);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBeDefined();
     });
 
     it("should validate child data - valid data passes", () => {
-      const validChild = {
-        name: "Test Child",
-        age: 8,
-        gender: "M",
-      };
-
-      expect(() => validateChildData(validChild)).not.toThrow();
+      const result = validateChildData("Test Child", 8);
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
     });
   });
 
