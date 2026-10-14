@@ -47,14 +47,19 @@ async function getCurrentAdminUid(): Promise<string> {
   try {
     const sessionCookie = getCookie("__Secure-parent-session") || getCookie("parent-session");
     if (!sessionCookie) {
-      throw new Error("Unauthenticated");
+      console.error("[getCurrentAdminUid] No session cookie found");
+      throw new Error("Unauthenticated: No session cookie found");
     }
 
+    console.log("[getCurrentAdminUid] Found session cookie, verifying...");
     const auth = getFirebaseAdmin();
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+    console.log("[getCurrentAdminUid] Session verified for user:", decodedClaims.uid);
     return decodedClaims.uid;
-  } catch {
-    throw new Error("Unauthenticated or invalid session");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[getCurrentAdminUid] Error:", message);
+    throw new Error(`Unauthenticated or invalid session: ${message}`);
   }
 }
 

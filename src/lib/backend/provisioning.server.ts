@@ -7,7 +7,7 @@
  * Security: All operations require explicit authorization verification by the caller.
  */
 
-import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
+import { getFirebaseAdminDb, getFirebaseAdmin } from "@/integrations/firebase/admin.server";
 import { getAuth } from "firebase-admin/auth";
 import { getApp } from "firebase-admin/app";
 import type { UserRecord } from "firebase-admin/auth";
@@ -148,7 +148,7 @@ export async function createParentAuthUser(
   email: string,
   displayName: string
 ): Promise<UserRecord> {
-  const auth = getAuth(getApp());
+  const auth = getFirebaseAdmin();
 
   const user = await auth.createUser({
     email: email.toLowerCase(),
