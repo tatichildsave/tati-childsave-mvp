@@ -15,8 +15,8 @@ import { Timestamp } from "firebase-admin/firestore";
 
 /**
  * Verify that a user has admin role
- * For pilot phase: any authenticated parent user can provision families
- * TODO: Enforce admin role in production
+ * Enforces strict authorization: only users with "admin" role can provision accounts.
+ * This security boundary is critical even during pilot phase.
  */
 export async function verifyAdminAuthorization(uid: string): Promise<string> {
   const db = getFirebaseAdminDb();
@@ -26,16 +26,18 @@ export async function verifyAdminAuthorization(uid: string): Promise<string> {
   const userData = userDoc.data();
 
   if (!userData) {
+    console.error(`[verifyAdminAuthorization] User not found: ${uid}`);
     throw new Error("User not found in database");
   }
 
-  // For pilot phase: allow any parent or admin user to provision
-  // In production, this should strictly check for admin role
+  // Strict authorization check: only admins can provision
   const roles = userData.roles as string[] | undefined;
-  if (!Array.isArray(roles) || (roles.length === 0)) {
-    console.warn(`[verifyAdminAuthorization] User ${uid} has no roles in Firestore`, userData);
-    // For pilot, allow it anyway
-    // throw new Error("Authorization required (no roles found)");
+  if (!Array.isArray(roles) || !roles.includes("admin")) {
+    console.error(
+      `[verifyAdminAuthorization] Authorization denied for user ${uid}. User roles:`,
+      roles
+    );
+    throw new Error("Admin authorization required to provision accounts");
   }
 
   console.log(`[verifyAdminAuthorization] User ${uid} authorized with roles:`, roles);

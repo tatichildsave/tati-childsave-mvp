@@ -61,6 +61,38 @@ function EnrollmentWorkflow() {
     children: [],
   });
 
+  /**
+   * Safely extract error message from various error types
+   * Handles standard Error, TanStack response errors, HTML error pages, etc.
+   */
+  function parseErrorMessage(err: unknown): string {
+    if (err instanceof Error) {
+      return err.message;
+    }
+
+    if (typeof err === "object" && err !== null) {
+      // Handle TanStack server function errors
+      if ("message" in err && typeof (err as any).message === "string") {
+        return (err as any).message;
+      }
+      if ("error" in err && typeof (err as any).error === "string") {
+        return (err as any).error;
+      }
+    }
+
+    if (typeof err === "string") {
+      // If it looks like HTML, don't display it directly
+      if (err.includes("<") && err.includes(">")) {
+        console.error("Server returned HTML error response:", err);
+        return "An unexpected server error occurred. Please check the browser console for details.";
+      }
+      return err;
+    }
+
+    console.error("Unexpected error type:", typeof err, err);
+    return "An unexpected error occurred";
+  }
+
   const handleNext = async () => {
     setError(null);
 
@@ -97,7 +129,9 @@ function EnrollmentWorkflow() {
         }));
         setStep(3);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create parent account");
+        const errorMessage = parseErrorMessage(err);
+        setError(errorMessage);
+        console.error("[Enrollment] Parent provisioning error:", err);
       } finally {
         setLoading(false);
       }
