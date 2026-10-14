@@ -94,21 +94,21 @@ function initializeAdminApp() {
 
 /**
  * Fail-closed environment check: Verify Firebase project configuration
- * matches the deployment environment to prevent accidental data corruption.
+ * in production to prevent accidental data loss. For MVP, no separate test project required.
  */
 function verifyProjectConfiguration(projectId: string | undefined) {
   const isEmulator = isEmulatorMode();
   const vercelEnv = process.env["VERCEL_ENV"] || process.env["NODE_ENV"] || "local";
   
-  // In emulator mode, skip production checks (allows testing)
+  // In emulator mode, skip checks (allows flexible testing)
   if (isEmulator) {
     console.log(
-      `[Firebase] Emulator mode active; skipping production environment checks (project: ${projectId})`,
+      `[Firebase] Emulator mode active; skipping environment checks (project: ${projectId})`,
     );
     return;
   }
 
-  // Production environment must use production project
+  // Production environment must use production project (fail-closed protection)
   if (vercelEnv === "production") {
     if (projectId !== "tatichildsavemvp") {
       throw new Error(
@@ -120,23 +120,10 @@ function verifyProjectConfiguration(projectId: string | undefined) {
     console.log("[Firebase] Production environment verified with correct project: tatichildsavemvp");
   }
 
-  // Preview environment must use test project
+  // Preview deployments can use any project; just log for monitoring
   if (vercelEnv === "preview") {
-    if (projectId === "tatichildsavemvp") {
-      throw new Error(
-        `[FAIL-CLOSED] Preview environment detected but FIREBASE_PROJECT_ID is "${projectId}". ` +
-        `Preview MUST use "tati-childsave-test" project to prevent production data contamination. ` +
-        `Update FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT in Vercel Preview environment variables.`,
-      );
-    }
-    if (projectId !== "tati-childsave-test") {
-      console.warn(
-        `[Firebase] Preview environment using non-standard project: ${projectId}. ` +
-        `Expected "tati-childsave-test". Ensure this is intentional.`,
-      );
-    } else {
-      console.log("[Firebase] Preview environment verified with isolated project: tati-childsave-test");
-    }
+    console.log(`[Firebase] Preview environment using project: ${projectId}. ` +
+      `Ensure credentials match the intended test/preview project.`);
   }
 
   // Local development is flexible
