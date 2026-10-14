@@ -184,13 +184,13 @@ function EnrollmentWorkflow() {
       {/* Progress Bar */}
       <Card className="mb-6 p-4">
         <div className="flex items-center justify-between mb-2">
-          <Text className="text-sm font-medium">Step {step} of 4</Text>
-          <Text className="text-sm text-gray-600">
+          <span className="text-sm font-medium">Step {step} of 4</span>
+          <span className="text-sm text-gray-600">
             {step === 1 && "Family Details"}
             {step === 2 && "Parent Details"}
             {step === 3 && "Children"}
             {step === 4 && "Review & Confirm"}
-          </Text>
+          </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
           <div
@@ -203,7 +203,7 @@ function EnrollmentWorkflow() {
       {/* Error Display */}
       {error && (
         <Card className="mb-6 p-4 bg-red-50 border border-red-200">
-          <Text className="text-red-700 text-sm">{error}</Text>
+          <span className="text-red-700 text-sm">{error}</span>
         </Card>
       )}
 
