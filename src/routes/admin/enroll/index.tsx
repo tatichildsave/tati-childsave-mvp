@@ -10,7 +10,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Page, PageHeader, Card, Button, Text, Alert } from "@/components/tati";
+import { Page, PageHeader, Card, Button, Alert } from "@/components/tati";
 import Step1Family from "./step-1-family";
 import Step2Parent from "./step-2-parent";
 import Step3Children from "./step-3-children";

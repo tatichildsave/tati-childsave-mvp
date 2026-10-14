@@ -18,6 +18,7 @@ export default defineConfig({
           style: "webpack",
         },
       },
+      routeFileIgnorePattern: "step-.*",
     }),
     // TanStack Start Vite plugin (for SSR and dev server)
     tanstackStart(),
