@@ -60,7 +60,7 @@ function AdminLoginPage() {
             if (Array.isArray(roles) && roles.includes("admin")) {
               try {
                 const idToken = await user.getIdToken();
-                await createParentSessionFn({ data: { idToken } });
+                await createParentSessionFn({ idToken });
                 navigate({ to: "/admin", replace: true });
                 return;
               } catch (sessionError) {
@@ -118,7 +118,7 @@ function AdminLoginPage() {
             console.log("[Admin Login] Admin role confirmed, creating session cookie");
             try {
               const idToken = await userCredential.user.getIdToken();
-              await createParentSessionFn({ data: { idToken } });
+              await createParentSessionFn({ idToken });
               console.log("[Admin Login] Session cookie created, navigating to /admin");
               navigate({ to: "/admin", replace: true });
               return;
@@ -178,7 +178,7 @@ function AdminLoginPage() {
             console.log("[Admin Login] Admin role confirmed (Google), creating session cookie");
             try {
               const idToken = await result.user.getIdToken();
-              await createParentSessionFn({ data: { idToken } });
+              await createParentSessionFn({ idToken });
               console.log("[Admin Login] Session cookie created, navigating to /admin");
               navigate({ to: "/admin", replace: true });
               return;
