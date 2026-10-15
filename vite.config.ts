@@ -43,6 +43,13 @@ export default defineConfig({
     target: "es2020",
   },
   ssr: {
-    external: ["firebase-admin"],
+    external: [
+      "firebase-admin",
+      "jose",
+      "jwks-rsa",
+      "google-auth-library-nodejs",
+      "@google-cloud/firestore",
+      "@google-cloud/storage",
+    ],
   },
 });
