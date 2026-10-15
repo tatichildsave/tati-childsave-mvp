@@ -136,10 +136,24 @@ function verifyProjectConfiguration(projectId: string | undefined) {
  * Get Firebase Admin Auth instance.
  * Safe for use in server-only contexts.
  * Automatically connects to Auth emulator if FIREBASE_AUTH_EMULATOR_HOST is set.
+ * Throws if initialization fails.
  */
 export function getFirebaseAdmin(): Auth {
   if (!adminAuthCache) {
-    adminAuthCache = getAuth(initializeAdminApp());
+    try {
+      const app = initializeAdminApp();
+      if (!app) {
+        throw new Error("Failed to initialize Firebase Admin app: app is null");
+      }
+      adminAuthCache = getAuth(app);
+      console.log("[Firebase] Admin Auth instance created successfully");
+    } catch (error) {
+      console.error("[Firebase] CRITICAL: Failed to initialize Admin Auth", {
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString(),
+      });
+      throw error;
+    }
   }
   return adminAuthCache;
 }

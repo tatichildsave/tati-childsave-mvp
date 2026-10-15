@@ -27,11 +27,30 @@ export type AuthenticatedParentContext = {
  */
 export async function createParentSession(idToken: string): Promise<void> {
   try {
+    // Validate input
+    if (!idToken || typeof idToken !== "string" || idToken.length === 0) {
+      console.error("[createParentSession] Invalid idToken", {
+        type: typeof idToken,
+        length: typeof idToken === "string" ? idToken.length : 0,
+      });
+      throw new Error("Invalid idToken: must be a non-empty string");
+    }
+
+    console.log("[createParentSession] Creating session cookie", {
+      idTokenLength: idToken.length,
+      timestamp: new Date().toISOString(),
+    });
+
     const auth = getFirebaseAdmin();
 
     // Verify the ID token and create a session cookie
     const sessionCookie = await auth.createSessionCookie(idToken, {
       expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
+    });
+
+    console.log("[createParentSession] Session cookie created successfully", {
+      cookieLength: sessionCookie.length,
+      timestamp: new Date().toISOString(),
     });
 
     // Set the session cookie with strict security options
@@ -42,24 +61,29 @@ export async function createParentSession(idToken: string): Promise<void> {
       path: "/",
       maxAge: SESSION_COOKIE_MAX_AGE,
     });
+
+    console.log("[createParentSession] Session cookie set successfully");
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : "";
-    
-    console.error("[createParentSession] CRITICAL: Failed to create session cookie");
-    console.error("[createParentSession] Error message:", errorMessage);
-    console.error("[createParentSession] Error type:", error?.constructor?.name);
+
+    console.error("[createParentSession] CRITICAL: Failed to create session cookie", {
+      errorMessage,
+      errorType: error?.constructor?.name,
+      timestamp: new Date().toISOString(),
+    });
+
     if (errorStack) {
-      console.error("[createParentSession] Stack:", errorStack.split("\n").slice(0, 5).join("\n"));
+      console.error("[createParentSession] Stack trace:", errorStack.split("\n").slice(0, 5).join("\n"));
     }
-    
+
     // Log environment context for debugging
-    console.error("[createParentSession] Environment:", {
+    console.error("[createParentSession] Environment context:", {
       NODE_ENV: process.env["NODE_ENV"],
       VERCEL_ENV: process.env["VERCEL_ENV"],
       FIREBASE_PROJECT_ID: process.env["FIREBASE_PROJECT_ID"],
     });
-    
+
     throw error;
   }
 }

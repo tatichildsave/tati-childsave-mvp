@@ -39,12 +39,30 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.object({ idToken: z.string().min(1) }))
   .handler(async (data) => {
     try {
+      // Log what we received (helps debug validation issues)
+      console.log("[createParentSessionFn] Received data:", {
+        hasData: !!data,
+        hasIdToken: !!data?.idToken,
+        idTokenLength: data?.idToken?.length,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Guard: ensure data is valid
+      if (!data || !data.idToken) {
+        console.error("[createParentSessionFn] Invalid data structure", {
+          data,
+          expected: "{ idToken: string }",
+        });
+        throw new Error("Invalid session data: missing or empty idToken");
+      }
+
       await createParentSession(data.idToken);
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      // Log full error context server-side (not exposed to client)
+      const errorStack = error instanceof Error ? error.stack : "";
+
+      // Log full error context server-side (Vercel logs)
       console.error(
         "[createParentSessionFn] CRITICAL: Session cookie creation failed",
         {
@@ -53,7 +71,11 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
           timestamp: new Date().toISOString(),
         }
       );
-      
+
+      if (errorStack) {
+        console.error("[createParentSessionFn] Stack trace:", errorStack.split("\n").slice(0, 3).join("\n"));
+      }
+
       // Return safe error message to client (no token/credential exposure)
       throw new Error("Session initialization failed. Please try signing in again.");
     }
