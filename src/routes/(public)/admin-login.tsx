@@ -243,6 +243,11 @@ function AdminLoginPage() {
             <Button variant="primary" onClick={handleSubmit} disabled={busy} className="w-full">
               {busy ? "Signing in..." : "Sign in"}
             </Button>
+            <div className="text-center pt-2">
+              <Link to="/admin/forgot-password" className="text-sm text-blue-600 hover:underline">
+                Forgot your password?
+              </Link>
+            </div>
           </form>
         </Card>
 

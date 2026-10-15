@@ -24,10 +24,14 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AcademyAdminRouteImport } from './routes/academy/admin'
 import { Route as AcademyCohortsRouteImport } from './routes/academy/cohorts'
 import { Route as AcademyDashboardRouteImport } from './routes/academy/dashboard'
+import { Route as AcademyForgotPasswordRouteImport } from './routes/academy/forgot-password'
 import { Route as AcademyLoginRouteImport } from './routes/academy/login'
 import { Route as AcademyProfileRouteImport } from './routes/academy/profile'
+import { Route as AcademyResetPasswordRouteImport } from './routes/academy/reset-password'
 import { Route as AcademySessionRouteImport } from './routes/academy/session'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminForgotPasswordRouteImport } from './routes/admin/forgot-password'
+import { Route as AdminResetPasswordRouteImport } from './routes/admin/reset-password'
 import { Route as ChildHomeRouteImport } from './routes/child/home'
 import { Route as ChildLearnRouteImport } from './routes/child/learn'
 import { Route as ChildLoginRouteImport } from './routes/child/login'
@@ -37,7 +41,9 @@ import { Route as ChildTestLoginRouteImport } from './routes/child/test-login'
 import { Route as ParentIndexRouteImport } from './routes/parent/index'
 import { Route as ParentFeedbackRouteImport } from './routes/parent/feedback'
 import { Route as ParentFeedbackReviewRouteImport } from './routes/parent/feedback-review'
+import { Route as ParentForgotPasswordRouteImport } from './routes/parent/forgot-password'
 import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
+import { Route as ParentResetPasswordRouteImport } from './routes/parent/reset-password'
 import { Route as AcademyCohortsChildIdRouteImport } from './routes/academy/cohorts/$childId'
 import { Route as AcademySessionMonitorRouteImport } from './routes/academy/session/monitor'
 import { Route as AcademySessionStartRouteImport } from './routes/academy/session/start'
@@ -133,6 +139,11 @@ const AcademyDashboardRoute = AcademyDashboardRouteImport.update({
   path: '/academy/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcademyForgotPasswordRoute = AcademyForgotPasswordRouteImport.update({
+  id: '/academy/forgot-password',
+  path: '/academy/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AcademyLoginRoute = AcademyLoginRouteImport.update({
   id: '/academy/login',
   path: '/academy/login',
@@ -143,6 +154,11 @@ const AcademyProfileRoute = AcademyProfileRouteImport.update({
   path: '/academy/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcademyResetPasswordRoute = AcademyResetPasswordRouteImport.update({
+  id: '/academy/reset-password',
+  path: '/academy/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AcademySessionRoute = AcademySessionRouteImport.update({
   id: '/academy/session',
   path: '/academy/session',
@@ -151,6 +167,16 @@ const AcademySessionRoute = AcademySessionRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminResetPasswordRoute = AdminResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const ChildHomeRoute = ChildHomeRouteImport.update({
@@ -198,9 +224,19 @@ const ParentFeedbackReviewRoute = ParentFeedbackReviewRouteImport.update({
   path: '/feedback-review',
   getParentRoute: () => ParentRouteRoute,
 } as any)
+const ParentForgotPasswordRoute = ParentForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
 const ParentMetricsRoute = ParentMetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
+const ParentResetPasswordRoute = ParentResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => ParentRouteRoute,
 } as any)
 const AcademyCohortsChildIdRoute = AcademyCohortsChildIdRouteImport.update({
@@ -335,9 +371,13 @@ export interface FileRoutesByFullPath {
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
+  '/academy/forgot-password': typeof AcademyForgotPasswordRoute
   '/academy/login': typeof AcademyLoginRoute
   '/academy/profile': typeof AcademyProfileRoute
+  '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
   '/child/login': typeof ChildLoginRoute
@@ -346,7 +386,9 @@ export interface FileRoutesByFullPath {
   '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/forgot-password': typeof ParentForgotPasswordRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/parent/reset-password': typeof ParentResetPasswordRoute
   '/admin/': typeof AdminIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
@@ -383,9 +425,13 @@ export interface FileRoutesByTo {
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
+  '/academy/forgot-password': typeof AcademyForgotPasswordRoute
   '/academy/login': typeof AcademyLoginRoute
   '/academy/profile': typeof AcademyProfileRoute
+  '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
   '/child/login': typeof ChildLoginRoute
@@ -394,7 +440,9 @@ export interface FileRoutesByTo {
   '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/forgot-password': typeof ParentForgotPasswordRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/parent/reset-password': typeof ParentResetPasswordRoute
   '/admin': typeof AdminIndexRoute
   '/parent': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
@@ -436,9 +484,13 @@ export interface FileRoutesById {
   '/academy/admin': typeof AcademyAdminRouteWithChildren
   '/academy/cohorts': typeof AcademyCohortsRouteWithChildren
   '/academy/dashboard': typeof AcademyDashboardRoute
+  '/academy/forgot-password': typeof AcademyForgotPasswordRoute
   '/academy/login': typeof AcademyLoginRoute
   '/academy/profile': typeof AcademyProfileRoute
+  '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
   '/child/learn': typeof ChildLearnRoute
   '/child/login': typeof ChildLoginRoute
@@ -447,7 +499,9 @@ export interface FileRoutesById {
   '/child/test-login': typeof ChildTestLoginRoute
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
+  '/parent/forgot-password': typeof ParentForgotPasswordRoute
   '/parent/metrics': typeof ParentMetricsRoute
+  '/parent/reset-password': typeof ParentResetPasswordRoute
   '/admin/': typeof AdminIndexRoute
   '/parent/': typeof ParentIndexRoute
   '/academy/cohorts/$childId': typeof AcademyCohortsChildIdRoute
@@ -488,9 +542,13 @@ export interface FileRouteTypes {
     | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
+    | '/academy/forgot-password'
     | '/academy/login'
     | '/academy/profile'
+    | '/academy/reset-password'
     | '/academy/session'
+    | '/admin/forgot-password'
+    | '/admin/reset-password'
     | '/child/home'
     | '/child/learn'
     | '/child/login'
@@ -499,7 +557,9 @@ export interface FileRouteTypes {
     | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
+    | '/parent/forgot-password'
     | '/parent/metrics'
+    | '/parent/reset-password'
     | '/admin/'
     | '/parent/'
     | '/academy/cohorts/$childId'
@@ -536,9 +596,13 @@ export interface FileRouteTypes {
     | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
+    | '/academy/forgot-password'
     | '/academy/login'
     | '/academy/profile'
+    | '/academy/reset-password'
     | '/academy/session'
+    | '/admin/forgot-password'
+    | '/admin/reset-password'
     | '/child/home'
     | '/child/learn'
     | '/child/login'
@@ -547,7 +611,9 @@ export interface FileRouteTypes {
     | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
+    | '/parent/forgot-password'
     | '/parent/metrics'
+    | '/parent/reset-password'
     | '/admin'
     | '/parent'
     | '/academy/cohorts/$childId'
@@ -588,9 +654,13 @@ export interface FileRouteTypes {
     | '/academy/admin'
     | '/academy/cohorts'
     | '/academy/dashboard'
+    | '/academy/forgot-password'
     | '/academy/login'
     | '/academy/profile'
+    | '/academy/reset-password'
     | '/academy/session'
+    | '/admin/forgot-password'
+    | '/admin/reset-password'
     | '/child/home'
     | '/child/learn'
     | '/child/login'
@@ -599,7 +669,9 @@ export interface FileRouteTypes {
     | '/child/test-login'
     | '/parent/feedback'
     | '/parent/feedback-review'
+    | '/parent/forgot-password'
     | '/parent/metrics'
+    | '/parent/reset-password'
     | '/admin/'
     | '/parent/'
     | '/academy/cohorts/$childId'
@@ -636,8 +708,10 @@ export interface RootRouteChildren {
   AcademyAdminRoute: typeof AcademyAdminRouteWithChildren
   AcademyCohortsRoute: typeof AcademyCohortsRouteWithChildren
   AcademyDashboardRoute: typeof AcademyDashboardRoute
+  AcademyForgotPasswordRoute: typeof AcademyForgotPasswordRoute
   AcademyLoginRoute: typeof AcademyLoginRoute
   AcademyProfileRoute: typeof AcademyProfileRoute
+  AcademyResetPasswordRoute: typeof AcademyResetPasswordRoute
   AcademySessionRoute: typeof AcademySessionRouteWithChildren
 }
 
@@ -748,6 +822,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcademyDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/academy/forgot-password': {
+      id: '/academy/forgot-password'
+      path: '/academy/forgot-password'
+      fullPath: '/academy/forgot-password'
+      preLoaderRoute: typeof AcademyForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/academy/login': {
       id: '/academy/login'
       path: '/academy/login'
@@ -762,6 +843,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcademyProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/academy/reset-password': {
+      id: '/academy/reset-password'
+      path: '/academy/reset-password'
+      fullPath: '/academy/reset-password'
+      preLoaderRoute: typeof AcademyResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/academy/session': {
       id: '/academy/session'
       path: '/academy/session'
@@ -774,6 +862,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/forgot-password': {
+      id: '/admin/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/admin/forgot-password'
+      preLoaderRoute: typeof AdminForgotPasswordRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/reset-password': {
+      id: '/admin/reset-password'
+      path: '/reset-password'
+      fullPath: '/admin/reset-password'
+      preLoaderRoute: typeof AdminResetPasswordRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/child/home': {
@@ -839,11 +941,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentFeedbackReviewRouteImport
       parentRoute: typeof ParentRouteRoute
     }
+    '/parent/forgot-password': {
+      id: '/parent/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/parent/forgot-password'
+      preLoaderRoute: typeof ParentForgotPasswordRouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
     '/parent/metrics': {
       id: '/parent/metrics'
       path: '/metrics'
       fullPath: '/parent/metrics'
       preLoaderRoute: typeof ParentMetricsRouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
+    '/parent/reset-password': {
+      id: '/parent/reset-password'
+      path: '/reset-password'
+      fullPath: '/parent/reset-password'
+      preLoaderRoute: typeof ParentResetPasswordRouteImport
       parentRoute: typeof ParentRouteRoute
     }
     '/academy/cohorts/$childId': {
@@ -1045,6 +1161,8 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AdminRouteRouteChildren {
+  AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
+  AdminResetPasswordRoute: typeof AdminResetPasswordRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFamiliesFamilyIdRoute: typeof AdminFamiliesFamilyIdRoute
   AdminEnrollIndexRoute: typeof AdminEnrollIndexRoute
@@ -1052,6 +1170,8 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminForgotPasswordRoute: AdminForgotPasswordRoute,
+  AdminResetPasswordRoute: AdminResetPasswordRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminFamiliesFamilyIdRoute: AdminFamiliesFamilyIdRoute,
   AdminEnrollIndexRoute: AdminEnrollIndexRoute,
@@ -1095,7 +1215,9 @@ const ChildRouteRouteWithChildren = ChildRouteRoute._addFileChildren(
 interface ParentRouteRouteChildren {
   ParentFeedbackRoute: typeof ParentFeedbackRoute
   ParentFeedbackReviewRoute: typeof ParentFeedbackReviewRoute
+  ParentForgotPasswordRoute: typeof ParentForgotPasswordRoute
   ParentMetricsRoute: typeof ParentMetricsRoute
+  ParentResetPasswordRoute: typeof ParentResetPasswordRoute
   ParentIndexRoute: typeof ParentIndexRoute
   ParentChildChildIdRoute: typeof ParentChildChildIdRoute
 }
@@ -1103,7 +1225,9 @@ interface ParentRouteRouteChildren {
 const ParentRouteRouteChildren: ParentRouteRouteChildren = {
   ParentFeedbackRoute: ParentFeedbackRoute,
   ParentFeedbackReviewRoute: ParentFeedbackReviewRoute,
+  ParentForgotPasswordRoute: ParentForgotPasswordRoute,
   ParentMetricsRoute: ParentMetricsRoute,
+  ParentResetPasswordRoute: ParentResetPasswordRoute,
   ParentIndexRoute: ParentIndexRoute,
   ParentChildChildIdRoute: ParentChildChildIdRoute,
 }
@@ -1165,8 +1289,10 @@ const rootRouteChildren: RootRouteChildren = {
   AcademyAdminRoute: AcademyAdminRouteWithChildren,
   AcademyCohortsRoute: AcademyCohortsRouteWithChildren,
   AcademyDashboardRoute: AcademyDashboardRoute,
+  AcademyForgotPasswordRoute: AcademyForgotPasswordRoute,
   AcademyLoginRoute: AcademyLoginRoute,
   AcademyProfileRoute: AcademyProfileRoute,
+  AcademyResetPasswordRoute: AcademyResetPasswordRoute,
   AcademySessionRoute: AcademySessionRouteWithChildren,
 }
 export const routeTree = rootRouteImport
