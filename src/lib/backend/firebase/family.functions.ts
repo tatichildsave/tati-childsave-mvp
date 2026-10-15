@@ -37,9 +37,9 @@ const updateChildInput = z.object({
  */
 export const createParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.object({ idToken: z.string().min(1) }))
-  .handler(async ({ data: { idToken } }) => {
+  .handler(async (data) => {
     try {
-      await createParentSession(idToken);
+      await createParentSession(data.idToken);
       return { success: true };
     } catch (error) {
       // Throw a plain Error, not the original error which may contain unserializable objects
