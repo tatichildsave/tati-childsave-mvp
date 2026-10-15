@@ -177,7 +177,7 @@ function LoginPage() {
             {busy ? "Signing you in…" : "Sign In →"}
           </Button>
           <div className="text-center pt-2">
-            <Link to="/parent/forgot-password" className="text-sm text-blue-600 hover:underline">
+            <Link to="/parent-forgot-password" className="text-sm text-blue-600 hover:underline">
               Forgot your password?
             </Link>
           </div>

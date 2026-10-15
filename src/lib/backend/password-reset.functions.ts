@@ -31,7 +31,7 @@ export const requestPasswordResetFn = createServerFn()
     
     const redirectUrls: Record<string, string> = {
       admin: "https://tati-childsave-mvp.vercel.app/admin-login",
-      parent: "https://tati-childsave-mvp.vercel.app/parent-login",
+      parent: "https://tati-childsave-mvp.vercel.app/parent-reset-password",
       facilitator: "https://tati-childsave-mvp.vercel.app/academy/login",
     };
 

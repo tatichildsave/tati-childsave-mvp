@@ -9,7 +9,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 
-export const Route = createFileRoute("/parent/reset-password")({
+export const Route = createFileRoute("/(public)/parent-reset-password")({
   component: ParentResetPasswordPage,
   meta: () => [
     {
@@ -25,7 +25,7 @@ interface ResetPasswordSearch {
 
 function ParentResetPasswordPage() {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/parent/reset-password" }) as ResetPasswordSearch;
+  const search = useSearch({ from: "/(public)/parent-reset-password" }) as ResetPasswordSearch;
   const oobCode = search.oobCode;
 
   const [email, setEmail] = useState("");
@@ -174,7 +174,7 @@ function ParentResetPasswordPage() {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => navigate({ to: "/parent/forgot-password" })}
+                onClick={() => navigate({ to: "/parent-forgot-password" })}
               >
                 Request New Link
               </Button>
