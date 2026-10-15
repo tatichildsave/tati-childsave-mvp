@@ -98,28 +98,21 @@ function AdminLoginPage() {
 
       // Verify admin role
       const db = getFirebaseFirestore();
-      console.log("[Admin Login] Firestore available:", !!db);
       
       if (db) {
         const userDocRef = doc(db, "users", userCredential.user.uid);
-        console.log("[Admin Login] Checking admin role for UID:", userCredential.user.uid);
         
         const userDocSnap = await getDoc(userDocRef);
-        console.log("[Admin Login] User doc exists:", userDocSnap.exists());
         
         if (userDocSnap.exists()) {
           const userData = userDocSnap.data();
-          console.log("[Admin Login] User data:", userData);
           
           const roles = userData?.["roles"] as string[] | undefined;
-          console.log("[Admin Login] User roles:", roles);
           
           if (Array.isArray(roles) && roles.includes("admin")) {
-            console.log("[Admin Login] Admin role confirmed, creating session cookie");
             try {
               const idToken = await userCredential.user.getIdToken();
               await createParentSessionFn({ idToken });
-              console.log("[Admin Login] Session cookie created, navigating to /admin");
               navigate({ to: "/admin", replace: true });
               return;
             } catch (sessionError) {
@@ -135,14 +128,12 @@ function AdminLoginPage() {
           console.log("[Admin Login] User document does not exist in Firestore");
         }
       } else {
-        console.log("[Admin Login] Firestore not available");
       }
 
       setError("You do not have admin privileges. Please contact support.");
       setBusy(false);
     } catch (signInError) {
       const message = signInError instanceof Error ? signInError.message.toLowerCase() : "";
-      console.error("[Admin Login] Sign in error:", signInError);
       setError(
         message.includes("invalid") ||
           message.includes("wrong-password") ||

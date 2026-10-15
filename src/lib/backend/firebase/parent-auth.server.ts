@@ -26,21 +26,42 @@ export type AuthenticatedParentContext = {
  * and includes the parent's uid. It is set as an HTTP-only cookie.
  */
 export async function createParentSession(idToken: string): Promise<void> {
-  const auth = getFirebaseAdmin();
+  try {
+    const auth = getFirebaseAdmin();
 
-  // Verify the ID token and create a session cookie
-  const sessionCookie = await auth.createSessionCookie(idToken, {
-    expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
-  });
+    // Verify the ID token and create a session cookie
+    const sessionCookie = await auth.createSessionCookie(idToken, {
+      expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
+    });
 
-  // Set the session cookie with strict security options
-  setCookie(SESSION_COOKIE_NAME, sessionCookie, {
-    httpOnly: true,
-    secure: process.env["NODE_ENV"] === "production",
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge: SESSION_COOKIE_MAX_AGE,
-  });
+    // Set the session cookie with strict security options
+    setCookie(SESSION_COOKIE_NAME, sessionCookie, {
+      httpOnly: true,
+      secure: process.env["NODE_ENV"] === "production",
+      sameSite: "lax" as const,
+      path: "/",
+      maxAge: SESSION_COOKIE_MAX_AGE,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : "";
+    
+    console.error("[createParentSession] CRITICAL: Failed to create session cookie");
+    console.error("[createParentSession] Error message:", errorMessage);
+    console.error("[createParentSession] Error type:", error?.constructor?.name);
+    if (errorStack) {
+      console.error("[createParentSession] Stack:", errorStack.split("\n").slice(0, 5).join("\n"));
+    }
+    
+    // Log environment context for debugging
+    console.error("[createParentSession] Environment:", {
+      NODE_ENV: process.env["NODE_ENV"],
+      VERCEL_ENV: process.env["VERCEL_ENV"],
+      FIREBASE_PROJECT_ID: process.env["FIREBASE_PROJECT_ID"],
+    });
+    
+    throw error;
+  }
 }
 
 /**

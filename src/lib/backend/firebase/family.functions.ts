@@ -42,9 +42,20 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
       await createParentSession(data.idToken);
       return { success: true };
     } catch (error) {
-      // Throw a plain Error, not the original error which may contain unserializable objects
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to create session: ${message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Log full error context server-side (not exposed to client)
+      console.error(
+        "[createParentSessionFn] CRITICAL: Session cookie creation failed",
+        {
+          errorMessage,
+          errorType: error?.constructor?.name,
+          timestamp: new Date().toISOString(),
+        }
+      );
+      
+      // Return safe error message to client (no token/credential exposure)
+      throw new Error("Session initialization failed. Please try signing in again.");
     }
   });
 
