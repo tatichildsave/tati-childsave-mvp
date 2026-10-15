@@ -1,0 +1,191 @@
+# ADMIN LOGIN INVESTIGATION - SUMMARY FOR USER
+
+## Investigation Completed: 2026-10-15
+
+---
+
+## ROOT CAUSE IDENTIFIED
+
+**The admin login fails because of an ESM/CommonJS module incompatibility in Firebase Admin SDK dependencies on Vercel's Node.js runtime.**
+
+### Error Chain:
+```
+Admin clicks "Sign in"
+  ↓
+Firebase email/password authentication succeeds ✅
+  ↓
+Admin role verification succeeds ✅
+  ↓
+Server function calls: auth.createSessionCookie(idToken) ❌
+  ↓
+Firebase Admin SDK tries to verify token using jose library
+  ↓
+Dependency jwks-rsa tries to require("jose") as CommonJS
+  ↓
+Node.js error: "require() of ES Module not supported"
+  ↓
+HTTP 500 error returned to browser
+```
+
+### Evidence from Vercel Logs:
+```
+Error [ERR_REQUIRE_ESM]: require() of ES Module 
+/var/task/node_modules/jose/dist/webapi/index.js from 
+/var/task/node_modules/jwks-rsa/src/utils.js not supported.
+```
+
+---
+
+## SECURITY ISSUES FOUND & FIXED
+
+### ❌ CRITICAL - Sensitive User Data Logged to Browser Console
+**File**: `src/routes/(public)/admin-login.tsx` (Line 106)
+```javascript
+console.log("[Admin Login] User data:", userData);  // ← EXPOSES: email, roles, all fields
+```
+**Status**: ✅ **FIXED** - Removed this and all similar sensitive logging
+
+### ❌ HIGH - No Server-Side Error Logging
+**File**: `src/lib/backend/firebase/family.functions.ts`
+```typescript
+catch (error) {
+  throw new Error(`Failed to create session: ${message}`);  // No server-side logging
+}
+```
+**Status**: ✅ **FIXED** - Added comprehensive error logging to Vercel logs
+
+### ✅ VERIFIED SAFE - No Plaintext Passwords
+Searched entire codebase:
+- Passwords stored ONLY in Firebase Authentication
+- Firestore documents do NOT contain passwords
+- Temporary passwords only used during user creation, not stored
+
+---
+
+## FILES CHANGED
+
+| File | Change | Reason |
+|------|--------|--------|
+| `src/lib/backend/firebase/parent-auth.server.ts` | Added detailed error logging in `createParentSession()` | Reveal actual root cause in Vercel logs |
+| `src/lib/backend/firebase/family.functions.ts` | Added error logging in `createParentSessionFn` | Log errors server-side before returning to client |
+| `src/routes/(public)/admin-login.tsx` | Removed 9 console.log statements | Remove sensitive user data from browser console |
+| `ADMIN_LOGIN_INVESTIGATION.md` | NEW - Documentation | Technical analysis for reference |
+| `ADMIN_LOGIN_ROOT_CAUSE_REPORT.md` | NEW - Root cause analysis | Detailed findings and fix strategy |
+
+---
+
+## IMMEDIATE FIXES DEPLOYED ✅
+
+**Commit**: e37c1d8 (+ 54a6d94 with documentation)
+
+1. ✅ Enhanced server-side error logging
+2. ✅ Removed sensitive client-side logging
+3. ✅ Improved error messages (safe for production)
+4. ✅ Added environment context to error logs
+
+**Status**: Deployed to Vercel. Now waiting for detailed error logs.
+
+---
+
+## WHAT I NEED FROM YOU
+
+### Step 1: Monitor Vercel Logs (RIGHT NOW)
+1. Go to: **Vercel Dashboard → Deployments → Latest**
+2. Click on the latest deployment (should say "54a6d94" in commit hash)
+3. Open **Runtime Logs**
+4. Attempt admin login at: `https://tati-childsave-mvp.vercel.app/admin-login`
+5. Look for these messages in the logs:
+   ```
+   [createParentSession] CRITICAL: Failed to create session cookie
+   [createParentSession] Error message: ...
+   [createParentSessionFn] CRITICAL: Session cookie creation failed
+   ```
+
+### Step 2: Share the Error Message
+Copy the detailed error message and share with me. This will tell us:
+- Is it the ESM/CommonJS issue? (Likely)
+- Is it a Firebase project mismatch? (Less likely)
+- Is it a network issue? (Unlikely)
+
+### Step 3: Check Vercel Environment Variables
+Go to: **Vercel Dashboard → Project Settings → Environment Variables (Production)**
+
+Verify these are set (DO NOT SHARE VALUES):
+- ✅ `FIREBASE_PROJECT_ID` = `tatichildsavemvp` (confirm in logs)
+- ✅ `FIREBASE_SERVICE_ACCOUNT` = JSON format (confirm present)
+- ✅ `NODE_ENV` = `production`
+- ✅ `VERCEL_ENV` = `production`
+
+---
+
+## EXPECTED FIXES (Based on Root Cause)
+
+### If Error is "ERR_REQUIRE_ESM" (Most Likely):
+
+**Option A: Update Node.js Version (Recommended)**
+1. Vercel Dashboard → Project Settings → General
+2. Find "Node.js Version" setting
+3. Update to 20.x or 22.x
+4. Redeploy
+
+**Option B: Clear Build Cache**
+1. Vercel Dashboard → Project Settings → Git
+2. Clear build cache
+3. Redeploy
+
+**Option C: Downgrade Firebase Admin SDK**
+- Current: `firebase-admin@14.5.0`
+- Try: `firebase-admin@14.4.0` or upgrade to `15.0.0`
+
+---
+
+## VERIFICATION AFTER FIX
+
+Once admin login works:
+
+1. **Test Admin Login**:
+   - Email: `tatichildsaveadmin@gmail.com`
+   - Password: Use your password reset to set a new one
+   - Should see admin dashboard
+
+2. **Test Authorization**:
+   - Non-admin user should NOT be able to access `/admin`
+   - Admin user should be able to access all admin routes
+
+3. **Verify Security**:
+   - Browser console should NOT log user data
+   - Server logs should have detailed error traces (for debugging)
+
+---
+
+## SUMMARY TABLE
+
+| Aspect | Status | Evidence |
+|--------|--------|----------|
+| Root Cause Identified | ✅ YES | ESM/CommonJS issue in firebase-admin deps |
+| Security Issues Fixed | ✅ YES | Removed sensitive logging, added error logging |
+| Plaintext Passwords Found | ✅ NO | Verified passwords only in Firebase Auth |
+| Code Deployed | ✅ YES | Commit e37c1d8 + 54a6d94 |
+| Vercel Logs Show Detail | ⏳ PENDING | Awaiting admin login test attempt |
+| Root Cause Fix Applied | ⏳ PENDING | Need error message to determine exact fix |
+| Admin Login Working | ⏳ PENDING | Testing after error logs reviewed |
+
+---
+
+## NEXT STEPS
+
+1. **RIGHT NOW**: Check Vercel logs during admin login attempt
+2. **SHARE**: Error message from logs
+3. **I WILL**: Apply targeted fix based on exact error
+4. **TEST**: Admin login again
+5. **VERIFY**: Authorization checks work
+
+---
+
+## DOCUMENTS CREATED
+
+For full technical details, see:
+- `ADMIN_LOGIN_INVESTIGATION.md` - Detailed technical analysis
+- `ADMIN_LOGIN_ROOT_CAUSE_REPORT.md` - Complete root cause report with fix strategies
+
+These are in the repository root and will help during the fix/debugging process.
