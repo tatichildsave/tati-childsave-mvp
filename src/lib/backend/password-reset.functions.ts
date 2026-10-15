@@ -24,9 +24,9 @@ const requestPasswordResetInput = z.object({
   role: z.enum(["admin", "parent", "facilitator"]),
 });
 
-export const requestPasswordResetFn = createServerFn()
-  .input(requestPasswordResetInput)
-  .handler(async ({ data }) => {
+export const requestPasswordResetFn = createServerFn({ method: "POST" })
+  .validator(requestPasswordResetInput)
+  .handler(async (data) => {
     const { sendPasswordResetEmail } = await import("./password-reset.server");
     
     const redirectUrls: Record<string, string> = {
@@ -49,9 +49,9 @@ const verifyPasswordResetCodeInput = z.object({
   code: z.string().min(1, "Reset code required"),
 });
 
-export const verifyPasswordResetCodeFn = createServerFn()
-  .input(verifyPasswordResetCodeInput)
-  .handler(async ({ data }) => {
+export const verifyPasswordResetCodeFn = createServerFn({ method: "POST" })
+  .validator(verifyPasswordResetCodeInput)
+  .handler(async (data) => {
     const { verifyPasswordResetCode } = await import("./password-reset.server");
     
     try {
@@ -81,9 +81,9 @@ const confirmPasswordResetInput = z.object({
   newPassword: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-export const confirmPasswordResetFn = createServerFn()
-  .input(confirmPasswordResetInput)
-  .handler(async ({ data }) => {
+export const confirmPasswordResetFn = createServerFn({ method: "POST" })
+  .validator(confirmPasswordResetInput)
+  .handler(async (data) => {
     const { confirmPasswordReset } = await import("./password-reset.server");
     
     // Additional password validation on server
