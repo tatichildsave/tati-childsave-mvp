@@ -41,9 +41,12 @@ export async function createParentSession(idToken: string): Promise<void> {
       timestamp: new Date().toISOString(),
     });
 
+    console.log("[createParentSession] Calling getFirebaseAdmin()");
     const auth = getFirebaseAdmin();
+    console.log("[createParentSession] getFirebaseAdmin() returned successfully");
 
     // Verify the ID token and create a session cookie
+    console.log("[createParentSession] Calling auth.createSessionCookie()");
     const sessionCookie = await auth.createSessionCookie(idToken, {
       expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
     });
@@ -54,6 +57,7 @@ export async function createParentSession(idToken: string): Promise<void> {
     });
 
     // Set the session cookie with strict security options
+    console.log("[createParentSession] Calling setCookie()");
     setCookie(SESSION_COOKIE_NAME, sessionCookie, {
       httpOnly: true,
       secure: process.env["NODE_ENV"] === "production",
@@ -62,7 +66,10 @@ export async function createParentSession(idToken: string): Promise<void> {
       maxAge: SESSION_COOKIE_MAX_AGE,
     });
 
-    console.log("[createParentSession] Session cookie set successfully");
+    console.log("[createParentSession] Session cookie set successfully", {
+      cookieName: SESSION_COOKIE_NAME,
+      isProduction: process.env["NODE_ENV"] === "production",
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : "";
@@ -70,6 +77,8 @@ export async function createParentSession(idToken: string): Promise<void> {
     console.error("[createParentSession] CRITICAL: Failed to create session cookie", {
       errorMessage,
       errorType: error?.constructor?.name,
+      errorCode: (error as any)?.code,
+      errorReason: (error as any)?.reason,
       timestamp: new Date().toISOString(),
     });
 

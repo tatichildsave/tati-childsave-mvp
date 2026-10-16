@@ -56,7 +56,9 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
         throw new Error("Invalid session data: missing or empty idToken");
       }
 
+      console.log("[createParentSessionFn] About to call createParentSession");
       await createParentSession(data.idToken);
+      console.log("[createParentSessionFn] createParentSession completed successfully");
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -68,12 +70,23 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
         {
           errorMessage,
           errorType: error?.constructor?.name,
+          errorCode: (error as any)?.code,
+          errorReason: (error as any)?.reason,
           timestamp: new Date().toISOString(),
         }
       );
 
       if (errorStack) {
-        console.error("[createParentSessionFn] Stack trace:", errorStack.split("\n").slice(0, 3).join("\n"));
+        console.error("[createParentSessionFn] Stack trace:", errorStack.split("\n").slice(0, 5).join("\n"));
+      }
+
+      // Log detailed error info for Firebase-specific issues
+      if (errorMessage.includes("claims") || errorMessage.includes("invalid") || errorMessage.includes("not found")) {
+        console.error("[createParentSessionFn] Possible token/auth issue:", {
+          errorMessage,
+          nodeEnv: process.env["NODE_ENV"],
+          vercelEnv: process.env["VERCEL_ENV"],
+        });
       }
 
       // Return safe error message to client (no token/credential exposure)
