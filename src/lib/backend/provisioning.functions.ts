@@ -206,6 +206,7 @@ const provisionChildInput = z.object({
   age: z.number().int().min(5).max(18),
   dateOfBirth: z.string().optional(), // ISO 8601
   preferredName: z.string().optional(),
+  tatiId: z.string().optional(), // TATI ID can be pre-generated
 });
 
 export const provisionChild = createServerFn({ method: "POST" })
@@ -235,21 +236,32 @@ export const provisionChild = createServerFn({ method: "POST" })
         throw new Error("Database not available");
       }
 
-      // Generate TATI ID with uniqueness check
+      // Use pre-provided TATI ID if available, otherwise generate new one
       let tatiId: string;
-      let retries = 0;
-      const maxRetries = 3;
-
-      do {
-        tatiId = generateTatiId();
-        const existing = await getCredentialByTatiId(tatiId);
-        if (!existing) break; // TATI ID is unique
-
-        retries++;
-        if (retries >= maxRetries) {
-          throw new Error("Unable to generate unique TATI ID");
+      
+      if (data.tatiId) {
+        // Validate that pre-provided TATI ID is unique
+        const existing = await getCredentialByTatiId(data.tatiId);
+        if (existing) {
+          throw new Error("TATI ID already in use");
         }
-      } while (true);
+        tatiId = data.tatiId;
+      } else {
+        // Generate TATI ID with uniqueness check
+        let retries = 0;
+        const maxRetries = 3;
+
+        do {
+          tatiId = generateTatiId();
+          const existing = await getCredentialByTatiId(tatiId);
+          if (!existing) break; // TATI ID is unique
+
+          retries++;
+          if (retries >= maxRetries) {
+            throw new Error("Unable to generate unique TATI ID");
+          }
+        } while (true);
+      }
 
       // Generate PIN and hash it
       const pin = generateChildPin();
