@@ -2,8 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
@@ -145,52 +143,6 @@ function AdminLoginPage() {
     }
   }
 
-  async function handleGoogle() {
-    setError(null);
-    try {
-      const auth = getFirebaseAuth();
-      if (!auth) {
-        setError("Authentication not available. Please reload the page.");
-        return;
-      }
-
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-
-      // Verify admin role
-      const db = getFirebaseFirestore();
-      if (db) {
-        const userDocRef = doc(db, "users", result.user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (userDocSnap.exists()) {
-          const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
-          if (Array.isArray(roles) && roles.includes("admin")) {
-            console.log("[Admin Login] Admin role confirmed (Google), creating session cookie");
-            try {
-              const idToken = await result.user.getIdToken();
-              await createParentSessionFn({ data: { idToken } });
-              console.log("[Admin Login] Session cookie created, navigating to /admin");
-              navigate({ to: "/admin", replace: true });
-              return;
-            } catch (sessionError) {
-              console.error("[Admin Login] Failed to create session cookie:", sessionError);
-              setError("Failed to create admin session. Please try signing in again.");
-              return;
-            }
-          }
-        }
-      }
-
-      setError("You do not have admin privileges. Please contact support.");
-    } catch (googleError) {
-      const message = googleError instanceof Error ? googleError.message.toLowerCase() : "";
-      if (!message.includes("popup-closed")) {
-        setError("We couldn't sign you in with Google right now. Please try again.");
-      }
-    }
-  }
-
   if (checking) {
     return (
       <Page>
@@ -240,15 +192,6 @@ function AdminLoginPage() {
               </Link>
             </div>
           </form>
-        </Card>
-
-        <Card>
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-4">Or sign in with Google</p>
-            <Button variant="secondary" onClick={handleGoogle} disabled={busy} className="w-full">
-              {busy ? "Signing in..." : "Sign in with Google"}
-            </Button>
-          </div>
         </Card>
 
         <Card>
