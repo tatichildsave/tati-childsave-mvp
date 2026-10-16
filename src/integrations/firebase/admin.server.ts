@@ -30,6 +30,13 @@ function initializeAdminApp() {
   const projectId = process.env["FIREBASE_PROJECT_ID"];
   const serviceAccountJson = process.env["FIREBASE_SERVICE_ACCOUNT"];
 
+  console.log("[Firebase] Initialization diagnostics:", {
+    hasFIREBASE_PROJECT_ID: !!projectId,
+    projectIdValue: projectId,
+    hasFIREBASE_SERVICE_ACCOUNT: !!serviceAccountJson,
+    isEmulator: isEmulatorMode(),
+  });
+
   if (!projectId && !isEmulatorMode()) {
     throw new Error("FIREBASE_PROJECT_ID env var is required for production Firebase.");
   }
