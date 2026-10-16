@@ -117,11 +117,11 @@ function EnrollmentWorkflow() {
       setLoading(true);
       try {
         // Call provisionParent server function
-        const result = await provisionParent({
+        const result = await provisionParent({ data: {
           email: data.parentEmail,
           displayName: data.parentName,
           phone: data.parentPhone || undefined,
-        });
+        }});
 
         setData((prev) => ({
           ...prev,
@@ -172,11 +172,11 @@ function EnrollmentWorkflow() {
 
     try {
       // Step 1: Create family
-      const familyResult = await provisionFamily({
+      const familyResult = await provisionFamily({ data: {
         name: data.familyName,
         notes: data.familyNotes || undefined,
         parentUid: data.parentUid!,
-      });
+      }});
 
       const familyId = familyResult.familyId;
 
@@ -185,14 +185,14 @@ function EnrollmentWorkflow() {
         if (child.tatiId && child.pin) {
           // Child was already provisioned in Step 3
           // Just confirm by calling provisionChild to finalize
-          await provisionChild({
+          await provisionChild({ data: {
             familyId,
             name: child.name,
             age: child.age,
             dateOfBirth: child.dateOfBirth || undefined,
             preferredName: child.preferredName || undefined,
             tatiId: child.tatiId,
-          });
+          }});
         }
       }
 
