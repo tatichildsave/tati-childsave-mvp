@@ -31,10 +31,10 @@ export default function Step4Review({
       await onConfirm();
       setSuccess(true);
 
-      // Redirect after 2 seconds
+      // Redirect after 10 seconds to allow time for download/print
       setTimeout(() => {
         navigate({ to: "/admin" });
-      }, 2000);
+      }, 10000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to confirm enrolment");
     }
@@ -113,8 +113,25 @@ export default function Step4Review({
             Family Enrollment Confirmed!
           </p>
           <p className="text-gray-600 mt-2">
-            Redirecting to admin dashboard...
+            You can download or print the credentials below.
           </p>
+          <p className="text-sm text-gray-500 mt-4">
+            Redirecting to admin dashboard in 10 seconds...
+          </p>
+        </div>
+        <div className="space-y-2">
+          <button
+            onClick={handleDownloadPDF}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            📥 Download Credentials
+          </button>
+          <button
+            onClick={handlePrint}
+            className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            🖨️ Print Credentials
+          </button>
         </div>
       </div>
     );

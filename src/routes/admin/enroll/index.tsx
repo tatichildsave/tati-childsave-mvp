@@ -180,17 +180,30 @@ function EnrollmentWorkflow() {
 
       const familyId = familyResult.familyId;
 
-      // Step 2: Create children with their TATI IDs and PINs
+      // Step 2: Create children and capture real credentials
+      const provisionedChildren: typeof data.children = [];
       for (const child of data.children) {
-        // Provision each child (server will generate TATI ID and PIN)
-        await provisionChild({ data: {
+        const childResult = await provisionChild({ data: {
           familyId,
           name: child.name,
           age: child.age,
           dateOfBirth: child.dateOfBirth || undefined,
           preferredName: child.preferredName || undefined,
         }});
+        
+        // Store real credentials returned from server
+        provisionedChildren.push({
+          ...child,
+          tatiId: childResult.tatiId,
+          pin: childResult.pin,
+        });
       }
+
+      // Update data with real credentials for display in step-4
+      setData((prev) => ({
+        ...prev,
+        children: provisionedChildren,
+      }));
 
       // Enrollment complete
       setLoading(false);
