@@ -55,25 +55,11 @@ export default function Step3Children({
     setGeneratingIndex(data.children.length);
 
     try {
-      // Call provisioning function to generate TATI ID and PIN
-      const response = await fetch("/api/provisioning/child", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          familyId: "will-be-set", // Updated in Step 4
-          name: newChild.name,
-          age: parseInt(newChild.age),
-          dateOfBirth: newChild.dateOfBirth,
-          preferredName: newChild.preferredName,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to generate credentials");
-      }
-
-      const result = await response.json();
+      // Generate PIN locally (4 random digits)
+      const pin = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Create a placeholder TATI ID (will be generated server-side in step 4)
+      const tempTatiId = `TATI-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
       // Add child to list with generated credentials
       const updatedChildren = [
@@ -83,8 +69,8 @@ export default function Step3Children({
           age: parseInt(newChild.age),
           dateOfBirth: newChild.dateOfBirth,
           preferredName: newChild.preferredName,
-          tatiId: result.tatiId,
-          pin: result.pin, // Shown once only
+          tatiId: tempTatiId,
+          pin: pin, // Shown once only
         },
       ];
 

@@ -182,18 +182,14 @@ function EnrollmentWorkflow() {
 
       // Step 2: Create children with their TATI IDs and PINs
       for (const child of data.children) {
-        if (child.tatiId && child.pin) {
-          // Child was already provisioned in Step 3
-          // Just confirm by calling provisionChild to finalize
-          await provisionChild({ data: {
-            familyId,
-            name: child.name,
-            age: child.age,
-            dateOfBirth: child.dateOfBirth || undefined,
-            preferredName: child.preferredName || undefined,
-            tatiId: child.tatiId,
-          }});
-        }
+        // Provision each child (server will generate TATI ID and PIN)
+        await provisionChild({ data: {
+          familyId,
+          name: child.name,
+          age: child.age,
+          dateOfBirth: child.dateOfBirth || undefined,
+          preferredName: child.preferredName || undefined,
+        }});
       }
 
       // Enrollment complete
