@@ -169,7 +169,7 @@ function AdminLoginPage() {
             console.log("[Admin Login] Admin role confirmed (Google), creating session cookie");
             try {
               const idToken = await result.user.getIdToken();
-              await createParentSessionFn({ idToken });
+              await createParentSessionFn({ data: { idToken } });
               console.log("[Admin Login] Session cookie created, navigating to /admin");
               navigate({ to: "/admin", replace: true });
               return;
@@ -231,7 +231,7 @@ function AdminLoginPage() {
               required
             />
             {error && <CardNote variant="error" text={error} />}
-            <Button variant="primary" onClick={handleSubmit} disabled={busy} className="w-full">
+            <Button type="submit" variant="primary" disabled={busy} className="w-full">
               {busy ? "Signing in..." : "Sign in"}
             </Button>
             <div className="text-center pt-2">
