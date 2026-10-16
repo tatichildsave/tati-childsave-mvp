@@ -104,7 +104,7 @@ function LoginPage() {
 
       // Create server session cookie with ID token
       const idToken = await result.user.getIdToken();
-      await createParentSessionFn({ idToken });
+      await createParentSessionFn({ data: { idToken } });
 
       navigate({ to: "/parent", replace: true });
     } catch (googleError) {
