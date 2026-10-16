@@ -60,7 +60,7 @@ function AdminLoginPage() {
             if (Array.isArray(roles) && roles.includes("admin")) {
               try {
                 const idToken = await user.getIdToken();
-                await createParentSessionFn({ idToken });
+                await createParentSessionFn({ data: { idToken } });
                 navigate({ to: "/admin", replace: true });
                 return;
               } catch (sessionError) {
@@ -112,7 +112,7 @@ function AdminLoginPage() {
           if (Array.isArray(roles) && roles.includes("admin")) {
             try {
               const idToken = await userCredential.user.getIdToken();
-              await createParentSessionFn({ idToken });
+              await createParentSessionFn({ data: { idToken } });
               navigate({ to: "/admin", replace: true });
               return;
             } catch (sessionError) {

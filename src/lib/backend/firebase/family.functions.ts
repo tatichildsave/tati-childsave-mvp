@@ -37,7 +37,7 @@ const updateChildInput = z.object({
  */
 export const createParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.object({ idToken: z.string().min(1) }))
-  .handler(async ({ data }) => {
+  .handler(async (data) => {
     try {
       // Log what we received (helps debug validation issues)
       console.log("[createParentSessionFn] Received data:", {
