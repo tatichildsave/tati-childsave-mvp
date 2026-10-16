@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
+import { signOut, createUserWithEmailAndPassword } from "firebase/auth";
 import {
   collection,
   getDocs,
@@ -232,23 +232,13 @@ function AdminDashboard() {
       const auth = getFirebaseAuth();
       if (!auth) throw new Error("Auth not available");
 
-      // Create Firebase user for parent
-      const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + (window as any).FIREBASE_API_KEY, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: newParentEmail,
-          password: newParentPassword,
-          returnSecureToken: true,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create Firebase user");
-      }
-
-      const firebaseUser = await response.json();
-      const uid = firebaseUser.localId;
+      // Create Firebase user for parent using SDK (not manual API call)
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        newParentEmail,
+        newParentPassword
+      );
+      const uid = userCredential.user.uid;
 
       // Create user document in Firestore with parent role
       await setDoc(doc(db, "users", uid), {
