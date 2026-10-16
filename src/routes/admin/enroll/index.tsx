@@ -200,16 +200,15 @@ function EnrollmentWorkflow() {
       }
 
       // Update data with real credentials for display in step-4
+      // This update will trigger a re-render with the new data
       setData((prev) => ({
         ...prev,
         children: provisionedChildren,
       }));
 
-      // Enrollment complete
+      // DO NOT redirect here - let Step4Review handle the redirect
+      // after showing success with real credentials
       setLoading(false);
-      
-      // Redirect to families page
-      navigate({ to: "/admin/families" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Enrollment failed");
       setLoading(false);
