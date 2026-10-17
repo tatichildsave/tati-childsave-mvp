@@ -88,6 +88,7 @@ export const childLogin = createServerFn({ method: "POST" })
     }
 
     // Set HTTP-only session cookie
+    console.log(`[childLogin] Setting session cookie with token length: ${token.length}`);
     setCookie(COOKIE_NAME, token, cookieOptions(30 * 60));
     console.log(`[childLogin] Set session cookie and returning profile`);
 
@@ -95,13 +96,21 @@ export const childLogin = createServerFn({ method: "POST" })
   });
 
 export const getChildSession = createServerFn({ method: "GET" }).handler(async () => {
+  console.log(`[getChildSession] Checking for session cookie`);
   const token = getCookie(COOKIE_NAME);
-  if (!token) return null;
+  console.log(`[getChildSession] Token exists: ${!!token}`);
+  if (!token) {
+    console.log(`[getChildSession] No token found, returning null`);
+    return null;
+  }
 
   // Validate session token
+  console.log(`[getChildSession] Validating session token`);
   const session = await validateChildSession(token);
+  console.log(`[getChildSession] Session validation result:`, session);
   if (!session) {
     // Clear invalid session cookie
+    console.log(`[getChildSession] Invalid session, clearing cookie`);
     setCookie(COOKIE_NAME, "", cookieOptions(0));
     return null;
   }
