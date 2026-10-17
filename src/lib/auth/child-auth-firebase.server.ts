@@ -322,37 +322,60 @@ export async function createChildSession(
 export async function validateChildSession(
   token: string,
 ): Promise<(ChildSessionDoc & { kind: "child" }) | null> {
-  if (!token || token.length < 32) return null;
+  console.log(`[validateChildSession] Starting validation, token length: ${token?.length}`);
+  if (!token || token.length < 32) {
+    console.log(`[validateChildSession] Invalid token length, returning null`);
+    return null;
+  }
 
   const tokenHash = sessionTokenHash(token);
+  console.log(`[validateChildSession] Token hash: ${tokenHash.substring(0, 16)}...`);
 
   try {
     // Query all sessions to find matching token hash
     // NOTE: This is a collectionGroup query across all families/children
     // It's expensive but unavoidable without storing token→childId mappings
     // In production, consider adding a separate token→session lookup collection
+    console.log(`[validateChildSession] Querying collectionGroup 'sessions'`);
     const snapshot = await db()
       .collectionGroup("sessions")
       .where("tokenHash", "==", tokenHash)
       .limit(1)
       .get();
 
-    if (snapshot.empty) return null;
+    console.log(`[validateChildSession] Query returned ${snapshot.size} documents`);
+    if (snapshot.empty) {
+      console.log(`[validateChildSession] No session found for token hash`);
+      return null;
+    }
 
     const sessionDoc = snapshot.docs[0];
-    if (!sessionDoc) return null;
+    if (!sessionDoc) {
+      console.log(`[validateChildSession] Session doc is null`);
+      return null;
+    }
 
     const sessionData = sessionDoc.data() as ChildSessionDoc;
+    console.log(`[validateChildSession] Found session: ${sessionData.id}, childProfileId: ${sessionData.childProfileId}`);
 
     // Check if session is revoked
-    if (sessionData.revokedAt) return null;
+    if (sessionData.revokedAt) {
+      console.log(`[validateChildSession] Session is revoked`);
+      return null;
+    }
 
     // Check if session is expired
     const expiresAt = new Date(sessionData.expiresAt);
-    if (expiresAt <= new Date()) return null;
+    console.log(`[validateChildSession] Session expires at: ${expiresAt.toISOString()}, now: ${new Date().toISOString()}`);
+    if (expiresAt <= new Date()) {
+      console.log(`[validateChildSession] Session is expired`);
+      return null;
+    }
 
+    console.log(`[validateChildSession] Session validation successful`);
     return { kind: "child" as const, ...sessionData };
-  } catch {
+  } catch (err) {
+    console.error(`[validateChildSession] Error during validation:`, err);
     return null;
   }
 }
