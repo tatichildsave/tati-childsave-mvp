@@ -222,10 +222,11 @@ export async function saveChildPin(
  * 4. Return childId if all checks pass
  */
 export async function verifyChildCredential(tatiId: string, pin: string): Promise<string | null> {
-  console.log(`[verifyChildCredential] Starting: tatiId=${tatiId}, pinLength=${pin.length}`);
+  console.log(`[verifyChildCredential] Starting: tatiId="${tatiId}" (length=${tatiId.length}), pin.length=${pin.length}`);
+  console.log(`[verifyChildCredential] TATI ID regex test: ${TATI_ID_PATTERN.test(tatiId)}, PIN regex test: ${PIN_PATTERN.test(pin)}`);
 
   if (!isValidTatiId(tatiId) || !PIN_PATTERN.test(pin)) {
-    console.log(`[verifyChildCredential] Format validation failed`);
+    console.log(`[verifyChildCredential] Format validation failed - isValidTatiId=${isValidTatiId(tatiId)}, PIN_PATTERN.test=${PIN_PATTERN.test(pin)}`);
     return null;
   }
 
