@@ -455,14 +455,13 @@ function HeroSection({ loading }: { loading: boolean }) {
         </p>
       </div>
 
-      {/* Hero Image Placeholder */}
-      <div className="hidden lg:flex w-64 h-48 bg-gradient-to-b from-blue-200 to-blue-100 rounded-2xl items-center justify-center flex-shrink-0">
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">Hero Image Placeholder</p>
-          <p className="text-xs text-gray-500">
-            Two smiling African schoolchildren image
-          </p>
-        </div>
+      {/* Hero Image */}
+      <div className="hidden lg:flex w-64 h-48 flex-shrink-0">
+        <img
+          src="/images/admin-hero.png"
+          alt="Two smiling African schoolchildren"
+          className="w-full h-full object-cover rounded-2xl"
+        />
       </div>
     </div>
   );
