@@ -216,7 +216,7 @@ function AdminDashboardV2() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
             {/* Hero Section */}
             <HeroSection loading={loading} />
 
@@ -227,7 +227,7 @@ function AdminDashboardV2() {
             <EnrolBanner onGetStarted={handleEnrolFamily} />
 
             {/* Activity and Quick Links */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 md:mt-8">
               {/* Recent Activity */}
               <ActivitySection
                 activities={recentActivity}
@@ -402,37 +402,37 @@ interface TopNavProps {
 function TopNav({ onMenuClick, adminName }: TopNavProps) {
   return (
     <header className="bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           {/* Mobile Menu */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5 md:w-6 md:h-6" />
           </button>
 
           {/* Breadcrumb */}
           <div className="hidden sm:flex items-center gap-2">
-            <Home className="w-5 h-5 text-gray-400" />
-            <span className="text-sm text-gray-600">Admin Dashboard</span>
+            <Home className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
+            <span className="text-xs md:text-sm text-gray-600">Admin Dashboard</span>
           </div>
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative">
-            <Bell className="w-6 h-6 text-gray-600" />
+        <div className="flex items-center gap-2 md:gap-4">
+          <button className="p-2 hover:bg-gray-100 rounded-lg relative flex-shrink-0">
+            <Bell className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full" />
           </button>
 
           {/* Profile */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-semibold text-gray-900">AD</p>
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <div className="text-right flex-shrink-0">
+              <p className="text-xs md:text-sm font-semibold text-gray-900">AD</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-gray-900">{adminName}</p>
+            <div className="text-right hidden sm:block min-w-0">
+              <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">{adminName}</p>
               <p className="text-xs text-gray-500">Administrator</p>
             </div>
           </div>
@@ -444,23 +444,23 @@ function TopNav({ onMenuClick, adminName }: TopNavProps) {
 
 function HeroSection({ loading }: { loading: boolean }) {
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-center justify-between gap-8">
-      <div className="flex-1">
-        <p className="text-xs font-semibold text-primary mb-2">GOOD TO SEE YOU AGAIN</p>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl md:rounded-2xl p-4 sm:p-6 mb-6 md:mb-8 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6">
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-primary mb-1 md:mb-2">GOOD TO SEE YOU AGAIN</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 md:mb-2">
           Welcome back, <span className="text-primary">Administrator</span>
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm md:text-base text-gray-600">
           Here's an overview of your platform and the impact you're making with TATI ChildSave.
         </p>
       </div>
 
-      {/* Hero Image */}
-      <div className="hidden lg:flex w-64 h-48 flex-shrink-0">
+      {/* Hero Image - Hidden on tablet, visible only on large desktop */}
+      <div className="hidden 2xl:flex w-48 h-40 flex-shrink-0">
         <img
           src="/images/admin-hero.png"
           alt="Two smiling African schoolchildren"
-          className="w-full h-full object-cover rounded-2xl"
+          className="w-full h-full object-cover rounded-lg"
         />
       </div>
     </div>
@@ -509,32 +509,32 @@ function KPIGrid({ stats, loading }: KPIGridProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
         return (
           <div
             key={kpi.label}
-            className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+            className="bg-white rounded-lg md:rounded-xl border border-gray-200 p-4 md:p-5 hover:shadow-lg transition-shadow"
           >
-            <div className={`${kpi.bgColor} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
-              <Icon className={`w-6 h-6 ${kpi.color}`} />
+            <div className={`${kpi.bgColor} w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center mb-3 md:mb-4`}>
+              <Icon className={`w-5 h-5 md:w-6 md:h-6 ${kpi.color}`} />
             </div>
             <p className="text-xs font-semibold text-gray-500 mb-1">{kpi.label}</p>
             {loading ? (
               <div className="h-8 bg-gray-200 rounded animate-pulse mb-2" />
             ) : (
               <>
-                <p className="text-3xl font-bold text-gray-900 mb-2">{kpi.value}</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{kpi.value}</p>
                 {kpi.trend !== undefined ? (
-                  <div className="flex items-center gap-1 text-sm">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
+                  <div className="flex items-center gap-1 text-xs md:text-sm">
+                    <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-green-600" />
                     <span className="text-green-600 font-medium">
                       +{kpi.trend}% from last month
                     </span>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">{kpi.note}</p>
+                  <p className="text-xs md:text-sm text-gray-500">{kpi.note}</p>
                 )}
               </>
             )}
@@ -551,27 +551,27 @@ interface EnrolBannerProps {
 
 function EnrolBanner({ onGetStarted }: EnrolBannerProps) {
   return (
-    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-8 mb-8 text-white">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-start gap-4 flex-1">
-          <div className="bg-blue-400 rounded-full p-3 flex-shrink-0">
-            <Plus className="w-6 h-6" />
+    <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl md:rounded-2xl p-4 sm:p-6 mb-6 md:mb-8 text-white">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+        <div className="flex items-start gap-3 md:gap-4 flex-1 min-w-0">
+          <div className="bg-blue-400 rounded-full p-2 md:p-3 flex-shrink-0">
+            <Plus className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold text-blue-100 mb-1">ENROL NEW FAMILY</p>
-            <h3 className="text-2xl font-bold mb-2">
+            <h3 className="text-lg md:text-2xl font-bold mb-1 md:mb-2 break-words">
               Add a new family to TATI ChildSave
             </h3>
-            <p className="text-blue-100">
+            <p className="text-xs md:text-sm text-blue-100">
               Register a family and provision their children with TATI IDs to get started.
             </p>
           </div>
         </div>
         <Button
           onClick={onGetStarted}
-          className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-lg flex-shrink-0"
+          className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-4 md:px-6 py-2 md:py-3 rounded-lg flex-shrink-0 text-sm md:text-base whitespace-nowrap"
         >
-          Get Started <ChevronRight className="w-4 h-4 ml-2" />
+          Get Started <ChevronRight className="w-4 h-4 ml-1 md:ml-2" />
         </Button>
       </div>
     </div>
@@ -586,50 +586,50 @@ interface ActivitySectionProps {
 
 function ActivitySection({ activities, loading, formatTime }: ActivitySectionProps) {
   return (
-    <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="lg:col-span-2 bg-white rounded-lg md:rounded-xl border border-gray-200 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 mb-4 md:mb-6">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
-          <p className="text-sm text-gray-500">Latest updates and activity across the platform.</p>
+          <h3 className="text-base md:text-lg font-bold text-gray-900">Recent Activity</h3>
+          <p className="text-xs md:text-sm text-gray-500">Latest updates and activity across the platform.</p>
         </div>
-        <a href="#" className="text-primary text-sm font-semibold flex items-center gap-1">
-          View all <ChevronRight className="w-4 h-4" />
+        <a href="#" className="text-primary text-xs md:text-sm font-semibold flex items-center gap-1 whitespace-nowrap">
+          View all <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
         </a>
       </div>
 
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-12 bg-gray-200 rounded animate-pulse" />
           ))}
         </div>
       ) : activities.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">No recent activity</p>
+        <p className="text-center text-gray-500 py-6 md:py-8 text-sm">No recent activity</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {activities.map((activity, index) => (
-            <div key={activity.id} className="pb-4 last:pb-0 last:border-b-0 border-b border-gray-100">
-              <div className="flex gap-4">
+            <div key={activity.id} className="pb-3 md:pb-4 last:pb-0 last:border-b-0 border-b border-gray-100">
+              <div className="flex gap-3 md:gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center">
                     {activity.type === "family" && (
-                      <Users className="w-5 h-5 text-blue-600" />
+                      <Users className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                     )}
                     {activity.type === "child" && (
-                      <BookOpen className="w-5 h-5 text-green-600" />
+                      <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-green-600" />
                     )}
                     {activity.type === "learner" && (
-                      <UserCheck className="w-5 h-5 text-purple-600" />
+                      <UserCheck className="w-4 h-4 md:w-5 md:h-5 text-purple-600" />
                     )}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs md:text-sm font-semibold text-gray-900 break-words">
                         {activity.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-gray-500 mt-0.5 md:mt-1 break-words">
                         {activity.description}
                       </p>
                     </div>
@@ -694,15 +694,15 @@ function QuickLinksSection({ onNavigate }: QuickLinksSectionProps) {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-gray-900">Quick Links</h3>
-        <p className="text-sm text-gray-500">
+    <div className="bg-white rounded-lg md:rounded-xl border border-gray-200 p-4 md:p-6">
+      <div className="mb-4 md:mb-6">
+        <h3 className="text-base md:text-lg font-bold text-gray-900">Quick Links</h3>
+        <p className="text-xs md:text-sm text-gray-500">
           Common tasks to help you get started quickly.
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 md:space-y-3">
         {quickLinks.map((link) => {
           const Icon = link.icon;
           return (
@@ -710,23 +710,23 @@ function QuickLinksSection({ onNavigate }: QuickLinksSectionProps) {
               key={link.label}
               onClick={() => onNavigate(link.href)}
               disabled={link.href === "#"}
-              className={`w-full text-left p-4 rounded-lg border transition-colors ${
+              className={`w-full text-left p-3 md:p-4 rounded-lg border transition-colors ${
                 link.href === "#"
                   ? "bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed"
                   : "border-gray-200 hover:border-primary hover:bg-blue-50"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                  <Icon className="w-4 h-4 md:w-5 md:h-5 text-gray-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">
                       {link.label}
                     </p>
-                    <p className="text-xs text-gray-500">{link.description}</p>
+                    <p className="text-xs text-gray-500 truncate">{link.description}</p>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
+                <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
               </div>
             </button>
           );
