@@ -1,13 +1,4 @@
 export {
-  FirebaseAchievementRepository,
-  FirebaseChildProfileRepository,
-  FirebaseCompetencyRepository,
-  FirebaseFamilyMemberRepository,
-  FirebaseFamilyRepository,
-  FirebaseJourneyProgressRepository,
-} from "./repositories";
-export { createFirebaseRepositoryBundle, type FirebaseRepositoryBundle } from "./provider";
-export {
   adminFirestore,
   adminAuth,
   adminCollection,

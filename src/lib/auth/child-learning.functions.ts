@@ -8,7 +8,6 @@ import { getLessonById } from "@/lib/lessons/registry";
 import { getScenarioDefinition, getEnhancedScenarioDefinition } from "@/lib/scenario/registry";
 import type { ScenarioState } from "@/lib/scenario/types";
 import { createInitialState, beginScenario, applyChoice, advance } from "@/lib/scenario/engine";
-import { FirebaseScenarioRepository } from "@/lib/backend/firebase/repositories";
 import type { AuthenticatedChildContext } from "./types";
 
 const COOKIE_NAME = "tati_child_session";
@@ -186,7 +185,7 @@ async function loadChildLearningDataFromFirebase(
       FirebaseJourneyProgressRepository,
       FirebaseCompetencyRepository,
       FirebaseAchievementRepository,
-    } = await import("@/lib/backend/firebase/repositories");
+    } = await import("@/lib/backend/firebase/repositories.server");
 
     const db = getFirebaseAdminDb();
     const progressRepo = new FirebaseJourneyProgressRepository(db, context.familyId);
@@ -620,7 +619,7 @@ export const recordChildProgress = createServerFn({ method: "POST" })
       // H4.B: Dynamic imports to avoid client-side server code contamination
       const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
       const { FirebaseJourneyProgressRepository } =
-        await import("@/lib/backend/firebase/repositories");
+        await import("@/lib/backend/firebase/repositories.server");
 
       const db = getFirebaseAdminDb();
       const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
@@ -666,7 +665,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
     try {
       // Phase 7C4B: Use Firebase persistence (atomic transaction)
       const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
-      const { FirebaseAssessmentRepository } = await import("@/lib/backend/firebase/repositories");
+      const { FirebaseAssessmentRepository } = await import("@/lib/backend/firebase/repositories.server");
 
       const db = getFirebaseAdminDb();
       const assessmentRepo = new FirebaseAssessmentRepository(db, familyId);
@@ -724,6 +723,9 @@ export async function loadChildScenarioForContext(
 
   // Gate B: Load session from Firebase
   const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+  const { FirebaseScenarioRepository } = await import(
+    "@/lib/backend/firebase/repositories.server"
+  );
   const db = getFirebaseAdminDb();
   const repo = new FirebaseScenarioRepository(db, context.familyId);
 
@@ -838,6 +840,9 @@ export async function saveChildScenarioForContext(
 
   // Gate B: Persist to Firebase with optimistic concurrency control
   const { getFirebaseAdminDb } = await import("@/integrations/firebase/admin.server");
+  const { FirebaseScenarioRepository } = await import(
+    "@/lib/backend/firebase/repositories.server"
+  );
   const db = getFirebaseAdminDb();
   const repo = new FirebaseScenarioRepository(db, context.familyId);
 

@@ -52,4 +52,10 @@ export default defineConfig({
       "@google-cloud/storage",
     ],
   },
+  optimizeDeps: {
+    exclude: ["google-auth-library", "google-logging-utils", "gcp-metadata"],
+    esbuildOptions: {
+      external: ["events"],
+    },
+  },
 });

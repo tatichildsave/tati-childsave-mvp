@@ -13,7 +13,7 @@ import {
 import {
   FirebaseFamilyRepository,
   FirebaseJourneyProgressRepository,
-} from "@/lib/backend/firebase/repositories";
+} from "@/lib/backend/firebase/repositories.server";
 import { getUserRoles } from "@/lib/auth/roles.server";
 import type { ChildProfile } from "@/lib/family";
 import type { ProgressEvent } from "@/lib/learning/progress";

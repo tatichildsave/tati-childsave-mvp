@@ -33,6 +33,7 @@ import { Route as AcademyResetPasswordRouteImport } from './routes/academy/reset
 import { Route as AcademySessionRouteImport } from './routes/academy/session'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminDashboardV2RouteImport } from './routes/admin/dashboard-v2'
 import { Route as AdminForgotPasswordRouteImport } from './routes/admin/forgot-password'
 import { Route as AdminResetPasswordRouteImport } from './routes/admin/reset-password'
 import { Route as ChildHomeRouteImport } from './routes/child/home'
@@ -185,6 +186,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminDashboardV2Route = AdminDashboardV2RouteImport.update({
+  id: '/dashboard-v2',
+  path: '/dashboard-v2',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/dashboard-v2': typeof AdminDashboardV2Route
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
@@ -442,6 +449,7 @@ export interface FileRoutesByTo {
   '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/dashboard-v2': typeof AdminDashboardV2Route
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
@@ -502,6 +510,7 @@ export interface FileRoutesById {
   '/academy/reset-password': typeof AcademyResetPasswordRoute
   '/academy/session': typeof AcademySessionRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/dashboard-v2': typeof AdminDashboardV2Route
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/reset-password': typeof AdminResetPasswordRoute
   '/child/home': typeof ChildHomeRoute
@@ -561,6 +570,7 @@ export interface FileRouteTypes {
     | '/academy/reset-password'
     | '/academy/session'
     | '/admin/dashboard'
+    | '/admin/dashboard-v2'
     | '/admin/forgot-password'
     | '/admin/reset-password'
     | '/child/home'
@@ -616,6 +626,7 @@ export interface FileRouteTypes {
     | '/academy/reset-password'
     | '/academy/session'
     | '/admin/dashboard'
+    | '/admin/dashboard-v2'
     | '/admin/forgot-password'
     | '/admin/reset-password'
     | '/child/home'
@@ -675,6 +686,7 @@ export interface FileRouteTypes {
     | '/academy/reset-password'
     | '/academy/session'
     | '/admin/dashboard'
+    | '/admin/dashboard-v2'
     | '/admin/forgot-password'
     | '/admin/reset-password'
     | '/child/home'
@@ -897,6 +909,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/dashboard-v2': {
+      id: '/admin/dashboard-v2'
+      path: '/dashboard-v2'
+      fullPath: '/admin/dashboard-v2'
+      preLoaderRoute: typeof AdminDashboardV2RouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/forgot-password': {
@@ -1187,6 +1206,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AdminRouteRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDashboardV2Route: typeof AdminDashboardV2Route
   AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
   AdminResetPasswordRoute: typeof AdminResetPasswordRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1197,6 +1217,7 @@ interface AdminRouteRouteChildren {
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDashboardV2Route: AdminDashboardV2Route,
   AdminForgotPasswordRoute: AdminForgotPasswordRoute,
   AdminResetPasswordRoute: AdminResetPasswordRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -1321,13 +1342,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

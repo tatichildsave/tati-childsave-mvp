@@ -1,4 +1,4 @@
-import type { Firestore } from "firebase/firestore";
+import type { Firestore } from "firebase-admin/firestore";
 import {
   FirebaseAchievementRepository,
   FirebaseChildProfileRepository,
@@ -6,7 +6,7 @@ import {
   FirebaseFamilyMemberRepository,
   FirebaseFamilyRepository,
   FirebaseJourneyProgressRepository,
-} from "./repositories";
+} from "./repositories.server";
 
 export interface FirebaseRepositoryBundle {
   families: FirebaseFamilyRepository;
