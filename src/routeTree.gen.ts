@@ -43,6 +43,7 @@ import { Route as ChildProgressRouteImport } from './routes/child/progress'
 import { Route as ChildResultsRouteImport } from './routes/child/results'
 import { Route as ChildTestLoginRouteImport } from './routes/child/test-login'
 import { Route as ParentIndexRouteImport } from './routes/parent/index'
+import { Route as ParentDashboardV2RouteImport } from './routes/parent/dashboard-v2'
 import { Route as ParentFeedbackRouteImport } from './routes/parent/feedback'
 import { Route as ParentFeedbackReviewRouteImport } from './routes/parent/feedback-review'
 import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
@@ -238,6 +239,11 @@ const ParentIndexRoute = ParentIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ParentRouteRoute,
 } as any)
+const ParentDashboardV2Route = ParentDashboardV2RouteImport.update({
+  id: '/dashboard-v2',
+  path: '/dashboard-v2',
+  getParentRoute: () => ParentRouteRoute,
+} as any)
 const ParentFeedbackRoute = ParentFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
@@ -402,6 +408,7 @@ export interface FileRoutesByFullPath {
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/child/test-login': typeof ChildTestLoginRoute
+  '/parent/dashboard-v2': typeof ParentDashboardV2Route
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -458,6 +465,7 @@ export interface FileRoutesByTo {
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/child/test-login': typeof ChildTestLoginRoute
+  '/parent/dashboard-v2': typeof ParentDashboardV2Route
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -519,6 +527,7 @@ export interface FileRoutesById {
   '/child/progress': typeof ChildProgressRoute
   '/child/results': typeof ChildResultsRoute
   '/child/test-login': typeof ChildTestLoginRoute
+  '/parent/dashboard-v2': typeof ParentDashboardV2Route
   '/parent/feedback': typeof ParentFeedbackRoute
   '/parent/feedback-review': typeof ParentFeedbackReviewRoute
   '/parent/metrics': typeof ParentMetricsRoute
@@ -579,6 +588,7 @@ export interface FileRouteTypes {
     | '/child/progress'
     | '/child/results'
     | '/child/test-login'
+    | '/parent/dashboard-v2'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -635,6 +645,7 @@ export interface FileRouteTypes {
     | '/child/progress'
     | '/child/results'
     | '/child/test-login'
+    | '/parent/dashboard-v2'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -695,6 +706,7 @@ export interface FileRouteTypes {
     | '/child/progress'
     | '/child/results'
     | '/child/test-login'
+    | '/parent/dashboard-v2'
     | '/parent/feedback'
     | '/parent/feedback-review'
     | '/parent/metrics'
@@ -981,6 +993,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentIndexRouteImport
       parentRoute: typeof ParentRouteRoute
     }
+    '/parent/dashboard-v2': {
+      id: '/parent/dashboard-v2'
+      path: '/dashboard-v2'
+      fullPath: '/parent/dashboard-v2'
+      preLoaderRoute: typeof ParentDashboardV2RouteImport
+      parentRoute: typeof ParentRouteRoute
+    }
     '/parent/feedback': {
       id: '/parent/feedback'
       path: '/feedback'
@@ -1261,6 +1280,7 @@ const ChildRouteRouteWithChildren = ChildRouteRoute._addFileChildren(
 )
 
 interface ParentRouteRouteChildren {
+  ParentDashboardV2Route: typeof ParentDashboardV2Route
   ParentFeedbackRoute: typeof ParentFeedbackRoute
   ParentFeedbackReviewRoute: typeof ParentFeedbackReviewRoute
   ParentMetricsRoute: typeof ParentMetricsRoute
@@ -1269,6 +1289,7 @@ interface ParentRouteRouteChildren {
 }
 
 const ParentRouteRouteChildren: ParentRouteRouteChildren = {
+  ParentDashboardV2Route: ParentDashboardV2Route,
   ParentFeedbackRoute: ParentFeedbackRoute,
   ParentFeedbackReviewRoute: ParentFeedbackReviewRoute,
   ParentMetricsRoute: ParentMetricsRoute,

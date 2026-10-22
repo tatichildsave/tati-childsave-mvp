@@ -19,6 +19,25 @@ export type AvatarKey = (typeof AVATAR_KEYS)[number];
 
 const sizes = { sm: 40, md: 56, lg: 88, xl: 120 } as const;
 
+/**
+ * The artwork (1024×572) is a 4×2 sheet: full-body figures on the top row and
+ * matching head-and-shoulders portraits on the bottom row. Avatars use the
+ * portraits. Nine stored keys map onto the four portraits.
+ */
+const SHEET = { width: 1024, height: 572, crop: 168, centerY: 486 } as const;
+const PORTRAIT_CENTERS_X = [160, 400, 642, 878] as const;
+const PORTRAIT_FOR_KEY: Record<AvatarKey, number> = {
+  ama: 0,
+  kojo: 1,
+  esi: 2,
+  kwame: 3,
+  yaw: 1,
+  abena: 0,
+  kofi: 3,
+  efua: 2,
+  kwesi: 1,
+};
+
 // Fallback RGB colors for avatars when images fail to load
 const avatarColors: Record<AvatarKey, string> = {
   ama: "rgb(191, 219, 254)", // bg-blue-200
@@ -41,15 +60,16 @@ export function Avatar({
 }: {
   avatar?: AvatarKey | string;
   name?: string;
-  size?: keyof typeof sizes;
+  /** Preset size or an exact pixel size. */
+  size?: keyof typeof sizes | number;
   ring?: "primary" | "success" | "accent";
   className?: string;
 }) {
-  const index = Math.max(0, AVATAR_KEYS.indexOf(avatar as AvatarKey));
-  const col = index % 3;
-  const row = Math.floor(index / 3);
-  const px = sizes[size];
-  const avatarKey = (avatar as AvatarKey) || "ama";
+  const known = (AVATAR_KEYS as readonly string[]).includes(avatar);
+  const avatarKey = (known ? avatar : "ama") as AvatarKey;
+  const px = typeof size === "number" ? size : sizes[size];
+  const scale = px / SHEET.crop;
+  const cx = PORTRAIT_CENTERS_X[PORTRAIT_FOR_KEY[avatarKey]] ?? PORTRAIT_CENTERS_X[0];
   const fallbackColor = avatarColors[avatarKey] || "rgb(229, 231, 235)"; // bg-gray-200
   const spanRef = useRef<HTMLSpanElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -79,10 +99,10 @@ export function Avatar({
       style={{
         width: px,
         height: px,
-        backgroundColor: imageLoaded ? "rgb(229, 231, 235)" : fallbackColor,
+        backgroundColor: imageLoaded ? "rgb(236, 230, 218)" : fallbackColor,
         backgroundImage: imageLoaded ? `url(${avatarSheet.url})` : "none",
-        backgroundSize: "300% 300%",
-        backgroundPosition: `${col * 50}% ${row * 50}%`,
+        backgroundSize: `${SHEET.width * scale}px ${SHEET.height * scale}px`,
+        backgroundPosition: `${-(cx - SHEET.crop / 2) * scale}px ${-(SHEET.centerY - SHEET.crop / 2) * scale}px`,
         backgroundRepeat: "no-repeat",
       }}
       data-avatar={avatarKey}
