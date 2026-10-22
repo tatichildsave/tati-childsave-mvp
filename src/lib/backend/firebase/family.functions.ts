@@ -204,7 +204,8 @@ export const assertChildInFamily = createServerFn({ method: "POST" })
 
 /**
  * Get journey progress for a child
- * Used by child learning routes to load progress history
+ * Used by parent-session routes (parent portal and parent-led learning) to load progress history.
+ * Requires a parent session whose family owns the child.
  * Returns a properly serializable array of progress events
  */
 export const getChildJourneyProgress = createServerFn({ method: "POST" })
@@ -227,30 +228,14 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
       }>
     > => {
       try {
+        // Authorise first: the caller must be a signed-in parent whose family owns this child.
+        const { uid } = await getCurrentParentContext();
         const db = getFirebaseAdminDb();
+        const familyRepo = new FirebaseFamilyRepository(db, uid);
+        await familyRepo.assertChildAccess(childId);
+        const familyId = await familyRepo.ensureFamily();
 
-        // Get the child document to find their family
-        const familyDocs = await db
-          .collectionGroup("children")
-          .where("id", "==", childId)
-          .limit(1)
-          .get();
-
-        if (familyDocs.empty) {
-          console.log("[getChildJourneyProgress] Child not found:", childId);
-          return [];
-        }
-
-        const childDoc = familyDocs.docs[0];
-        if (!childDoc) {
-          console.log("[getChildJourneyProgress] Child doc unexpectedly missing:", childId);
-          return [];
-        }
-
-        const childData = childDoc.data();
-        const familyId = childData["familyId"];
-
-        console.log("[getChildJourneyProgress] Found child:", childId, "family:", familyId);
+        console.log("[getChildJourneyProgress] Authorised child:", childId, "family:", familyId);
 
         // Get journey progress using the repository
         const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
