@@ -219,7 +219,10 @@ export async function createFamilyRecord(
 }
 
 /**
- * Add parent to family (create member subcollection document)
+ * Add parent to family.
+ * Writes both sides of the link: the family's members entry (used by security rules and
+ * the admin directory) and the parent's familyMemberships entry (used by the parent portal
+ * to find their family). Both are written atomically.
  */
 export async function addParentToFamily(
   familyId: string,
@@ -228,17 +231,22 @@ export async function addParentToFamily(
   const db = getFirebaseAdminDb();
   if (!db) throw new Error("Database not available");
 
-  await db
-    .collection("families")
-    .doc(familyId)
-    .collection("members")
-    .doc(parentUid)
-    .set({
-      uid: parentUid,
-      role: "parent",
-      status: "active",
-      addedAt: Timestamp.now(),
-    });
+  const now = Timestamp.now();
+  const batch = db.batch();
+  batch.set(db.collection("families").doc(familyId).collection("members").doc(parentUid), {
+    uid: parentUid,
+    role: "parent",
+    status: "active",
+    addedAt: now,
+  });
+  batch.set(db.collection("users").doc(parentUid).collection("familyMemberships").doc(familyId), {
+    familyId,
+    userId: parentUid,
+    role: "parent",
+    status: "active",
+    createdAt: now,
+  });
+  await batch.commit();
 }
 
 /**
@@ -265,6 +273,9 @@ export async function createChildProfileRecord(
     .set({
       id: childId,
       tatiId,
+      // Parent-portal field names (see toChildProfile in repositories.server.ts)
+      tati_id: tatiId,
+      created_by: adminUid,
       familyId,
       name,
       age,

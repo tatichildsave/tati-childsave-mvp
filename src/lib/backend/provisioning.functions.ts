@@ -32,7 +32,7 @@ import {
   getCredentialByTatiId,
 } from "./provisioning.server";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
-import { Timestamp, type DocumentReference } from "firebase-admin/firestore";
+import { Timestamp, type DocumentReference, type WriteBatch } from "firebase-admin/firestore";
 import {
   generateTatiId,
   generateChildPin,
@@ -270,6 +270,9 @@ export const provisionChild = createServerFn({ method: "POST" })
         transaction.set(childRef, {
           id: childId,
           tatiId,
+          // Parent-portal field names (see toChildProfile in repositories.server.ts)
+          tati_id: tatiId,
+          created_by: adminUid,
           familyId: data.familyId,
           name: data.name,
           age: data.age,
@@ -588,6 +591,133 @@ export const getFamilyAdmin = createServerFn({ method: "POST" })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load family";
       console.error("[getFamilyAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+// ============================================================================
+// FUNCTION 8: Repair parent ↔ family links (one-off, admin only)
+// ============================================================================
+// Before the enrolment fix, provisioning linked parents only via families/{id}/members.
+// The parent portal looks up users/{uid}/familyMemberships, found nothing, and auto-created
+// an empty "My Family". This repair is additive and idempotent: it adds missing membership
+// links and parent-portal child fields, and marks empty self-created families "superseded".
+// It never deletes data and never touches credentials or PINs.
+
+export interface FamilyLinkRepairReport {
+  applied: boolean;
+  familiesScanned: number;
+  linksToAdd: Array<{ familyId: string; familyName: string | null; parentUid: string; parentEmail: string | null }>;
+  childFieldsToFix: number;
+  strayFamiliesToRetire: Array<{ familyId: string; parentUid: string; parentEmail: string | null }>;
+  needsReview: Array<{ familyId: string; parentUid: string; parentEmail: string | null; childrenCount: number }>;
+}
+
+export const repairFamilyLinks = createServerFn({ method: "POST" })
+  .validator(z.object({ apply: z.boolean() }))
+  .handler(async ({ data }): Promise<FamilyLinkRepairReport> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const db = getFirebaseAdminDb();
+      const now = Timestamp.now();
+      const writes: Array<(batch: WriteBatch) => void> = [];
+      const report: FamilyLinkRepairReport = {
+        applied: data.apply,
+        familiesScanned: 0,
+        linksToAdd: [],
+        childFieldsToFix: 0,
+        strayFamiliesToRetire: [],
+        needsReview: [],
+      };
+
+      const familiesSnap = await db.collection("families").get();
+      report.familiesScanned = familiesSnap.size;
+      const familyById = new Map(familiesSnap.docs.map((f) => [f.id, f]));
+      const linkedFamiliesByParent = new Map<string, Set<string>>();
+      const emailCache = new Map<string, string | null>();
+      const emailOf = async (uid: string) => {
+        if (!emailCache.has(uid)) {
+          const u = await db.collection("users").doc(uid).get();
+          emailCache.set(uid, str(u.data()?.["email"]));
+        }
+        return emailCache.get(uid) ?? null;
+      };
+
+      for (const family of familiesSnap.docs) {
+        const [membersSnap, childrenSnap] = await Promise.all([
+          family.ref.collection("members").get(),
+          family.ref.collection("children").get(),
+        ]);
+
+        for (const child of childrenSnap.docs) {
+          const cd = child.data();
+          const patch: Record<string, unknown> = {};
+          if (str(cd["tatiId"]) && !str(cd["tati_id"])) patch["tati_id"] = cd["tatiId"];
+          if (str(cd["createdBy"]) && !str(cd["created_by"])) patch["created_by"] = cd["createdBy"];
+          if (Object.keys(patch).length > 0) {
+            report.childFieldsToFix++;
+            writes.push((b) => b.update(child.ref, patch));
+          }
+        }
+
+        for (const member of membersSnap.docs) {
+          const md = member.data();
+          const role = str(md["role"]) ?? "parent";
+          if ((role !== "parent" && role !== "guardian") || (str(md["status"]) ?? "active") !== "active") continue;
+          const uid = str(md["uid"]) ?? member.id;
+          if (!linkedFamiliesByParent.has(uid)) linkedFamiliesByParent.set(uid, new Set());
+          linkedFamiliesByParent.get(uid)!.add(family.id);
+
+          const membershipRef = db.collection("users").doc(uid).collection("familyMemberships").doc(family.id);
+          const membership = await membershipRef.get();
+          if (!membership.exists) {
+            report.linksToAdd.push({
+              familyId: family.id,
+              familyName: str(family.data()["name"]),
+              parentUid: uid,
+              parentEmail: await emailOf(uid),
+            });
+            writes.push((b) =>
+              b.set(membershipRef, { familyId: family.id, userId: uid, role, status: "active", createdAt: now, repairedAt: now }),
+            );
+          }
+        }
+      }
+
+      // Retire empty families the portal auto-created for parents who belong to an enrolled family.
+      for (const [uid, linkedFamilies] of linkedFamiliesByParent) {
+        const memberships = await db.collection("users").doc(uid).collection("familyMemberships").get();
+        for (const m of memberships.docs) {
+          if (linkedFamilies.has(m.id) || str(m.data()["status"]) !== "active") continue;
+          const stray = familyById.get(m.id);
+          if (!stray || str(stray.data()["createdBy"]) !== uid) continue;
+          const childCount = (await stray.ref.collection("children").count().get()).data().count;
+          const entry = { familyId: stray.id, parentUid: uid, parentEmail: await emailOf(uid) };
+          if (childCount > 0) {
+            report.needsReview.push({ ...entry, childrenCount: childCount });
+            continue;
+          }
+          report.strayFamiliesToRetire.push(entry);
+          writes.push((b) => b.update(m.ref, { status: "superseded", supersededAt: now }));
+          writes.push((b) => b.update(stray.ref, { status: "superseded", supersededAt: now, updatedAt: now }));
+        }
+      }
+
+      if (data.apply && writes.length > 0) {
+        for (let i = 0; i < writes.length; i += 400) {
+          const batch = db.batch();
+          writes.slice(i, i + 400).forEach((w) => w(batch));
+          await batch.commit();
+        }
+        console.log(`[repairFamilyLinks] Applied ${writes.length} writes (admin ${adminUid})`);
+      }
+
+      return report;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to repair family links";
+      console.error("[repairFamilyLinks] Error:", message);
       throw error;
     }
   });

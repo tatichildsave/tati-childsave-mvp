@@ -101,19 +101,20 @@ function AdminDashboardV2() {
         // Continue with empty array
       }
 
-      // Calculate stats
+      // Calculate stats (retired/superseded families are excluded)
+      const activeFamilies = families.filter((f) => f.status === "active");
       const facilitators = users.filter((u) => (u["roles"] as string[] | undefined)?.includes("facilitator"));
-      const activeLearners = families.reduce((sum, f) => sum + f.childrenCount, 0);
+      const activeLearners = activeFamilies.reduce((sum, f) => sum + f.childrenCount, 0);
 
       setStats({
-        totalFamilies: families.length,
+        totalFamilies: activeFamilies.length,
         activeLearners,
         totalFacilitators: facilitators.length,
         activeCohorts: 0, // Placeholder: awaits sessions collection
       });
 
       // Recent activity: most recently enrolled families (already sorted newest first)
-      const activities: ActivityItem[] = families
+      const activities: ActivityItem[] = activeFamilies
         .filter((f) => f.createdAt)
         .slice(0, 5)
         .map((family) => ({
