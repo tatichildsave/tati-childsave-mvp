@@ -103,6 +103,8 @@ function ParentDashboardV2() {
   return (
     <ParentShell
       title="Parent Dashboard"
+      homeHref="/parent/dashboard-v2"
+      roleLabel="Parent"
       navItems={navItems}
       userName={displayName}
       userInitials={initialsOf(displayName)}

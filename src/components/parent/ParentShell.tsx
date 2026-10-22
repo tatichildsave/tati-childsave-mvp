@@ -14,10 +14,16 @@ export interface ParentNavItem {
   hash?: string;
   active?: boolean;
 }
+export type WorkspaceNavItem = ParentNavItem;
+export { ParentShell as WorkspaceShell };
 
 interface ParentShellProps {
   title: string;
   subtitle?: string;
+  /** Where the logo links to, e.g. the role's dashboard. */
+  homeHref: string;
+  /** Shown under the user's name and used in navigation labels, e.g. "Parent". */
+  roleLabel: string;
   navItems: ParentNavItem[];
   userName: string;
   userInitials: string;
@@ -26,9 +32,12 @@ interface ParentShellProps {
   children: ReactNode;
 }
 
+/** Shared TATI workspace chrome (sidebar, top bar, mobile drawer) used by role dashboards. */
 export function ParentShell({
   title,
   subtitle = "TATI ChildSave",
+  homeHref,
+  roleLabel,
   navItems,
   userName,
   userInitials,
@@ -61,14 +70,22 @@ export function ParentShell({
           "fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-[#E9EDF4] bg-white lg:flex",
           collapsed && "lg:hidden",
         )}
-        aria-label="Parent navigation"
+        aria-label={`${roleLabel} navigation`}
       >
-        <SidebarContent navItems={navItems} onSignOut={onSignOut} signingOut={signingOut} />
+        <SidebarContent
+          homeHref={homeHref}
+          roleLabel={roleLabel}
+          navItems={navItems}
+          onSignOut={onSignOut}
+          signingOut={signingOut}
+        />
       </aside>
 
       {/* Mobile / tablet drawer */}
-      <MobileDrawer open={drawerOpen} onClose={closeDrawer}>
+      <MobileDrawer open={drawerOpen} onClose={closeDrawer} label={`${roleLabel} navigation`}>
         <SidebarContent
+          homeHref={homeHref}
+          roleLabel={roleLabel}
           navItems={navItems}
           onSignOut={onSignOut}
           signingOut={signingOut}
@@ -80,6 +97,7 @@ export function ParentShell({
         <TopNav
           title={title}
           subtitle={subtitle}
+          roleLabel={roleLabel}
           userName={userName}
           userInitials={userInitials}
           onMenu={handleMenu}
@@ -94,12 +112,12 @@ export function ParentShell({
   );
 }
 
-function Brand() {
+function Brand({ homeHref, roleLabel }: { homeHref: string; roleLabel: string }) {
   return (
     <Link
-      to="/parent/dashboard-v2"
+      to={homeHref}
       className={cn("flex items-center gap-3 rounded-xl", t.focus)}
-      aria-label="TATI ChildSave parent home"
+      aria-label={`TATI ChildSave ${roleLabel.toLowerCase()} home`}
     >
       <img src={logo} alt="" className="h-[56px] w-[56px] shrink-0 select-none" draggable={false} />
       <span className={cn("leading-[1.05]", t.navy)}>
@@ -111,11 +129,15 @@ function Brand() {
 }
 
 function SidebarContent({
+  homeHref,
+  roleLabel,
   navItems,
   onSignOut,
   signingOut,
   onNavigate,
 }: {
+  homeHref: string;
+  roleLabel: string;
   navItems: ParentNavItem[];
   onSignOut: () => void;
   signingOut?: boolean | undefined;
@@ -123,9 +145,9 @@ function SidebarContent({
 }) {
   return (
     <div className="flex h-full flex-col overflow-y-auto px-5 pb-5 pt-5 [scrollbar-width:thin]">
-      <Brand />
+      <Brand homeHref={homeHref} roleLabel={roleLabel} />
 
-      <nav className="mt-6 flex-1 space-y-1" aria-label="Parent sections">
+      <nav className="mt-6 flex-1 space-y-1" aria-label={`${roleLabel} sections`}>
         {navItems.map((item) => (
           <NavLink key={item.label} item={item} onNavigate={onNavigate} />
         ))}
@@ -213,6 +235,7 @@ function NavLink({ item, onNavigate }: { item: ParentNavItem; onNavigate?: (() =
 function TopNav({
   title,
   subtitle,
+  roleLabel,
   userName,
   userInitials,
   onMenu,
@@ -221,6 +244,7 @@ function TopNav({
 }: {
   title: string;
   subtitle: string;
+  roleLabel: string;
   userName: string;
   userInitials: string;
   onMenu: () => void;
@@ -269,7 +293,7 @@ function TopNav({
             <span className={cn("block max-w-[160px] truncate text-[14px] font-extrabold leading-tight", t.navy)}>
               {userName}
             </span>
-            <span className={cn("block text-[12px] font-semibold leading-tight", t.muted)}>Parent</span>
+            <span className={cn("block text-[12px] font-semibold leading-tight", t.muted)}>{roleLabel}</span>
           </span>
           <ChevronDown className="hidden h-4 w-4 text-[#6B7489] sm:block" strokeWidth={2.4} aria-hidden />
         </div>
@@ -281,10 +305,12 @@ function TopNav({
 function MobileDrawer({
   open,
   onClose,
+  label,
   children,
 }: {
   open: boolean;
   onClose: () => void;
+  label: string;
   children: ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -317,7 +343,7 @@ function MobileDrawer({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Parent navigation"
+        aria-label={label}
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-[min(18rem,85vw)] bg-white shadow-xl transition-transform duration-200",
           open ? "translate-x-0" : "-translate-x-full",

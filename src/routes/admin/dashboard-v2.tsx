@@ -2,7 +2,7 @@
  * Admin Dashboard — New Design Implementation
  * 
  * Reproduces the approved visual design with:
- * - Premium sidebar with TATI logo and navigation
+ * - Shared admin workspace chrome (sidebar and navigation) via AdminWorkspace
  * - Hero welcome section with profile and image
  * - KPI cards with real Firestore data and trend indicators
  * - Enrol New Family CTA banner
@@ -13,30 +13,23 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
-import { getFirebaseAuth, getFirebaseFirestore } from "@/integrations/firebase/client";
+import { getFirebaseFirestore } from "@/integrations/firebase/client";
 import { Button } from "@/components/tati";
+import { AdminWorkspace } from "@/components/admin/AdminWorkspace";
+import { familyDisplayName } from "@/components/admin/family-format";
+import { listFamiliesAdmin, type AdminFamilySummary } from "@/lib/backend/provisioning.functions";
 import {
-  Home,
   Users,
   BookOpen,
   UserCheck,
   Layers,
   Calendar,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Bell,
   ChevronRight,
   Plus,
-  TrendingUp,
   Clock,
   LinkIcon,
 } from "lucide-react";
-import logo from "@/assets/tati-logo.svg";
 
 export const Route = createFileRoute("/admin/dashboard-v2")({
   component: AdminDashboardV2,
@@ -61,9 +54,7 @@ interface ActivityItem {
 
 function AdminDashboardV2() {
   const navigate = useNavigate();
-  const auth = getFirebaseAuth();
   const db = getFirebaseFirestore();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalFamilies: 0,
@@ -91,17 +82,14 @@ function AdminDashboardV2() {
         return; // Database not available, show empty state
       }
 
-      let families = [];
-      let users = [];
-      let children = [];
+      let families: AdminFamilySummary[] = [];
+      let users: Array<Record<string, unknown>> = [];
 
-      // Fetch families with error handling
+      // Families and learner counts come from the admin-only server function
       try {
-        const familiesSnap = await getDocs(collection(db, "families"));
-        families = familiesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        families = await listFamiliesAdmin();
       } catch (err: any) {
         console.warn("Could not load families:", err.message);
-        // Continue with empty array
       }
 
       // Fetch users with error handling
@@ -113,18 +101,9 @@ function AdminDashboardV2() {
         // Continue with empty array
       }
 
-      // Fetch children with error handling
-      try {
-        const childrenSnap = await getDocs(collection(db, "children"));
-        children = childrenSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      } catch (err: any) {
-        console.warn("Could not load children:", err.message);
-        // Continue with empty array
-      }
-
       // Calculate stats
-      const facilitators = users.filter((u) => (u.roles as string[])?.includes("facilitator"));
-      const activeLearners = children.filter((c) => !c.archived).length;
+      const facilitators = users.filter((u) => (u["roles"] as string[] | undefined)?.includes("facilitator"));
+      const activeLearners = families.reduce((sum, f) => sum + f.childrenCount, 0);
 
       setStats({
         totalFamilies: families.length,
@@ -133,54 +112,21 @@ function AdminDashboardV2() {
         activeCohorts: 0, // Placeholder: awaits sessions collection
       });
 
-      // Build recent activity from timestamps
-      const activities: ActivityItem[] = [];
+      // Recent activity: most recently enrolled families (already sorted newest first)
+      const activities: ActivityItem[] = families
+        .filter((f) => f.createdAt)
+        .slice(0, 5)
+        .map((family) => ({
+          id: `family-${family.id}`,
+          type: "family",
+          title: `Family enrolled: ${familyDisplayName(family)}`,
+          description: `${family.childrenCount} ${family.childrenCount === 1 ? "child" : "children"}`,
+          timestamp: new Date(family.createdAt!),
+          badge: "Primary",
+          badgeColor: "primary",
+        }));
 
-      // Add family events
-      families
-        .sort((a, b) => {
-          const aTime = a.createdAt?.toDate?.() || new Date(0);
-          const bTime = b.createdAt?.toDate?.() || new Date(0);
-          return bTime.getTime() - aTime.getTime();
-        })
-        .slice(0, 3)
-        .forEach((family) => {
-          const timestamp = family.createdAt?.toDate?.() || new Date();
-          activities.push({
-            id: `family-${family.id}`,
-            type: "family",
-            title: `Family created: ${family.name || "Unnamed"}`,
-            description: `${(children.filter((c) => c.familyId === family.id) || []).length} member(s)`,
-            timestamp,
-            badge: "Primary",
-            badgeColor: "primary",
-          });
-        });
-
-      // Add child enrollment events
-      children
-        .sort((a, b) => {
-          const aTime = a.createdAt?.toDate?.() || new Date(0);
-          const bTime = b.createdAt?.toDate?.() || new Date(0);
-          return bTime.getTime() - aTime.getTime();
-        })
-        .slice(0, 2)
-        .forEach((child) => {
-          const timestamp = child.createdAt?.toDate?.() || new Date();
-          activities.push({
-            id: `child-${child.id}`,
-            type: "child",
-            title: `Child enrolled: ${child.name || "Unnamed"}`,
-            description: `TATI ID: ${child.tatiId || "Pending"}`,
-            timestamp,
-            badge: "Success",
-            badgeColor: "success",
-          });
-        });
-
-      // Sort and take top 5
-      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-      setRecentActivity(activities.slice(0, 5));
+      setRecentActivity(activities);
       setLoading(false);
     } catch (err: any) {
       console.error("Failed to load dashboard data:", err);
@@ -188,17 +134,6 @@ function AdminDashboardV2() {
       setLoading(false);
     }
   }
-
-  const handleLogout = async () => {
-    try {
-      if (auth) {
-        await signOut(auth);
-        navigate({ to: "/admin/login" });
-      }
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
 
   const handleEnrolFamily = () => {
     navigate({ to: "/admin/enroll" });
@@ -217,247 +152,29 @@ function AdminDashboardV2() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onLogout={handleLogout}
-      />
+    <AdminWorkspace title="Admin Dashboard" active="dashboard">
+      {/* Hero Section */}
+      <HeroSection loading={loading} />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation */}
-        <TopNav
-          onMenuClick={() => setSidebarOpen(true)}
-          adminName="Administrator"
+      {/* KPI Cards */}
+      <KPIGrid stats={stats} loading={loading} />
+
+      {/* Enrol CTA */}
+      <EnrolBanner onGetStarted={handleEnrolFamily} />
+
+      {/* Activity and Quick Links */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 md:mt-8">
+        {/* Recent Activity */}
+        <ActivitySection
+          activities={recentActivity}
+          loading={loading}
+          formatTime={formatTime}
         />
 
-        {/* Content Area */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
-            {/* Hero Section */}
-            <HeroSection loading={loading} />
-
-            {/* KPI Cards */}
-            <KPIGrid stats={stats} loading={loading} />
-
-            {/* Enrol CTA */}
-            <EnrolBanner onGetStarted={handleEnrolFamily} />
-
-            {/* Activity and Quick Links */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 md:mt-8">
-              {/* Recent Activity */}
-              <ActivitySection
-                activities={recentActivity}
-                loading={loading}
-                formatTime={formatTime}
-              />
-
-              {/* Quick Links */}
-              <QuickLinksSection onNavigate={(route) => navigate({ to: route })} />
-            </div>
-          </div>
-        </main>
+        {/* Quick Links */}
+        <QuickLinksSection onNavigate={(route) => navigate({ to: route })} />
       </div>
-
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-interface SidebarProps {
-  open: boolean;
-  onClose: () => void;
-  onLogout: () => void;
-}
-
-function Sidebar({ open, onClose, onLogout }: SidebarProps) {
-  const pathname = window.location.pathname;
-
-  const navItems = [
-    { label: "Dashboard", icon: Home, href: "/admin/dashboard-v2" },
-    { label: "Families", icon: Users, href: "/admin/families" },
-    { label: "Learners", icon: BookOpen, href: "#", comingSoon: true },
-    { label: "Facilitators", icon: UserCheck, href: "#", comingSoon: true },
-    { label: "Programmes", icon: Layers, href: "#", comingSoon: true },
-    { label: "Sessions", icon: Calendar, href: "#", comingSoon: true },
-    { label: "Reports", icon: BarChart3, href: "#", comingSoon: true },
-    { label: "Settings", icon: Settings, href: "#", comingSoon: true },
-  ];
-
-  const isActive = (href: string) => pathname === href;
-
-  return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <img
-            src={logo}
-            alt="TATI ChildSave"
-            className="h-12 w-auto"
-          />
-          <p className="text-sm font-semibold text-gray-900 mt-2">TATI ChildSave</p>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <a
-                key={item.label}
-                href={item.comingSoon ? "#" : item.href}
-                onClick={(e) => {
-                  if (item.comingSoon) e.preventDefault();
-                }}
-                className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                  isActive(item.href)
-                    ? "bg-blue-50 text-primary border-l-4 border-primary"
-                    : "text-gray-600 hover:bg-gray-50"
-                } ${item.comingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                <Icon className="w-5 h-5 mr-3" />
-                <span className="font-medium text-sm flex-1">{item.label}</span>
-                {item.comingSoon && (
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                    Soon
-                  </span>
-                )}
-              </a>
-            );
-          })}
-        </nav>
-
-        {/* Logout */}
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={onLogout}
-            className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          >
-            <LogOut className="w-5 h-5 mr-3" />
-            <span className="font-medium text-sm">Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white z-50 transform transition-transform duration-300 lg:hidden ${
-          open ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-            <img src={logo} alt="TATI ChildSave" className="h-10 w-auto" />
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <a
-                  key={item.label}
-                  href={item.comingSoon ? "#" : item.href}
-                  onClick={(e) => {
-                    if (item.comingSoon) e.preventDefault();
-                    else onClose();
-                  }}
-                  className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    isActive(item.href)
-                      ? "bg-blue-50 text-primary border-l-4 border-primary"
-                      : "text-gray-600 hover:bg-gray-50"
-                  } ${item.comingSoon ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  <span className="font-medium text-sm flex-1">{item.label}</span>
-                  {item.comingSoon && (
-                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                      Soon
-                    </span>
-                  )}
-                </a>
-              );
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={onLogout}
-              className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              <span className="font-medium text-sm">Logout</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-    </>
-  );
-}
-
-interface TopNavProps {
-  onMenuClick: () => void;
-  adminName: string;
-}
-
-function TopNav({ onMenuClick, adminName }: TopNavProps) {
-  return (
-    <header className="bg-white border-b border-gray-200">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
-          {/* Mobile Menu */}
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg flex-shrink-0"
-          >
-            <Menu className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-
-          {/* Breadcrumb */}
-          <div className="hidden sm:flex items-center gap-2">
-            <Home className="w-4 h-4 md:w-5 md:h-5 text-gray-400 flex-shrink-0" />
-            <span className="text-xs md:text-sm text-gray-600">Admin Dashboard</span>
-          </div>
-        </div>
-
-        {/* Right Side */}
-        <div className="flex items-center gap-2 md:gap-4">
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative flex-shrink-0">
-            <Bell className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-400 rounded-full" />
-          </button>
-
-          {/* Profile */}
-          <div className="flex items-center gap-2 md:gap-3 min-w-0">
-            <div className="text-right flex-shrink-0">
-              <p className="text-xs md:text-sm font-semibold text-gray-900">AD</p>
-            </div>
-            <div className="text-right hidden sm:block min-w-0">
-              <p className="text-xs md:text-sm font-semibold text-gray-900 truncate">{adminName}</p>
-              <p className="text-xs text-gray-500">Administrator</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    </AdminWorkspace>
   );
 }
 
@@ -497,7 +214,7 @@ function KPIGrid({ stats, loading }: KPIGridProps) {
       label: "TOTAL FAMILIES",
       value: stats.totalFamilies,
       icon: Users,
-      trend: 6,
+      note: "Enrolled families",
       color: "text-blue-600",
       bgColor: "bg-blue-50",
     },
@@ -505,7 +222,7 @@ function KPIGrid({ stats, loading }: KPIGridProps) {
       label: "ACTIVE LEARNERS",
       value: stats.activeLearners,
       icon: BookOpen,
-      trend: 12,
+      note: "Children provisioned",
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
@@ -513,7 +230,7 @@ function KPIGrid({ stats, loading }: KPIGridProps) {
       label: "FACILITATORS",
       value: stats.totalFacilitators,
       icon: Users,
-      trend: 2,
+      note: "Facilitator accounts",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
@@ -545,16 +262,7 @@ function KPIGrid({ stats, loading }: KPIGridProps) {
             ) : (
               <>
                 <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{kpi.value}</p>
-                {kpi.trend !== undefined ? (
-                  <div className="flex items-center gap-1 text-xs md:text-sm">
-                    <TrendingUp className="w-3 h-3 md:w-4 md:h-4 text-green-600" />
-                    <span className="text-green-600 font-medium">
-                      +{kpi.trend}% from last month
-                    </span>
-                  </div>
-                ) : (
-                  <p className="text-xs md:text-sm text-gray-500">{kpi.note}</p>
-                )}
+                <p className="text-xs md:text-sm text-gray-500">{kpi.note}</p>
               </>
             )}
           </div>
