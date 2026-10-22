@@ -16,6 +16,7 @@ import {
   useAcademyDashboard,
   useCreateAcademySession,
   useActiveFacilitatorSession,
+  useFacilitatorCohorts,
   type CreateSessionInput,
 } from "@/lib/academy";
 import { getTrack, itemTitle, itemSubtitle } from "@/lib/learning/track";
@@ -23,11 +24,13 @@ import { facilitatorGuides } from "@/lib/academy/facilitator-guide";
 
 interface StartSearchParams {
   activityId?: string | undefined;
+  cohortId?: string | undefined;
 }
 
 export const Route = createFileRoute("/academy/session/start")({
   validateSearch: (search: Record<string, unknown>): StartSearchParams => ({
     activityId: search["activityId"] as string | undefined,
+    cohortId: search["cohortId"] as string | undefined,
   }),
   head: () => ({
     meta: [
@@ -49,6 +52,7 @@ function AcademyActivityLaunch() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/academy/session/start" });
   const activityId = search["activityId"];
+  const cohortId = search["cohortId"];
 
   const [prepChecklist, setPrepChecklist] = useState({
     materialsReady: false,
@@ -71,6 +75,23 @@ function AcademyActivityLaunch() {
     session ? { uid: session.uid, email: session.email, displayName: session.displayName } : null,
   );
 
+  // Cohorts: a session is always run for one cohort
+  const { data: cohorts, isLoading: cohortsLoading } = useFacilitatorCohorts(session?.uid ?? null);
+  const activeCohorts = (cohorts ?? []).filter((c) => c.status === "active");
+  const selectedCohort = activeCohorts.find((c) => c.id === cohortId);
+  // Only learners who are in the cohort AND assigned to this facilitator can join the session.
+  const cohortLearners = selectedCohort
+    ? (dashboardData?.progressSummaries ?? []).filter((p) => selectedCohort.learnerIds.includes(p.childId))
+    : [];
+
+  function selectCohort(id: string) {
+    navigate({
+      to: "/academy/session/start",
+      search: { activityId, cohortId: id || undefined },
+      replace: true,
+    });
+  }
+
   // Check for existing active session
   const { data: existingSession } = useActiveFacilitatorSession(
     session?.uid ?? null,
@@ -88,7 +109,7 @@ function AcademyActivityLaunch() {
   }, [sessionLoading, session?.isFacilitator, navigate]);
 
   const handleStartSession = async () => {
-    if (!session || !activityId || !dashboardData) return;
+    if (!session || !activityId || !dashboardData || !selectedCohort || cohortLearners.length === 0) return;
 
     // If there's an existing active session, show resume dialog
     if (existingSession && existingSession.status === "active") {
@@ -109,7 +130,9 @@ function AcademyActivityLaunch() {
         activityKind: activity.kind as "lesson" | "scenario" | "assessment" | "reflection",
         activityTitle: itemTitle(track, activity),
         trackId: "save",
-        learnerIds: dashboardData.assignedChildren.map((child) => child.id),
+        learnerIds: cohortLearners.map((learner) => learner.childId),
+        cohortId: selectedCohort.id,
+        cohortName: selectedCohort.name,
       };
 
       const newSessionId = await createSessionMutation.mutateAsync(sessionInput);
@@ -125,7 +148,7 @@ function AcademyActivityLaunch() {
     navigate({ to: `/academy/session/monitor?sessionId=${existingSession.id}` });
   };
 
-  if (sessionLoading || dashboardLoading) {
+  if (sessionLoading || dashboardLoading || cohortsLoading) {
     return (
       <AcademyShell>
         <LoadingState label="Preparing activity launch…" />
@@ -183,8 +206,8 @@ function AcademyActivityLaunch() {
   const position = track.sequence.findIndex((item) => item.id === activityId) + 1;
   const totalActivities = track.sequence.length;
 
-  // Get assigned learners
-  const learners = dashboardData?.progressSummaries || [];
+  // Learners for this session: the selected cohort's assigned learners only
+  const learners = cohortLearners;
   const learnerCount = learners.length;
 
   return (
@@ -247,10 +270,42 @@ function AcademyActivityLaunch() {
         <div>
           <h2 className="text-lg font-bold text-foreground mb-2">Learners in This Group</h2>
 
-          {learnerCount === 0 ? (
+          {activeCohorts.length === 0 ? (
+            <Card tone="muted">
+              <p className="text-base font-bold text-foreground">No cohorts yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sessions are run for a cohort. Create one in My Cohorts, or ask your administrator to
+                set one up for you.
+              </p>
+              <Button to="/academy/cohorts" variant="outline" className="mt-3">
+                Go to My Cohorts
+              </Button>
+            </Card>
+          ) : (
+            <Card className="mb-3">
+              <label htmlFor="session-cohort" className="text-sm font-bold text-foreground">
+                Which cohort are you teaching?
+              </label>
+              <select
+                id="session-cohort"
+                value={selectedCohort?.id ?? ""}
+                onChange={(e) => selectCohort(e.target.value)}
+                className="mt-2 min-h-[48px] w-full rounded-xl border border-border bg-background px-3 text-base font-bold"
+              >
+                <option value="">Select a cohort…</option>
+                {activeCohorts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.learnerIds.length} learner{c.learnerIds.length !== 1 ? "s" : ""})
+                  </option>
+                ))}
+              </select>
+            </Card>
+          )}
+
+          {!selectedCohort ? null : learnerCount === 0 ? (
             <Card tone="muted">
               <p className="text-base text-muted-foreground">
-                No learners are currently assigned to you.
+                None of the learners in {selectedCohort.name} are currently assigned to you.
               </p>
             </Card>
           ) : (
@@ -271,9 +326,9 @@ function AcademyActivityLaunch() {
                       <Avatar avatar={learner.avatar} name={learner.childName} size="md" />
                       <div>
                         <p className="font-bold text-foreground">{learner.childName}</p>
-                        {learner.currentActivityName && (
+                        {learner.nextActivityTitle && (
                           <p className="text-xs text-muted-foreground">
-                            Currently: {learner.currentActivityName}
+                            Next: {learner.nextActivityTitle}
                           </p>
                         )}
                       </div>
@@ -434,7 +489,7 @@ function AcademyActivityLaunch() {
               size="lg"
               className="min-w-[200px]"
               onClick={handleStartSession}
-              disabled={isCreatingSession}
+              disabled={isCreatingSession || !selectedCohort || learnerCount === 0}
             >
               {isCreatingSession ? "Starting…" : "Start Session →"}
             </Button>

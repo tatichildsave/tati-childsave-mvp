@@ -21,11 +21,8 @@ function getLearnerName(learner: AssignedChild | ChildProgressSummary): string {
 }
 
 function getLearnerId(learner: AssignedChild | ChildProgressSummary): string {
-  // AssignedChild has 'id', ChildProgressSummary has 'childId'
-  if ("id" in learner && typeof learner.id === "string") {
-    return learner.id;
-  }
-  return learner.childId;
+  // ChildProgressSummary has 'childId'; AssignedChild has 'id'
+  return "childId" in learner ? learner.childId : learner.id;
 }
 
 function getLearnerAge(learner: AssignedChild | ChildProgressSummary): number | undefined {
@@ -106,7 +103,7 @@ export function CohortDetail({
           <div className="grid gap-3">
             {cohortLearners.map((learner) => (
               <div
-                key={learner.id}
+                key={getLearnerId(learner)}
                 onClick={() => onSelectLearner?.(learner)}
                 onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
                   if (e.key === "Enter" || e.key === " ") {

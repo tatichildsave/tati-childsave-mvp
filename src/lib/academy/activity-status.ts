@@ -54,7 +54,7 @@ export function getActivityStatus(
   journeyProgress: FirestoreProgressEvent[],
 ): LearnerActivityStatus {
   // Check if learner is currently working on this activity
-  if (learner.currentActivityName === activityId) {
+  if (learner.currentActivityId === activityId) {
     const event = journeyProgress.find((e) => e.itemId === activityId);
     if (event?.status === "completed") {
       return {
@@ -100,7 +100,7 @@ export function getActivityStatus(
     learner,
     activityId,
     status: "on-another-activity",
-    statusReason: `Currently working on: ${learner.currentActivityName}`,
+    statusReason: `Currently working on: ${learner.currentActivityName ?? learner.nextActivityTitle ?? "another activity"}`,
   };
 }
 

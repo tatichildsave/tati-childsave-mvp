@@ -20,7 +20,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   Timestamp,
   serverTimestamp,
   type Firestore,
@@ -44,6 +43,9 @@ export interface AcademySession {
   endedAt?: Timestamp | null;
   status: AcademySessionStatus;
   learnerIds: string[];
+  /** Cohort the session was run for (sessions created before cohort selection have none). */
+  cohortId?: string;
+  cohortName?: string | null;
   attendance: Record<string, "present" | "absent" | "unknown">;
   facilitatorNote?: string | null;
   createdAt: Timestamp;
@@ -57,6 +59,8 @@ export interface CreateSessionInput {
   activityTitle: string;
   trackId: string;
   learnerIds: string[];
+  cohortId?: string | undefined;
+  cohortName?: string | undefined;
 }
 
 export interface UpdateSessionAttendanceInput {
@@ -112,6 +116,7 @@ export async function createAcademySession(input: CreateSessionInput): Promise<s
     endedAt: null,
     status: "active",
     learnerIds: input.learnerIds,
+    ...(input.cohortId ? { cohortId: input.cohortId, cohortName: input.cohortName ?? null } : {}),
     attendance: initialAttendance,
     facilitatorNote: null,
     createdAt: serverTimestamp() as Timestamp,
@@ -197,14 +202,15 @@ export async function listFacilitatorSessions(facilitatorUid: string): Promise<A
   const db = getFirebaseFirestore();
   if (!db) throw new Error("Firestore not initialized");
 
-  const q = query(
-    collection(db, "academySessions"),
-    where("facilitatorUid", "==", facilitatorUid),
-    orderBy("createdAt", "desc"),
-  );
+  // Equality-only filter (no composite index required); newest first sorted in memory.
+  const q = query(collection(db, "academySessions"), where("facilitatorUid", "==", facilitatorUid));
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as AcademySession);
+  const millis = (s: AcademySession) => {
+    const v = s.createdAt as unknown as { toMillis?: () => number } | null;
+    return typeof v?.toMillis === "function" ? v.toMillis() : 0;
+  };
+  return snapshot.docs.map((doc) => doc.data() as AcademySession).sort((a, b) => millis(b) - millis(a));
 }
 
 /**

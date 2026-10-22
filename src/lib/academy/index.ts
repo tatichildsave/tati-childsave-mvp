@@ -5,3 +5,5 @@ export * from "./facilitator-guide";
 export * from "./session-data";
 export * from "./cohort-data";
 export * from "./school-data";
+export * from "./class-schedule";
+export * from "./class-data";

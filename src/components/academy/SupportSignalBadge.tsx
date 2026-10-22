@@ -4,8 +4,9 @@
  */
 
 import { cn } from "@/lib/utils";
+import type { SupportSignal } from "@/lib/academy/learner-progress";
 
-export type SupportSignal = "on-track" | "not-started" | "needs-support";
+export type { SupportSignal };
 
 interface SupportSignalBadgeProps {
   signal?: SupportSignal;
@@ -27,6 +28,16 @@ const signalConfig: Record<SupportSignal, { label: string; icon: string; color: 
     label: "May need support",
     icon: "!",
     color: "bg-warning/10 text-warning border-warning/20",
+  },
+  inactive: {
+    label: "Low activity",
+    icon: "!",
+    color: "bg-warning/10 text-warning border-warning/20",
+  },
+  unknown: {
+    label: "Activity not recorded",
+    icon: "?",
+    color: "bg-muted text-muted-foreground border-border",
   },
 };
 

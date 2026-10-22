@@ -194,6 +194,32 @@ export async function createParentFirestoreRecord(
 }
 
 /**
+ * Create a facilitator Firestore record (role: facilitator). Admin SDK only.
+ */
+export async function createFacilitatorFirestoreRecord(
+  uid: string,
+  email: string,
+  displayName: string,
+  phone: string | undefined,
+  adminUid: string
+): Promise<void> {
+  const db = getFirebaseAdminDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.collection("users").doc(uid).set({
+    uid,
+    email: email.toLowerCase(),
+    displayName,
+    phone: phone || null,
+    roles: ["facilitator"],
+    status: "active",
+    createdAt: Timestamp.now(),
+    createdBy: adminUid,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+/**
  * Create family document
  */
 export async function createFamilyRecord(

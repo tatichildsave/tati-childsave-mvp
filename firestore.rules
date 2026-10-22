@@ -91,12 +91,16 @@ service cloud.firestore {
 
       match /children/{childId} {
         allow read: if canAccessChild(familyId, childId);
+        // facilitatorUids grants facilitator access, so only admins (via Admin SDK provisioning) may set it.
         allow create: if isFamilyAdult(familyId)
           && request.resource.data.familyId == familyId
           && request.resource.data.id == childId
-          && request.resource.data.createdBy == request.auth.uid;
+          && request.resource.data.createdBy == request.auth.uid
+          && !('facilitatorUids' in request.resource.data);
         allow update: if canAccessChild(familyId, childId)
-          && immutableOwnership(resource.data, request.resource.data);
+          && immutableOwnership(resource.data, request.resource.data)
+          && (isAdmin()
+            || request.resource.data.get('facilitatorUids', []) == resource.data.get('facilitatorUids', []));
         allow delete: if isAdmin() || isFamilyAdult(familyId);
 
         match /journeyProgress/{itemKey} {
@@ -251,7 +255,8 @@ service cloud.firestore {
         && request.resource.data.status == 'active'
         && request.resource.data.name != null
         && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 100;
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.get('managedBy', 'facilitator') != 'admin';
 
       // Read: Owner or admin or school admin (if schoolId matches)
       // Facilitators can only see their own cohorts
@@ -262,12 +267,59 @@ service cloud.firestore {
       // Update: Owner only, with immutability checks
       // Prevents: ownership change, timestamp modification
       // Allows: name, description, learnerIds, status, schoolId changes
+      // Admin-managed cohorts (managedBy == 'admin') define learner access, so their
+      // learnerIds and managedBy can only be changed by admins (via Admin SDK).
       allow update: if request.auth.uid == resource.data.facilitatorUid
         && request.resource.data.facilitatorUid == resource.data.facilitatorUid
-        && request.resource.data.createdAt == resource.data.createdAt;
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.get('managedBy', 'facilitator') == resource.data.get('managedBy', 'facilitator')
+        && (resource.data.get('managedBy', 'facilitator') != 'admin'
+          || request.resource.data.learnerIds == resource.data.learnerIds);
 
       // Delete: Prevent deletion (archive instead)
       // Cohort history must be preserved
+      allow delete: if false;
+    }
+
+    // ============================================================================
+    // ACADEMY CLASSES (TATI Academy class scheduling)
+    // ============================================================================
+    // A scheduled class belongs to one cohort owned by the facilitator who created it.
+    // Ownership, cohort, activity and schedule time are immutable after creation;
+    // only status (scheduled <-> cancelled) and updatedAt may change. Classes are
+    // never deleted, so cancelled classes remain in the record.
+    // ============================================================================
+
+    match /academyClasses/{classId} {
+      allow create: if signedIn() && hasRole('facilitator')
+        && request.resource.data.facilitatorUid == request.auth.uid
+        && request.resource.data.status == 'scheduled'
+        && request.resource.data.cohortId is string
+        && request.resource.data.activityId is string
+        && request.resource.data.scheduledAt is timestamp
+        && request.resource.data.durationMinutes is int
+        && request.resource.data.durationMinutes > 0
+        && request.resource.data.durationMinutes <= 480
+        && request.resource.data.deliveryMode in ['in-person', 'virtual']
+        && request.resource.data.location is string
+        && request.resource.data.location.size() > 0
+        && request.resource.data.location.size() <= 200
+        && get(/databases/$(database)/documents/academyCohorts/$(request.resource.data.cohortId)).data.facilitatorUid == request.auth.uid;
+
+      allow read: if request.auth.uid == resource.data.facilitatorUid || isAdmin();
+
+      allow update: if request.auth.uid == resource.data.facilitatorUid
+        && request.resource.data.facilitatorUid == resource.data.facilitatorUid
+        && request.resource.data.cohortId == resource.data.cohortId
+        && request.resource.data.activityId == resource.data.activityId
+        && request.resource.data.scheduledAt == resource.data.scheduledAt
+        && request.resource.data.durationMinutes == resource.data.durationMinutes
+        && request.resource.data.deliveryMode == resource.data.deliveryMode
+        && request.resource.data.location == resource.data.location
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in ['scheduled', 'cancelled']
+        && request.resource.data.updatedAt is timestamp;
+
       allow delete: if false;
     }
 

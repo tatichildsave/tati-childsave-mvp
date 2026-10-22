@@ -351,6 +351,26 @@ function AcademyLearnerDetail() {
                 </p>
               </div>
             )}
+
+            {supportSignal === "inactive" && (
+              <div className="rounded-lg bg-surface p-3 space-y-2">
+                <p className="text-sm font-medium text-foreground">Low activity</p>
+                <p className="text-sm text-muted-foreground">
+                  No learning activity has been recorded for over a week. A friendly check-in may help
+                  them pick up where they left off.
+                </p>
+              </div>
+            )}
+
+            {supportSignal === "unknown" && (
+              <div className="rounded-lg bg-surface p-3 space-y-2">
+                <p className="text-sm font-medium text-foreground">Activity not recorded</p>
+                <p className="text-sm text-muted-foreground">
+                  This learner has made progress, but their recent activity dates aren't available, so no
+                  support status is shown.
+                </p>
+              </div>
+            )}
           </div>
         </Card>
       </div>
