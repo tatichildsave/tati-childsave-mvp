@@ -21,7 +21,6 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   Timestamp,
   serverTimestamp,
   type Firestore,
@@ -201,15 +200,18 @@ export async function getFacilitatorCohorts(facilitatorUid: string): Promise<Aca
   const db = getFirebaseFirestore();
   if (!db) throw new Error("Firestore not initialized");
 
+  // Equality-only filter (no composite index required); newest first sorted in memory.
   const cohortsSnap = await getDocs(
-    query(
-      collection(db, "academyCohorts"),
-      where("facilitatorUid", "==", facilitatorUid),
-      orderBy("createdAt", "desc"),
-    ),
+    query(collection(db, "academyCohorts"), where("facilitatorUid", "==", facilitatorUid)),
   );
 
-  return cohortsSnap.docs.map((doc) => doc.data() as AcademyCohort);
+  const millis = (c: AcademyCohort) =>
+    typeof (c.createdAt as unknown as { toMillis?: () => number })?.toMillis === "function"
+      ? c.createdAt.toMillis()
+      : 0;
+  return cohortsSnap.docs
+    .map((d) => ({ ...(d.data() as AcademyCohort), id: d.id }))
+    .sort((a, b) => millis(b) - millis(a));
 }
 
 /**

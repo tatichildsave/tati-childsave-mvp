@@ -14,8 +14,18 @@ import {
   useArchiveAcademyCohort,
 } from "@/lib/academy";
 import type { AcademyCohort, AssignedChild } from "@/lib/academy/data-access";
+import { needsAttention } from "@/lib/academy/learner-progress";
+
+interface CohortsSearch {
+  view?: "learners" | "cohorts" | undefined;
+  cohortId?: string | undefined;
+}
 
 export const Route = createFileRoute("/academy/cohorts")({
+  validateSearch: (search: Record<string, unknown>): CohortsSearch => ({
+    view: search["view"] === "cohorts" || search["view"] === "learners" ? search["view"] : undefined,
+    cohortId: typeof search["cohortId"] === "string" ? search["cohortId"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "My Cohorts — TATI Academy" },
@@ -37,9 +47,10 @@ type ModalMode = "create" | "edit" | null;
 
 function AcademyCohorts() {
   const navigate = useNavigate();
-  const [view, setView] = useState<View>("implicit");
+  const search = Route.useSearch();
+  const [view, setView] = useState<View>(search.view === "cohorts" || search.cohortId ? "formal" : "implicit");
   const [filterSignal, setFilterSignal] = useState<
-    "all" | "on-track" | "needs-support" | "not-started"
+    "all" | "on-track" | "needs-support" | "inactive" | "not-started"
   >("all");
   const [selectedCohort, setSelectedCohort] = useState<AcademyCohort | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
@@ -68,6 +79,18 @@ function AcademyCohorts() {
   const createCohort = useCreateAcademyCohort();
   const updateCohort = useUpdateAcademyCohort();
   const archiveCohort = useArchiveAcademyCohort();
+
+  // Deep link: /academy/cohorts?cohortId=… opens that cohort once cohorts have loaded.
+  const [openedFromLink, setOpenedFromLink] = useState(false);
+  useEffect(() => {
+    if (openedFromLink || !search.cohortId || cohorts.length === 0) return;
+    const match = cohorts.find((c) => c.id === search.cohortId);
+    if (match) {
+      setView("formal");
+      setSelectedCohort(match);
+    }
+    setOpenedFromLink(true);
+  }, [openedFromLink, search.cohortId, cohorts]);
 
   useEffect(() => {
     if (!sessionLoading && !session?.isFacilitator) {
@@ -172,7 +195,7 @@ function AcademyCohorts() {
 
   const totalLearners = learners.length;
   const onTrackCount = learners.filter((l) => l.supportSignal === "on-track").length;
-  const needsSupportCount = learners.filter((l) => l.supportSignal === "needs-support").length;
+  const needsSupportCount = learners.filter((l) => needsAttention(l.supportSignal)).length;
   const notStartedCount = learners.filter((l) => l.supportSignal === "not-started").length;
 
   const totalCompleted = learners.reduce((sum, l) => sum + l.journeyProgress.completed, 0);
@@ -184,7 +207,7 @@ function AcademyCohorts() {
     return l.supportSignal === filterSignal;
   });
 
-  const needsSupportLearners = learners.filter((l) => l.supportSignal === "needs-support");
+  const needsSupportLearners = learners.filter((l) => needsAttention(l.supportSignal));
   const everyoneOnTrack = totalLearners > 0 && needsSupportCount === 0;
 
   const selectedCohortLearners =
@@ -358,6 +381,7 @@ function AcademyCohorts() {
                         { label: "All learners", value: "all" },
                         { label: "On track", value: "on-track" },
                         { label: "May need support", value: "needs-support" },
+                        { label: "Low activity", value: "inactive" },
                         { label: "Not started", value: "not-started" },
                       ] as const
                     ).map((filter) => (

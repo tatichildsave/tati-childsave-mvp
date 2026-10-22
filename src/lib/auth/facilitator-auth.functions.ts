@@ -1,6 +1,10 @@
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseFirestore } from "@/integrations/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
+import {
+  clearParentSessionFn,
+  createParentSessionFn,
+} from "@/lib/backend/firebase/family.functions";
 
 export interface FacilitatorSession {
   uid: string;
@@ -10,35 +14,40 @@ export interface FacilitatorSession {
 }
 
 /**
- * Check if the current user has facilitator role.
- * Checks the Firestore /users/{uid} document for facilitator role.
+ * Read the roles on /users/{uid}. Returns [] when the record is missing or unreadable.
  */
-export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
+export async function getUserRoles(userId: string): Promise<string[]> {
   try {
     const db = getFirebaseFirestore();
-    if (!db) return false;
-
-    const userDocRef = doc(db, "users", userId);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (!userDocSnap.exists()) return false;
-
-    const roles = userDocSnap.data()?.["roles"] as string[] | undefined;
-    return Array.isArray(roles) && roles.includes("facilitator");
+    if (!db) return [];
+    const snap = await getDoc(doc(db, "users", userId));
+    const roles = snap.exists() ? (snap.data()?.["roles"] as unknown) : undefined;
+    return Array.isArray(roles) ? roles.filter((r): r is string => typeof r === "string") : [];
   } catch (error) {
-    console.error("Error checking facilitator status:", error);
-    return false;
+    console.error("Error reading user roles:", error);
+    return [];
   }
 }
 
 /**
+ * Check if the current user has facilitator role.
+ * Checks the Firestore /users/{uid} document for facilitator role.
+ */
+export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
+  return (await getUserRoles(userId)).includes("facilitator");
+}
+
+/**
  * Get current facilitator session info if authenticated.
+ * Waits for Firebase Auth to restore a persisted login before deciding.
  * Returns null if not authenticated or not a facilitator.
  */
 export async function getFacilitatorSession(): Promise<FacilitatorSession | null> {
   try {
     const auth = getFirebaseAuth();
-    const user = auth?.currentUser;
+    if (!auth) return null;
+    await auth.authStateReady();
+    const user = auth.currentUser;
 
     if (!user) return null;
 
@@ -59,6 +68,8 @@ export async function getFacilitatorSession(): Promise<FacilitatorSession | null
 
 /**
  * Login facilitator with email and password.
+ * After the role check, creates the same HTTP-only server session cookie used by the
+ * admin and parent portals so facilitator server functions can verify the caller.
  */
 export async function loginFacilitator(
   email: string,
@@ -78,6 +89,16 @@ export async function loginFacilitator(
       return null;
     }
 
+    try {
+      const idToken = await userCredential.user.getIdToken();
+      await createParentSessionFn({ data: { idToken } });
+    } catch (error) {
+      // Without a server session, server-verified features (e.g. class scheduling) won't work.
+      console.error("Error creating facilitator server session:", error);
+      await signOut(auth);
+      return null;
+    }
+
     return {
       uid: userCredential.user.uid,
       email: userCredential.user.email ?? "",
@@ -91,9 +112,14 @@ export async function loginFacilitator(
 }
 
 /**
- * Logout current facilitator.
+ * Logout current facilitator: clears the server session cookie, then signs out of Firebase.
  */
 export async function logoutFacilitator(): Promise<void> {
+  try {
+    await clearParentSessionFn({ data: undefined });
+  } catch (error) {
+    console.error("Error clearing facilitator server session:", error);
+  }
   const auth = getFirebaseAuth();
   if (auth) {
     await signOut(auth);

@@ -11,7 +11,19 @@
 import { collection, getDocs, getDoc, query, doc, where, type Firestore } from "firebase/firestore";
 import type { ProgressEvent } from "@/lib/learning/progress";
 import { getFirebaseFirestore } from "@/integrations/firebase/client";
+import { getTrack, itemTitle } from "@/lib/learning/track";
 import type { AcademyCohort } from "./cohort-data";
+import {
+  computeChildProgressSummary,
+  needsAttention,
+  toValidDate,
+  type ChildProgressSummary,
+  type FirestoreProgressEvent,
+  type SupportSignal,
+} from "./learner-progress";
+
+export { computeChildProgressSummary, toValidDate };
+export type { ChildProgressSummary, FirestoreProgressEvent, SupportSignal };
 
 // Types for Academy data views
 
@@ -30,20 +42,6 @@ export interface AssignedChild {
   tier: "junior";
   tatiId: string;
   facilitatorUids: string[];
-}
-
-export interface ChildProgressSummary {
-  childId: string;
-  childName: string;
-  avatar: string;
-  currentActivityType?: "lesson" | "scenario" | "assessment" | "reflection";
-  currentActivityName?: string;
-  journeyProgress: {
-    completed: number;
-    total: number;
-  };
-  lastActivityAt?: Date;
-  supportSignal?: "on-track" | "not-started" | "needs-support";
 }
 
 export interface AcademyDashboardData {
@@ -87,14 +85,6 @@ export interface ActivityLogEntry {
   itemId: string;
 }
 
-export interface FirestoreProgressEvent {
-  id: string;
-  kind: string;
-  itemId: string;
-  status: string;
-  completedAt: Date | null;
-}
-
 export interface LearnerDetailView {
   child: AssignedChild;
   progress: ChildProgressSummary;
@@ -102,7 +92,7 @@ export interface LearnerDetailView {
   assessments: AssessmentRecord[];
   competencies: CompetencyRecord[];
   activityLog: ActivityLogEntry[];
-  supportSignal: "on-track" | "not-started" | "needs-support";
+  supportSignal: SupportSignal;
 }
 
 // Re-export AcademyCohort from cohort-data
@@ -116,52 +106,54 @@ async function _getAssignedChildrenViaIndex(facilitatorUid: string): Promise<Ass
   const db = getFirebaseFirestore();
   if (!db) throw new Error("Firestore not initialized");
 
-  const results: AssignedChild[] = [];
   const assignmentsSnap = await getDocs(
     query(collection(db, "facilitatorAssignments"), where("facilitatorUid", "==", facilitatorUid)),
   );
 
-  for (const assignmentDoc of assignmentsSnap.docs) {
-    const assignment = assignmentDoc.data();
-    const familyId = assignment["familyId"] as string;
-    const childId = assignment["childId"] as string;
+  const loaded = await Promise.all(
+    assignmentsSnap.docs.map(async (assignmentDoc): Promise<AssignedChild | null> => {
+      const assignment = assignmentDoc.data();
+      const familyId = assignment["familyId"] as string;
+      const childId = assignment["childId"] as string;
 
-    try {
-      const childRef = doc(db, "families", familyId, "children", childId);
-      const childSnap = await getDoc(childRef);
+      try {
+        const childSnap = await getDoc(doc(db, "families", familyId, "children", childId));
+        if (!childSnap.exists()) {
+          console.warn(`Child ${childId} in family ${familyId} not found`);
+          return null;
+        }
 
-      if (!childSnap.exists()) {
-        console.warn(`Child ${childId} in family ${familyId} not found`);
-        continue;
+        const child = childSnap.data();
+        const facilitatorUids = child["facilitatorUids"] as string[] | undefined;
+
+        // Defence in depth: the child record must also name this facilitator.
+        if (!facilitatorUids?.includes(facilitatorUid)) {
+          console.warn(`Facilitator ${facilitatorUid} not authorized for child ${childId} in family ${familyId}`);
+          return null;
+        }
+
+        return {
+          id: childId,
+          familyId,
+          name: (child["name"] as string) ?? "Learner",
+          avatar: (child["avatar"] as string) ?? "",
+          age: child["age"] as number,
+          tier: "junior" as const,
+          // Parent-portal field name, with the legacy admin-provisioning field as fallback.
+          tatiId: ((child["tati_id"] as string | undefined) ?? (child["tatiId"] as string | undefined)) ?? "",
+          facilitatorUids,
+        };
+      } catch (error) {
+        console.error(`Failed to fetch child ${childId} in family ${familyId}:`, error);
+        return null;
       }
+    }),
+  );
 
-      const child = childSnap.data();
-      const facilitatorUids = child["facilitatorUids"] as string[] | undefined;
-
-      if (!facilitatorUids?.includes(facilitatorUid)) {
-        console.warn(
-          `Facilitator ${facilitatorUid} not authorized for child ${childId} in family ${familyId}`,
-        );
-        continue;
-      }
-
-      results.push({
-        id: childId,
-        familyId: familyId,
-        name: child["name"] as string,
-        avatar: child["avatar"] as string,
-        age: child["age"] as number,
-        tier: "junior" as const,
-        tatiId: child["tati_id"] as string,
-        facilitatorUids: facilitatorUids,
-      });
-    } catch (error) {
-      console.error(`Failed to fetch child ${childId} in family ${familyId}:`, error);
-      continue;
-    }
-  }
-
-  return results;
+  // One learner may appear in several assignments (e.g. several cohorts); keep one entry.
+  const unique = new Map<string, AssignedChild>();
+  for (const child of loaded) if (child && !unique.has(child.id)) unique.set(child.id, child);
+  return [...unique.values()];
 }
 
 /**
@@ -220,15 +212,15 @@ export async function getChildJourneyProgress(
     collection(db, "families", familyId, "children", childId, "journeyProgress"),
   );
 
-  return progressSnap.docs.map((doc) => {
-    const data = doc.data();
-    const completedAt = data["updatedAt"];
+  return progressSnap.docs.map((d) => {
+    const data = d.data();
     return {
-      id: data["id"] as string,
+      id: (data["id"] as string) ?? d.id,
       kind: data["item_type"] as string,
       itemId: data["item_id"] as string,
       status: data["status"] as string,
-      completedAt: completedAt ? new Date(completedAt as unknown as string) : null,
+      // Firestore Timestamps must be converted with toDate(); new Date(timestamp) is invalid.
+      completedAt: toValidDate(data["updatedAt"]) ?? toValidDate(data["createdAt"]),
     };
   });
 }
@@ -280,14 +272,13 @@ async function getChildAssessments(familyId: string, childId: string): Promise<A
 
   return assessmentsSnap.docs.map((doc) => {
     const data = doc.data();
-    const completedAt = data["completedAt"];
     return {
       id: data["id"] as string,
       phase: data["phase"] as "pre" | "post",
       title: data["title"] as string,
       score: (data["score"] as number | null) || null,
       maxScore: (data["maxScore"] as number | null) || null,
-      completedAt: completedAt ? new Date(completedAt as unknown as string) : null,
+      completedAt: toValidDate(data["completedAt"]),
       details: (data["details"] as Record<string, unknown>) || null,
     };
   });
@@ -314,123 +305,13 @@ async function getChildScenarioSessions(
 
   return scenariosSnap.docs.map((doc) => {
     const data = doc.data();
-    const completedAt = data["completedAt"];
     return {
       id: data["id"] as string,
       title: data["title"] as string,
       status: data["status"] as string,
-      completedAt: completedAt ? new Date(completedAt as unknown as string) : null,
+      completedAt: toValidDate(data["completedAt"]),
     };
   });
-}
-
-/**
- * Derive a support signal for a child based on progress data.
- *
- * **Neutral, Non-Stigmatizing Language**:
- * This function derives facilitator-visible support indicators from objective progress data.
- * It does NOT rank, score, or judge learners. It helps facilitators identify who may benefit
- * from additional support.
- *
- * **Deterministic Rules** (Exactly documented for H3.2.2):
- *
- * 1. **"not-started"**: Child has completed 0 journey items
- *    - Condition: completed == 0
- *
- * 2. **"on-track"**: Child is making progress or recently active
- *    - Condition: (completionPercent >= 30%) OR (lastActivityAt within 2 days)
- *    - Interpretation: Child is engaged with the journey
- *
- * 3. **"needs-support"**: Child started but seems stuck
- *    - Condition: (completionPercent < 30%) AND (lastActivityAt > 2 days old)
- *    - Interpretation: Child may benefit from facilitator check-in
- *    - Neutral phrasing: "May need support" (not "struggling" or "at risk")
- *
- * **No Hidden Scoring**:
- * - Does NOT compute risk scores
- * - Does NOT rank learners
- * - Does NOT consider competency data (only progress completion)
- * - Does NOT predict outcomes
- *
- * **Data Used**:
- * - completed item count (from journeyProgress)
- * - last activity timestamp (from journeyProgress.updatedAt)
- * - totalActivities constant (default 14 for SAVE track)
- *
- * @param progressEvents - Array of journey progress records (Firestore events)
- * @param lastActivityAt - Timestamp of most recent activity (or undefined)
- * @param totalActivities - Total activities in learner track (e.g., 14 for SAVE)
- * @returns "not-started" | "on-track" | "needs-support"
- */
-function deriveSupportSignal(
-  progressEvents: FirestoreProgressEvent[],
-  lastActivityAt?: Date,
-  totalActivities: number = 14,
-): "not-started" | "on-track" | "needs-support" {
-  const completed = progressEvents.filter((e) => e.status === "completed").length;
-  const completionPercent = (completed / totalActivities) * 100;
-
-  // Rule 1: Not started
-  if (completed === 0) {
-    return "not-started";
-  }
-
-  // Rule 2 & 3: On-track vs needs-support
-  if (completionPercent < 30) {
-    const now = new Date();
-    const daysSinceActivity = lastActivityAt
-      ? (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24)
-      : Infinity;
-
-    // If progress is < 30% AND last activity was > 2 days ago → needs-support
-    if (daysSinceActivity > 2) {
-      return "needs-support";
-    }
-  }
-
-  // Default: on-track (30%+ complete OR recent activity)
-  return "on-track";
-}
-
-/**
- * Compute progress summary for a child.
- * Aggregates journey progress data into a facilitator-friendly view.
- *
- * @param child - The child record
- * @param progressEvents - The child's progress events
- * @param totalActivities - Total activities in the track (default: 14)
- * @returns Progress summary
- */
-export function computeChildProgressSummary(
-  child: AssignedChild,
-  progressEvents: FirestoreProgressEvent[],
-  totalActivities: number = 14,
-): ChildProgressSummary {
-  const completedCount = progressEvents.filter((e) => e.status === "completed").length;
-  const lastEvent = progressEvents.sort((a, b) => {
-    const aTime = a.completedAt instanceof Date ? a.completedAt.getTime() : 0;
-    const bTime = b.completedAt instanceof Date ? b.completedAt.getTime() : 0;
-    return bTime - aTime;
-  })[0];
-  const lastActivityAt = lastEvent?.completedAt instanceof Date ? lastEvent.completedAt : undefined;
-
-  // Get current activity (last incomplete or in-progress)
-  const currentItem = progressEvents.find((e) => e.status !== "completed");
-
-  return {
-    childId: child.id,
-    childName: child.name,
-    avatar: child.avatar,
-    currentActivityType: (currentItem?.kind as string) || undefined,
-    currentActivityName: currentItem?.itemId,
-    journeyProgress: {
-      completed: completedCount,
-      total: totalActivities,
-    },
-    lastActivityAt,
-    supportSignal: deriveSupportSignal(progressEvents, lastActivityAt, totalActivities) as
-      "not-started" | "on-track" | "needs-support",
-  } as ChildProgressSummary;
 }
 
 /**
@@ -464,22 +345,28 @@ export async function getAssignedLearnerDetail(
   }
 
   // Load all data for this learner (all queries now authorized by Firestore rules)
-  const journeyProgress = await getChildJourneyProgress(child.familyId, childId);
-  const assessments = await getChildAssessments(child.familyId, childId);
-  const competencies = await getChildCompetencies(child.familyId, childId);
-  const scenarioSessions = await getChildScenarioSessions(child.familyId, childId);
+  const [journeyProgress, assessments, competencies, scenarioSessions] = await Promise.all([
+    getChildJourneyProgress(child.familyId, childId),
+    getChildAssessments(child.familyId, childId),
+    getChildCompetencies(child.familyId, childId),
+    getChildScenarioSessions(child.familyId, childId),
+  ]);
 
   // Compute progress summary
   const progress = computeChildProgressSummary(child, journeyProgress);
 
-  // Build activity log from journey progress and other data
-  const activityLog: ActivityLogEntry[] = journeyProgress.map((event) => ({
-    type: (event.kind as "lesson" | "scenario" | "assessment" | "reflection") || "lesson",
-    title: event.itemId,
-    status: (event.status as "completed" | "in-progress" | "not-started") || "in-progress",
-    completedAt: event.completedAt instanceof Date ? event.completedAt : null,
-    itemId: event.itemId,
-  }));
+  // Build activity log from journey progress and other data, using real activity titles
+  const track = getTrack("save");
+  const activityLog: ActivityLogEntry[] = journeyProgress.map((event) => {
+    const item = track.sequence.find((i) => i.id === event.itemId);
+    return {
+      type: (event.kind as "lesson" | "scenario" | "assessment" | "reflection") || "lesson",
+      title: item ? itemTitle(track, item) : event.itemId,
+      status: event.status === "completed" ? "completed" : "in-progress",
+      completedAt: event.completedAt,
+      itemId: event.itemId,
+    };
+  });
 
   // Add assessments to activity log
   for (const assessment of assessments) {
@@ -526,7 +413,7 @@ export async function getAssignedLearnerDetail(
       score: c.score,
     })),
     activityLog,
-    supportSignal: progress.supportSignal ?? "on-track",
+    supportSignal: progress.supportSignal,
   };
 }
 
@@ -542,21 +429,16 @@ export async function loadAcademyDashboard(
 ): Promise<AcademyDashboardData> {
   const children = await getAssignedChildren(facilitator.uid);
 
-  // Load progress for all children
-  const progressSummaries: ChildProgressSummary[] = [];
-  for (const child of children) {
-    const progress = await getChildJourneyProgress(child.familyId, child.id);
-    const summary = computeChildProgressSummary(child, progress);
-    progressSummaries.push(summary);
-  }
+  // Load progress for all children in parallel
+  const progressSummaries: ChildProgressSummary[] = await Promise.all(
+    children.map(async (child) =>
+      computeChildProgressSummary(child, await getChildJourneyProgress(child.familyId, child.id)),
+    ),
+  );
 
-  // Compute support signals
-  const learnersSupportSignal = {
-    total: progressSummaries.filter((s) => s.supportSignal === "needs-support").length,
-    needsSupport: progressSummaries.filter((s) => s.supportSignal === "needs-support"),
-  };
-
-  // TODO: In H3.3, load actual today's activity from cohort sessions table
+  // Learners needing attention: "needs-support" or "inactive" (see learner-progress.ts rules)
+  const needsSupport = progressSummaries.filter((s) => needsAttention(s.supportSignal));
+  const learnersSupportSignal = { total: needsSupport.length, needsSupport };
 
   return {
     facilitator,

@@ -24,6 +24,7 @@ import {
   getFamilyById,
   createParentAuthUser,
   createParentFirestoreRecord,
+  createFacilitatorFirestoreRecord,
   createFamilyRecord,
   addParentToFamily,
   updateCredentialPin,
@@ -32,7 +33,14 @@ import {
   getCredentialByTatiId,
 } from "./provisioning.server";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
-import { Timestamp, type DocumentReference, type WriteBatch } from "firebase-admin/firestore";
+import {
+  FieldValue,
+  Timestamp,
+  type DocumentReference,
+  type DocumentSnapshot,
+  type WriteBatch,
+} from "firebase-admin/firestore";
+import { assignmentId } from "@/lib/academy/assignment-id";
 import {
   generateTatiId,
   generateChildPin,
@@ -718,6 +726,448 @@ export const repairFamilyLinks = createServerFn({ method: "POST" })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to repair family links";
       console.error("[repairFamilyLinks] Error:", message);
+      throw error;
+    }
+  });
+
+// ============================================================================
+// FUNCTIONS 9–14: Facilitators — provisioning and cohort-based assignment (admin only)
+// ============================================================================
+// Access model: a facilitator can read a learner only when BOTH a facilitatorAssignments
+// document exists and the child's facilitatorUids contains the facilitator (Firestore rules).
+// Admins assign learners through cohorts; every change updates the cohort, the assignment
+// documents and the child's facilitatorUids in one transaction.
+
+export interface AdminFacilitatorSummary {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  status: string;
+  cohortCount: number;
+  learnerCount: number;
+  createdAt: string | null;
+}
+
+export interface AdminCohortLearner {
+  childId: string;
+  familyId: string;
+  name: string;
+  age: number | null;
+  avatar: string | null;
+  tatiId: string | null;
+}
+
+export interface AdminFacilitatorCohort {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  managedBy: string;
+  learners: AdminCohortLearner[];
+  /** Learner ids on the cohort whose child record could not be found. */
+  missingLearnerIds: string[];
+}
+
+export interface AdminFacilitatorDetail extends Omit<AdminFacilitatorSummary, "cohortCount"> {
+  cohorts: AdminFacilitatorCohort[];
+}
+
+export interface AdminLearnerOption extends AdminCohortLearner {
+  familyName: string | null;
+}
+
+function learnerFromDoc(doc: DocumentSnapshot): AdminCohortLearner | null {
+  if (!doc.exists) return null;
+  const d = doc.data() ?? {};
+  const familyId = str(d["familyId"]) ?? doc.ref.parent.parent?.id ?? null;
+  if (!familyId) return null;
+  return {
+    childId: doc.id,
+    familyId,
+    name: str(d["name"]) ?? "Unnamed learner",
+    age: typeof d["age"] === "number" ? d["age"] : null,
+    avatar: str(d["avatar"]),
+    tatiId: str(d["tati_id"]) ?? str(d["tatiId"]),
+  };
+}
+
+const provisionFacilitatorInput = z.object({
+  email: z.string().email("Invalid email address"),
+  displayName: z.string().trim().min(1, "Name required").max(100),
+  phone: z.string().max(40).optional(),
+});
+
+export const provisionFacilitator = createServerFn({ method: "POST" })
+  .validator(provisionFacilitatorInput)
+  .handler(async ({ data }) => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const validation = validateParentData(data.email, data.displayName);
+      if (!validation.valid) throw new Error(validation.error || "Invalid input");
+      if (await emailExists(data.email)) throw new Error("Email already in use");
+
+      const authUser = await createParentAuthUser(data.email, data.displayName);
+      await createFacilitatorFirestoreRecord(authUser.uid, data.email, data.displayName, data.phone, adminUid);
+
+      console.log(`[provisionFacilitator] Created facilitator ${authUser.uid} (admin ${adminUid})`);
+      return {
+        success: true,
+        facilitatorUid: authUser.uid,
+        email: authUser.email || data.email,
+        displayName: authUser.displayName || data.displayName,
+        message:
+          "Facilitator account created. Ask them to choose 'Forgot password' on the TATI Academy sign-in page to set their password.",
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create facilitator";
+      console.error("[provisionFacilitator] Error:", message);
+      throw error;
+    }
+  });
+
+export const listFacilitatorsAdmin = createServerFn({ method: "POST" })
+  .validator(z.void())
+  .handler(async (): Promise<AdminFacilitatorSummary[]> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+      const db = getFirebaseAdminDb();
+
+      const users = await db.collection("users").where("roles", "array-contains", "facilitator").get();
+      const rows = await Promise.all(
+        users.docs.map(async (u) => {
+          const d = u.data();
+          const [cohorts, assignments] = await Promise.all([
+            db.collection("academyCohorts").where("facilitatorUid", "==", u.id).where("status", "==", "active").count().get(),
+            db.collection("facilitatorAssignments").where("facilitatorUid", "==", u.id).count().get(),
+          ]);
+          return {
+            uid: u.id,
+            displayName: str(d["displayName"]),
+            email: str(d["email"]),
+            phone: str(d["phone"]),
+            status: str(d["status"]) ?? "active",
+            cohortCount: cohorts.data().count,
+            learnerCount: assignments.data().count,
+            createdAt: toIso(d["createdAt"]),
+          };
+        }),
+      );
+      return rows.sort((a, b) => (a.displayName ?? a.email ?? "").localeCompare(b.displayName ?? b.email ?? ""));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load facilitators";
+      console.error("[listFacilitatorsAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+export const getFacilitatorAdmin = createServerFn({ method: "POST" })
+  .validator(z.object({ facilitatorUid: z.string().min(1).max(200) }))
+  .handler(async ({ data }): Promise<AdminFacilitatorDetail | null> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+      const db = getFirebaseAdminDb();
+
+      const user = await db.collection("users").doc(data.facilitatorUid).get();
+      const u = user.data();
+      if (!user.exists || !u || !Array.isArray(u["roles"]) || !(u["roles"] as string[]).includes("facilitator")) {
+        return null;
+      }
+
+      const [cohortSnap, assignmentSnap] = await Promise.all([
+        db.collection("academyCohorts").where("facilitatorUid", "==", data.facilitatorUid).get(),
+        db.collection("facilitatorAssignments").where("facilitatorUid", "==", data.facilitatorUid).get(),
+      ]);
+
+      // Resolve learners via their assignments (familyId is stored there).
+      const familyByChild = new Map(
+        assignmentSnap.docs.map((a) => [a.data()["childId"] as string, a.data()["familyId"] as string]),
+      );
+
+      const cohorts = await Promise.all(
+        cohortSnap.docs.map(async (c): Promise<AdminFacilitatorCohort> => {
+          const cd = c.data();
+          const ids = Array.isArray(cd["learnerIds"]) ? (cd["learnerIds"] as string[]) : [];
+          const refs = ids
+            .filter((id) => familyByChild.has(id))
+            .map((id) => db.collection("families").doc(familyByChild.get(id)!).collection("children").doc(id));
+          const docs = refs.length ? await db.getAll(...refs) : [];
+          const learners = docs.map(learnerFromDoc).filter((l): l is AdminCohortLearner => !!l);
+          const found = new Set(learners.map((l) => l.childId));
+          return {
+            id: c.id,
+            name: str(cd["name"]) ?? "Unnamed cohort",
+            description: str(cd["description"]),
+            status: str(cd["status"]) ?? "active",
+            managedBy: str(cd["managedBy"]) ?? "facilitator",
+            learners: learners.sort((a, b) => a.name.localeCompare(b.name)),
+            missingLearnerIds: ids.filter((id) => !found.has(id)),
+          };
+        }),
+      );
+
+      return {
+        uid: user.id,
+        displayName: str(u["displayName"]),
+        email: str(u["email"]),
+        phone: str(u["phone"]),
+        status: str(u["status"]) ?? "active",
+        learnerCount: assignmentSnap.size,
+        createdAt: toIso(u["createdAt"]),
+        cohorts: cohorts.sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load facilitator";
+      console.error("[getFacilitatorAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+/** Every learner in an active family, for the admin cohort picker. Never returns credentials. */
+export const listLearnersAdmin = createServerFn({ method: "POST" })
+  .validator(z.void())
+  .handler(async (): Promise<AdminLearnerOption[]> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+      const db = getFirebaseAdminDb();
+
+      const [children, families] = await Promise.all([
+        db.collectionGroup("children").get(),
+        db.collection("families").get(),
+      ]);
+      const familyInfo = new Map(
+        families.docs.map((f) => [f.id, { name: str(f.data()["name"]), status: str(f.data()["status"]) ?? "active" }]),
+      );
+
+      return children.docs
+        .filter((c) => c.ref.parent.parent?.parent.id === "families")
+        .map((c) => {
+          const learner = learnerFromDoc(c);
+          if (!learner) return null;
+          const fam = familyInfo.get(learner.familyId);
+          if (!fam || fam.status !== "active") return null;
+          return { ...learner, familyName: fam.name };
+        })
+        .filter((l): l is AdminLearnerOption => !!l)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load learners";
+      console.error("[listLearnersAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+const cohortLearnerRef = z.object({
+  familyId: z.string().min(1).max(200),
+  childId: z.string().min(1).max(200),
+});
+
+const saveFacilitatorCohortInput = z.object({
+  facilitatorUid: z.string().min(1).max(200),
+  cohortId: z.string().min(1).max(200).optional(),
+  name: z.string().trim().min(1, "Cohort name required").max(100),
+  description: z.string().trim().max(500).optional(),
+  // Max 120 keeps the transaction within Firestore's 500-write limit (2 writes per added and removed learner).
+  learners: z.array(cohortLearnerRef).max(120, "A cohort can have up to 120 learners"),
+});
+
+/**
+ * Create or update an admin-managed cohort for a facilitator, atomically keeping
+ * facilitatorAssignments and each child's facilitatorUids in sync with cohort membership.
+ */
+async function saveCohortTransaction(params: {
+  adminUid: string;
+  facilitatorUid: string;
+  cohortId?: string | undefined;
+  name: string;
+  description: string | null;
+  learners: Array<{ familyId: string; childId: string }>;
+}): Promise<{ cohortId: string; added: number; removed: number }> {
+  const db = getFirebaseAdminDb();
+  const cohortRef = params.cohortId
+    ? db.collection("academyCohorts").doc(params.cohortId)
+    : db.collection("academyCohorts").doc();
+
+  return db.runTransaction(async (tx) => {
+    // ---- Reads (all before writes) ----
+    const facilitator = await tx.get(db.collection("users").doc(params.facilitatorUid));
+    const roles = facilitator.data()?.["roles"];
+    if (!facilitator.exists || !Array.isArray(roles) || !roles.includes("facilitator")) {
+      throw new Error("Facilitator not found");
+    }
+
+    const existing = params.cohortId ? await tx.get(cohortRef) : null;
+    if (params.cohortId) {
+      if (!existing?.exists) throw new Error("Cohort not found");
+      if (existing.data()?.["facilitatorUid"] !== params.facilitatorUid) {
+        throw new Error("Cohort belongs to a different facilitator");
+      }
+    }
+
+    const unique = new Map(params.learners.map((l) => [l.childId, l]));
+    const childDocs = unique.size
+      ? await tx.getAll(
+          ...[...unique.values()].map((l) =>
+            db.collection("families").doc(l.familyId).collection("children").doc(l.childId),
+          ),
+        )
+      : [];
+    for (const c of childDocs) {
+      if (!c.exists) throw new Error("One or more selected learners could not be found");
+    }
+
+    const otherCohorts = await tx.get(
+      db.collection("academyCohorts").where("facilitatorUid", "==", params.facilitatorUid),
+    );
+    const assignments = await tx.get(
+      db.collection("facilitatorAssignments").where("facilitatorUid", "==", params.facilitatorUid),
+    );
+
+    const previous = new Set<string>(
+      existing?.exists && Array.isArray(existing.data()?.["learnerIds"]) ? (existing.data()!["learnerIds"] as string[]) : [],
+    );
+    const next = new Set(unique.keys());
+    const stillCoveredElsewhere = new Set<string>();
+    for (const c of otherCohorts.docs) {
+      // Only other active admin-managed cohorts grant (and therefore retain) access.
+      if (c.id === cohortRef.id || c.data()["status"] !== "active" || c.data()["managedBy"] !== "admin") continue;
+      for (const id of (c.data()["learnerIds"] as string[] | undefined) ?? []) stillCoveredElsewhere.add(id);
+    }
+    const assignmentsByChild = new Map<string, DocumentReference[]>();
+    for (const a of assignments.docs) {
+      const childId = a.data()["childId"] as string;
+      assignmentsByChild.set(childId, [...(assignmentsByChild.get(childId) ?? []), a.ref]);
+    }
+
+    // Removed learners lose access only when no other active cohort of this facilitator includes them.
+    const revoke = [...previous].filter((id) => !next.has(id) && !stillCoveredElsewhere.has(id));
+    const revokeFamily = new Map(
+      assignments.docs.map((a) => [a.data()["childId"] as string, a.data()["familyId"] as string]),
+    );
+
+    // ---- Writes ----
+    const now = Timestamp.now();
+    for (const l of unique.values()) {
+      tx.set(
+        db.collection("facilitatorAssignments").doc(assignmentId(params.facilitatorUid, l.childId)),
+        {
+          facilitatorUid: params.facilitatorUid,
+          familyId: l.familyId,
+          childId: l.childId,
+          assignedBy: params.adminUid,
+          updatedAt: now,
+          ...(assignmentsByChild.has(l.childId) ? {} : { createdAt: now }),
+        },
+        { merge: true },
+      );
+      tx.update(db.collection("families").doc(l.familyId).collection("children").doc(l.childId), {
+        facilitatorUids: FieldValue.arrayUnion(params.facilitatorUid),
+      });
+    }
+
+    for (const childId of revoke) {
+      for (const ref of assignmentsByChild.get(childId) ?? []) tx.delete(ref);
+      const familyId = revokeFamily.get(childId);
+      if (familyId) {
+        tx.update(db.collection("families").doc(familyId).collection("children").doc(childId), {
+          facilitatorUids: FieldValue.arrayRemove(params.facilitatorUid),
+        });
+      }
+    }
+
+    tx.set(
+      cohortRef,
+      {
+        id: cohortRef.id,
+        facilitatorUid: params.facilitatorUid,
+        name: params.name,
+        description: params.description,
+        learnerIds: [...next],
+        status: "active",
+        managedBy: "admin",
+        updatedAt: now,
+        updatedBy: params.adminUid,
+        ...(existing?.exists ? {} : { createdAt: now, createdBy: params.adminUid }),
+      },
+      { merge: true },
+    );
+
+    const added = [...next].filter((id) => !previous.has(id)).length;
+    return { cohortId: cohortRef.id, added, removed: revoke.length };
+  });
+}
+
+export const saveFacilitatorCohort = createServerFn({ method: "POST" })
+  .validator(saveFacilitatorCohortInput)
+  .handler(async ({ data }) => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+      const result = await saveCohortTransaction({
+        adminUid,
+        facilitatorUid: data.facilitatorUid,
+        cohortId: data.cohortId,
+        name: data.name,
+        description: data.description?.trim() || null,
+        learners: data.learners,
+      });
+      console.log(
+        `[saveFacilitatorCohort] Cohort ${result.cohortId} for ${data.facilitatorUid}: +${result.added} / -${result.removed} (admin ${adminUid})`,
+      );
+      return { success: true, ...result };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save cohort";
+      console.error("[saveFacilitatorCohort] Error:", message);
+      throw error;
+    }
+  });
+
+export const removeLearnerFromFacilitatorCohort = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      facilitatorUid: z.string().min(1).max(200),
+      cohortId: z.string().min(1).max(200),
+      childId: z.string().min(1).max(200),
+    }),
+  )
+  .handler(async ({ data }) => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+      const db = getFirebaseAdminDb();
+
+      const cohort = await db.collection("academyCohorts").doc(data.cohortId).get();
+      const cd = cohort.data();
+      if (!cohort.exists || !cd || cd["facilitatorUid"] !== data.facilitatorUid) throw new Error("Cohort not found");
+
+      const assignments = await db
+        .collection("facilitatorAssignments")
+        .where("facilitatorUid", "==", data.facilitatorUid)
+        .get();
+      const familyByChild = new Map(
+        assignments.docs.map((a) => [a.data()["childId"] as string, a.data()["familyId"] as string]),
+      );
+      const remaining = ((cd["learnerIds"] as string[] | undefined) ?? [])
+        .filter((id) => id !== data.childId && familyByChild.has(id))
+        .map((id) => ({ childId: id, familyId: familyByChild.get(id)! }));
+
+      const result = await saveCohortTransaction({
+        adminUid,
+        facilitatorUid: data.facilitatorUid,
+        cohortId: data.cohortId,
+        name: str(cd["name"]) ?? "Cohort",
+        description: str(cd["description"]),
+        learners: remaining,
+      });
+      return { success: true, ...result };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to remove learner";
+      console.error("[removeLearnerFromFacilitatorCohort] Error:", message);
       throw error;
     }
   });

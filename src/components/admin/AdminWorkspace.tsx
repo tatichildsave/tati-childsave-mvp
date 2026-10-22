@@ -16,7 +16,7 @@ import { getFirebaseAuth } from "@/integrations/firebase/client";
 import { clearParentSessionFn } from "@/lib/backend/firebase/family.functions";
 import { WorkspaceShell, type WorkspaceNavItem } from "@/components/parent/ParentShell";
 
-export type AdminSection = "dashboard" | "families";
+export type AdminSection = "dashboard" | "families" | "facilitators";
 
 function initialsOf(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -59,7 +59,7 @@ export function AdminWorkspace({
     { label: "Dashboard", icon: Home, to: "/admin/dashboard-v2", active: active === "dashboard" },
     { label: "Families", icon: Users, to: "/admin/families", active: active === "families" },
     { label: "Learners", icon: BookOpen },
-    { label: "Facilitators", icon: UserCheck },
+    { label: "Facilitators", icon: UserCheck, to: "/admin/facilitators", active: active === "facilitators" },
     { label: "Programmes", icon: Layers },
     { label: "Sessions", icon: Calendar },
     { label: "Reports", icon: BarChart3 },
