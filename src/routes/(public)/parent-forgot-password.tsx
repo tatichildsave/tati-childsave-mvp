@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { requestPasswordResetFn } from "../../lib/backend/password-reset.functions";
+import { requestPasswordReset } from "../../lib/auth/password-reset-client";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
@@ -22,21 +21,17 @@ function ParentForgotPasswordPage() {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const requestReset = useServerFn(requestPasswordResetFn);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const result = await requestReset({ email, role: "parent" });
+      const sentMessage = await requestPasswordReset(email, "/parent-reset-password");
 
-      setMessage(result.message);
-      if (result.success) {
-        setSubmitted(true);
-        setEmail("");
-      }
+      setMessage(sentMessage);
+      setSubmitted(true);
+      setEmail("");
     } catch (error) {
       setMessage(
         error instanceof Error
