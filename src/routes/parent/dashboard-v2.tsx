@@ -1,13 +1,14 @@
 /**
- * Parent Dashboard V2 — approved premium design (stage 1).
+ * Parent Dashboard V2 — approved premium design.
  *
- * Stage 1: sidebar, top navigation, welcome hero and My Children.
+ * Sidebar, top navigation, welcome hero, My Children, learning journey, achievements,
+ * SAVE journey, next class, parent tips, quick links and quote.
  * Data is read only through the existing parent-scoped server functions
  * (getFamilyChildren / getChildJourneyProgress). Parents cannot create or
  * modify children from this page.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "firebase/auth";
@@ -22,11 +23,21 @@ import {
   Users,
 } from "lucide-react";
 import { getFirebaseAuth } from "@/integrations/firebase/client";
-import { useChildProfiles, useSession } from "@/lib/family";
+import { useChildProfiles, useSession, type ChildProfile } from "@/lib/family";
+import { useChildProgress, type ChildProgressResult } from "@/lib/progress/service";
 import { clearParentSessionFn } from "@/lib/backend/firebase/family.functions";
 import { ParentShell, type ParentNavItem } from "@/components/parent/ParentShell";
 import { ParentHero } from "@/components/parent/ParentHero";
 import { MyChildrenCard } from "@/components/parent/MyChildrenCard";
+import {
+  AchievementsCard,
+  LearningJourneyCard,
+  NextClassCard,
+  ParentTipsCard,
+  QuickLinksCard,
+  QuoteCard,
+  SaveJourneyCard,
+} from "@/components/parent/DashboardSections";
 
 export const Route = createFileRoute("/parent/dashboard-v2")({
   head: () => ({
@@ -82,23 +93,31 @@ function ParentDashboardV2() {
     navigate({ to: "/login", replace: true });
   }
 
+  const hasChild = !!selectedId;
   const navItems: ParentNavItem[] = [
     { label: "Home", icon: Home, to: "/parent/dashboard-v2", active: true },
     { label: "My Children", icon: Users, hash: "my-children" },
-    selectedId
-      ? {
-          label: "Learning Journey",
-          icon: GraduationCap,
-          to: "/parent/child/$childId",
-          params: { childId: selectedId },
-        }
+    hasChild
+      ? { label: "Learning Journey", icon: GraduationCap, hash: "learning-journey" }
       : { label: "Learning Journey", icon: GraduationCap },
-    { label: "Achievements", icon: Trophy },
-    { label: "SAVE Journey", icon: BarChart3 },
-    { label: "Academy", icon: CalendarDays },
-    { label: "Parent Tips", icon: Lightbulb },
+    hasChild ? { label: "Achievements", icon: Trophy, hash: "achievements" } : { label: "Achievements", icon: Trophy },
+    { label: "SAVE Journey", icon: BarChart3, hash: "save-journey" },
+    { label: "Academy", icon: CalendarDays, hash: "next-class" },
+    { label: "Parent Tips", icon: Lightbulb, hash: "parent-tips" },
     { label: "Support", icon: Headphones },
   ];
+
+  const selectedChild = children?.find((c) => c.id === selectedId) ?? null;
+  const myChildren = (
+    <MyChildrenCard
+      profiles={children}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={() => void refetch()}
+      selectedId={selectedId}
+      onSelect={setSelectedId}
+    />
+  );
 
   return (
     <ParentShell
@@ -113,15 +132,56 @@ function ParentDashboardV2() {
     >
       <div className="mx-auto w-full max-w-[1600px] space-y-3 sm:space-y-4">
         <ParentHero firstName={firstName} />
-        <MyChildrenCard
-          profiles={children}
-          isLoading={isLoading}
-          isError={isError}
-          onRetry={() => void refetch()}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-        />
+        {selectedChild ? (
+          <ChildDashboard child={selectedChild} myChildren={myChildren} />
+        ) : (
+          <DashboardLayout child={null} progress={null} myChildren={myChildren} />
+        )}
       </div>
     </ParentShell>
+  );
+}
+
+function ChildDashboard({ child, myChildren }: { child: ChildProfile; myChildren: ReactNode }) {
+  const progress = useChildProgress(child.id);
+  return <DashboardLayout child={child} progress={progress} myChildren={myChildren} />;
+}
+
+/**
+ * Reference layout: a main column with a 360px side column from 1360px wide,
+ * then a three-up row (tips, quick links, quote). Stacks on smaller screens.
+ */
+function DashboardLayout({
+  child,
+  progress,
+  myChildren,
+}: {
+  child: ChildProfile | null;
+  progress: ChildProgressResult | null;
+  myChildren: ReactNode;
+}) {
+  return (
+    <>
+      <div className="grid gap-3 sm:gap-4 min-[1360px]:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-3 sm:space-y-4">
+          {myChildren}
+          {child && progress ? (
+            <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+              <LearningJourneyCard key={child.id} child={child} progress={progress} />
+              <AchievementsCard key={`badges-${child.id}`} child={child} progress={progress} />
+            </div>
+          ) : null}
+        </div>
+        <div className="grid min-w-0 content-start gap-3 sm:gap-4 md:grid-cols-2 min-[1360px]:grid-cols-1">
+          <NextClassCard />
+          <SaveJourneyCard child={child} progress={progress} />
+        </div>
+      </div>
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2 min-[1360px]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,0.72fr)]">
+        <ParentTipsCard key={child?.id ?? "none"} child={child} progress={progress} />
+        <QuickLinksCard child={child} />
+        <QuoteCard className="lg:col-span-2 min-[1360px]:col-span-1" />
+      </div>
+    </>
   );
 }
