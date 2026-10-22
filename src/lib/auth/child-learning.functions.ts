@@ -12,13 +12,26 @@ import type { AuthenticatedChildContext } from "./types";
 
 const COOKIE_NAME = "tati_child_session";
 
-const progressInput = z.object({
-  itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
-  itemId: z.string().min(1).max(128),
-  score: z.number().int().min(0).nullable().optional(),
-  maxScore: z.number().int().min(0).nullable().optional(),
-  details: z.record(z.string(), z.unknown()).optional(),
-});
+const MAX_PROGRESS_DETAILS_BYTES = 4096;
+const MAX_ASSESSMENT_RESPONSES = 200;
+const MAX_ASSESSMENT_RESPONSE_CHARS = 2000;
+
+export const progressInput = z
+  .object({
+    itemType: z.enum(["assessment", "lesson", "scenario", "reflection"]),
+    itemId: z.string().min(1).max(128),
+    score: z.number().int().min(0).max(100_000).nullable().optional(),
+    maxScore: z.number().int().min(0).max(100_000).nullable().optional(),
+    details: z.record(z.string().max(128), z.unknown()).optional(),
+  })
+  .refine(
+    (d) => d.score == null || d.maxScore == null || d.score <= d.maxScore,
+    { message: "Score cannot exceed the maximum score.", path: ["score"] },
+  )
+  .refine(
+    (d) => d.details === undefined || JSON.stringify(d.details).length <= MAX_PROGRESS_DETAILS_BYTES,
+    { message: "Progress details are too large.", path: ["details"] },
+  );
 
 export type ScenarioStateInput = ScenarioState & { expectedVersion: number };
 
@@ -81,12 +94,20 @@ const scenarioStateInput: z.ZodType<ScenarioStateInput> = z.object({
   expectedVersion: z.number().int().min(0),
 });
 
-const assessmentInput = z.object({
+export const assessmentInput = z.object({
   assessmentId: z.string().min(1).max(128),
-  responses: z.record(z.string(), z.string()),
-  points: z.number().int().min(0),
-  maxPoints: z.number().int().min(0),
-  competencyScores: z.record(z.string(), z.unknown()),
+  responses: z
+    .record(z.string().max(128), z.string().max(MAX_ASSESSMENT_RESPONSE_CHARS))
+    .refine((r) => Object.keys(r).length <= MAX_ASSESSMENT_RESPONSES, {
+      message: "Too many assessment responses.",
+    }),
+  points: z.number().int().min(0).max(100_000),
+  maxPoints: z.number().int().min(0).max(100_000),
+  competencyScores: z
+    .record(z.string().max(128), z.unknown())
+    .refine((r) => JSON.stringify(r).length <= MAX_PROGRESS_DETAILS_BYTES, {
+      message: "Competency scores are too large.",
+    }),
   expectedVersion: z.number().int().min(0).default(0),
 });
 
@@ -206,7 +227,10 @@ async function loadChildLearningDataFromFirebase(
       assessments: [], // H4.C will handle assessments
     };
   } catch (error) {
-    console.error("[H4.B] Failed to load child learning data from Firebase:", error);
+    console.error(
+      "[H4.B] Failed to load child learning data from Firebase:",
+      error instanceof Error ? error.name : "unknown error",
+    );
     throw new Error("Learning data unavailable.");
   }
 }
@@ -561,22 +585,14 @@ function compareScenarioCheckpoint(
 }
 
 export const getChildLearningData = createServerFn({ method: "GET" }).handler(async () => {
-  console.log("[H4.B] getChildLearningData: Starting");
-
   // Get authenticated child context (includes childId and familyId)
   const context = await getCurrentChildContext();
-  const childId = context.childId;
-  const familyId = context.familyId;
-
-  console.log(`[H4.B] getChildLearningData: childId=${childId}, familyId=${familyId}`);
 
   // Load profile and learning data in parallel
   const [profile, learningData] = await Promise.all([
     loadProfile(context),
     loadChildLearningDataFromFirebase(context),
   ]);
-
-  console.log(`[H4.B] getChildLearningData: Loaded profile and learning data`);
 
   return {
     profile,
@@ -605,8 +621,6 @@ export const assertChildActivity = createServerFn({ method: "GET" })
 export const recordChildProgress = createServerFn({ method: "POST" })
   .validator(progressInput)
   .handler(async ({ data }) => {
-    console.log(`[H4.B] recordChildProgress: ${data.itemType}/${data.itemId}`);
-
     // Get authenticated child context
     const context = await getCurrentChildContext();
     const childId = context.childId;
@@ -633,11 +647,10 @@ export const recordChildProgress = createServerFn({ method: "POST" })
         details: data.details,
       });
 
-      console.log(`[H4.B] recordChildProgress: Successfully recorded`);
       return { ok: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error("[H4.B] recordChildProgress error:", message);
+      console.error("[H4.B] recordChildProgress error:", error instanceof Error ? error.name : "unknown error");
       throw new Error(`Failed to record progress: ${message}`);
     }
   });
@@ -687,7 +700,7 @@ export const saveChildAssessment = createServerFn({ method: "POST" })
       return { ok: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error("[saveChildAssessment] Firebase persistence error:", message);
+      console.error("[saveChildAssessment] Firebase persistence error:", error instanceof Error ? error.name : "unknown error");
       throw new Error(`Could not save that check-in: ${message}`);
     }
   });
@@ -735,7 +748,7 @@ export async function loadChildScenarioForContext(
   if (session && session.state) {
     const stateCheck = validateScenarioStateBounds(session.state);
     if (!stateCheck.valid) {
-      console.warn(`[Gate B] Invalid saved state for ${data.scenarioId}: ${stateCheck.error}`);
+      console.warn(`[Gate B] Invalid saved state: ${stateCheck.error}`);
       // Return a safe engine state; do not persist over the invalid document.
       return {
         sessionId: data.scenarioId,

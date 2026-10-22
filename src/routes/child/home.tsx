@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Page,
@@ -14,7 +14,7 @@ import {
 } from "@/components/tati";
 import { childLogout, getChildSession } from "@/lib/auth/child-auth.functions";
 import { useChildLearning } from "@/lib/auth/use-child-learning";
-import { getTrack, itemTitle } from "@/lib/learning/track";
+import { getTrack, itemTitle, childItemPath } from "@/lib/learning/track";
 
 export const Route = createFileRoute("/child/home")({
   head: () => ({
@@ -117,22 +117,27 @@ function ChildHome() {
       <div className="mb-4">
         <h2 className="mb-3 text-lg font-extrabold">Your current challenge</h2>
         {snapshot.currentItem ? (
-          <Card interactive tone="primary" className="cursor-pointer">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wide text-white/80">
-                  {snapshot.currentItem.kind}
-                </p>
-                <h3 className="mt-1 text-xl font-extrabold text-white">
-                  {itemTitle(track, snapshot.currentItem)}
-                </h3>
-                <p className="mt-2 text-sm text-white/70">Keep going on your adventure trail.</p>
+          <Link
+            to={childItemPath(snapshot.currentItem)}
+            className="block rounded-3xl transition-transform duration-200 active:scale-[0.98]"
+          >
+            <Card interactive tone="primary" className="cursor-pointer">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold uppercase tracking-wide text-white/80">
+                    {snapshot.currentItem.kind}
+                  </p>
+                  <h3 className="mt-1 text-xl font-extrabold text-white">
+                    {itemTitle(track, snapshot.currentItem)}
+                  </h3>
+                  <p className="mt-2 text-sm text-white/70">Keep going on your adventure trail.</p>
+                </div>
+                <span className="text-2xl" aria-hidden="true">
+                  →
+                </span>
               </div>
-              <span className="text-2xl" aria-hidden="true">
-                →
-              </span>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ) : null}
       </div>
 

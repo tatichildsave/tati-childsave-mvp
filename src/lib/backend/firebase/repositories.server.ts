@@ -53,7 +53,7 @@ function toISOString(value: unknown): string {
 function toChildProfile(document: FirestoreChildDocument): ChildProfile {
   return {
     id: document.id,
-    tati_id: document.tati_id,
+    tati_id: document.tati_id ?? (document as { tatiId?: string }).tatiId ?? "",
     family_id: document.familyId,
     created_by: document.created_by,
     name: document.name,
@@ -76,10 +76,6 @@ export class FirebaseFamilyRepository implements FamilyService {
 
   async ensureFamily(): Promise<string> {
     try {
-      console.log("\n========== ensureFamily CALLED ==========");
-      console.log("ensureFamily userId:", this.userId);
-      console.log("ensureFamily Checking for existing family membership");
-
       // Check for existing active family membership
       const membershipsRef = this.db
         .collection("users")
@@ -87,22 +83,15 @@ export class FirebaseFamilyRepository implements FamilyService {
         .collection("familyMemberships");
 
       const memberships = await membershipsRef.get();
-
-      console.log("ensureFamily Query returned", memberships.docs.length, "documents");
       const active = memberships.docs.find((item) => item.data()["status"] === "active");
 
       if (active) {
-        console.log("ensureFamily Found existing active family:", active.id);
-        console.log("========== ensureFamily RETURNING EXISTING ==========\n");
         return active.id;
       }
 
       // No family exists - create a new one
-      console.log("ensureFamily No active family found - creating new one");
       const familyId = `fam-${crypto.randomUUID()}`;
       const now = FieldValue.serverTimestamp();
-
-      console.log("ensureFamily New familyId:", familyId);
 
       // Create family document with all required fields per FirestoreFamilyDocument schema
       await this.db.collection("families").doc(familyId).set({
@@ -112,10 +101,7 @@ export class FirebaseFamilyRepository implements FamilyService {
         createdAt: now,
         updatedAt: now,
       });
-      console.log("ensureFamily Family document written successfully");
-
       // Create family membership for this user
-      console.log("ensureFamily Writing membership document");
       await this.db
         .collection("users")
         .doc(this.userId)
@@ -128,30 +114,20 @@ export class FirebaseFamilyRepository implements FamilyService {
           status: "active",
           createdAt: now,
         });
-      console.log("ensureFamily Membership document written successfully");
-
-      console.log("ensureFamily SUCCESS - Family created:", familyId);
-      console.log("========== ensureFamily RETURNING NEW ==========\n");
       return familyId;
     } catch (error) {
-      console.error("\n========== ensureFamily ERROR ==========");
-      console.error("ensureFamily userId:", this.userId);
-      console.error("ensureFamily Error:", error);
-      if (error instanceof Error) {
-        console.error("ensureFamily Error name:", error.name);
-        console.error("ensureFamily Error message:", error.message);
-        console.error("ensureFamily Error code:", (error as any).code);
-      }
-      console.error("========== ensureFamily ERROR END ==========\n");
+      // Log error type and code only: raw errors can echo document paths and user IDs.
+      console.error("[ensureFamily] Failed", {
+        errorType: error instanceof Error ? error.name : "unknown",
+        errorCode: (error as { code?: unknown })?.code,
+      });
       throw error;
     }
   }
 
   async getFamilyChildren(): Promise<ChildProfile[]> {
     try {
-      console.log("[getFamilyChildren] Getting family ID");
       const familyId = await this.ensureFamily();
-      console.log("[getFamilyChildren] Got family:", familyId, "querying children");
 
       const children = await this.db
         .collection("families")
@@ -160,38 +136,34 @@ export class FirebaseFamilyRepository implements FamilyService {
         .orderBy("createdAt", "asc")
         .get();
 
-      console.log("[getFamilyChildren] Query succeeded, found", children.docs.length, "children");
-      const result = children.docs.map((item) => {
+      return children.docs.map((item) => {
         try {
           return toChildProfile(item.data() as FirestoreChildDocument);
         } catch (e) {
-          console.error("[getFamilyChildren] Error mapping child document:", item.id, e);
-          throw new Error(
-            `Failed to map child ${item.id}: ${e instanceof Error ? e.message : String(e)}`,
-          );
+          console.error("[getFamilyChildren] Failed to map a child document", {
+            errorType: e instanceof Error ? e.name : "unknown",
+          });
+          throw new Error("Failed to map child profile");
         }
       });
-      console.log("[getFamilyChildren] Successfully converted", result.length, "children");
-      return result;
     } catch (error) {
-      console.error("[getFamilyChildren] Error:", error);
+      console.error("[getFamilyChildren] Failed", {
+        errorType: error instanceof Error ? error.name : "unknown",
+        errorCode: (error as { code?: unknown })?.code,
+      });
       throw error;
     }
   }
 
   async createChild(input: CreateChildInput): Promise<ChildProfile> {
     try {
-      console.log("[createChild] Starting for user:", this.userId, "child name:", input.name);
       const familyId = await this.ensureFamily();
-      console.log("[createChild] Got family:", familyId);
 
       const childId = crypto.randomUUID();
-      console.log("[createChild] Generated child ID:", childId);
 
       // Generate TATI ID and PIN
       const tatiId = generateTatiId();
       const pin = generateChildPin();
-      console.log("[createChild] Generated TATI ID:", tatiId, "PIN: ****");
 
       const now = FieldValue.serverTimestamp();
       const document = {
@@ -210,22 +182,17 @@ export class FirebaseFamilyRepository implements FamilyService {
         updatedAt: now,
       };
 
-      console.log("[createChild] Writing child document with tati_id:", tatiId);
       await this.db
         .collection("families")
         .doc(familyId)
         .collection("children")
         .doc(childId)
         .set(document);
-      console.log("[createChild] Child document written");
 
       // Generate and save credential
-      console.log("[createChild] Saving credential for TATI ID:", tatiId);
       await saveChildPin(childId, tatiId, familyId, pin);
-      console.log("[createChild] Credential saved for TATI ID:", tatiId);
 
       // Read back child document to verify
-      console.log("[createChild] Reading back child document");
       const saved = await this.db
         .collection("families")
         .doc(familyId)
@@ -237,17 +204,13 @@ export class FirebaseFamilyRepository implements FamilyService {
         throw new Error("Child document was written but cannot be read back");
       }
 
-      console.log("[createChild] Document read, converting to profile");
       const profile = toChildProfile(saved.data() as FirestoreChildDocument);
-      console.log(
-        "[createChild] Success! Created child profile:",
-        profile.id,
-        "with TATI ID:",
-        profile.tati_id,
-      );
       return profile;
     } catch (error) {
-      console.error("[createChild] Error for user:", this.userId, error);
+      console.error(
+        "[createChild] Failed:",
+        error instanceof Error ? error.name : "unknown error",
+      );
       throw error;
     }
   }

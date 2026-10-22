@@ -20,13 +20,9 @@ function ChildLogin() {
     setBusy(true);
     setError(null);
     try {
-      console.log(`[Child Login] Attempting login with TATI ID: ${tatiId}, PIN length: ${pin.length}`);
       await childLogin({ data: { tatiId, pin } });
-      console.log(`[Child Login] Login successful, navigating to home`);
       await navigate({ to: "/child/home", replace: true });
-    } catch (err) {
-      console.error(`[Child Login] Error caught:`, err);
-      console.error(`[Child Login] Error message:`, err instanceof Error ? err.message : String(err));
+    } catch {
       setError(genericFailure);
     } finally {
       setBusy(false);

@@ -34,6 +34,8 @@ interface Props {
   goalTarget?: number | undefined;
   /** Goal label (e.g., "School Bag Goal") */
   goalLabel?: string | undefined;
+  /** True inside the child portal: the back link returns to /child/learn. */
+  childJourney?: boolean | undefined;
 }
 
 /** Renders any scenario from the engine. Holds no story logic of its own. */
@@ -53,6 +55,7 @@ export function ScenarioPlayer({
   currentSaved,
   goalTarget,
   goalLabel,
+  childJourney,
 }: Props) {
   const runner = useScenarioRunner(scenario, childId, persistence);
   const {
@@ -88,8 +91,9 @@ export function ScenarioPlayer({
     <Screen>
       <header className="mb-4 flex items-center gap-3">
         <Link
-          to="/learn/$childId"
-          params={{ childId }}
+          {...(childJourney
+            ? { to: "/child/learn" as const }
+            : { to: "/learn/$childId" as const, params: { childId } })}
           aria-label="Back to my journey"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
         >

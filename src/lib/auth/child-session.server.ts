@@ -64,10 +64,7 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
       .limit(1)
       .get();
 
-    if (credSnapshots.empty) {
-      console.log(`[loadChildProfile] No credential found for childId=${childId}`);
-      return null;
-    }
+    if (credSnapshots.empty) return null;
 
     const credDoc = credSnapshots.docs[0];
     if (!credDoc) return null;
@@ -75,7 +72,7 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     const familyId = credData["familyId"] as string;
 
     if (!familyId) {
-      console.error(`[loadChildProfile] Credential missing familyId for childId=${childId}`);
+      console.error("[loadChildProfile] Credential is missing familyId");
       return null;
     }
 
@@ -84,20 +81,16 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
     const childDocRef = db.collection("families").doc(familyId).collection("children").doc(childId);
     const childDocSnapshot = await childDocRef.get();
 
-    if (!childDocSnapshot.exists) {
-      console.log(
-        `[loadChildProfile] Child profile not found at /families/${familyId}/children/${childId}`,
-      );
-      return null;
-    }
+    if (!childDocSnapshot.exists) return null;
 
     const childData = childDocSnapshot.data();
     if (!childData) return null;
 
-    // Transform Firebase child document to expected format
+    // Profiles written by the admin provisioning path use `tatiId`; older
+    // documents and parent-portal writes use `tati_id`. Read either.
     return {
       id: childDocSnapshot.id,
-      tati_id: childData["tatiId"],
+      tati_id: (childData["tatiId"] ?? childData["tati_id"]) as string,
       name: childData["name"],
       age: childData["age"],
       avatar: childData["avatar"],
@@ -106,7 +99,10 @@ async function loadChildProfile(childId: string): Promise<ChildProfileRow | null
       family_id: familyId,
     };
   } catch (error) {
-    console.error("[H4.B] Failed to load child profile from Firebase:", error);
+    console.error(
+      "[H4.B] Failed to load child profile:",
+      error instanceof Error ? error.name : "unknown error",
+    );
     return null;
   }
 }
@@ -151,13 +147,16 @@ async function resolveChildFirebaseIdentity(
     ) {
       // Security: Family mapping mismatch detected
       // Log and re-throw to prevent silent continuation
-      console.error("Firebase family mismatch for child:", childId, error);
+      console.error("Firebase family mismatch for child session");
       throw error;
     }
 
     // Other errors (network, Firestore down, emulator unavailable, etc.)
     // Gracefully continue without Firebase context
-    console.debug("Firebase identity resolution failed:", error);
+    console.debug(
+      "Firebase identity resolution failed:",
+      error instanceof Error ? error.name : "unknown error",
+    );
     return null;
   }
 }

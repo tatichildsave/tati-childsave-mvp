@@ -26,21 +26,17 @@ export async function verifyAdminAuthorization(uid: string): Promise<string> {
   const userData = userDoc.data();
 
   if (!userData) {
-    console.error(`[verifyAdminAuthorization] User not found: ${uid}`);
+    console.error("[verifyAdminAuthorization] User profile not found");
     throw new Error("User not found in database");
   }
 
   // Strict authorization check: only admins can provision
   const roles = userData.roles as string[] | undefined;
   if (!Array.isArray(roles) || !roles.includes("admin")) {
-    console.error(
-      `[verifyAdminAuthorization] Authorization denied for user ${uid}. User roles:`,
-      roles
-    );
+    console.error("[verifyAdminAuthorization] Authorization denied");
     throw new Error("Admin authorization required to provision accounts");
   }
 
-  console.log(`[verifyAdminAuthorization] User ${uid} authorized with roles:`, roles);
   return uid;
 }
 
@@ -334,11 +330,14 @@ export async function createCredentialRecord(
     active: true,
     revokedAt: null,
     rotatedAt: Timestamp.now(),
+    failedAttempts: 0,
+    lockedUntil: null,
   });
 }
 
 /**
- * Update credential with new PIN hash
+ * Update credential with new PIN hash.
+ * A PIN reset also clears any active PIN-attempt lockout.
  */
 export async function updateCredentialPin(
   tatiId: string,
@@ -350,6 +349,57 @@ export async function updateCredentialPin(
   await db.collection("childCredentials").doc(tatiId).update({
     pinHash: newPinHash,
     rotatedAt: Timestamp.now(),
+    failedAttempts: 0,
+    lockedUntil: null,
+  });
+}
+
+/**
+ * Replace a child's PIN and revoke every active child session in one transaction.
+ * Either the new PIN and all revocations commit, or nothing changes.
+ * The credential must belong to the given family; otherwise the reset is rejected.
+ */
+export async function resetChildPinAndRevokeSessions(
+  childId: string,
+  familyId: string,
+  newPinHash: string
+): Promise<{ tatiId: string; revokedSessionCount: number }> {
+  const db = getFirebaseAdminDb();
+  if (!db) throw new Error("Database not available");
+
+  const credentialQuery = db
+    .collection("childCredentials")
+    .where("childId", "==", childId)
+    .where("familyId", "==", familyId)
+    .limit(1);
+  const activeSessionsQuery = db
+    .collection("families")
+    .doc(familyId)
+    .collection("children")
+    .doc(childId)
+    .collection("sessions")
+    .where("revokedAt", "==", null);
+
+  return db.runTransaction(async (tx) => {
+    const credentialSnapshot = await tx.get(credentialQuery);
+    const credentialDoc = credentialSnapshot.docs[0];
+    if (!credentialDoc) throw new Error("Credential not found");
+
+    const sessionSnapshot = await tx.get(activeSessionsQuery);
+
+    tx.update(credentialDoc.ref, {
+      pinHash: newPinHash,
+      rotatedAt: Timestamp.now(),
+      failedAttempts: 0,
+      lockedUntil: null,
+    });
+
+    const revokedAt = new Date().toISOString();
+    for (const sessionDoc of sessionSnapshot.docs) {
+      tx.update(sessionDoc.ref, { revokedAt });
+    }
+
+    return { tatiId: credentialDoc.id, revokedSessionCount: sessionSnapshot.size };
   });
 }
 

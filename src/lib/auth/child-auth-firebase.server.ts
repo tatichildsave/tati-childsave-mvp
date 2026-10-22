@@ -39,6 +39,10 @@ function deriveKey(
 const TATI_ID_PATTERN = /^TATI-[A-F0-9]{8}$/;
 const PIN_PATTERN = /^\d{4,6}$/;
 
+// PIN brute-force protection: lock a TATI ID after consecutive failures
+const PIN_MAX_FAILED_ATTEMPTS = 5;
+const PIN_LOCKOUT_MS = 15 * 60 * 1000;
+
 // Session configuration
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -59,7 +63,14 @@ type ChildCredentialDoc = {
   active: boolean;
   revokedAt: string | null;
   rotatedAt: string;
+  failedAttempts?: number;
+  lockedUntil?: string | null;
 };
+
+export type ChildCredentialResult =
+  | { status: "ok"; childId: string }
+  | { status: "invalid" }
+  | { status: "locked"; retryAt: string };
 
 type ChildSessionDoc = {
   id: string;
@@ -208,64 +219,112 @@ export async function saveChildPin(
     active: true,
     revokedAt: null,
     rotatedAt: new Date().toISOString(),
+    failedAttempts: 0,
+    lockedUntil: null,
   } as ChildCredentialDoc);
+}
+
+function toEpochMs(value: string | null | undefined): number {
+  if (!value) return 0;
+  const ms = Date.parse(value);
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+let dummyPinHashPromise: Promise<string> | null = null;
+
+/**
+ * Spend the same scrypt work as a real PIN check. Branches that would
+ * otherwise return early (unknown, inactive, revoked, locked, errors) call this
+ * so response timing does not reveal whether a TATI ID exists or is locked.
+ */
+async function spendEquivalentPinCheckTime(pin: string): Promise<void> {
+  if (!dummyPinHashPromise) dummyPinHashPromise = hashChildPin("0000");
+  await verifyChildPin(pin, await dummyPinHashPromise);
 }
 
 /**
  * Verify a child's TATI ID and PIN.
- * Returns the childId if verification succeeds, null otherwise.
  *
- * Process:
- * 1. Look up credential by TATI ID in /childCredentials/{tatiId}
- * 2. Verify PIN hash using scrypt
- * 3. Check credential is active and not revoked
- * 4. Return childId if all checks pass
+ * Failed attempts are counted per TATI ID. Each attempt first reserves a slot
+ * inside a Firestore transaction, so parallel guesses cannot exceed the limit.
+ * The PIN is then verified outside the transaction (scrypt is slow), and a
+ * successful verification resets the counter.
+ *
+ * Unknown, inactive, revoked and locked IDs do not count as attempts. They
+ * return a non-ok status after an equivalent scrypt delay. Callers must show a
+ * single generic message for every non-ok status.
  */
-export async function verifyChildCredential(tatiId: string, pin: string): Promise<string | null> {
-  console.log(`[verifyChildCredential] Starting: tatiId="${tatiId}" (length=${tatiId.length}), pin.length=${pin.length}`);
-  console.log(`[verifyChildCredential] TATI ID regex test: ${TATI_ID_PATTERN.test(tatiId)}, PIN regex test: ${PIN_PATTERN.test(pin)}`);
-
-  if (!isValidTatiId(tatiId) || !PIN_PATTERN.test(pin)) {
-    console.log(`[verifyChildCredential] Format validation failed - isValidTatiId=${isValidTatiId(tatiId)}, PIN_PATTERN.test=${PIN_PATTERN.test(pin)}`);
-    return null;
-  }
+export async function verifyChildCredential(
+  tatiId: string,
+  pin: string,
+): Promise<ChildCredentialResult> {
+  if (!isValidTatiId(tatiId) || !PIN_PATTERN.test(pin)) return { status: "invalid" };
 
   const normalizedId = normalizeTatiId(tatiId);
-  console.log(`[verifyChildCredential] Normalized ID: ${normalizedId}`);
+  const credentialRef = db().collection("childCredentials").doc(normalizedId);
 
   try {
-    const credentialDoc = await db().collection("childCredentials").doc(normalizedId).get();
+    const reservation = await db().runTransaction(async (tx) => {
+      const snapshot = await tx.get(credentialRef);
+      if (!snapshot.exists) return { kind: "invalid" as const };
 
-    if (!credentialDoc.exists) {
-      console.log(`[verifyChildCredential] Document not found`);
-      return null;
+      const credential = snapshot.data() as ChildCredentialDoc;
+      if (!credential.active || credential.revokedAt) return { kind: "invalid" as const };
+
+      const now = Date.now();
+      const lockedUntilMs = toEpochMs(credential.lockedUntil);
+      if (lockedUntilMs > now) {
+        return { kind: "locked" as const, retryAt: new Date(lockedUntilMs).toISOString() };
+      }
+
+      let failedAttempts = credential.failedAttempts ?? 0;
+      if (lockedUntilMs !== 0) failedAttempts = 0; // previous lock has expired
+
+      if (failedAttempts >= PIN_MAX_FAILED_ATTEMPTS) {
+        // Counter at the limit without an active lock: lock defensively.
+        const retryAt = new Date(now + PIN_LOCKOUT_MS).toISOString();
+        tx.update(credentialRef, { failedAttempts, lockedUntil: retryAt });
+        return { kind: "locked" as const, retryAt };
+      }
+
+      const nextFailedAttempts = failedAttempts + 1;
+      const lockedUntil =
+        nextFailedAttempts >= PIN_MAX_FAILED_ATTEMPTS
+          ? new Date(now + PIN_LOCKOUT_MS).toISOString()
+          : null;
+      tx.update(credentialRef, { failedAttempts: nextFailedAttempts, lockedUntil });
+
+      return {
+        kind: "reserved" as const,
+        childId: credential.childId,
+        pinHash: credential.pinHash,
+      };
+    });
+
+    if (reservation.kind === "invalid") {
+      await spendEquivalentPinCheckTime(pin);
+      return { status: "invalid" };
+    }
+    if (reservation.kind === "locked") {
+      await spendEquivalentPinCheckTime(pin);
+      return { status: "locked", retryAt: reservation.retryAt };
     }
 
-    const credential = credentialDoc.data() as ChildCredentialDoc;
-    console.log(
-      `[verifyChildCredential] Found credential - childId=${credential.childId}, active=${credential.active}, revoked=${credential.revokedAt ? "yes" : "no"}`,
-    );
+    const pinValid = await verifyChildPin(pin, reservation.pinHash);
+    if (!pinValid) return { status: "invalid" };
 
-    // Check if credential is active and not revoked
-    if (!credential.active || credential.revokedAt) {
-      console.log(`[verifyChildCredential] Credential is inactive or revoked`);
-      return null;
-    }
-
-    // Verify PIN using timing-safe comparison
-    console.log(`[verifyChildCredential] Verifying PIN...`);
-    const pinValid = await verifyChildPin(pin, credential.pinHash);
-    console.log(`[verifyChildCredential] PIN valid: ${pinValid}`);
-
-    if (!pinValid) return null;
-
-    console.log(`[verifyChildCredential] SUCCESS - returning childId=${credential.childId}`);
-    return credential.childId;
+    await credentialRef.update({ failedAttempts: 0, lockedUntil: null });
+    return { status: "ok", childId: reservation.childId };
   } catch (error) {
-    console.error(`[verifyChildCredential] Error:`, error);
-    return null;
+    console.error(
+      "[verifyChildCredential] Verification failed:",
+      error instanceof Error ? error.name : "unknown error",
+    );
+    await spendEquivalentPinCheckTime(pin);
+    return { status: "invalid" };
   }
 }
+
 
 /**
  * Create a new child session.
@@ -322,60 +381,35 @@ export async function createChildSession(
 export async function validateChildSession(
   token: string,
 ): Promise<(ChildSessionDoc & { kind: "child" }) | null> {
-  console.log(`[validateChildSession] Starting validation, token length: ${token?.length}`);
-  if (!token || token.length < 32) {
-    console.log(`[validateChildSession] Invalid token length, returning null`);
-    return null;
-  }
+  if (!token || token.length < 32) return null;
 
   const tokenHash = sessionTokenHash(token);
-  console.log(`[validateChildSession] Token hash: ${tokenHash.substring(0, 16)}...`);
 
   try {
-    // Query all sessions to find matching token hash
-    // NOTE: This is a collectionGroup query across all families/children
-    // It's expensive but unavoidable without storing token→childId mappings
-    // In production, consider adding a separate token→session lookup collection
-    console.log(`[validateChildSession] Querying collectionGroup 'sessions'`);
+    // NOTE: collectionGroup lookup across all children's sessions. It is
+    // unavoidable without a token -> session index; see Phase 0 audit notes.
     const snapshot = await db()
       .collectionGroup("sessions")
       .where("tokenHash", "==", tokenHash)
       .limit(1)
       .get();
 
-    console.log(`[validateChildSession] Query returned ${snapshot.size} documents`);
-    if (snapshot.empty) {
-      console.log(`[validateChildSession] No session found for token hash`);
-      return null;
-    }
-
     const sessionDoc = snapshot.docs[0];
-    if (!sessionDoc) {
-      console.log(`[validateChildSession] Session doc is null`);
-      return null;
-    }
+    if (snapshot.empty || !sessionDoc) return null;
 
     const sessionData = sessionDoc.data() as ChildSessionDoc;
-    console.log(`[validateChildSession] Found session: ${sessionData.id}, childProfileId: ${sessionData.childProfileId}`);
 
-    // Check if session is revoked
-    if (sessionData.revokedAt) {
-      console.log(`[validateChildSession] Session is revoked`);
-      return null;
-    }
+    if (sessionData.revokedAt) return null;
 
-    // Check if session is expired
     const expiresAt = new Date(sessionData.expiresAt);
-    console.log(`[validateChildSession] Session expires at: ${expiresAt.toISOString()}, now: ${new Date().toISOString()}`);
-    if (expiresAt <= new Date()) {
-      console.log(`[validateChildSession] Session is expired`);
-      return null;
-    }
+    if (expiresAt <= new Date()) return null;
 
-    console.log(`[validateChildSession] Session validation successful`);
     return { kind: "child" as const, ...sessionData };
   } catch (err) {
-    console.error(`[validateChildSession] Error during validation:`, err);
+    console.error(
+      "[validateChildSession] Validation failed:",
+      err instanceof Error ? err.name : "unknown error",
+    );
     return null;
   }
 }
@@ -438,6 +472,9 @@ export async function loadChildProfile(
         sanitized[key] = value;
       }
     }
+
+    // Parent-portal writes use `tati_id`; admin provisioning uses `tatiId`. No data migration.
+    if (!sanitized.tatiId && sanitized.tati_id) sanitized.tatiId = sanitized.tati_id;
 
     return sanitized as ChildProfileDoc;
   } catch {

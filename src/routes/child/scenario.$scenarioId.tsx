@@ -106,6 +106,7 @@ function ScenarioPage() {
       currentSaved={snapshot.journey.savedCedis}
       goalTarget={track.goal?.target}
       goalLabel={track.goal?.title}
+      childJourney
       onComplete={async ({ saved, available, decisions }) => {
         await record.mutateAsync({
           data: {

@@ -27,9 +27,8 @@ import {
   createFacilitatorFirestoreRecord,
   createFamilyRecord,
   addParentToFamily,
-  updateCredentialPin,
+  resetChildPinAndRevokeSessions,
   getChildByIdInFamily,
-  findCredentialByChildId,
   getCredentialByTatiId,
 } from "./provisioning.server";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
@@ -62,7 +61,7 @@ async function getCurrentAdminUid(): Promise<string> {
     console.log("[getCurrentAdminUid] Found session cookie, verifying...");
     const auth = getFirebaseAdmin();
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-    console.log("[getCurrentAdminUid] Session verified for user:", decodedClaims.uid);
+    console.log("[getCurrentAdminUid] Session verified");
     return decodedClaims.uid;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -117,7 +116,7 @@ export const provisionParent = createServerFn({ method: "POST" })
         adminUid
       );
 
-      console.log(`[provisionParent] Created parent: ${authUser.uid} (${data.email})`);
+      console.log("[provisionParent] Parent account created");
 
       return {
         success: true,
@@ -185,9 +184,7 @@ export const provisionFamily = createServerFn({ method: "POST" })
       // Add parent to family
       await addParentToFamily(familyId, data.parentUid);
 
-      console.log(
-        `[provisionFamily] Created family: ${familyId} with parent ${data.parentUid}`
-      );
+      console.log("[provisionFamily] Family created");
 
       return {
         success: true,
@@ -302,12 +299,12 @@ export const provisionChild = createServerFn({ method: "POST" })
           active: true,
           revokedAt: null,
           rotatedAt: Timestamp.now(),
+          failedAttempts: 0,
+          lockedUntil: null,
         });
       });
 
-      console.log(
-        `[provisionChild] Created child: ${childId} (TATI: ${tatiId}) in family ${data.familyId}`
-      );
+      console.log("[provisionChild] Child provisioned");
 
       return {
         success: true,
@@ -353,27 +350,23 @@ export const resetChildPin = createServerFn({ method: "POST" })
         throw new Error("Child not found in this family");
       }
 
-      // Find credential by child ID
-      const credential = await findCredentialByChildId(data.childId);
-      if (!credential) {
-        throw new Error("Credential not found");
-      }
-
-      // Generate new PIN and hash it
+      // Generate new PIN and hash it (outside the transaction; scrypt is slow)
       const newPin = generateChildPin();
       const newPinHash = await hashChildPin(newPin);
 
-      // Update credential
-      await updateCredentialPin(credential.tatiId, newPinHash);
-
-      console.log(
-        `[resetChildPin] Reset PIN for child ${data.childId} (TATI: ${credential.tatiId})`
+      // New PIN, cleared lockout and revocation of all active child sessions
+      // commit together. The family check is enforced inside the transaction.
+      const { revokedSessionCount } = await resetChildPinAndRevokeSessions(
+        data.childId,
+        data.familyId,
+        newPinHash
       );
 
       return {
         success: true,
         childId: data.childId,
-        newPin, // PIN SHOWN ONLY ONCE
+        revokedSessionCount,
+        newPin, // PIN SHOWN ONLY ONCE; returned only after the transaction commits
         message: "Child PIN reset. New PIN shown above.",
       };
     } catch (error) {
@@ -719,7 +712,7 @@ export const repairFamilyLinks = createServerFn({ method: "POST" })
           writes.slice(i, i + 400).forEach((w) => w(batch));
           await batch.commit();
         }
-        console.log(`[repairFamilyLinks] Applied ${writes.length} writes (admin ${adminUid})`);
+        console.log(`[repairFamilyLinks] Applied ${writes.length} writes`);
       }
 
       return report;
@@ -812,7 +805,7 @@ export const provisionFacilitator = createServerFn({ method: "POST" })
       const authUser = await createParentAuthUser(data.email, data.displayName);
       await createFacilitatorFirestoreRecord(authUser.uid, data.email, data.displayName, data.phone, adminUid);
 
-      console.log(`[provisionFacilitator] Created facilitator ${authUser.uid} (admin ${adminUid})`);
+      console.log("[provisionFacilitator] Facilitator account created");
       return {
         success: true,
         facilitatorUid: authUser.uid,
@@ -1117,7 +1110,7 @@ export const saveFacilitatorCohort = createServerFn({ method: "POST" })
         learners: data.learners,
       });
       console.log(
-        `[saveFacilitatorCohort] Cohort ${result.cohortId} for ${data.facilitatorUid}: +${result.added} / -${result.removed} (admin ${adminUid})`,
+        `[saveFacilitatorCohort] Cohort saved: +${result.added} / -${result.removed}`,
       );
       return { success: true, ...result };
     } catch (error) {

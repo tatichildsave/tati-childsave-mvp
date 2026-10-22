@@ -29,35 +29,18 @@ export async function createParentSession(idToken: string): Promise<void> {
   try {
     // Validate input
     if (!idToken || typeof idToken !== "string" || idToken.length === 0) {
-      console.error("[createParentSession] Invalid idToken", {
-        type: typeof idToken,
-        length: typeof idToken === "string" ? idToken.length : 0,
-      });
+      console.error("[createParentSession] Invalid idToken");
       throw new Error("Invalid idToken: must be a non-empty string");
     }
 
-    console.log("[createParentSession] Creating session cookie", {
-      idTokenLength: idToken.length,
-      timestamp: new Date().toISOString(),
-    });
-
-    console.log("[createParentSession] Calling getFirebaseAdmin()");
     const auth = getFirebaseAdmin();
-    console.log("[createParentSession] getFirebaseAdmin() returned successfully");
 
     // Verify the ID token and create a session cookie
-    console.log("[createParentSession] Calling auth.createSessionCookie()");
     const sessionCookie = await auth.createSessionCookie(idToken, {
       expiresIn: SESSION_COOKIE_MAX_AGE * 1000, // Convert to milliseconds
     });
 
-    console.log("[createParentSession] Session cookie created successfully", {
-      cookieLength: sessionCookie.length,
-      timestamp: new Date().toISOString(),
-    });
-
     // Set the session cookie with strict security options
-    console.log("[createParentSession] Calling setCookie()");
     setCookie(SESSION_COOKIE_NAME, sessionCookie, {
       httpOnly: true,
       secure: process.env["NODE_ENV"] === "production",
@@ -65,32 +48,12 @@ export async function createParentSession(idToken: string): Promise<void> {
       path: "/",
       maxAge: SESSION_COOKIE_MAX_AGE,
     });
-
-    console.log("[createParentSession] Session cookie set successfully", {
-      cookieName: SESSION_COOKIE_NAME,
-      isProduction: process.env["NODE_ENV"] === "production",
-    });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : "";
-
-    console.error("[createParentSession] CRITICAL: Failed to create session cookie", {
-      errorMessage,
+    // Log error type and code only: messages and stacks from the Admin SDK
+    // can echo request details, and the token itself must never be logged.
+    console.error("[createParentSession] Failed to create session cookie", {
       errorType: error?.constructor?.name,
-      errorCode: (error as any)?.code,
-      errorReason: (error as any)?.reason,
-      timestamp: new Date().toISOString(),
-    });
-
-    if (errorStack) {
-      console.error("[createParentSession] Stack trace:", errorStack.split("\n").slice(0, 5).join("\n"));
-    }
-
-    // Log environment context for debugging
-    console.error("[createParentSession] Environment context:", {
-      NODE_ENV: process.env["NODE_ENV"],
-      VERCEL_ENV: process.env["VERCEL_ENV"],
-      FIREBASE_PROJECT_ID: process.env["FIREBASE_PROJECT_ID"],
+      errorCode: (error as { code?: unknown })?.code,
     });
 
     throw error;
@@ -141,16 +104,19 @@ export async function clearParentSession(uid?: string): Promise<void> {
       try {
         const auth = getFirebaseAdmin();
         await auth.revokeRefreshTokens(uid);
-        console.log("[clearParentSession] Refresh tokens revoked for uid:", uid);
       } catch (revokeError) {
-        console.error("[clearParentSession] Error revoking tokens:", revokeError);
+        console.error(
+          "[clearParentSession] Error revoking tokens:",
+          revokeError instanceof Error ? revokeError.name : "unknown error",
+        );
         // Continue even if revocation fails - cookie deletion is what matters
       }
     }
-
-    console.log("[clearParentSession] Session cleared");
   } catch (error) {
-    console.error("[clearParentSession] Error clearing session:", error);
+    console.error(
+      "[clearParentSession] Error clearing session:",
+      error instanceof Error ? error.name : "unknown error",
+    );
     throw error;
   }
 }

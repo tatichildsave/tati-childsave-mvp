@@ -52,65 +52,40 @@ async function getChildContext(childId: string): Promise<{ familyId: string } | 
 export const childLogin = createServerFn({ method: "POST" })
   .validator(loginInput)
   .handler(async ({ data }) => {
-    console.log(`[childLogin] Starting login - tatiId=${data.tatiId}`);
-
-    // Verify TATI ID and PIN, returns childId
-    const childId = await verifyChildCredential(data.tatiId, data.pin);
-    console.log(`[childLogin] verifyChildCredential returned: ${childId}`);
-
-    if (!childId) {
-      console.log(`[childLogin] Credential verification failed`);
+    // Locked, unknown, inactive and wrong-PIN results all return the same error,
+    // so the response does not reveal whether a TATI ID exists or is locked.
+    const result = await verifyChildCredential(data.tatiId, data.pin);
+    if (result.status !== "ok") {
       throw new Error(genericFailure);
     }
 
-    // Get familyId from credential context
+    const childId = result.childId;
+
     const context = await getChildContext(childId);
-    console.log(`[childLogin] Got context:`, context);
-
     if (!context) {
-      console.log(`[childLogin] Context lookup failed`);
       throw new Error(genericFailure);
     }
 
-    // Create session in Firestore
     const { token, session } = await createChildSession(childId, context.familyId);
-    console.log(`[childLogin] Created session: ${session.id}`);
 
-    // Load child profile
     const profile = await loadChildProfileFirebase(childId, context.familyId);
-    console.log(`[childLogin] Loaded profile: ${profile?.name}`);
-
     if (!profile) {
-      // Clean up session if profile load fails
-      console.log(`[childLogin] Profile load failed, revoking session`);
       await revokeChildSession(childId, context.familyId, session.id);
       throw new Error(genericFailure);
     }
 
-    // Set HTTP-only session cookie
-    console.log(`[childLogin] Setting session cookie with token length: ${token.length}`);
     setCookie(COOKIE_NAME, token, cookieOptions(30 * 60));
-    console.log(`[childLogin] Set session cookie and returning profile`);
 
     return { profile };
   });
 
 export const getChildSession = createServerFn({ method: "GET" }).handler(async () => {
-  console.log(`[getChildSession] Checking for session cookie`);
   const token = getCookie(COOKIE_NAME);
-  console.log(`[getChildSession] Token exists: ${!!token}`);
-  if (!token) {
-    console.log(`[getChildSession] No token found, returning null`);
-    return null;
-  }
+  if (!token) return null;
 
-  // Validate session token
-  console.log(`[getChildSession] Validating session token`);
   const session = await validateChildSession(token);
-  console.log(`[getChildSession] Session validation result:`, session);
   if (!session) {
     // Clear invalid session cookie
-    console.log(`[getChildSession] Invalid session, clearing cookie`);
     setCookie(COOKIE_NAME, "", cookieOptions(0));
     return null;
   }

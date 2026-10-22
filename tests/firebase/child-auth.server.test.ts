@@ -87,7 +87,7 @@ describe("Firebase Child Authentication (Phase G2)", () => {
       const user = await adminAuth().getUser(uid);
       expect(user.uid).toBe(uid);
       expect(user.displayName).toContain("child");
-    });
+    }, 20_000); // First call cold-starts the emulator clients (~8s locally).
 
     it("stores mapping in Firestore", async () => {
       await createChildFirebaseIdentity(parentA, childA1, familyA, 9);

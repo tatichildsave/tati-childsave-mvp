@@ -21,8 +21,14 @@ import { randomBytes, createHash } from "crypto";
 
 const COOKIE_NAME = "tati_child_session";
 
-// Only enable in emulator mode
-const isEmulatorOnly = () => !!process.env["FIRESTORE_EMULATOR_HOST"];
+// Test login is refused unless ALL of these hold:
+// - NODE_ENV is not "production" (set by the production server runtime)
+// - VERCEL_ENV is not "production" (set on Vercel deployments)
+// - the Firestore emulator host is configured (never a live Firestore project)
+const isEmulatorOnly = () =>
+  process.env["NODE_ENV"] !== "production" &&
+  process.env["VERCEL_ENV"] !== "production" &&
+  !!process.env["FIRESTORE_EMULATOR_HOST"];
 
 function cookieOptions(maxAge: number) {
   return {

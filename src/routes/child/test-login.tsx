@@ -1,14 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { testChildLogin } from "@/lib/auth/test-child-login.functions";
-import { useNavigate } from "@tanstack/react-router";
+import { createFileRoute, notFound, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { Page, PageHeader, Card, Button, CardTitle, CardNote } from "@/components/tati";
 
+// Dev-only: in production the route is a 404 and this page (plus the test
+// server function it dynamically imports) is dropped from the bundle.
 export const Route = createFileRoute("/child/test-login")({
+  beforeLoad: () => {
+    if (!import.meta.env.DEV) throw notFound();
+  },
   head: () => ({
-    meta: [{ title: "Test Login — TATI ChildSave" }],
+    meta: [{ title: import.meta.env.DEV ? "Test Login — TATI ChildSave" : "TATI ChildSave" }],
   }),
-  component: TestLoginPage,
+  ...(import.meta.env.DEV ? { component: TestLoginPage } : {}),
 });
 
 const inputClass =
@@ -26,9 +29,12 @@ function TestLoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const result = await testChildLogin({ tatiId, pin });
-      if (result.profile) {
-        navigate({ to: "/child/home", replace: true });
+      if (import.meta.env.DEV) {
+        const { testChildLogin } = await import("@/lib/auth/test-child-login.functions");
+        const result = await testChildLogin({ data: { tatiId, pin } });
+        if (result.profile) {
+          navigate({ to: "/child/home", replace: true });
+        }
       }
     } catch (err) {
       setError(

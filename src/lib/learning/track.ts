@@ -56,6 +56,14 @@ export function itemPath(childId: string, item: TrackItem): string {
   return `${base}/assessment/${item.id}`;
 }
 
+/** Child-portal route for a journey item (child routes carry no childId segment). */
+export function childItemPath(item: TrackItem): string {
+  if (item.kind === "lesson") return `/child/lesson/${item.id}`;
+  if (item.kind === "reflection") return `/child/reflection/${item.id}`;
+  if (item.kind === "scenario") return `/child/scenario/${item.id}`;
+  return `/child/assessment/${item.id}`;
+}
+
 export function nextItem(track: Track, item: TrackItem): TrackItem | undefined {
   const i = track.sequence.findIndex((s) => s.kind === item.kind && s.id === item.id);
   return i >= 0 ? track.sequence[i + 1] : undefined;

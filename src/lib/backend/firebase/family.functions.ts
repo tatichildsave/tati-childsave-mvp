@@ -39,55 +39,20 @@ export const createParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.object({ idToken: z.string().min(1) }))
   .handler(async ({ data }) => {
     try {
-      // Log what we received (helps debug validation issues)
-      console.log("[createParentSessionFn] Received data:", {
-        hasData: !!data,
-        hasIdToken: !!data?.idToken,
-        idTokenLength: data?.idToken?.length,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Guard: ensure data is valid
       if (!data || !data.idToken) {
-        console.error("[createParentSessionFn] Invalid data structure", {
-          data,
-          expected: "{ idToken: string }",
-        });
+        console.error("[createParentSessionFn] Invalid data structure");
         throw new Error("Invalid session data: missing or empty idToken");
       }
 
-      console.log("[createParentSessionFn] About to call createParentSession");
       await createParentSession(data.idToken);
-      console.log("[createParentSessionFn] createParentSession completed successfully");
       return { success: true };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorStack = error instanceof Error ? error.stack : "";
-
-      // Log full error context server-side (Vercel logs)
-      console.error(
-        "[createParentSessionFn] CRITICAL: Session cookie creation failed",
-        {
-          errorMessage,
-          errorType: error?.constructor?.name,
-          errorCode: (error as any)?.code,
-          errorReason: (error as any)?.reason,
-          timestamp: new Date().toISOString(),
-        }
-      );
-
-      if (errorStack) {
-        console.error("[createParentSessionFn] Stack trace:", errorStack.split("\n").slice(0, 5).join("\n"));
-      }
-
-      // Log detailed error info for Firebase-specific issues
-      if (errorMessage.includes("claims") || errorMessage.includes("invalid") || errorMessage.includes("not found")) {
-        console.error("[createParentSessionFn] Possible token/auth issue:", {
-          errorMessage,
-          nodeEnv: process.env["NODE_ENV"],
-          vercelEnv: process.env["VERCEL_ENV"],
-        });
-      }
+      // Log error type and code only. Never log the token, request body or
+      // Admin SDK messages, which can echo identifiers.
+      console.error("[createParentSessionFn] Session cookie creation failed", {
+        errorType: error?.constructor?.name,
+        errorCode: (error as { code?: unknown })?.code,
+      });
 
       // Return safe error message to client (no token/credential exposure)
       throw new Error("Session initialization failed. Please try signing in again.");
@@ -235,18 +200,11 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
         await familyRepo.assertChildAccess(childId);
         const familyId = await familyRepo.ensureFamily();
 
-        console.log("[getChildJourneyProgress] Authorised child:", childId, "family:", familyId);
+        console.log("[getChildJourneyProgress] Authorised child access");
 
         // Get journey progress using the repository
         const progressRepo = new FirebaseJourneyProgressRepository(db, familyId);
         const progress = await progressRepo.getProgress(childId);
-
-        console.log(
-          "[getChildJourneyProgress] Loaded progress for child:",
-          childId,
-          "events:",
-          progress.length,
-        );
 
         // Return properly typed array for serialization
         return progress.map((event) => ({
@@ -262,7 +220,10 @@ export const getChildJourneyProgress = createServerFn({ method: "POST" })
           updated_at: event.updated_at,
         }));
       } catch (error) {
-        console.error("[getChildJourneyProgress] Error for child:", childId, error);
+        console.error(
+          "[getChildJourneyProgress] Error:",
+          error instanceof Error ? error.name : "unknown error",
+        );
         throw error;
       }
     },
@@ -324,7 +285,7 @@ export const clearParentSessionFn = createServerFn({ method: "POST" })
       await clearParentSession(uid);
       return { success: true };
     } catch (error) {
-      console.error("[clearParentSessionFn] Error:", error);
+      console.error("[clearParentSessionFn] Failed", error instanceof Error ? error.name : "unknown error");
       throw error;
     }
   });
