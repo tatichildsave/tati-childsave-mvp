@@ -1,10 +1,6 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  verifyPasswordResetCodeFn,
-  confirmPasswordResetFn,
-} from "../../lib/backend/password-reset.functions";
+import { completePasswordReset, verifyResetLink } from "../../lib/auth/password-reset-client";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import {
@@ -46,9 +42,6 @@ function AdminResetPasswordPage() {
   const [error, setError] = useState("");
   const [resetComplete, setResetComplete] = useState(false);
 
-  const verifyCode = useServerFn(verifyPasswordResetCodeFn);
-  const confirmReset = useServerFn(confirmPasswordResetFn);
-
   // Verify reset code when page loads
   useEffect(() => {
     const verify = async () => {
@@ -59,28 +52,17 @@ function AdminResetPasswordPage() {
       }
 
       try {
-        const result = await verifyCode({ code: oobCode });
-        if (result.success && result.email) {
-          setEmail(result.email);
-          setVerified(true);
-          setMessage("Reset code is valid. You can now create a new password.");
-        } else {
-          setError(
-            result.message ||
-              "Reset link is invalid or has expired. Please request a new one.",
-          );
-        }
-      } catch (err) {
-        setError(
-          "Failed to verify reset link. Please request a new one or try again.",
-        );
+        const accountEmail = await verifyResetLink(oobCode);
+        setEmail(accountEmail);
+        setVerified(true);
+        setMessage("Reset code is valid. You can now create a new password.");
       } finally {
         setVerifying(false);
       }
     };
 
     verify();
-  }, [oobCode, verifyCode]);
+  }, [oobCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,14 +88,9 @@ function AdminResetPasswordPage() {
     setLoading(true);
 
     try {
-      const result = await confirmReset({ code: oobCode, newPassword });
-
-      if (result.success) {
-        setResetComplete(true);
-        setMessage(result.message);
-      } else {
-        setError(result.message || "Failed to reset password");
-      }
+      await completePasswordReset(oobCode, newPassword);
+      setResetComplete(true);
+      setMessage("Your password has been reset. You can now log in with your new password.");
     } catch (err) {
       setError(
         err instanceof Error

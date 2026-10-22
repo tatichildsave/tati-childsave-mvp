@@ -1,10 +1,6 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import {
-  verifyPasswordResetCodeFn,
-  confirmPasswordResetFn,
-} from "../../lib/backend/password-reset.functions";
+import { completePasswordReset, verifyResetLink } from "../../lib/auth/password-reset-client";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
@@ -36,9 +32,6 @@ function AcademyResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const verifyCode = useServerFn(verifyPasswordResetCodeFn);
-  const confirmReset = useServerFn(confirmPasswordResetFn);
-
   useEffect(() => {
     if (!oobCode) {
       setError("Invalid reset link. Missing reset code.");
@@ -49,16 +42,9 @@ function AcademyResetPasswordPage() {
     const verifyResetCode = async () => {
       try {
         setVerifying(true);
-        const result = await verifyCode({ code: oobCode });
-
-        if (result.success && result.email) {
-          setEmail(result.email);
-          setError("");
-        } else {
-          setError(
-            result.message || "Reset link is invalid or has expired.",
-          );
-        }
+        const accountEmail = await verifyResetLink(oobCode);
+        setEmail(accountEmail);
+        setError("");
       } catch (err) {
         setError(
           err instanceof Error
@@ -71,7 +57,7 @@ function AcademyResetPasswordPage() {
     };
 
     verifyResetCode();
-  }, [oobCode, verifyCode]);
+  }, [oobCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,15 +81,13 @@ function AcademyResetPasswordPage() {
     setLoading(true);
 
     try {
-      const result = await confirmReset({ code: oobCode, newPassword: password });
-
-      if (result.success) {
-        setSuccess(true);
-        setPassword("");
-        setConfirmPassword("");
-      } else {
-        setError(result.message || "Failed to reset password.");
+      if (!oobCode) {
+        throw new Error("Invalid reset link. Missing reset code.");
       }
+      await completePasswordReset(oobCode, password);
+      setSuccess(true);
+      setPassword("");
+      setConfirmPassword("");
     } catch (err) {
       setError(
         err instanceof Error
