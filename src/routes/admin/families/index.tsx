@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Plus, RefreshCw, Search, Users } from "lucide-react";
 import { AdminWorkspace } from "@/components/admin/AdminWorkspace";
 import { familyDisplayName, formatDate, StatusBadge } from "@/components/admin/family-format";
+import { FamilyLinkRepairPanel } from "@/components/admin/FamilyLinkRepairPanel";
 import { listFamiliesAdmin, type AdminFamilySummary } from "@/lib/backend/provisioning.functions";
 import { parentTheme as t } from "@/components/parent/theme";
 import { cn } from "@/lib/utils";
@@ -164,6 +165,8 @@ function FamiliesPage() {
           </>
         )}
       </div>
+
+      {!isLoading && !isError ? <FamilyLinkRepairPanel /> : null}
     </AdminWorkspace>
   );
 }
