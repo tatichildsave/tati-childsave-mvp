@@ -32,7 +32,7 @@ import {
   getCredentialByTatiId,
 } from "./provisioning.server";
 import { getFirebaseAdminDb } from "@/integrations/firebase/admin.server";
-import { Timestamp } from "firebase-admin/firestore";
+import { Timestamp, type DocumentReference } from "firebase-admin/firestore";
 import {
   generateTatiId,
   generateChildPin,
@@ -427,6 +427,167 @@ export const verifyProvisioningState = createServerFn({ method: "POST" })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to verify state";
       console.error("[verifyProvisioningState] Error:", message);
+      throw error;
+    }
+  });
+
+// ============================================================================
+// FUNCTIONS 6–7: Read-only family directory for administrators
+// ============================================================================
+// These never read childCredentials and never return PINs, PIN hashes or passwords.
+
+export interface AdminFamilyParent {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  phone: string | null;
+  status: string | null;
+}
+
+export interface AdminFamilyChild {
+  id: string;
+  name: string;
+  preferredName: string | null;
+  age: number | null;
+  avatar: string | null;
+  tatiId: string | null;
+  status: string;
+  createdAt: string | null;
+}
+
+export interface AdminFamilySummary {
+  id: string;
+  name: string | null;
+  status: string;
+  enrolmentDate: string | null;
+  createdAt: string | null;
+  childrenCount: number;
+  parents: AdminFamilyParent[];
+}
+
+export interface AdminFamilyDetail extends Omit<AdminFamilySummary, "childrenCount"> {
+  notes: string | null;
+  children: AdminFamilyChild[];
+}
+
+function toIso(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && value && "toDate" in value && typeof (value as { toDate: unknown }).toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return null;
+}
+
+function str(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+async function loadFamilyParents(familyRef: DocumentReference): Promise<AdminFamilyParent[]> {
+  const db = getFirebaseAdminDb();
+  const members = await familyRef.collection("members").get();
+  const adults = members.docs
+    .map((m) => ({ uid: str(m.data()["uid"]) ?? m.id, role: str(m.data()["role"]) ?? "parent" }))
+    .filter((m) => m.role === "parent" || m.role === "guardian");
+  if (adults.length === 0) return [];
+
+  const userDocs = await db.getAll(...adults.map((a) => db.collection("users").doc(a.uid)));
+  return userDocs.map((u, i) => {
+    const d = u.data() ?? {};
+    return {
+      uid: adults[i]!.uid,
+      displayName: str(d["displayName"]),
+      email: str(d["email"]),
+      phone: str(d["phone"]),
+      status: str(d["status"]),
+    };
+  });
+}
+
+export const listFamiliesAdmin = createServerFn({ method: "POST" })
+  .validator(z.void())
+  .handler(async (): Promise<AdminFamilySummary[]> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const db = getFirebaseAdminDb();
+      const snapshot = await db.collection("families").limit(500).get();
+
+      const families = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const d = doc.data();
+          const [parents, childCount] = await Promise.all([
+            loadFamilyParents(doc.ref),
+            doc.ref.collection("children").count().get(),
+          ]);
+          return {
+            id: doc.id,
+            name: str(d["name"]),
+            status: str(d["status"]) ?? "active",
+            enrolmentDate: str(d["enrolmentDate"]),
+            createdAt: toIso(d["createdAt"]),
+            childrenCount: childCount.data().count,
+            parents,
+          };
+        }),
+      );
+
+      return families.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load families";
+      console.error("[listFamiliesAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+export const getFamilyAdmin = createServerFn({ method: "POST" })
+  .validator(z.object({ familyId: z.string().min(1).max(200) }))
+  .handler(async ({ data }): Promise<AdminFamilyDetail | null> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const db = getFirebaseAdminDb();
+      const familyRef = db.collection("families").doc(data.familyId);
+      const familyDoc = await familyRef.get();
+      if (!familyDoc.exists) return null;
+      const d = familyDoc.data() ?? {};
+
+      const [parents, childrenSnap] = await Promise.all([
+        loadFamilyParents(familyRef),
+        familyRef.collection("children").get(),
+      ]);
+
+      const children: AdminFamilyChild[] = childrenSnap.docs
+        .map((c) => {
+          const cd = c.data();
+          return {
+            id: c.id,
+            name: str(cd["name"]) ?? "Unnamed learner",
+            preferredName: str(cd["preferredName"]),
+            age: typeof cd["age"] === "number" ? cd["age"] : null,
+            avatar: str(cd["avatar"]),
+            tatiId: str(cd["tatiId"]) ?? str(cd["tati_id"]),
+            status: str(cd["status"]) ?? "active",
+            createdAt: toIso(cd["createdAt"]),
+          };
+        })
+        .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
+
+      return {
+        id: familyDoc.id,
+        name: str(d["name"]),
+        notes: str(d["notes"]),
+        status: str(d["status"]) ?? "active",
+        enrolmentDate: str(d["enrolmentDate"]),
+        createdAt: toIso(d["createdAt"]),
+        parents,
+        children,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load family";
+      console.error("[getFamilyAdmin] Error:", message);
       throw error;
     }
   });
