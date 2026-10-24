@@ -4,6 +4,7 @@ import { Page } from "@/components/tati";
 import { Screen } from "@/components/learning/primitives";
 import { LessonPlayer, type LessonDraft } from "@/components/lesson/LessonPlayer";
 import { getLessonById, lessonsForTrack } from "@/lib/lessons/registry";
+import { getTrack } from "@/lib/learning/track";
 import { assertChildActivity } from "@/lib/auth/child-learning.functions";
 import { useChildLearning, useRecordChildProgress } from "@/lib/auth/use-child-learning";
 
