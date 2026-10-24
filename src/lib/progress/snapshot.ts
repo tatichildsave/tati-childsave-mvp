@@ -95,12 +95,24 @@ export function computeProgressSnapshot(
   const currentIndex = track.sequence.findIndex((item) => !eventOf(item));
   const steps: ItemProgress[] = track.sequence.map((item, index) => {
     const event = eventOf(item);
+    
+    // Check if this item is paused before by any earlier scenario
+    let isPausedBefore = false;
+    for (let i = 0; i < index; i++) {
+      const earlierItem = track.sequence[i];
+      if (earlierItem.pauseBefore?.includes(item.id) && !eventOf(earlierItem)) {
+        // An earlier scenario that pauses before this item is not yet done
+        isPausedBefore = true;
+        break;
+      }
+    }
+    
     return {
       item,
       index,
       done: !!event,
       current: index === currentIndex,
-      locked: currentIndex !== -1 && index > currentIndex,
+      locked: isPausedBefore || (currentIndex !== -1 && index > currentIndex),
       title: itemTitle(track, item),
       path: itemPath(childId, item),
       ...(event ? { event } : {}),
