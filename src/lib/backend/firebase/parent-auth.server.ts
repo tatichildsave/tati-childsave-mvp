@@ -10,8 +10,10 @@ import { getFirebaseAdmin } from "@/integrations/firebase/admin.server";
 
 // In dev (http://), __Secure- prefix is rejected by browsers unless secure=true.
 // Use plain name in dev, __Secure- in production.
+// Note: On Vercel, NODE_ENV may not reliably indicate secure context.
+// Since we use __Secure- prefix in production, we MUST set secure: true for that cookie name.
 const SESSION_COOKIE_NAME =
-  process.env["NODE_ENV"] === "production" ? "__Secure-parent-session" : "parent-session";
+  process.env["NODE_ENV"] === "production" || process.env["VERCEL"] ? "__Secure-parent-session" : "parent-session";
 const SESSION_COOKIE_MAX_AGE = 5 * 24 * 60 * 60; // 5 days in seconds
 
 export type AuthenticatedParentContext = {
@@ -41,9 +43,12 @@ export async function createParentSession(idToken: string): Promise<void> {
     });
 
     // Set the session cookie with strict security options
+    // If using __Secure- prefix (production/Vercel), secure MUST be true
+    const useSecureFlag = SESSION_COOKIE_NAME.startsWith("__Secure-");
+    
     setCookie(SESSION_COOKIE_NAME, sessionCookie, {
       httpOnly: true,
-      secure: process.env["NODE_ENV"] === "production",
+      secure: useSecureFlag,
       sameSite: "lax" as const,
       path: "/",
       maxAge: SESSION_COOKIE_MAX_AGE,
