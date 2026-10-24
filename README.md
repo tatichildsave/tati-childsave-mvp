@@ -1,24 +1,36 @@
 # TATI ChildSave MVP
 
-Implement exactly the screenshot and nothing else
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/76f052bd-0d71-421c-a36c-95979087608f).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+Financial capability learning for children, with parent, academy and administrator
+workspaces. Originally built with [Lovable](https://lovable.dev); runtime hosting
+uses Vercel, Firebase and remaining legacy Supabase integrations directly.
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node.js and npm. `package-lock.json` is the authoritative dependency lockfile;
+do not restore the obsolete Bun lockfile. Copy [.env.example](./.env.example) to a
+local environment file and configure your own service endpoints and credentials.
+Never commit secrets or put Firebase Admin/Supabase service-role credentials in
+`VITE_` variables.
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
-npm i
+npm ci
 npm run dev
 ```
+
+## Verification and deployment
+
+```sh
+npm test -- tests/lovable-exit
+npm run build
+```
+
+Database-backed tests require isolated Firebase Auth and Firestore emulators;
+do not run the full suite with production credentials. Vercel uses the existing
+`vercel.json` npm install/build configuration. No scheduled jobs or cron secret
+are configured in this repository.
+
+See [the dependency audit](./LOVABLE_DEPENDENCY_AUDIT.md) and
+[completion report](./LOVABLE_EXIT_COMPLETION_REPORT.md) for the current inventory,
+test evidence, environment settings, release gates and rollback instructions.

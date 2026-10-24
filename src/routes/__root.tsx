@@ -76,12 +76,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "TATI ChildSave" },
       { name: "description", content: "Financial capability for children aged 8-12." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "TATI ChildSave" },
       { property: "og:title", content: "TATI ChildSave" },
       { property: "og:description", content: "Financial capability for children aged 8-12." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
