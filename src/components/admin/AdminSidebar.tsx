@@ -72,15 +72,11 @@ export function AdminSidebar() {
       label: 'Programmes',
       to: '/admin/programmes',
       icon: <Layers className="h-5 w-5" />,
-      disabled: true,
-      comingSoon: true,
     },
     {
       label: 'Sessions',
       to: '/admin/sessions',
       icon: <Calendar className="h-5 w-5" />,
-      disabled: true,
-      comingSoon: true,
     },
     {
       label: 'Reports',

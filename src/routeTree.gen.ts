@@ -61,6 +61,8 @@ import { Route as AdminFacilitatorsFacilitatorUidRouteImport } from './routes/ad
 import { Route as AdminFamiliesIndexRouteImport } from './routes/admin/families/index'
 import { Route as AdminFamiliesFamilyIdRouteImport } from './routes/admin/families/$familyId'
 import { Route as AdminLearnersIndexRouteImport } from './routes/admin/learners/index'
+import { Route as AdminProgrammesIndexRouteImport } from './routes/admin/programmes/index'
+import { Route as AdminSessionsIndexRouteImport } from './routes/admin/sessions/index'
 import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as ChildAssessmentAssessmentIdRouteImport } from './routes/child/assessment.$assessmentId'
 import { Route as ChildLessonLessonIdRouteImport } from './routes/child/lesson.$lessonId'
@@ -339,6 +341,16 @@ const AdminLearnersIndexRoute = AdminLearnersIndexRouteImport.update({
   path: '/learners/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminProgrammesIndexRoute = AdminProgrammesIndexRouteImport.update({
+  id: '/programmes/',
+  path: '/programmes/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSessionsIndexRoute = AdminSessionsIndexRouteImport.update({
+  id: '/sessions/',
+  path: '/sessions/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -488,6 +500,8 @@ export interface FileRoutesByFullPath {
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
   '/admin/families/': typeof AdminFamiliesIndexRoute
   '/admin/learners/': typeof AdminLearnersIndexRoute
+  '/admin/programmes/': typeof AdminProgrammesIndexRoute
+  '/admin/sessions/': typeof AdminSessionsIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
@@ -553,6 +567,8 @@ export interface FileRoutesByTo {
   '/admin/facilitators': typeof AdminFacilitatorsIndexRoute
   '/admin/families': typeof AdminFamiliesIndexRoute
   '/admin/learners': typeof AdminLearnersIndexRoute
+  '/admin/programmes': typeof AdminProgrammesIndexRoute
+  '/admin/sessions': typeof AdminSessionsIndexRoute
   '/admin/settings': typeof AdminSettingsIndexRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
@@ -624,6 +640,8 @@ export interface FileRoutesById {
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
   '/admin/families/': typeof AdminFamiliesIndexRoute
   '/admin/learners/': typeof AdminLearnersIndexRoute
+  '/admin/programmes/': typeof AdminProgrammesIndexRoute
+  '/admin/sessions/': typeof AdminSessionsIndexRoute
   '/admin/settings/': typeof AdminSettingsIndexRoute
   '/_authenticated/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/_authenticated/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
@@ -694,6 +712,8 @@ export interface FileRouteTypes {
     | '/admin/facilitators/'
     | '/admin/families/'
     | '/admin/learners/'
+    | '/admin/programmes/'
+    | '/admin/sessions/'
     | '/admin/settings/'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
@@ -759,6 +779,8 @@ export interface FileRouteTypes {
     | '/admin/facilitators'
     | '/admin/families'
     | '/admin/learners'
+    | '/admin/programmes'
+    | '/admin/sessions'
     | '/admin/settings'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
@@ -829,6 +851,8 @@ export interface FileRouteTypes {
     | '/admin/facilitators/'
     | '/admin/families/'
     | '/admin/learners/'
+    | '/admin/programmes/'
+    | '/admin/sessions/'
     | '/admin/settings/'
     | '/_authenticated/learn/$childId/feedback'
     | '/_authenticated/learn/$childId/summary'
@@ -1219,6 +1243,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLearnersIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/programmes/': {
+      id: '/admin/programmes/'
+      path: '/programmes'
+      fullPath: '/admin/programmes/'
+      preLoaderRoute: typeof AdminProgrammesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/sessions/': {
+      id: '/admin/sessions/'
+      path: '/sessions'
+      fullPath: '/admin/sessions/'
+      preLoaderRoute: typeof AdminSessionsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/settings/': {
       id: '/admin/settings/'
       path: '/settings'
@@ -1472,6 +1510,8 @@ interface AdminRouteRouteChildren {
   AdminFacilitatorsIndexRoute: typeof AdminFacilitatorsIndexRoute
   AdminFamiliesIndexRoute: typeof AdminFamiliesIndexRoute
   AdminLearnersIndexRoute: typeof AdminLearnersIndexRoute
+  AdminProgrammesIndexRoute: typeof AdminProgrammesIndexRoute
+  AdminSessionsIndexRoute: typeof AdminSessionsIndexRoute
   AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
 }
 
@@ -1489,6 +1529,8 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminFacilitatorsIndexRoute: AdminFacilitatorsIndexRoute,
   AdminFamiliesIndexRoute: AdminFamiliesIndexRoute,
   AdminLearnersIndexRoute: AdminLearnersIndexRoute,
+  AdminProgrammesIndexRoute: AdminProgrammesIndexRoute,
+  AdminSessionsIndexRoute: AdminSessionsIndexRoute,
   AdminSettingsIndexRoute: AdminSettingsIndexRoute,
 }
 
@@ -1561,3 +1603,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
