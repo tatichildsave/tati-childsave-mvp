@@ -1164,3 +1164,203 @@ export const removeLearnerFromFacilitatorCohort = createServerFn({ method: "POST
       throw error;
     }
   });
+
+// ============================================================================
+// FUNCTION 15: List Sessions — admin dashboard
+// ============================================================================
+// Display all academy sessions (classes) with facilitator and cohort details.
+// Returns session data for the admin sessions management page.
+
+export interface AdminSessionItem {
+  id: string;
+  cohortName: string;
+  activityTitle: string;
+  facilitatorName: string | null;
+  facilitatorEmail: string | null;
+  scheduledAt: string; // ISO 8601 string
+  durationMinutes: number;
+  deliveryMode: "in-person" | "virtual";
+  location: string;
+  status: "scheduled" | "completed" | "cancelled";
+  learnerCount: number;
+}
+
+export const listSessionsAdmin = createServerFn({ method: "POST" })
+  .validator(z.void())
+  .handler(async (): Promise<AdminSessionItem[]> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const db = getFirebaseAdminDb();
+
+      // Query all academy classes (sessions)
+      const classesSnapshot = await db.collection("academyClasses").get();
+
+      // Get all unique cohort IDs and facilitator UIDs for batch loading
+      const cohortIds = new Set<string>();
+      const facilitatorUids = new Set<string>();
+      const classData = new Map<string, any>();
+
+      for (const doc of classesSnapshot.docs) {
+        const data = doc.data();
+        classData.set(doc.id, data);
+        cohortIds.add(data.cohortId);
+        facilitatorUids.add(data.facilitatorUid);
+      }
+
+      // Batch load cohorts and facilitators
+      const [cohortDocs, facilitatorDocs] = await Promise.all([
+        cohortIds.size > 0
+          ? db.getAll(...[...cohortIds].map((id) => db.collection("academyCohorts").doc(id)))
+          : Promise.resolve([]),
+        facilitatorUids.size > 0
+          ? db.getAll(...[...facilitatorUids].map((uid) => db.collection("users").doc(uid)))
+          : Promise.resolve([]),
+      ]);
+
+      // Build lookup maps
+      const cohortMap = new Map(
+        cohortDocs.map((doc) => [doc.id, { name: str(doc.data()?.["name"]) ?? "Unnamed Cohort" }]),
+      );
+
+      const facilitatorMap = new Map(
+        facilitatorDocs.map((doc) => [
+          doc.id,
+          {
+            name: str(doc.data()?.["displayName"]),
+            email: str(doc.data()?.["email"]),
+          },
+        ]),
+      );
+
+      // Get learner counts per cohort
+      const cohortLearnerCounts = new Map<string, number>();
+      for (const cohortId of cohortIds) {
+        const cohortDoc = await db.collection("academyCohorts").doc(cohortId).get();
+        const learnerIds = cohortDoc.data()?.["learnerIds"] ?? [];
+        cohortLearnerCounts.set(cohortId, Array.isArray(learnerIds) ? learnerIds.length : 0);
+      }
+
+      // Transform to admin format
+      const sessions: AdminSessionItem[] = classesSnapshot.docs
+        .map((doc): AdminSessionItem | null => {
+          const data = classData.get(doc.id);
+          if (!data) return null;
+
+          const scheduledAt = data.scheduledAt instanceof Timestamp
+            ? data.scheduledAt.toDate().toISOString()
+            : typeof data.scheduledAt === "string"
+            ? data.scheduledAt
+            : new Date().toISOString();
+
+          const cohort = cohortMap.get(data.cohortId);
+          const facilitator = facilitatorMap.get(data.facilitatorUid);
+          const learnerCount = cohortLearnerCounts.get(data.cohortId) ?? 0;
+
+          return {
+            id: doc.id,
+            cohortName: cohort?.name ?? "Unnamed Cohort",
+            activityTitle: str(data.activityTitle) ?? str(data.activityId) ?? "Unknown Activity",
+            facilitatorName: facilitator?.name,
+            facilitatorEmail: facilitator?.email,
+            scheduledAt,
+            durationMinutes: typeof data.durationMinutes === "number" ? data.durationMinutes : 60,
+            deliveryMode: data.deliveryMode === "virtual" ? "virtual" : "in-person",
+            location: str(data.location) ?? "",
+            status: ["completed", "cancelled"].includes(data.status) ? data.status : "scheduled",
+            learnerCount,
+          };
+        })
+        .filter((s): s is AdminSessionItem => s !== null)
+        .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+
+      return sessions;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load sessions";
+      console.error("[listSessionsAdmin] Error:", message);
+      throw error;
+    }
+  });
+
+// ============================================================================
+// FUNCTION 16: List Programmes — admin dashboard
+// ============================================================================
+// Display all academy programmes (cohorts) with facilitator and learner details.
+// Returns programme data for the admin programmes management page.
+
+export interface AdminProgrammeItem {
+  id: string;
+  name: string;
+  facilitatorName: string | null;
+  facilitatorEmail: string | null;
+  learnerCount: number;
+  status: "active" | "archived";
+  createdAt: string | null; // ISO 8601 string
+  description: string | null;
+}
+
+export const listProgrammesAdmin = createServerFn({ method: "POST" })
+  .validator(z.void())
+  .handler(async (): Promise<AdminProgrammeItem[]> => {
+    try {
+      const adminUid = await getCurrentAdminUid();
+      await verifyAdminAuthorization(adminUid);
+
+      const db = getFirebaseAdminDb();
+
+      // Query all academy cohorts
+      const cohortsSnapshot = await db.collection("academyCohorts").get();
+
+      // Get all unique facilitator UIDs for batch loading
+      const facilitatorUids = new Set<string>();
+      for (const doc of cohortsSnapshot.docs) {
+        const facilitatorUid = doc.data().facilitatorUid;
+        if (facilitatorUid) facilitatorUids.add(facilitatorUid);
+      }
+
+      // Batch load facilitators
+      const facilitatorDocs = facilitatorUids.size > 0
+        ? await db.getAll(...[...facilitatorUids].map((uid) => db.collection("users").doc(uid)))
+        : [];
+
+      // Build lookup map
+      const facilitatorMap = new Map(
+        facilitatorDocs.map((doc) => [
+          doc.id,
+          {
+            name: str(doc.data()?.["displayName"]),
+            email: str(doc.data()?.["email"]),
+          },
+        ]),
+      );
+
+      // Transform to admin format
+      const programmes: AdminProgrammeItem[] = cohortsSnapshot.docs
+        .map((doc): AdminProgrammeItem | null => {
+          const data = doc.data();
+          const learnerIds = data.learnerIds ?? [];
+          const learnerCount = Array.isArray(learnerIds) ? learnerIds.length : 0;
+          const facilitator = facilitatorMap.get(data.facilitatorUid);
+
+          return {
+            id: doc.id,
+            name: str(data.name) ?? "Unnamed Programme",
+            facilitatorName: facilitator?.name,
+            facilitatorEmail: facilitator?.email,
+            learnerCount,
+            status: (data.status === "archived" ? "archived" : "active") as "active" | "archived",
+            createdAt: toIso(data.createdAt),
+            description: str(data.description),
+          };
+        })
+        .filter((p): p is AdminProgrammeItem => p !== null)
+        .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+
+      return programmes;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load programmes";
+      console.error("[listProgrammesAdmin] Error:", message);
+      throw error;
+    }
+  });

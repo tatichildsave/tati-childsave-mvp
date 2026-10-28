@@ -16,6 +16,7 @@ import {
   Plus,
 } from "lucide-react";
 import { AdminWorkspace } from "@/components/admin/AdminWorkspace";
+import { listProgrammesAdmin, type AdminProgrammeItem } from "@/lib/backend/provisioning.functions";
 import { parentTheme as t } from "@/components/parent/theme";
 import { cn } from "@/lib/utils";
 
@@ -24,25 +25,7 @@ export const Route = createFileRoute("/admin/programmes/")({
   component: ProgrammesPage,
 });
 
-interface ProgrammeItem {
-  id: string;
-  name: string;
-  facilitatorName: string;
-  facilitatorEmail: string;
-  learnerCount: number;
-  status: "active" | "archived";
-  createdAt: Date;
-  description: string | null;
-}
-
 type StatusFilter = "all" | "active" | "archived";
-
-// Mock data for now - replace with real server function
-async function listProgrammesAdmin(): Promise<ProgrammeItem[]> {
-  // TODO: Replace with real server function that queries academyCohorts
-  // For now, return empty array to show structure
-  return [];
-}
 
 function ProgrammesPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
@@ -206,11 +189,13 @@ function ProgrammesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-[#6B7489]">
-                        {new Date(programme.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {programme.createdAt
+                          ? new Date(programme.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <button className="text-[#1C5AD6] hover:underline text-[13px] font-bold">
@@ -250,10 +235,12 @@ function ProgrammesPage() {
                   </div>
                   <div className="mt-3 flex items-center gap-2 text-[12px] text-[#8A93A8]">
                     <Calendar className="h-3 w-3" aria-hidden />
-                    {new Date(programme.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {programme.createdAt
+                      ? new Date(programme.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Unknown"}
                   </div>
                 </li>
               ))}

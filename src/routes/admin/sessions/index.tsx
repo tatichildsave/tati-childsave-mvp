@@ -17,6 +17,7 @@ import {
   Plus,
 } from "lucide-react";
 import { AdminWorkspace } from "@/components/admin/AdminWorkspace";
+import { listSessionsAdmin, type AdminSessionItem } from "@/lib/backend/provisioning.functions";
 import { parentTheme as t } from "@/components/parent/theme";
 import { cn } from "@/lib/utils";
 
@@ -25,28 +26,7 @@ export const Route = createFileRoute("/admin/sessions/")({
   component: SessionsPage,
 });
 
-interface SessionItem {
-  id: string;
-  cohortName: string;
-  activityTitle: string;
-  facilitatorName: string;
-  facilitatorEmail: string;
-  scheduledAt: Date;
-  durationMinutes: number;
-  deliveryMode: "in-person" | "virtual";
-  location: string;
-  status: "scheduled" | "completed" | "cancelled";
-  learnerCount: number;
-}
-
 type StatusFilter = "all" | "scheduled" | "completed" | "cancelled";
-
-// Mock data for now - replace with real server function
-async function listSessionsAdmin(): Promise<SessionItem[]> {
-  // TODO: Replace with real server function that queries academyClasses
-  // For now, return empty array to show structure
-  return [];
-}
 
 function SessionsPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -326,16 +306,16 @@ function StatCard({ label, value, icon, color = "text-[#1C5AD6]" }: StatCardProp
   );
 }
 
-function formatDate(date: Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
+function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-function formatTime(date: Date): string {
-  return new Date(date).toLocaleTimeString("en-US", {
+function formatTime(isoString: string): string {
+  return new Date(isoString).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
