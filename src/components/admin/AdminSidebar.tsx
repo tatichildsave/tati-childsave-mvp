@@ -21,6 +21,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Activity,
 } from 'lucide-react';
 import logo from '@/assets/tati-logo.svg';
 import { Button } from '@/components/tati';
@@ -61,6 +62,11 @@ export function AdminSidebar() {
       label: 'Facilitators',
       to: '/admin/facilitators',
       icon: <UserCheck className="h-5 w-5" />,
+    },
+    {
+      label: 'Activity',
+      to: '/admin/activity',
+      icon: <Activity className="h-5 w-5" />,
     },
     {
       label: 'Programmes',

@@ -53,6 +53,7 @@ import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
 import { Route as AcademyCohortsChildIdRouteImport } from './routes/academy/cohorts/$childId'
 import { Route as AcademySessionMonitorRouteImport } from './routes/academy/session/monitor'
 import { Route as AcademySessionStartRouteImport } from './routes/academy/session/start'
+import { Route as AdminActivityIndexRouteImport } from './routes/admin/activity/index'
 import { Route as AdminAnalyticsIndexRouteImport } from './routes/admin/analytics/index'
 import { Route as AdminEnrollIndexRouteImport } from './routes/admin/enroll/index'
 import { Route as AdminFacilitatorsIndexRouteImport } from './routes/admin/facilitators/index'
@@ -297,6 +298,11 @@ const AcademySessionStartRoute = AcademySessionStartRouteImport.update({
   path: '/start',
   getParentRoute: () => AcademySessionRoute,
 } as any)
+const AdminActivityIndexRoute = AdminActivityIndexRouteImport.update({
+  id: '/activity/',
+  path: '/activity/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAnalyticsIndexRoute = AdminAnalyticsIndexRouteImport.update({
   id: '/analytics/',
   path: '/analytics/',
@@ -476,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/activity/': typeof AdminActivityIndexRoute
   '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/enroll/': typeof AdminEnrollIndexRoute
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
@@ -540,6 +547,7 @@ export interface FileRoutesByTo {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/activity': typeof AdminActivityIndexRoute
   '/admin/analytics': typeof AdminAnalyticsIndexRoute
   '/admin/enroll': typeof AdminEnrollIndexRoute
   '/admin/facilitators': typeof AdminFacilitatorsIndexRoute
@@ -610,6 +618,7 @@ export interface FileRoutesById {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/activity/': typeof AdminActivityIndexRoute
   '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/enroll/': typeof AdminEnrollIndexRoute
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
@@ -679,6 +688,7 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/activity/'
     | '/admin/analytics/'
     | '/admin/enroll/'
     | '/admin/facilitators/'
@@ -743,6 +753,7 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/activity'
     | '/admin/analytics'
     | '/admin/enroll'
     | '/admin/facilitators'
@@ -812,6 +823,7 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/activity/'
     | '/admin/analytics/'
     | '/admin/enroll/'
     | '/admin/facilitators/'
@@ -1151,6 +1163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcademySessionStartRouteImport
       parentRoute: typeof AcademySessionRoute
     }
+    '/admin/activity/': {
+      id: '/admin/activity/'
+      path: '/activity'
+      fullPath: '/admin/activity/'
+      preLoaderRoute: typeof AdminActivityIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/analytics/': {
       id: '/admin/analytics/'
       path: '/analytics'
@@ -1447,6 +1466,7 @@ interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFacilitatorsFacilitatorUidRoute: typeof AdminFacilitatorsFacilitatorUidRoute
   AdminFamiliesFamilyIdRoute: typeof AdminFamiliesFamilyIdRoute
+  AdminActivityIndexRoute: typeof AdminActivityIndexRoute
   AdminAnalyticsIndexRoute: typeof AdminAnalyticsIndexRoute
   AdminEnrollIndexRoute: typeof AdminEnrollIndexRoute
   AdminFacilitatorsIndexRoute: typeof AdminFacilitatorsIndexRoute
@@ -1463,6 +1483,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminFacilitatorsFacilitatorUidRoute: AdminFacilitatorsFacilitatorUidRoute,
   AdminFamiliesFamilyIdRoute: AdminFamiliesFamilyIdRoute,
+  AdminActivityIndexRoute: AdminActivityIndexRoute,
   AdminAnalyticsIndexRoute: AdminAnalyticsIndexRoute,
   AdminEnrollIndexRoute: AdminEnrollIndexRoute,
   AdminFacilitatorsIndexRoute: AdminFacilitatorsIndexRoute,
@@ -1540,3 +1561,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
