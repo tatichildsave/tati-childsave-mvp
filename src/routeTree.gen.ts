@@ -53,11 +53,14 @@ import { Route as ParentMetricsRouteImport } from './routes/parent/metrics'
 import { Route as AcademyCohortsChildIdRouteImport } from './routes/academy/cohorts/$childId'
 import { Route as AcademySessionMonitorRouteImport } from './routes/academy/session/monitor'
 import { Route as AcademySessionStartRouteImport } from './routes/academy/session/start'
+import { Route as AdminAnalyticsIndexRouteImport } from './routes/admin/analytics/index'
 import { Route as AdminEnrollIndexRouteImport } from './routes/admin/enroll/index'
 import { Route as AdminFacilitatorsIndexRouteImport } from './routes/admin/facilitators/index'
 import { Route as AdminFacilitatorsFacilitatorUidRouteImport } from './routes/admin/facilitators/$facilitatorUid'
 import { Route as AdminFamiliesIndexRouteImport } from './routes/admin/families/index'
 import { Route as AdminFamiliesFamilyIdRouteImport } from './routes/admin/families/$familyId'
+import { Route as AdminLearnersIndexRouteImport } from './routes/admin/learners/index'
+import { Route as AdminSettingsIndexRouteImport } from './routes/admin/settings/index'
 import { Route as ChildAssessmentAssessmentIdRouteImport } from './routes/child/assessment.$assessmentId'
 import { Route as ChildLessonLessonIdRouteImport } from './routes/child/lesson.$lessonId'
 import { Route as ChildReflectionReflectionIdRouteImport } from './routes/child/reflection.$reflectionId'
@@ -294,6 +297,11 @@ const AcademySessionStartRoute = AcademySessionStartRouteImport.update({
   path: '/start',
   getParentRoute: () => AcademySessionRoute,
 } as any)
+const AdminAnalyticsIndexRoute = AdminAnalyticsIndexRouteImport.update({
+  id: '/analytics/',
+  path: '/analytics/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminEnrollIndexRoute = AdminEnrollIndexRouteImport.update({
   id: '/enroll/',
   path: '/enroll/',
@@ -318,6 +326,16 @@ const AdminFamiliesIndexRoute = AdminFamiliesIndexRouteImport.update({
 const AdminFamiliesFamilyIdRoute = AdminFamiliesFamilyIdRouteImport.update({
   id: '/families/$familyId',
   path: '/families/$familyId',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminLearnersIndexRoute = AdminLearnersIndexRouteImport.update({
+  id: '/learners/',
+  path: '/learners/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminSettingsIndexRoute = AdminSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const ChildAssessmentAssessmentIdRoute =
@@ -458,9 +476,12 @@ export interface FileRoutesByFullPath {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/enroll/': typeof AdminEnrollIndexRoute
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
   '/admin/families/': typeof AdminFamiliesIndexRoute
+  '/admin/learners/': typeof AdminLearnersIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
@@ -519,9 +540,12 @@ export interface FileRoutesByTo {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/analytics': typeof AdminAnalyticsIndexRoute
   '/admin/enroll': typeof AdminEnrollIndexRoute
   '/admin/facilitators': typeof AdminFacilitatorsIndexRoute
   '/admin/families': typeof AdminFamiliesIndexRoute
+  '/admin/learners': typeof AdminLearnersIndexRoute
+  '/admin/settings': typeof AdminSettingsIndexRoute
   '/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
@@ -586,9 +610,12 @@ export interface FileRoutesById {
   '/child/reflection/$reflectionId': typeof ChildReflectionReflectionIdRoute
   '/child/scenario/$scenarioId': typeof ChildScenarioScenarioIdRoute
   '/parent/child/$childId': typeof ParentChildChildIdRoute
+  '/admin/analytics/': typeof AdminAnalyticsIndexRoute
   '/admin/enroll/': typeof AdminEnrollIndexRoute
   '/admin/facilitators/': typeof AdminFacilitatorsIndexRoute
   '/admin/families/': typeof AdminFamiliesIndexRoute
+  '/admin/learners/': typeof AdminLearnersIndexRoute
+  '/admin/settings/': typeof AdminSettingsIndexRoute
   '/_authenticated/learn/$childId/feedback': typeof AuthenticatedLearnChildIdFeedbackRoute
   '/_authenticated/learn/$childId/summary': typeof AuthenticatedLearnChildIdSummaryRoute
   '/academy/admin/schools/$schoolId': typeof AcademyAdminSchoolsSchoolIdRoute
@@ -652,9 +679,12 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/analytics/'
     | '/admin/enroll/'
     | '/admin/facilitators/'
     | '/admin/families/'
+    | '/admin/learners/'
+    | '/admin/settings/'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
     | '/academy/admin/schools/$schoolId'
@@ -713,9 +743,12 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/analytics'
     | '/admin/enroll'
     | '/admin/facilitators'
     | '/admin/families'
+    | '/admin/learners'
+    | '/admin/settings'
     | '/learn/$childId/feedback'
     | '/learn/$childId/summary'
     | '/academy/admin/schools/$schoolId'
@@ -779,9 +812,12 @@ export interface FileRouteTypes {
     | '/child/reflection/$reflectionId'
     | '/child/scenario/$scenarioId'
     | '/parent/child/$childId'
+    | '/admin/analytics/'
     | '/admin/enroll/'
     | '/admin/facilitators/'
     | '/admin/families/'
+    | '/admin/learners/'
+    | '/admin/settings/'
     | '/_authenticated/learn/$childId/feedback'
     | '/_authenticated/learn/$childId/summary'
     | '/academy/admin/schools/$schoolId'
@@ -1115,6 +1151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AcademySessionStartRouteImport
       parentRoute: typeof AcademySessionRoute
     }
+    '/admin/analytics/': {
+      id: '/admin/analytics/'
+      path: '/analytics'
+      fullPath: '/admin/analytics/'
+      preLoaderRoute: typeof AdminAnalyticsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/enroll/': {
       id: '/admin/enroll/'
       path: '/enroll'
@@ -1148,6 +1191,20 @@ declare module '@tanstack/react-router' {
       path: '/families/$familyId'
       fullPath: '/admin/families/$familyId'
       preLoaderRoute: typeof AdminFamiliesFamilyIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/learners/': {
+      id: '/admin/learners/'
+      path: '/learners'
+      fullPath: '/admin/learners/'
+      preLoaderRoute: typeof AdminLearnersIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/settings/': {
+      id: '/admin/settings/'
+      path: '/settings'
+      fullPath: '/admin/settings/'
+      preLoaderRoute: typeof AdminSettingsIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/child/assessment/$assessmentId': {
@@ -1390,9 +1447,12 @@ interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminFacilitatorsFacilitatorUidRoute: typeof AdminFacilitatorsFacilitatorUidRoute
   AdminFamiliesFamilyIdRoute: typeof AdminFamiliesFamilyIdRoute
+  AdminAnalyticsIndexRoute: typeof AdminAnalyticsIndexRoute
   AdminEnrollIndexRoute: typeof AdminEnrollIndexRoute
   AdminFacilitatorsIndexRoute: typeof AdminFacilitatorsIndexRoute
   AdminFamiliesIndexRoute: typeof AdminFamiliesIndexRoute
+  AdminLearnersIndexRoute: typeof AdminLearnersIndexRoute
+  AdminSettingsIndexRoute: typeof AdminSettingsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
@@ -1403,9 +1463,12 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminFacilitatorsFacilitatorUidRoute: AdminFacilitatorsFacilitatorUidRoute,
   AdminFamiliesFamilyIdRoute: AdminFamiliesFamilyIdRoute,
+  AdminAnalyticsIndexRoute: AdminAnalyticsIndexRoute,
   AdminEnrollIndexRoute: AdminEnrollIndexRoute,
   AdminFacilitatorsIndexRoute: AdminFacilitatorsIndexRoute,
   AdminFamiliesIndexRoute: AdminFamiliesIndexRoute,
+  AdminLearnersIndexRoute: AdminLearnersIndexRoute,
+  AdminSettingsIndexRoute: AdminSettingsIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

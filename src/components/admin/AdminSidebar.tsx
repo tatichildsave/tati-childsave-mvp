@@ -56,8 +56,6 @@ export function AdminSidebar() {
       label: 'Learners',
       to: '/admin/learners',
       icon: <BookOpen className="h-5 w-5" />,
-      disabled: true,
-      comingSoon: true,
     },
     {
       label: 'Facilitators',
@@ -80,10 +78,8 @@ export function AdminSidebar() {
     },
     {
       label: 'Reports',
-      to: '/admin/reports',
+      to: '/admin/analytics',
       icon: <BarChart3 className="h-5 w-5" />,
-      disabled: true,
-      comingSoon: true,
     },
     {
       label: 'Settings',

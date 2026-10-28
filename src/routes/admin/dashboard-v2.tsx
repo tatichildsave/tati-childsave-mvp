@@ -435,13 +435,13 @@ function QuickLinksSection({ onNavigate }: QuickLinksSectionProps) {
       label: "View Learners",
       description: "View and manage learner profiles",
       icon: BookOpen,
-      href: "#",
+      href: "/admin/learners",
     },
     {
       label: "View Facilitators",
       description: "Manage facilitators and their details",
       icon: UserCheck,
-      href: "#",
+      href: "/admin/facilitators",
     },
     {
       label: "Manage Programmes",
