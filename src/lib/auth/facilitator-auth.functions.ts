@@ -40,6 +40,7 @@ export async function checkFacilitatorStatus(userId: string): Promise<boolean> {
 /**
  * Get current facilitator session info if authenticated.
  * Waits for Firebase Auth to restore a persisted login before deciding.
+ * Refreshes the ID token to ensure validity for server functions.
  * Returns null if not authenticated or not a facilitator.
  */
 export async function getFacilitatorSession(): Promise<FacilitatorSession | null> {
@@ -50,6 +51,14 @@ export async function getFacilitatorSession(): Promise<FacilitatorSession | null
     const user = auth.currentUser;
 
     if (!user) return null;
+
+    // Refresh token to ensure it's still valid (prevents auth/invalid-credential errors)
+    try {
+      await user.getIdToken(true); // Force refresh
+    } catch (tokenError) {
+      console.error("Error refreshing ID token:", tokenError);
+      // Continue anyway - the user might still be valid
+    }
 
     const isFacilitator = await checkFacilitatorStatus(user.uid);
     if (!isFacilitator) return null;

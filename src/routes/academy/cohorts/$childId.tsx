@@ -33,10 +33,12 @@ function AcademyLearnerDetail() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Get facilitator session
+  // Use shorter stale time for learner detail to ensure fresh auth tokens
   const { data: session, isLoading: sessionLoading } = useQuery({
     queryKey: ["facilitator-session"],
     queryFn: getFacilitatorSession,
-    staleTime: 60_000,
+    staleTime: 10_000, // Refresh more frequently for this route
+    gcTime: 5 * 60_000,
   });
 
   // Load learner detail data
@@ -52,7 +54,19 @@ function AcademyLearnerDetail() {
       return getAssignedLearnerDetail(session.uid, childId);
     },
     enabled: !!session?.uid,
-    retry: 2,
+    retry: (failureCount, error) => {
+      // Retry on auth errors (token might have expired)
+      const isAuthError = error instanceof Error && 
+        (error.message.includes("invalid-credential") || 
+         error.message.includes("auth/") ||
+         error.message.includes("not assigned"));
+      // Retry up to 3 times on auth errors, but only retry others once
+      return isAuthError ? failureCount < 3 : failureCount < 1;
+    },
+    retryDelay: (attemptIndex) => {
+      // Exponential backoff: 500ms, 1000ms, 2000ms
+      return Math.min(1000 * Math.pow(2, attemptIndex), 30000);
+    },
   });
 
   // Redirect to login if not authenticated
