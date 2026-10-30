@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Page, PageHeader, Card, LessonCard, ScenarioCard, ProgressBar } from "@/components/tati";
-import { getTrack, itemTitle, itemSubtitle } from "@/lib/learning/track";
+import { ErrorState, LoadingState, Page } from "@/components/tati";
+import { ChildJourney } from "@/components/child/ChildJourney";
 import { useChildLearning } from "@/lib/auth/use-child-learning";
 
 export const Route = createFileRoute("/child/learn")({
@@ -25,15 +25,12 @@ export const Route = createFileRoute("/child/learn")({
 });
 
 function ChildLearn() {
-  const { snapshot, isLoading, isError } = useChildLearning();
-  const track = getTrack("save");
+  const { snapshot, isLoading, isError, refetch } = useChildLearning();
 
   if (isLoading || !snapshot) {
     return (
       <Page withBottomNav role="junior">
-        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          <p className="font-bold">Opening your journey…</p>
-        </div>
+        <LoadingState label="Opening your journey…" />
       </Page>
     );
   }
@@ -41,78 +38,14 @@ function ChildLearn() {
   if (isError) {
     return (
       <Page withBottomNav role="junior">
-        <PageHeader backTo="/child/home" title="My learning journey" />
-        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          <p>We could not load your journey. Please try again.</p>
-        </div>
+        <ErrorState
+          title="Your journey didn't load"
+          description="Please try again. Your progress is safe."
+          onRetry={() => void refetch()}
+        />
       </Page>
     );
   }
 
-  const lessonSteps = snapshot.steps.filter(({ item }) => item.kind === "lesson");
-  const scenarioSteps = snapshot.steps.filter(({ item }) => item.kind === "scenario");
-  const childPath = (kind: string, id: string) => {
-    if (kind === "lesson") return `/child/lesson/${id}`;
-    if (kind === "scenario") return `/child/scenario/${id}`;
-    if (kind === "assessment") return `/child/assessment/${id}`;
-    return `/child/reflection/${id}`;
-  };
-
-  return (
-    <Page withBottomNav role="junior">
-      <PageHeader
-        backTo="/child/home"
-        eyebrow="Track: SAVE"
-        title="My learning journey"
-        subtitle="Learn, decide, see what happens, then adjust your plan."
-        listenable
-      />
-
-      {/* Progress Section */}
-      <Card tone="surface" className="mb-6">
-        <ProgressBar
-          value={snapshot.journey.doneItems.length}
-          max={snapshot.track.sequence.length}
-          label={`${snapshot.journey.doneItems.length} of ${snapshot.track.sequence.length} journey stops finished`}
-          showPercent
-          tone="success"
-        />
-      </Card>
-
-      {/* Mini-lessons Section */}
-      <div className="mb-6">
-        <h2 className="mb-3 text-lg font-extrabold">📚 Mini-lessons</h2>
-        <div className="space-y-2">
-          {lessonSteps.map(({ item, index, done, locked }) => (
-            <LessonCard
-              key={item.id}
-              index={index + 1}
-              title={itemTitle(track, item)}
-              subtitle={itemSubtitle(track, item)}
-              status={done ? "done" : locked ? "locked" : "ready"}
-              to={childPath(item.kind, item.id)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Decision Stories Section */}
-      <div className="mb-6">
-        <h2 className="mb-3 text-lg font-extrabold">💭 Decision stories</h2>
-        <div className="space-y-3">
-          {scenarioSteps.map(({ item, done, locked }) => (
-            <ScenarioCard
-              key={item.id}
-              title={itemTitle(track, item)}
-              description={
-                item.blurb ?? "Make a money choice, see what happens, and keep learning."
-              }
-              status={done ? "done" : locked ? "locked" : "ready"}
-              to={childPath(item.kind, item.id)}
-            />
-          ))}
-        </div>
-      </div>
-    </Page>
-  );
+  return <ChildJourney snapshot={snapshot} />;
 }
