@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Page } from "@/components/tati";
+import { ErrorState, LoadingState, Page } from "@/components/tati";
 import { ScenarioPlayer } from "@/components/scenario/ScenarioPlayer";
 import { getScenarioDefinition } from "@/lib/scenario/registry";
 import { getTrack, itemTitle } from "@/lib/learning/track";
@@ -11,7 +11,6 @@ import {
 } from "@/lib/auth/child-learning.functions";
 import type { ScenarioState } from "@/lib/scenario/types";
 import type { ScenarioPersistence } from "@/lib/scenario/useScenarioRunner";
-import { Screen, Card, PrimaryButton } from "@/components/learning/primitives";
 
 const scenarioPersistence: ScenarioPersistence = {
   loadSession: async (_childId, id) => {
@@ -71,9 +70,7 @@ function ScenarioPage() {
   if (isLoading || !data || !snapshot) {
     return (
       <Page role="junior">
-        <div className="rounded-3xl border border-dashed border-border p-8 text-center text-muted-foreground">
-          <p className="font-bold">Opening your story…</p>
-        </div>
+        <LoadingState label="Opening your story…" />
       </Page>
     );
   }
@@ -81,15 +78,11 @@ function ScenarioPage() {
   if (!scenario || !item) {
     return (
       <Page role="junior">
-        <Screen>
-          <Card>
-            <p className="text-lg font-bold mb-4">Story not found</p>
-            <p className="text-base mb-4">This story is not available in your journey.</p>
-            <PrimaryButton onClick={() => navigate({ to: "/child/learn" })}>
-              Back to my journey
-            </PrimaryButton>
-          </Card>
-        </Screen>
+        <ErrorState
+          title="This story isn't available"
+          description="Please return to your journey and choose another unlocked story."
+          onRetry={() => void navigate({ to: "/child/learn" })}
+        />
       </Page>
     );
   }

@@ -4,7 +4,7 @@ import { dayProgressPercent } from "@/lib/scenario/engine";
 import { useScenarioRunner, type ScenarioPersistence } from "@/lib/scenario/useScenarioRunner";
 import type { ScenarioDefinition } from "@/lib/scenario/types";
 import { Screen, PrimaryButton } from "@/components/learning/primitives";
-import { ChapterBanner, GoalWidget } from "@/components/tati";
+import { ChapterBanner, GoalWidget, ListenButton } from "@/components/tati";
 import { SaveFeedback } from "@/components/learning/SaveFeedback";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/gamification/AnimatedNumber";
@@ -95,17 +95,20 @@ export function ScenarioPlayer({
             ? { to: "/child/learn" as const }
             : { to: "/learn/$childId" as const, params: { childId } })}
           aria-label="Back to my journey"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground"
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-secondary-foreground",
+            childJourney ? "bg-white shadow-card" : "bg-secondary",
+          )}
         >
           <span aria-hidden="true">←</span>
         </Link>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-bold">{scenario.title}</p>
+          <p className={cn("truncate text-base font-bold", childJourney && "text-[#0f2248]")}>
+            {scenario.title}
+          </p>
           <p className="truncate text-sm text-muted-foreground">{scenario.subtitle}</p>
         </div>
-        <span className="rounded-full bg-primary-soft px-3 py-1.5 text-sm font-semibold text-primary">
-          🔊 Listen
-        </span>
+        <ListenButton className="min-h-[40px] rounded-full px-3 py-1.5 text-sm" />
       </header>
 
       {chapterStage && dayNumber !== undefined && daysTotal !== undefined ? (
@@ -158,10 +161,10 @@ export function ScenarioPlayer({
       <section className="mb-4">
         <div className="flex items-center justify-between text-sm font-semibold">
           <span>
-            📅 Day {state.day} of {scenario.totalDays}
+            Day {state.day} of {scenario.totalDays}
           </span>
           <span className="text-primary">
-            {state.phase === "consequence" ? "● Decision Consequence" : `${dayPct}% completed`}
+            {state.phase === "consequence" ? "Decision consequence" : `${dayPct}% completed`}
           </span>
         </div>
         <div
