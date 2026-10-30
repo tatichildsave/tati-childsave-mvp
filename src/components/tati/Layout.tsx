@@ -1,5 +1,6 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { ChartColumnIncreasing, House, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tatiTheme, containers } from "@/lib/theme";
 import logo from "@/assets/tati-logo.svg";
@@ -115,9 +116,9 @@ export function ListenButton({ className }: { className?: string }) {
 }
 
 const navItems = [
-  { to: "/child/home", label: "Home", icon: "🏠" },
-  { to: "/child/learn", label: "My Journey", icon: "🧭" },
-  { to: "/child/progress", label: "Progress", icon: "📊" },
+  { to: "/child/home", label: "Home", icon: House },
+  { to: "/child/learn", label: "Journey", icon: Map },
+  { to: "/child/progress", label: "Progress", icon: ChartColumnIncreasing },
 ] as const;
 
 export function BottomNavigation() {
@@ -138,14 +139,12 @@ export function BottomNavigation() {
             <Link
               to={item.to}
               className={cn(
-                "flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-2xl text-xs font-extrabold text-muted-foreground",
+                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-2xl text-xs font-extrabold text-muted-foreground",
                 tatiTheme.focusRing,
               )}
               activeProps={{ className: "text-primary" }}
             >
-              <span aria-hidden="true" className="text-xl">
-                {item.icon}
-              </span>
+              <item.icon aria-hidden="true" className="h-5 w-5" />
               {item.label}
             </Link>
           </li>
