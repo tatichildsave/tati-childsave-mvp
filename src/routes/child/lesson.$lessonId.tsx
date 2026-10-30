@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Page } from "@/components/tati";
-import { Screen } from "@/components/learning/primitives";
+import { ErrorState, LoadingState, Page } from "@/components/tati";
 import { LessonPlayer, type LessonDraft } from "@/components/lesson/LessonPlayer";
 import { getLessonById, lessonsForTrack } from "@/lib/lessons/registry";
 import { getTrack } from "@/lib/learning/track";
@@ -43,13 +42,23 @@ function LessonPage() {
   const record = useRecordChildProgress();
   const navigate = useNavigate();
 
+  if (access.isLoading) {
+    return (
+      <Page role="junior">
+        <LoadingState label="Opening your lesson…" />
+      </Page>
+    );
+  }
+
   const playableLesson = lesson;
   if (!playableLesson || access.isError || !data || !snapshot) {
     return (
       <Page role="junior">
-        <Screen>
-          <p className="text-lg">Lesson not found</p>
-        </Screen>
+        <ErrorState
+          title="This lesson isn't available"
+          description="Please return to your journey and choose another unlocked lesson."
+          onRetry={() => void access.refetch()}
+        />
       </Page>
     );
   }
@@ -88,6 +97,7 @@ function LessonPage() {
       currentSaved={snapshot.journey.savedCedis}
       goalTarget={track.goal.target}
       goalLabel={track.goal.title}
+      childJourney
       onComplete={finish}
     />
   );

@@ -57,6 +57,7 @@ export function LessonPlayer({
   currentSaved,
   goalTarget,
   goalLabel,
+  childJourney,
   onComplete,
 }: {
   lesson: Lesson;
@@ -70,6 +71,7 @@ export function LessonPlayer({
   currentSaved?: number | undefined;
   goalTarget?: number | undefined;
   goalLabel?: string | undefined;
+  childJourney?: boolean | undefined;
   onComplete: (draft: LessonDraft) => void;
 }) {
   const storageKey = `tati.lesson.${childId}.${lesson.id}`;
@@ -110,18 +112,33 @@ export function LessonPlayer({
   const patch = (p: Partial<LessonDraft>) => setDraft((d) => ({ ...d, ...p }));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+    <div
+      className={cn(
+        "min-h-screen text-foreground",
+        childJourney ? "bg-[#fff9eb]" : "bg-background",
+      )}
+    >
+      <header
+        className={cn(
+          "sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur",
+          childJourney && "bg-[#fff9eb]/95",
+        )}
+      >
         <div className={cn(tatiTheme.container, "flex items-center gap-3 py-3")}>
           <Link
             to={backTo}
             aria-label="Back to my journey"
-            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-xl"
+            className={cn(
+              "flex h-12 w-12 items-center justify-center text-xl",
+              childJourney ? "rounded-full bg-white shadow-card" : "rounded-2xl bg-secondary",
+            )}
           >
             <span aria-hidden="true">←</span>
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-extrabold text-primary">TATI ChildSave</p>
+            <p className="truncate text-base font-extrabold text-primary">
+              {childJourney ? "TATI Learner Space" : "TATI ChildSave"}
+            </p>
             <p className="truncate text-sm text-muted-foreground">
               {lesson.subtitle ?? "Interactive lesson"}
             </p>
@@ -150,14 +167,21 @@ export function LessonPlayer({
         ) : null}
 
         {resumed ? (
-          <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
+          <p
+            className={cn(
+              "rounded-2xl px-4 py-3 text-sm font-bold",
+              childJourney
+                ? "border border-[#d2f2de] bg-[#ecfff3] text-success"
+                : "bg-success-soft text-success",
+            )}
+          >
             Welcome back! Ready to continue?
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-2">
           {stepLabel ? (
             <span className="rounded-full bg-secondary px-3 py-1.5 text-sm font-extrabold text-secondary-foreground">
-              📖 {stepLabel}
+              {stepLabel}
               {lesson.topic ? ` • ${lesson.topic}` : ""}
             </span>
           ) : null}
@@ -170,7 +194,14 @@ export function LessonPlayer({
         </div>
 
         <div>
-          <h1 className="text-2xl font-extrabold leading-tight">{lesson.title}</h1>
+          <h1
+            className={cn(
+              "font-extrabold leading-tight",
+              childJourney ? "text-[1.95rem] text-[#0f2248]" : "text-2xl",
+            )}
+          >
+            {lesson.title}
+          </h1>
         </div>
 
         {lesson.learningObjective ? (
@@ -231,7 +262,12 @@ export function LessonPlayer({
             type="button"
             onClick={() => onComplete(draft)}
             disabled={saving}
-            className="inline-flex min-h-[56px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-50"
+            className={cn(
+              "inline-flex min-h-[56px] w-full items-center justify-center gap-2 px-6 text-lg font-extrabold text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-50",
+              childJourney
+                ? "rounded-full bg-[#003DA5] shadow-[0_8px_20px_rgba(0,61,165,0.25)]"
+                : "rounded-2xl bg-primary",
+            )}
           >
             {saving ? "Saving…" : (lesson.ctaLabel ?? "Continue")} <span aria-hidden="true">→</span>
           </button>
