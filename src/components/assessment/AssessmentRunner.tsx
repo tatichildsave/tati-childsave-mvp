@@ -12,21 +12,43 @@ import type { ReactNode } from "react";
  * Content comes from the definition; this component holds no questions.
  */
 
-function Shell({ children }: { children: ReactNode }) {
+function Shell({
+  children,
+  childJourney = false,
+}: {
+  children: ReactNode;
+  childJourney?: boolean;
+}) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className={cn(
+        "min-h-screen text-foreground",
+        childJourney ? "bg-[#fff9eb]" : "bg-background",
+      )}
+    >
       <div className="mx-auto w-full max-w-xl px-4 pb-10 pt-4">{children}</div>
     </div>
   );
 }
 
-function Header({ title, backTo }: { title: string; backTo: string }) {
+function Header({
+  title,
+  backTo,
+  childJourney = false,
+}: {
+  title: string;
+  backTo: string;
+  childJourney?: boolean;
+}) {
   return (
     <header className="mb-4 flex items-center gap-3">
       <Link
         to={backTo}
         aria-label="Go back"
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-foreground"
+        className={cn(
+          "flex h-12 w-12 shrink-0 items-center justify-center text-xl text-foreground",
+          childJourney ? "rounded-full bg-white shadow-card" : "rounded-2xl",
+        )}
       >
         <span aria-hidden="true">←</span>
       </Link>
@@ -37,8 +59,17 @@ function Header({ title, backTo }: { title: string; backTo: string }) {
         Tati
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-extrabold text-muted-foreground">TATI Junior</p>
-        <h1 className="break-words text-lg font-extrabold leading-tight">{title}</h1>
+        <p className="text-xs font-extrabold text-muted-foreground">
+          {childJourney ? "TATI Learner Space" : "TATI Junior"}
+        </p>
+        <h1
+          className={cn(
+            "break-words text-lg font-extrabold leading-tight",
+            childJourney && "text-[#0f2248]",
+          )}
+        >
+          {title}
+        </h1>
       </div>
       <ListenButton />
     </header>
@@ -79,17 +110,24 @@ function CtaButton({
   children,
   onClick,
   disabled,
+  childJourney = false,
 }: {
   children: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  childJourney?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex min-h-[56px] w-full items-center justify-center rounded-2xl bg-primary px-6 text-lg font-extrabold text-primary-foreground shadow-card transition-[transform,opacity] duration-150 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 motion-reduce:transition-none"
+      className={cn(
+        "inline-flex min-h-[56px] w-full items-center justify-center px-6 text-lg font-extrabold text-primary-foreground shadow-card transition-[transform,opacity] duration-150 hover:opacity-95 active:scale-[0.98] disabled:opacity-50 motion-reduce:transition-none",
+        childJourney
+          ? "rounded-full bg-[#003DA5] shadow-[0_8px_20px_rgba(0,61,165,0.25)]"
+          : "rounded-2xl bg-primary",
+      )}
     >
       {children}
     </button>
@@ -105,6 +143,7 @@ export function AssessmentRunner({
   completeLabel = "Start My Journey 🚀",
   childName,
   submitError,
+  childJourney = false,
 }: {
   definition: AssessmentDefinition;
   storageKey?: string;
@@ -114,14 +153,15 @@ export function AssessmentRunner({
   completeLabel?: string;
   childName?: string;
   submitError?: string | null;
+  childJourney?: boolean;
 }) {
   const runner = useAssessmentRunner(definition, storageKey);
   const headerTitle = definition.shortTitle ?? definition.title;
 
   if (runner.stage === "intro") {
     return (
-      <Shell>
-        <Header title={headerTitle} backTo={backTo} />
+      <Shell childJourney={childJourney}>
+        <Header title={headerTitle} backTo={backTo} childJourney={childJourney} />
 
         {submitError ? (
           <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
@@ -208,7 +248,9 @@ export function AssessmentRunner({
         </div>
 
         <div className="mt-5">
-          <CtaButton onClick={runner.start}>Let's Go! 🚀</CtaButton>
+          <CtaButton onClick={runner.start} childJourney={childJourney}>
+            Let's Go! 🚀
+          </CtaButton>
         </div>
         <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
           🔒 Your answers stay private to your family
@@ -227,8 +269,8 @@ export function AssessmentRunner({
     const superpowers = [...result.competencies].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
 
     return (
-      <Shell>
-        <Header title={headerTitle} backTo={backTo} />
+      <Shell childJourney={childJourney}>
+        <Header title={headerTitle} backTo={backTo} childJourney={childJourney} />
 
         {submitError ? (
           <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
@@ -289,7 +331,11 @@ export function AssessmentRunner({
         ) : null}
 
         <div className="mt-6">
-          <CtaButton onClick={() => onComplete(result)} disabled={saving}>
+          <CtaButton
+            onClick={() => onComplete(result)}
+            disabled={saving}
+            childJourney={childJourney}
+          >
             {saving ? "Saving…" : completeLabel}
           </CtaButton>
         </div>
@@ -306,8 +352,8 @@ export function AssessmentRunner({
   const pct = Math.round(((runner.index + 1) / runner.total) * 100);
 
   return (
-    <Shell>
-      <Header title={headerTitle} backTo={backTo} />
+    <Shell childJourney={childJourney}>
+      <Header title={headerTitle} backTo={backTo} childJourney={childJourney} />
 
       {submitError ? (
         <div className="mb-4 rounded-2xl bg-warning-soft px-4 py-3">
@@ -445,7 +491,11 @@ export function AssessmentRunner({
               Back
             </button>
           ) : null}
-          <CtaButton onClick={runner.next} disabled={!runner.canAdvance}>
+          <CtaButton
+            onClick={runner.next}
+            disabled={!runner.canAdvance}
+            childJourney={childJourney}
+          >
             {runner.isLast ? "Finish ✨" : "Continue →"}
           </CtaButton>
         </div>

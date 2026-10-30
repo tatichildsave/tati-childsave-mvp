@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Page } from "@/components/tati";
-import { Screen } from "@/components/learning/primitives";
+import { ErrorState, LoadingState, Page } from "@/components/tati";
 import { AssessmentRunner } from "@/components/assessment/AssessmentRunner";
 import { getAssessmentDefinition } from "@/lib/assessment/registry";
 import { assertChildActivity, saveChildAssessment } from "@/lib/auth/child-learning.functions";
@@ -31,18 +30,40 @@ export const Route = createFileRoute("/child/assessment/$assessmentId")({
 function AssessmentPage() {
   const { assessmentId } = Route.useParams();
   const definition = getAssessmentDefinition(assessmentId);
-  const { data } = useChildLearning();
+  const { data, isLoading, isError, refetch } = useChildLearning();
   const record = useRecordChildProgress();
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  if (isLoading) {
+    return (
+      <Page role="junior">
+        <LoadingState label="Opening your check-in…" />
+      </Page>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Page role="junior">
+        <ErrorState
+          title="Your check-in didn't load"
+          description="Please try again. Your progress is safe."
+          onRetry={() => void refetch()}
+        />
+      </Page>
+    );
+  }
+
   if (!definition || !data)
     return (
       <Page role="junior">
-        <Screen>
-          <p className="text-lg">Check-in not found</p>
-        </Screen>
+        <ErrorState
+          title="This check-in isn't available"
+          description="Please return to your journey and choose another unlocked activity."
+          onRetry={() => void navigate({ to: "/child/learn" })}
+        />
       </Page>
     );
 
@@ -89,6 +110,8 @@ function AssessmentPage() {
       saving={record.isPending || isSubmitting}
       onComplete={finish}
       submitError={submitError}
+      completeLabel="Continue my journey"
+      childJourney
       {...(data.profile.name ? { childName: data.profile.name.split(" ")[0] } : {})}
     />
   );
