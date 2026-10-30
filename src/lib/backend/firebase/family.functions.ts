@@ -280,12 +280,25 @@ export const clearParentSessionFn = createServerFn({ method: "POST" })
   .validator(z.void())
   .handler(async () => {
     try {
-      const { uid } = await getCurrentParentContext();
+      let uid: string | undefined;
+      try {
+        const context = await getCurrentParentContext();
+        uid = context.uid;
+      } catch (contextError) {
+        console.warn(
+          "[clearParentSessionFn] No active parent context while clearing cookie:",
+          contextError instanceof Error ? contextError.name : "unknown error",
+        );
+      }
+
       const { clearParentSession } = await import("@/lib/backend/firebase/parent-auth.server");
       await clearParentSession(uid);
       return { success: true };
     } catch (error) {
-      console.error("[clearParentSessionFn] Failed", error instanceof Error ? error.name : "unknown error");
+      console.error(
+        "[clearParentSessionFn] Failed",
+        error instanceof Error ? error.name : "unknown error",
+      );
       throw error;
     }
   });
