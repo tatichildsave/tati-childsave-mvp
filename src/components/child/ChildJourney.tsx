@@ -10,7 +10,7 @@ export function ChildJourney({ snapshot }: { snapshot: ProgressSnapshot }) {
   const completedStops = snapshot.steps.filter((step) => step.done).length;
   const totalStops = snapshot.steps.length;
   const currentStep = snapshot.steps.find((step) => step.current && !step.locked);
-  const preview = snapshot.steps.slice(0, Math.min(8, totalStops));
+  const visibleSteps = snapshot.steps;
 
   return (
     <Page withBottomNav role="junior">
@@ -107,9 +107,9 @@ export function ChildJourney({ snapshot }: { snapshot: ProgressSnapshot }) {
           </h2>
           <span className="text-sm font-bold text-muted-foreground">{totalStops} total</span>
         </div>
-        {preview.length ? (
+        {visibleSteps.length ? (
           <ol className="space-y-2.5">
-            {preview.map((step) => {
+            {visibleSteps.map((step) => {
               const statusLabel = step.done
                 ? "Completed"
                 : step.locked
